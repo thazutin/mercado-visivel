@@ -140,7 +140,7 @@ const pt = {
 };
 
 const en: typeof pt = {
-  locale: "en",
+  locale: "en" as const,
   dir: "ltr",
   badge: "Marketing for business owners",
   heroTitle1: "How much of your local market",
@@ -251,7 +251,7 @@ const en: typeof pt = {
 };
 
 const es: typeof pt = {
-  locale: "es",
+  locale: "es" as const,
   dir: "ltr",
   badge: "Marketing para dueños de negocio",
   heroTitle1: "¿Cuánto de tu mercado local",
@@ -361,6 +361,6 @@ const es: typeof pt = {
   ],
 };
 
-export const dictionaries: Record<Locale, typeof pt> = { pt, en, es };
+export const dictionaries: Record<Locale, Record<string, any>> = { pt, en, es };
 
 export default pt;
