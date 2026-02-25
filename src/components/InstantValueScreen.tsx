@@ -39,13 +39,15 @@ interface Props {
   product: string;
   region: string;
   results: Results;
-  onCheckout: () => void;
+  onCheckout: (coupon?: string) => void;
   loading?: boolean;
 }
 
 export default function InstantValueScreen({ product, region, results, onCheckout, loading }: Props) {
   const [show, setShow] = useState(false);
   const [barWidth, setBarWidth] = useState(0);
+  const [coupon, setCoupon] = useState("");
+  const [couponApplied, setCouponApplied] = useState(false);
 
   useEffect(() => {
     setTimeout(() => setShow(true), 100);
@@ -154,20 +156,54 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           ))}
         </div>
 
-        {/* CTA */}
+        {/* Coupon + CTA */}
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <button onClick={onCheckout} disabled={loading} style={{
+          {/* Coupon field */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: V.white, border: `1px solid ${couponApplied ? V.veroTeal : "#E5E0D8"}`, borderRadius: 10, padding: "4px 4px 4px 16px", maxWidth: 340, width: "100%" }}>
+              <input
+                type="text"
+                placeholder="Código promocional"
+                value={coupon}
+                onChange={(e: any) => { setCoupon(e.target.value.toUpperCase()); setCouponApplied(false); }}
+                style={{ border: "none", outline: "none", fontSize: 14, fontFamily: V.mono, letterSpacing: "0.04em", color: V.dark, background: "transparent", flex: 1, padding: "10px 0" }}
+              />
+              {coupon.length > 0 && (
+                <button
+                  onClick={() => setCouponApplied(true)}
+                  style={{ background: couponApplied ? V.veroTeal : V.charcoal, color: V.white, border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 12, fontFamily: V.mono, fontWeight: 500, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" as const }}
+                >
+                  {couponApplied ? "✓ Aplicado" : "Aplicar"}
+                </button>
+              )}
+            </div>
+            {couponApplied && (
+              <div style={{ fontSize: 12, color: V.veroTeal, marginTop: 8, fontFamily: V.mono, animation: "fadeInUp 0.3s ease" }}>
+                Cupom {coupon} será validado no checkout
+              </div>
+            )}
+          </div>
+
+          <button onClick={() => onCheckout(couponApplied ? coupon : undefined)} disabled={loading} style={{
             background: V.ember, color: V.white, border: "none", padding: "16px 36px",
             borderRadius: 10, fontSize: 16, fontWeight: 600, cursor: "pointer",
             fontFamily: V.body, transition: "all 0.3s ease",
             boxShadow: "0 4px 20px rgba(212,88,42,0.3)",
             opacity: loading ? 0.7 : 1,
           }}>
-            {loading ? "Redirecionando..." : "Desbloquear o como — R$ 497"}
+            {loading ? "Redirecionando..." : couponApplied ? "Desbloquear o como" : "Desbloquear o como — R$ 497"}
           </button>
-          <p style={{ fontSize: 13, color: V.stone, marginTop: 12 }}>
-            Diagnóstico Vero + plano semanal por R$ 197/mês
-          </p>
+          {couponApplied && (
+            <p style={{ fontSize: 14, color: V.dark, marginTop: 12, fontWeight: 500 }}>
+              <span style={{ textDecoration: "line-through", color: V.stone }}>R$ 497</span>{" "}
+              <span style={{ color: V.veroTeal }}>Desconto aplicado no checkout</span>
+            </p>
+          )}
+          {!couponApplied && (
+            <p style={{ fontSize: 13, color: V.stone, marginTop: 12 }}>
+              Diagnóstico Vero + plano semanal por R$ 197/mês
+            </p>
+          )}
         </div>
 
         {/* Disclaimer */}

@@ -156,10 +156,10 @@ export default function Home() {
     } catch { setResults({ terms: [{ term: formData.product, volume: 1200, cpc: 2.5, position: "-" }], totalVolume: 2400, avgCpc: 2.1, marketLow: 18000, marketHigh: 42000, influencePercent: 7, source: "estimated", confidence: "medium" }); }
   }, [formData, locale]);
 
-  const handleCheckout = useCallback(async () => {
+  const handleCheckout = useCallback(async (coupon?: string) => {
     setCheckoutLoading(true);
     try {
-      const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lead_id: leadId, locale }) });
+      const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lead_id: leadId, locale, coupon }) });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
     } catch { alert("Erro no checkout. Tente novamente."); }

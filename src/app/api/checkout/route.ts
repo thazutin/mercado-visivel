@@ -3,14 +3,14 @@ import { createCheckoutSession } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
   try {
-    const { lead_id, locale } = await req.json();
+    const { lead_id, locale, coupon } = await req.json();
 
     if (!lead_id) {
       return NextResponse.json({ error: "lead_id required" }, { status: 400 });
     }
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
-    const session = await createCheckoutSession(lead_id, origin, locale || "pt");
+    const session = await createCheckoutSession(lead_id, origin, locale || "pt", coupon);
 
     return NextResponse.json({ url: session.url, session_id: session.id });
   } catch (err) {
