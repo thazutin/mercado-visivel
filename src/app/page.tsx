@@ -228,7 +228,7 @@ export default function Home() {
           <Field label={t.step3TicketLabel}>
             <select style={{ ...inputStyle, appearance: "none" as any, cursor: "pointer" }} value={formData.ticket} onChange={(e) => updateField("ticket", e.target.value)}>
               <option value="">{locale === "pt" ? "Selecione" : locale === "es" ? "Selecciona" : "Select"}</option>
-              {t.step3TicketOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              {t.step3TicketOptions.map((o: string) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </Field>
         </>
