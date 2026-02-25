@@ -139,7 +139,7 @@ const pt = {
   ],
 };
 
-const en: typeof pt = {
+const en = {
   locale: "en" as const,
   dir: "ltr",
   badge: "Marketing for business owners",
@@ -250,7 +250,7 @@ const en: typeof pt = {
   ],
 };
 
-const es: typeof pt = {
+const es = {
   locale: "es" as const,
   dir: "ltr",
   badge: "Marketing para dueños de negocio",
