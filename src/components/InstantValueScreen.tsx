@@ -3,19 +3,24 @@
 import { useState, useEffect } from "react";
 import AnimatedCounter from "./AnimatedCounter";
 
-const T = {
-  bg: "#0a0a0f",
-  bgCard: "#111118",
-  accent: "#f0a030",
-  accentGlow: "rgba(240, 160, 48, 0.13)",
-  accentSoft: "#f7c46c",
-  green: "#00d4aa",
-  greenGlow: "rgba(0, 212, 170, 0.15)",
-  text: "#e8e8f0",
-  textMuted: "#8888a0",
-  textDim: "#555568",
-  border: "#222233",
-  mono: "'Space Mono', monospace",
+const V = {
+  dark: "#141210",
+  warmBlack: "#1E1C19",
+  charcoal: "#2A2724",
+  stone: "#8C8578",
+  sand: "#B8AFA4",
+  cream: "#F0ECE4",
+  paper: "#F7F5F0",
+  white: "#FEFEFE",
+  ember: "#D4582A",
+  emberGlow: "rgba(212, 88, 42, 0.12)",
+  veroBlue: "#1A3A4A",
+  veroTeal: "#2B6B7C",
+  veroLight: "#E8F1F4",
+  veroGlow: "rgba(43, 107, 124, 0.10)",
+  serif: "'DM Serif Display', Georgia, serif",
+  body: "'Outfit', sans-serif",
+  mono: "'IBM Plex Mono', monospace",
 };
 
 interface Results {
@@ -48,381 +53,127 @@ export default function InstantValueScreen({ product, region, results, onCheckou
   }, [results.influencePercent]);
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: T.bg,
-        padding: "60px 24px",
-        opacity: show ? 1 : 0,
-        transition: "opacity 0.6s ease",
-      }}
-    >
+    <div style={{ minHeight: "100vh", background: V.cream, padding: "60px 24px", opacity: show ? 1 : 0, transition: "opacity 0.6s ease" }}>
       <div style={{ maxWidth: 680, margin: "0 auto" }}>
-        {/* Header */}
+        {/* Header — Vero delivers */}
         <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              fontFamily: T.mono,
-              fontSize: 11,
-              letterSpacing: 3,
-              textTransform: "uppercase",
-              color: T.accent,
-              background: T.accentGlow,
-              padding: "8px 20px",
-              borderRadius: 100,
-              border: "1px solid rgba(240,160,48,0.25)",
-              marginBottom: 24,
-            }}
-          >
-            Visão instantânea
+          <div style={{ width: 40, height: 40, borderRadius: "50%", background: `linear-gradient(135deg, ${V.veroTeal}, ${V.veroBlue})`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+            <span style={{ fontFamily: V.serif, fontSize: 18, color: V.cream }}>V</span>
           </div>
-          <h2 style={{ fontSize: "clamp(24px, 5vw, 32px)", fontWeight: 700, marginBottom: 8 }}>
-            {product} em {region}
-          </h2>
-          <p style={{ fontSize: 14, color: T.textMuted }}>
-            Análise baseada em dados reais de busca da sua categoria e região.
+          <div style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: V.veroTeal, background: V.veroGlow, padding: "6px 16px", borderRadius: 100, display: "inline-block", marginBottom: 20 }}>
+            Visão instantânea — Vero
+          </div>
+          <p style={{ fontSize: 14, color: V.stone }}>
+            {product} · {region}
           </p>
         </div>
 
-        {/* The Number — Market range */}
-        <div
-          style={{
-            background: T.bgCard,
-            border: `1px solid ${T.border}`,
-            borderRadius: 12,
-            padding: "48px 32px",
-            textAlign: "center",
-            position: "relative",
-            overflow: "hidden",
-            marginBottom: 24,
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: `radial-gradient(ellipse at center, ${T.accentGlow}, transparent 70%)`,
-              pointerEvents: "none",
-            }}
-          />
-          <div style={{ position: "relative" }}>
-            <p style={{ fontSize: 14, color: T.textMuted, marginBottom: 12 }}>
-              Mercado disponível na sua região
-            </p>
-            <div
-              style={{
-                fontFamily: T.mono,
-                fontSize: "clamp(28px, 7vw, 48px)",
-                fontWeight: 700,
-                color: T.accent,
-                marginBottom: 8,
-              }}
-            >
-              <AnimatedCounter target={results.marketLow} prefix="R$ " duration={2000} />
-              {" — "}
-              <AnimatedCounter target={results.marketHigh} prefix="R$ " duration={2500} />
-            </div>
-            <p style={{ fontSize: 18, marginBottom: 8 }}>por mês</p>
-            <p style={{ fontSize: 13, color: T.textDim }}>
-              {results.confidence} · Fonte: {results.source} ·{" "}
-              <span
-                style={{ color: T.accent, textDecoration: "underline", cursor: "pointer" }}
-                onClick={() =>
-                  alert(
-                    `Premissas do cálculo:\n\n` +
-                      `• Volume de busca: ${results.totalVolume.toLocaleString("pt-BR")}/mês\n` +
-                      `• CPC médio: R$ ${results.avgCpc.toFixed(2)}\n` +
-                      `• CTR estimado: 25-45%\n` +
-                      `• Taxa de conversão: 1-1.5% (conservadora)\n` +
-                      `• Faixa usa piso e teto de premissas\n\n` +
-                      `Fonte: Google Ads Keyword Planner`
-                  )
-                }
-              >
-                Ver premissas
-              </span>
-            </p>
+        {/* Market range — the wow */}
+        <div style={{ background: V.white, borderRadius: 16, border: "1px solid #E5E0D8", padding: "36px 28px", marginBottom: 16, textAlign: "center", boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}>
+          <div style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: V.stone, marginBottom: 12 }}>
+            Mercado disponível na sua região
+          </div>
+          <div style={{ fontFamily: V.serif, fontSize: "clamp(36px, 6vw, 52px)", color: V.dark, letterSpacing: "-0.02em", lineHeight: 1 }}>
+            R$ <AnimatedCounter target={results.marketLow} duration={1500} /> — <AnimatedCounter target={results.marketHigh} duration={1800} />
+          </div>
+          <div style={{ fontFamily: V.mono, fontSize: 12, color: V.stone, marginTop: 8 }}>por mês</div>
+        </div>
 
-            {/* Influence bar */}
-            <div style={{ marginTop: 32 }}>
-              <div
-                style={{
-                  width: "100%",
-                  height: 8,
-                  background: T.border,
-                  borderRadius: 4,
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  style={{
-                    height: "100%",
-                    background: T.accent,
-                    borderRadius: 4,
-                    width: `${barWidth}%`,
-                    transition: "width 1.5s ease",
-                  }}
-                />
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginTop: 8,
-                  fontSize: 12,
-                }}
-              >
-                <span style={{ color: T.accent, fontWeight: 600 }}>
-                  Você influencia ~{results.influencePercent}%
-                </span>
-                <span style={{ color: T.textDim }}>100% do mercado</span>
-              </div>
-            </div>
+        {/* Influence bar */}
+        <div style={{ background: V.white, borderRadius: 16, border: "1px solid #E5E0D8", padding: "28px 24px", marginBottom: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+            <span style={{ fontFamily: V.body, fontSize: 14, color: V.dark, fontWeight: 500 }}>Você influencia ~{results.influencePercent}%</span>
+            <span style={{ fontFamily: V.mono, fontSize: 11, color: V.stone }}>100% do mercado</span>
+          </div>
+          <div style={{ height: 10, borderRadius: 5, background: "#E5E0D8", overflow: "hidden" }}>
+            <div style={{ height: "100%", borderRadius: 5, background: `linear-gradient(90deg, ${V.ember}, ${V.veroTeal})`, width: `${barWidth}%`, transition: "width 1.5s cubic-bezier(0.16, 1, 0.3, 1)" }} />
           </div>
         </div>
 
-        {/* Stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
+        {/* Stats row */}
+        <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
           {[
-            { label: "Buscas/mês", value: results.totalVolume.toLocaleString("pt-BR") },
+            { label: "buscas/mês", value: results.totalVolume.toLocaleString("pt-BR") },
             { label: "CPC médio", value: `R$ ${results.avgCpc.toFixed(2)}` },
-            { label: "Termos mapeados", value: String(results.terms.length) },
+            { label: "termos mapeados", value: results.terms.length.toString() },
           ].map((s, i) => (
-            <div
-              key={i}
-              style={{
-                background: T.bgCard,
-                border: `1px solid ${T.border}`,
-                borderRadius: 12,
-                padding: "20px 16px",
-                textAlign: "center",
-              }}
-            >
-              <p style={{ fontFamily: T.mono, fontSize: 20, fontWeight: 700 }}>{s.value}</p>
-              <p
-                style={{
-                  fontFamily: T.mono,
-                  fontSize: 10,
-                  color: T.textDim,
-                  letterSpacing: 1,
-                  textTransform: "uppercase",
-                  marginTop: 4,
-                }}
-              >
-                {s.label}
-              </p>
+            <div key={i} style={{ flex: "1 1 120px", background: V.white, borderRadius: 12, border: "1px solid #E5E0D8", padding: "16px", textAlign: "center" }}>
+              <div style={{ fontFamily: V.serif, fontSize: 22, color: V.veroBlue }}>{s.value}</div>
+              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.stone, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginTop: 4 }}>{s.label}</div>
             </div>
           ))}
         </div>
 
-        {/* ALL terms visible (free wow moment) */}
-        <div
-          style={{
-            background: T.bgCard,
-            border: `1px solid ${T.border}`,
-            borderRadius: 12,
-            overflow: "hidden",
-            marginBottom: 24,
-          }}
-        >
-          <div
-            style={{
-              padding: "14px 20px",
-              borderBottom: `1px solid ${T.border}`,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <span style={{ fontSize: 14, fontWeight: 600 }}>Termos de busca reais</span>
-            <span
-              style={{
-                fontFamily: T.mono,
-                fontSize: 10,
-                color: T.green,
-                background: T.greenGlow,
-                padding: "4px 10px",
-                borderRadius: 100,
-              }}
-            >
-              {results.terms.length} termos
-            </span>
+        {/* All terms — no paywall on data */}
+        <div style={{ background: V.white, borderRadius: 16, border: "1px solid #E5E0D8", padding: "24px", marginBottom: 24, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+          <div style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: V.veroTeal, marginBottom: 16 }}>
+            Termos de busca reais
           </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 100px 80px",
-              gap: 12,
-              padding: "10px 20px",
-              borderBottom: "1px solid rgba(255,255,255,0.04)",
-            }}
-          >
-            {["Termo", "Volume", "CPC"].map((h) => (
-              <span
-                key={h}
-                style={{
-                  fontFamily: T.mono,
-                  fontSize: 10,
-                  color: T.textDim,
-                  textTransform: "uppercase",
-                  letterSpacing: 1,
-                  textAlign: h === "Termo" ? "left" : "right",
-                }}
-              >
-                {h}
-              </span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {results.terms.map((t: any, i: number) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", borderRadius: 8, background: i % 2 === 0 ? V.paper : "transparent" }}>
+                <span style={{ fontSize: 14, color: V.dark }}>{t.term}</span>
+                <div style={{ display: "flex", gap: 16 }}>
+                  <span style={{ fontFamily: V.mono, fontSize: 12, color: V.veroTeal }}>{t.volume.toLocaleString("pt-BR")}/mês</span>
+                  <span style={{ fontFamily: V.mono, fontSize: 12, color: V.stone }}>R$ {t.cpc.toFixed(2)}</span>
+                </div>
+              </div>
             ))}
           </div>
-
-          {results.terms.map((t, i) => (
-            <div
-              key={i}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 100px 80px",
-                gap: 12,
-                padding: "14px 20px",
-                alignItems: "center",
-                borderBottom: i < results.terms.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 14,
-                  color: "rgba(255,255,255,0.8)",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {t.term}
-              </span>
-              <span style={{ fontFamily: T.mono, fontSize: 12, color: T.textMuted, textAlign: "right" }}>
-                {t.volume.toLocaleString("pt-BR")}/mês
-              </span>
-              <span style={{ fontFamily: T.mono, fontSize: 12, color: T.green, textAlign: "right" }}>
-                R$ {t.cpc.toFixed(2)}
-              </span>
-            </div>
-          ))}
         </div>
 
         {/* Bridge text */}
-        <div
-          style={{
-            background: T.bgCard,
-            border: `1px solid ${T.border}`,
-            borderRadius: 12,
-            padding: "32px 28px",
-            marginBottom: 16,
-          }}
-        >
-          <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 12, lineHeight: 1.5 }}>
+        <div style={{ padding: "0 8px", marginBottom: 32 }}>
+          <p style={{ fontSize: 16, color: V.dark, lineHeight: 1.8, fontFamily: V.body, marginBottom: 12, fontWeight: 500 }}>
             Esse mercado existe. Ele não depende de você — já está lá.
           </p>
-          <p style={{ fontSize: 15, color: T.textMuted, lineHeight: 1.8 }}>
-            A pergunta é: como aumentar a probabilidade de que, quando alguém nesse mercado precisar do
-            que você oferece, seu negócio seja lembrado? Não existe garantia — mas existe um plano baseado
-            em evidência que aumenta essa probabilidade além do que aconteceria sem fazer nada.
+          <p style={{ fontSize: 14, color: V.stone, lineHeight: 1.8 }}>
+            A pergunta é: como aumentar a probabilidade de que, quando alguém nesse mercado precisar do que você oferece, seu negócio seja lembrado? Não existe garantia — mas existe um plano baseado em evidência.
           </p>
         </div>
 
-        {/* What you get */}
-        <div
-          style={{
-            background: "rgba(240,160,48,0.05)",
-            border: "1px solid rgba(240,160,48,0.15)",
-            borderRadius: 12,
-            padding: "24px 28px",
-            marginBottom: 32,
-          }}
-        >
-          <p
-            style={{
-              fontFamily: T.mono,
-              fontSize: 10,
-              letterSpacing: 2,
-              textTransform: "uppercase",
-              color: T.accent,
-              marginBottom: 16,
-            }}
-          >
-            O que o diagnóstico completo entrega
-          </p>
-
+        {/* Deliverables — what Vero unlocks */}
+        <div style={{ background: V.warmBlack, borderRadius: 16, padding: "32px 24px", marginBottom: 24, color: V.cream }}>
+          <div style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: V.veroTeal, marginBottom: 20 }}>
+            O que Vero desbloqueia
+          </div>
           {[
-            {
-              title: "Espelho de percepção",
-              desc: "O que você comunica vs. o que seu cliente realmente valoriza — e onde está a lacuna",
-            },
-            {
-              title: "Mapa competitivo",
-              desc: "Quem aparece quando seu cliente busca, o que fazem diferente, e onde você já tem vantagem",
-            },
-            {
-              title: "Ativos subutilizados",
-              desc: "Reviews, história, expertise que você já tem mas não trabalham para atrair clientes",
-            },
-            {
-              title: "Plano de 12 semanas",
-              desc: "Ações concretas de posicionamento, presença e reputação — não é calendário de posts, é construção de influência",
-            },
-            {
-              title: "Briefing semanal",
-              desc: "O que mudou no seu mercado esta semana e como responder com o que você já tem",
-            },
-          ].map((item, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: i < 4 ? 14 : 0 }}>
-              <span style={{ color: T.green, fontSize: 14, marginTop: 2, flexShrink: 0 }}>✓</span>
+            { title: "Espelho de percepção", desc: "O que você comunica vs. o que seu cliente valoriza" },
+            { title: "Mapa competitivo", desc: "Quem aparece, o que fazem diferente, onde você tem vantagem" },
+            { title: "Ativos subutilizados", desc: "O que você já tem mas não trabalha pra atrair" },
+            { title: "Plano de 90 dias", desc: "Ações concretas — reflexivas, acionáveis, delegáveis" },
+            { title: "Briefing semanal", desc: "O que mudou e como responder com o que você já tem" },
+          ].map((d, i) => (
+            <div key={i} style={{ display: "flex", gap: 14, marginBottom: 16, alignItems: "flex-start" }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: V.veroTeal, marginTop: 8, flexShrink: 0 }} />
               <div>
-                <span style={{ fontSize: 14, fontWeight: 600 }}>{item.title}</span>
-                <p style={{ fontSize: 13, color: T.textMuted, marginTop: 2, lineHeight: 1.6 }}>{item.desc}</p>
+                <div style={{ fontFamily: V.serif, fontSize: 16, fontWeight: 400, color: V.cream, marginBottom: 2 }}>{d.title}</div>
+                <div style={{ fontSize: 13, color: V.sand, lineHeight: 1.5 }}>{d.desc}</div>
               </div>
             </div>
           ))}
-
-          <div
-            style={{
-              marginTop: 20,
-              padding: "14px 16px",
-              background: "rgba(240,160,48,0.06)",
-              borderRadius: 8,
-            }}
-          >
-            <p style={{ fontSize: 13, color: T.textMuted, lineHeight: 1.7 }}>
-              Assim como um plano de treino ou dieta, os resultados dependem da execução. O diagnóstico dá
-              clareza e direção — a consistência é com você.
-            </p>
-          </div>
         </div>
 
         {/* CTA */}
-        <div style={{ textAlign: "center" }}>
-          <button
-            onClick={onCheckout}
-            disabled={loading}
-            style={{
-              fontSize: 16,
-              fontWeight: 600,
-              color: "#fff",
-              background: T.accent,
-              border: "none",
-              borderRadius: 100,
-              padding: "16px 40px",
-              cursor: loading ? "wait" : "pointer",
-              transition: "all 0.3s ease",
-              boxShadow: `0 8px 40px ${T.accentGlow}`,
-              opacity: loading ? 0.7 : 1,
-            }}
-          >
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <button onClick={onCheckout} disabled={loading} style={{
+            background: V.ember, color: V.white, border: "none", padding: "16px 36px",
+            borderRadius: 10, fontSize: 16, fontWeight: 600, cursor: "pointer",
+            fontFamily: V.body, transition: "all 0.3s ease",
+            boxShadow: "0 4px 20px rgba(212,88,42,0.3)",
+            opacity: loading ? 0.7 : 1,
+          }}>
             {loading ? "Redirecionando..." : "Desbloquear o como — R$ 497"}
           </button>
-          <p style={{ fontSize: 12, color: T.textDim, marginTop: 16, maxWidth: 360, margin: "16px auto 0" }}>
-            Diagnóstico completo + plano semanal contínuo por R$ 197/mês
+          <p style={{ fontSize: 13, color: V.stone, marginTop: 12 }}>
+            Diagnóstico Vero + plano semanal por R$ 197/mês
+          </p>
+        </div>
+
+        {/* Disclaimer */}
+        <div style={{ textAlign: "center", padding: "20px 0" }}>
+          <p style={{ fontSize: 12, color: V.stone, lineHeight: 1.7, maxWidth: 480, margin: "0 auto", fontStyle: "italic" }}>
+            Como plano de treino ou dieta — resultado depende da execução. Vero dá clareza e direção. Consistência é com você.
           </p>
         </div>
       </div>

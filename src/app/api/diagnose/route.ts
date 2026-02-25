@@ -33,6 +33,9 @@ export async function POST(req: NextRequest) {
         differentiator: formData.differentiator || "",
         competitors: formData.competitors || [],
         challenge: formData.challenge || "",
+        free_text: formData.freeText || "",
+        locale: formData.locale || "pt",
+        coupon: formData.coupon || "",
         status: "processing",
       });
     } catch (dbError) {

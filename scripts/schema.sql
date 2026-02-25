@@ -32,10 +32,12 @@ create table if not exists public.leads (
   
   -- Final (step 4)
   challenge text default '',
+  free_text text default '',
   
   -- Status tracking
   status text default 'pending' check (status in ('pending', 'processing', 'done', 'paid')),
   locale text default 'pt',
+  coupon text default '',
   
   -- Stripe
   stripe_session_id text,

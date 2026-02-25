@@ -1,19 +1,14 @@
 "use client";
 
-const T = {
-  accent: "#f0a030",
-  border: "#222233",
-};
-
 export default function ProgressBar({ step, total }: { step: number; total: number }) {
   return (
-    <div className="flex gap-1 mb-10">
+    <div style={{ display: "flex", gap: 6 }}>
       {Array.from({ length: total }, (_, i) => (
-        <div
-          key={i}
-          className="flex-1 h-[3px] rounded-sm transition-colors duration-500"
-          style={{ background: i < step ? T.accent : T.border }}
-        />
+        <div key={i} style={{
+          flex: 1, height: 3, borderRadius: 2,
+          background: i < step ? "#D4582A" : "#E5E0D8",
+          transition: "background 0.4s ease",
+        }} />
       ))}
     </div>
   );
