@@ -3,102 +3,155 @@
 import { useState, useEffect } from "react";
 
 const V = {
-  dark: "#141210",
-  warmBlack: "#1E1C19",
-  charcoal: "#2A2724",
-  stone: "#8C8578",
-  cream: "#F0ECE4",
-  ember: "#D4582A",
-  veroTeal: "#2B6B7C",
-  veroGlow: "rgba(43, 107, 124, 0.10)",
-  serif: "'DM Serif Display', Georgia, serif",
-  body: "'Outfit', sans-serif",
-  mono: "'IBM Plex Mono', monospace",
+  night: "#161618",
+  graphite: "#232326",
+  slate: "#3A3A40",
+  zinc: "#6E6E78",
+  ash: "#9E9EA8",
+  mist: "#C8C8D0",
+  fog: "#EAEAEE",
+  cloud: "#F4F4F7",
+  white: "#FEFEFF",
+  amber: "#CF8523",
+  amberWash: "rgba(207,133,35,0.08)",
+  teal: "#2D9B83",
+  tealWash: "rgba(45,155,131,0.08)",
+  display: "'Satoshi', 'General Sans', -apple-system, sans-serif",
+  body: "'Satoshi', 'General Sans', -apple-system, sans-serif",
+  mono: "'JetBrains Mono', 'SF Mono', monospace",
 };
 
 interface Props {
   product: string;
   onComplete: () => void;
+  steps?: string[];
 }
 
-export default function ProcessingScreen({ product, onComplete }: Props) {
-  const [visibleSteps, setVisibleSteps] = useState<number[]>([]);
-  const [doneSteps, setDoneSteps] = useState<number[]>([]);
-  const [activeStep, setActiveStep] = useState(0);
+export default function ProcessingScreen({ product, onComplete, steps: customSteps }: Props) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [done, setDone] = useState(false);
 
-  const steps = [
-    { text: "Analisando presença digital: site e redes sociais", detail: "12s" },
-    { text: "Instagram: posts e engagement analisados", detail: "28s" },
-    { text: "Google Reviews: avaliações e atributos mapeados", detail: "8s" },
-    { text: `Volume de busca: "${product}" na região`, detail: "5s" },
-    { text: "Perguntas frequentes da categoria identificadas", detail: "11s" },
-    { text: "Concorrentes: mapeando posicionamento", detail: "34s" },
-    { text: "Cruzamento 1/4: Calculando mercado disponível...", detail: "" },
-    { text: "Cruzamento 2/4: Comparando percepção vs. realidade...", detail: "" },
-    { text: "Cruzamento 3/4: Mapeando raio de influência...", detail: "" },
-    { text: "Cruzamento 4/4: Gerando visão instantânea...", detail: "" },
-    { text: "Análise concluída. Preparando resultados...", detail: "" },
+  const steps = customSteps || [
+    "Mapeando termos de busca na sua região...",
+    "Analisando volume de demanda...",
+    "Calculando mercado disponível...",
+    "Medindo sua influência digital...",
+    "Preparando seu resultado...",
   ];
 
   useEffect(() => {
-    const delays = [400, 1800, 3200, 4600, 5800, 7200, 8800, 10000, 11200, 12200, 13500];
-    const timeouts: NodeJS.Timeout[] = [];
+    // Cycle through steps, then hold on last step until API completes
+    const stepDuration = 3000;
+    const timers: NodeJS.Timeout[] = [];
+
     steps.forEach((_, i) => {
-      timeouts.push(setTimeout(() => { setVisibleSteps(p => [...p, i]); setActiveStep(i); if (i > 0) setDoneSteps(p => [...p, i - 1]); }, delays[i]));
+      if (i > 0) {
+        timers.push(setTimeout(() => setActiveIdx(i), i * stepDuration));
+      }
     });
-    timeouts.push(setTimeout(() => { setDoneSteps(p => [...p, steps.length - 1]); setTimeout(onComplete, 1200); }, 15000));
-    return () => timeouts.forEach(clearTimeout);
+
+    // After cycling all steps, call onComplete — parent decides when to transition
+    // If API is still running, parent holds us on processing screen
+    timers.push(setTimeout(() => {
+      setDone(true);
+      onComplete();
+    }, steps.length * stepDuration + 500));
+
+    return () => timers.forEach(clearTimeout);
   }, []);
 
   return (
-    <div style={{ minHeight: "100vh", background: `linear-gradient(180deg, ${V.dark} 0%, ${V.warmBlack} 100%)`, padding: "60px 24px" }}>
-      <div style={{ maxWidth: 600, margin: "0 auto", paddingTop: 80 }}>
-        <div style={{ textAlign: "center", marginBottom: 60 }}>
-          {/* Vero avatar */}
-          <div style={{ width: 48, height: 48, borderRadius: "50%", background: `linear-gradient(135deg, ${V.veroTeal} 0%, #1A3A4A 100%)`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", boxShadow: "0 4px 16px rgba(43,107,124,0.3)" }}>
-            <span style={{ fontFamily: V.serif, fontSize: 20, color: V.cream }}>V</span>
-          </div>
-          <h2 style={{ fontFamily: V.serif, fontSize: 28, fontWeight: 400, marginBottom: 12, color: V.cream, letterSpacing: "-0.02em" }}>
-            Vero está analisando seu mercado
-          </h2>
-          <p style={{ color: V.stone, fontSize: 15, fontFamily: V.body }}>
-            Cruzando dados reais da sua categoria e região.
-          </p>
+    <div style={{
+      minHeight: "100vh",
+      background: V.night,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "60px 24px",
+    }}>
+      <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
+        {/* Brand */}
+        <div style={{
+          width: 48, height: 48, borderRadius: 14,
+          background: V.graphite, display: "flex", alignItems: "center", justifyContent: "center",
+          margin: "0 auto 24px",
+        }}>
+          <span style={{ fontFamily: V.display, fontWeight: 700, fontSize: 22, color: V.white, letterSpacing: "-0.03em" }}>V</span>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <h2 style={{
+          fontFamily: V.display, fontSize: 24, fontWeight: 700,
+          color: V.white, letterSpacing: "-0.03em", marginBottom: 8,
+        }}>
+          Analisando seu mercado
+        </h2>
+        <p style={{ color: V.ash, fontSize: 14, fontFamily: V.body, marginBottom: 48 }}>
+          {product}
+        </p>
+
+        {/* Steps */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, textAlign: "left" }}>
           {steps.map((step, i) => {
-            const visible = visibleSteps.includes(i);
-            const done = doneSteps.includes(i);
-            const active = activeStep === i && visible && !done;
+            const isActive = i === activeIdx;
+            const isDone = i < activeIdx || done;
             return (
               <div key={i} style={{
-                display: "flex", alignItems: "center", gap: 16, padding: "14px 18px", borderRadius: 10,
-                background: done ? V.veroGlow : active ? V.charcoal : "rgba(42,39,36,0.5)",
-                border: active ? `1px solid rgba(43,107,124,0.3)` : "1px solid transparent",
-                opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(10px)",
-                transition: "all 0.5s ease",
+                display: "flex", alignItems: "center", gap: 14,
+                padding: "14px 18px", borderRadius: 10,
+                background: isDone ? V.tealWash : isActive ? V.graphite : "transparent",
+                border: isActive ? `1px solid rgba(207,133,35,0.2)` : "1px solid transparent",
+                transition: "all 0.4s ease",
+                opacity: i <= activeIdx || done ? 1 : 0.3,
               }}>
+                {/* Icon */}
                 <div style={{
-                  width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center",
-                  justifyContent: "center", flexShrink: 0, fontSize: 11,
-                  background: done ? V.veroTeal : V.charcoal,
-                  color: done ? V.cream : "transparent",
+                  width: 22, height: 22, borderRadius: "50%", display: "flex",
+                  alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  fontSize: 11, fontWeight: 600,
+                  background: isDone ? V.teal : isActive ? V.graphite : V.slate,
+                  color: isDone ? V.white : "transparent",
+                  border: isActive && !isDone ? `2px solid ${V.amber}` : "none",
+                  transition: "all 0.3s",
                 }}>
-                  {done && "✓"}
-                  {active && !done && (
-                    <div style={{ width: 12, height: 12, borderRadius: "50%", border: "2px solid transparent", borderTopColor: V.ember, animation: "spin 0.8s linear infinite" }} />
+                  {isDone && "✓"}
+                  {isActive && !isDone && (
+                    <div style={{
+                      width: 10, height: 10, borderRadius: "50%",
+                      border: "2px solid transparent", borderTopColor: V.amber,
+                      animation: "spin 0.8s linear infinite",
+                    }} />
                   )}
                 </div>
-                <div style={{ fontSize: 13, color: done || active ? V.cream : V.stone, fontFamily: V.body }}>{step.text}</div>
-                {step.detail && done && (
-                  <div style={{ fontFamily: V.mono, fontSize: 10, color: V.veroTeal, marginLeft: "auto", flexShrink: 0 }}>{step.detail}</div>
-                )}
+
+                {/* Text */}
+                <span style={{
+                  fontSize: 13, fontFamily: V.body,
+                  color: isDone ? V.mist : isActive ? V.white : V.zinc,
+                  transition: "color 0.3s",
+                }}>
+                  {step}
+                </span>
               </div>
             );
           })}
         </div>
+
+        {/* Progress bar */}
+        <div style={{
+          marginTop: 40, height: 3, borderRadius: 2,
+          background: V.graphite, overflow: "hidden",
+        }}>
+          <div style={{
+            height: "100%", borderRadius: 2, background: V.amber,
+            width: done ? "100%" : `${((activeIdx + 1) / steps.length) * 100}%`,
+            transition: "width 0.8s ease",
+          }} />
+        </div>
       </div>
+
+      {/* Spinner keyframe */}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
