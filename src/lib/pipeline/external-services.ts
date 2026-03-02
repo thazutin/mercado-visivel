@@ -544,6 +544,207 @@ export function createGoogleAdsKPClient(config: GoogleAdsConfig) {
 
 
 // ============================================================================
+// DATAFORSEO WRAPPER — Fallback para Google Ads Keyword Planner
+// ============================================================================
+// API Docs: https://docs.dataforseo.com/v3/keywords_data/google_ads/search_volume/live/
+// Env vars: DATAFORSEO_LOGIN, DATAFORSEO_PASSWORD
+// Custo: ~$0.05 por request (até 700 keywords por request)
+
+interface DataForSEOConfig {
+  login: string;
+  password: string;
+  cache?: CacheConfig;
+}
+
+interface DataForSEOKeywordResult {
+  keyword: string;
+  search_volume: number | null;
+  competition: number | null;               // 0-1 (numérico)
+  competition_level: string | null;         // "LOW" | "MEDIUM" | "HIGH"
+  cpc: number | null;                       // USD — converter pra BRL se necessário
+  monthly_searches: Array<{
+    year: number;
+    month: number;
+    search_volume: number;
+  }> | null;
+}
+
+interface DataForSEOResponse {
+  status_code: number;
+  status_message: string;
+  tasks: Array<{
+    id: string;
+    status_code: number;
+    status_message: string;
+    result: Array<{
+      items: DataForSEOKeywordResult[] | null;
+    }> | null;
+  }>;
+}
+
+export function createDataForSEOClient(config: DataForSEOConfig) {
+  const baseUrl = 'https://api.dataforseo.com/v3';
+  const authHeader = 'Basic ' + Buffer.from(`${config.login}:${config.password}`).toString('base64');
+
+  return async function getKeywordVolumes(
+    terms: string[],
+    region: string,
+    locationCode: number = 2076,    // 2076 = Brasil
+    languageCode: string = 'pt',
+  ): Promise<TermVolumeData[]> {
+    if (terms.length === 0) return [];
+
+    // Check cache
+    const cacheKey = `dfs:${terms.sort().join('+')}:${region}`;
+    if (config.cache) {
+      const cached = await getCached<TermVolumeData[]>(config.cache, cacheKey);
+      if (cached) return cached;
+    }
+
+    // DataForSEO aceita até 700 keywords por request
+    const CHUNK_SIZE = 700;
+    const allResults: TermVolumeData[] = [];
+
+    for (let i = 0; i < terms.length; i += CHUNK_SIZE) {
+      const chunk = terms.slice(i, i + CHUNK_SIZE);
+
+      const body = [
+        {
+          keywords: chunk,
+          location_code: locationCode,
+          language_code: languageCode,
+        },
+      ];
+
+      let raw: DataForSEOResponse;
+      try {
+        const res = await fetch(`${baseUrl}/keywords_data/google_ads/search_volume/live`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: authHeader,
+          },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(30_000),
+        });
+
+        if (!res.ok) {
+          const errText = await res.text().catch(() => 'no body');
+          throw new Error(`DataForSEO HTTP ${res.status}: ${errText.slice(0, 200)}`);
+        }
+
+        raw = (await res.json()) as DataForSEOResponse;
+      } catch (err) {
+        console.error(`[DataForSEO] Request failed for chunk ${i / CHUNK_SIZE + 1}:`, err);
+        // Graceful degradation: retorna zeros para esse chunk
+        allResults.push(...chunk.map(term => buildZeroVolume(term)));
+        continue;
+      }
+
+      // Validar resposta
+      const task = raw.tasks?.[0];
+      if (!task || task.status_code !== 20000) {
+        console.error('[DataForSEO] Task error:', task?.status_message || 'no task returned');
+        allResults.push(...chunk.map(term => buildZeroVolume(term)));
+        continue;
+      }
+
+      const items = task.result?.[0]?.items ?? [];
+
+      // Indexar por keyword (lowercase) para lookup rápido
+      const itemMap = new Map<string, DataForSEOKeywordResult>();
+      for (const item of items) {
+        itemMap.set(item.keyword.toLowerCase(), item);
+      }
+
+      // Mapear cada termo do chunk
+      for (const term of chunk) {
+        const item = itemMap.get(term.toLowerCase());
+        if (item) {
+          allResults.push(mapDataForSEOToTermVolume(item));
+        } else {
+          allResults.push(buildZeroVolume(term));
+        }
+      }
+    }
+
+    // Cache for 30 days (volume data não muda rápido)
+    if (config.cache && allResults.some(r => r.monthlyVolume > 0)) {
+      await setCache(config.cache, cacheKey, 'dataforseo', allResults, 30);
+    }
+
+    return allResults;
+  };
+}
+
+/**
+ * Converte um resultado da API DataForSEO para TermVolumeData (interface Virô).
+ */
+function mapDataForSEOToTermVolume(item: DataForSEOKeywordResult): TermVolumeData {
+  // Sazonalidade: ordenar por data e pegar últimos 12 meses
+  const sortedMonthly = (item.monthly_searches ?? [])
+    .sort((a, b) => a.year - b.year || a.month - b.month)
+    .slice(-12);
+
+  const monthlyTrend: MonthlyDataPoint[] = sortedMonthly.map(m => ({
+    month: `${m.year}-${String(m.month).padStart(2, '0')}`,
+    volume: m.search_volume ?? 0,
+    isRelative: false,  // DataForSEO retorna volumes absolutos (via Google Ads data)
+  }));
+
+  // Tendência: comparar primeira e segunda metade
+  let trendDirection: 'rising' | 'stable' | 'declining' = 'stable';
+  if (monthlyTrend.length >= 6) {
+    const firstHalf = monthlyTrend.slice(0, 6).reduce((s, m) => s + m.volume, 0) / 6;
+    const secondHalf = monthlyTrend.slice(6).reduce((s, m) => s + m.volume, 0) / Math.max(monthlyTrend.length - 6, 1);
+    if (secondHalf > firstHalf * 1.15) trendDirection = 'rising';
+    else if (secondHalf < firstHalf * 0.85) trendDirection = 'declining';
+  }
+
+  // Competition: DataForSEO retorna tanto string ("LOW"/"MEDIUM"/"HIGH") quanto numérico (0-1)
+  let competition: 'low' | 'medium' | 'high' = 'medium';
+  if (item.competition_level) {
+    const level = item.competition_level.toUpperCase();
+    if (level === 'HIGH') competition = 'high';
+    else if (level === 'LOW') competition = 'low';
+    else competition = 'medium';
+  } else if (item.competition !== null) {
+    if (item.competition > 0.66) competition = 'high';
+    else if (item.competition < 0.33) competition = 'low';
+  }
+
+  return {
+    term: item.keyword,
+    monthlyVolume: item.search_volume ?? 0,
+    volumeSource: 'google_ads' as const,      // DataForSEO puxa do Google Ads internamente
+    volumeConfidence: (item.search_volume ?? 0) > 0 ? 'exact' as const : 'estimate' as const,
+    cpcBrl: item.cpc ?? 0,                    // DataForSEO retorna CPC em USD por padrão; ajustar se necessário
+    competition,
+    monthlyTrend,
+    trendDirection,
+    trendSource: 'google_ads' as const,
+  };
+}
+
+/**
+ * Fallback: gera TermVolumeData zerado para um termo sem dados.
+ */
+function buildZeroVolume(term: string): TermVolumeData {
+  return {
+    term,
+    monthlyVolume: 0,
+    volumeSource: 'apify_estimate' as const,
+    volumeConfidence: 'estimate' as const,
+    cpcBrl: 0,
+    competition: 'medium' as const,
+    monthlyTrend: [],
+    trendDirection: 'stable' as const,
+    trendSource: 'google_ads' as const,
+  };
+}
+
+
+// ============================================================================
 // MODUS AI / SIMILARWEB WRAPPER
 // ============================================================================
 // NOTA: Depende de como a API do Modus funciona — esqueleto genérico
@@ -617,6 +818,8 @@ export function createExternalServices(env: {
   GOOGLE_ADS_REFRESH_TOKEN?: string;
   GOOGLE_ADS_DEVELOPER_TOKEN?: string;
   GOOGLE_ADS_CUSTOMER_ID?: string;
+  DATAFORSEO_LOGIN?: string;
+  DATAFORSEO_PASSWORD?: string;
   MODUS_API_KEY?: string;
   MODUS_BASE_URL?: string;
   supabaseClient?: any;
@@ -663,6 +866,17 @@ export function createExternalServices(env: {
         refreshToken: env.GOOGLE_ADS_REFRESH_TOKEN!,
         developerToken: env.GOOGLE_ADS_DEVELOPER_TOKEN,
         customerId: env.GOOGLE_ADS_CUSTOMER_ID!,
+        cache,
+      }),
+    };
+  }
+
+  // DataForSEO (se configurado — fallback para Google Ads KP)
+  if (env.DATAFORSEO_LOGIN && env.DATAFORSEO_PASSWORD) {
+    services.dataForSEO = {
+      getKeywordVolumes: createDataForSEOClient({
+        login: env.DATAFORSEO_LOGIN,
+        password: env.DATAFORSEO_PASSWORD,
         cache,
       }),
     };

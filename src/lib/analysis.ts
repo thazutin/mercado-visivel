@@ -1,6 +1,6 @@
 // ============================================================================
 // Virô Phase 2 — Block 2 Analysis Engine
-// Real data: Apify (SERP, Maps, Instagram) + optional Google Ads KP
+// Real data: Apify (SERP, Maps, Instagram) + Google Ads KP / DataForSEO
 // ============================================================================
 
 import Anthropic from "@anthropic-ai/sdk";
@@ -18,6 +18,8 @@ import {
   createApifySerpScraper,
   createApifyMapsScraper,
   createApifyInstagramScraper,
+  createGoogleAdsKPClient,
+  createDataForSEOClient,
 } from "./pipeline/external-services";
 import type {
   FormInput,
@@ -52,7 +54,82 @@ function getApifyConfig() {
 }
 
 // --- PIPELINE VERSION ---
-const PIPELINE_VERSION = "momento1-v2.0-block2";
+const PIPELINE_VERSION = "momento1-v2.1-block2";
+
+// ============================================================================
+// VOLUME FETCHER — cadeia de fallback
+// 1. Google Ads KP (se GOOGLE_ADS_* env vars presentes)
+// 2. DataForSEO (se DATAFORSEO_LOGIN + DATAFORSEO_PASSWORD presentes)
+// 3. Zeros (graceful degradation — pipeline continua funcional)
+// ============================================================================
+
+async function fetchTermVolumes(
+  terms: string[],
+  region: string,
+): Promise<{ volumes: TermVolumeData[]; source: string }> {
+
+  // --- 1. Google Ads Keyword Planner ---
+  if (
+    process.env.GOOGLE_ADS_CLIENT_ID &&
+    process.env.GOOGLE_ADS_CLIENT_SECRET &&
+    process.env.GOOGLE_ADS_REFRESH_TOKEN &&
+    process.env.GOOGLE_ADS_DEVELOPER_TOKEN &&
+    process.env.GOOGLE_ADS_CUSTOMER_ID
+  ) {
+    try {
+      console.log('[Analysis] Buscando volumes via Google Ads KP...');
+      const kpClient = createGoogleAdsKPClient({
+        clientId: process.env.GOOGLE_ADS_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_ADS_CLIENT_SECRET,
+        refreshToken: process.env.GOOGLE_ADS_REFRESH_TOKEN,
+        developerToken: process.env.GOOGLE_ADS_DEVELOPER_TOKEN,
+        customerId: process.env.GOOGLE_ADS_CUSTOMER_ID,
+      });
+      const volumes = await kpClient(terms, region);
+      const withData = volumes.filter(v => v.monthlyVolume > 0).length;
+      if (withData > 0) {
+        console.log(`[Analysis] Google Ads KP: ${withData}/${volumes.length} termos com volume`);
+        return { volumes, source: 'google_ads' };
+      }
+      console.warn('[Analysis] Google Ads KP retornou tudo zero — tentando fallback...');
+    } catch (err) {
+      console.error('[Analysis] Google Ads KP falhou:', err);
+    }
+  }
+
+  // --- 2. DataForSEO (fallback) ---
+  if (process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD) {
+    try {
+      console.log('[Analysis] Buscando volumes via DataForSEO (fallback)...');
+      const dfsClient = createDataForSEOClient({
+        login: process.env.DATAFORSEO_LOGIN,
+        password: process.env.DATAFORSEO_PASSWORD,
+      });
+      const volumes = await dfsClient(terms, region);
+      const withData = volumes.filter(v => v.monthlyVolume > 0).length;
+      console.log(`[Analysis] DataForSEO: ${withData}/${volumes.length} termos com volume`);
+      return { volumes, source: 'dataforseo' };
+    } catch (err) {
+      console.error('[Analysis] DataForSEO falhou:', err);
+    }
+  }
+
+  // --- 3. Graceful degradation: zeros ---
+  console.warn('[Analysis] Nenhum provedor de volume disponível. monthlyVolume = 0 para todos os termos.');
+  const volumes: TermVolumeData[] = terms.map(term => ({
+    term,
+    monthlyVolume: 0,
+    volumeSource: 'apify_estimate' as const,
+    volumeConfidence: 'estimate' as const,
+    cpcBrl: 0,
+    competition: 'medium' as const,
+    monthlyTrend: [],
+    trendDirection: 'stable' as const,
+    trendSource: 'google_ads' as const,
+  }));
+  return { volumes, source: 'none' };
+}
+
 
 // --- MAIN ENTRY POINT ---
 
@@ -174,33 +251,49 @@ export async function runInstantAnalysis(
     sourcesUnavailable.push("serp_scraper", "google_maps", "instagram");
   }
 
-  // Build term volumes — for now using SERP data as proxy
-  // When Google Ads KP is configured, this will use real volumes
-  const termVolumes: TermVolumeData[] = step1.terms.map((t) => {
-    const serpMatch = serpPositions.find(
-      (sp) => sp.term.toLowerCase() === t.term.toLowerCase()
-    );
-    return {
-      term: t.term,
-      monthlyVolume: 0, // Will be filled by Google Ads KP when available
-      volumeSource: "apify_estimate" as const,
-      volumeConfidence: "estimate" as const,
-      cpcBrl: 0,
-      competition: "medium" as const,
-      monthlyTrend: [],
-      trendDirection: "stable" as const,
-      trendSource: "google_ads" as const,
-    };
-  });
+  // -----------------------------------------------------------------------
+  // FETCH REAL VOLUMES (Google Ads KP → DataForSEO → zeros)
+  // -----------------------------------------------------------------------
+  const allTermStrings = step1.terms.map(t => t.term);
+  const { volumes: fetchedVolumes, source: volumeSource } = await fetchTermVolumes(
+    allTermStrings,
+    input.region,
+  );
 
-  // TODO: Google Ads KP integration
-  // When env vars are set (GOOGLE_ADS_CLIENT_ID, etc.), call:
-  // const kpData = await googleAdsClient(topTerms, input.region);
-  // Merge kpData into termVolumes with real monthlyVolume + cpcBrl
-  if (!process.env.GOOGLE_ADS_CLIENT_ID) {
-    sourcesUnavailable.push("google_ads");
+  if (volumeSource === 'google_ads') {
+    sourcesUsed.push('google_ads');
+  } else if (volumeSource === 'dataforseo') {
+    sourcesUsed.push('dataforseo');
+  }
+
+  if (volumeSource === 'none') {
+    sourcesUnavailable.push('google_ads', 'dataforseo');
+  } else if (!process.env.GOOGLE_ADS_CLIENT_ID) {
+    sourcesUnavailable.push('google_ads');
   }
   sourcesUnavailable.push("google_trends", "similarweb");
+
+  // Merge fetched volumes with SERP data (preserve any extra SERP info)
+  const termVolumes: TermVolumeData[] = step1.terms.map((t) => {
+    const fetched = fetchedVolumes.find(
+      (fv) => fv.term.toLowerCase() === t.term.toLowerCase()
+    );
+    if (fetched && fetched.monthlyVolume > 0) {
+      return fetched;
+    }
+    // Fallback: use whatever fetchTermVolumes returned (may be zero)
+    return fetched || {
+      term: t.term,
+      monthlyVolume: 0,
+      volumeSource: 'apify_estimate' as const,
+      volumeConfidence: 'estimate' as const,
+      cpcBrl: 0,
+      competition: 'medium' as const,
+      monthlyTrend: [],
+      trendDirection: 'stable' as const,
+      trendSource: 'google_ads' as const,
+    };
+  });
 
   const totalMonthlyVolume = termVolumes.reduce((s, t) => s + t.monthlyVolume, 0);
   const weightedMonthlyVolume = termVolumes.reduce((s, t) => {
@@ -213,11 +306,11 @@ export async function runInstantAnalysis(
     totalMonthlyVolume,
     weightedMonthlyVolume,
     dataFreshness: new Date().toISOString().slice(0, 7),
-    sources: sourcesUsed.filter((s) => s.includes("volume") || s.includes("ads") || s.includes("trends")),
+    sources: sourcesUsed.filter((s) => s.includes("volume") || s.includes("ads") || s.includes("trends") || s === "dataforseo"),
     processingTimeMs: Date.now() - pipelineStart,
   };
 
-  console.log(`[Pipeline] Step 2 OK: ${termVolumes.length} terms, volume=${totalMonthlyVolume}`);
+  console.log(`[Pipeline] Step 2 OK: ${termVolumes.length} terms, totalVolume=${totalMonthlyVolume}, source=${volumeSource}`);
 
   // =========================================================================
   // STEP 3 — Market Sizing
