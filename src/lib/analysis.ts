@@ -185,10 +185,24 @@ export async function runInstantAnalysis(
     ? new URL(formData.site.startsWith("http") ? formData.site : `https://${formData.site}`).hostname.replace("www.", "")
     : undefined;
 
-  // Run external calls in parallel
+  // Run external calls in parallel (with per-call timeouts to prevent pipeline stall)
   let serpPositions: SerpPosition[] = [];
   let mapsPresence: MapsPresence | null = null;
   let instagramProfiles: InstagramProfile[] = [];
+
+  // Helper: wrap a promise with a timeout (rejects if not resolved in time)
+  function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        console.warn(`[Pipeline] ${label} timed out after ${ms / 1000}s`);
+        reject(new Error(`${label} timed out after ${ms / 1000}s`));
+      }, ms);
+      promise.then(
+        (val) => { clearTimeout(timer); resolve(val); },
+        (err) => { clearTimeout(timer); reject(err); },
+      );
+    });
+  }
 
   if (apifyConfig) {
     const serpScraper = createApifySerpScraper(apifyConfig);
@@ -198,30 +212,42 @@ export async function runInstantAnalysis(
     console.log(`[Pipeline] Starting Apify calls: SERP(${topTerms.length} terms), Maps, Instagram(${instagramHandles.length} handles)`);
 
     const [serpResult, mapsResult, igResult] = await Promise.allSettled([
-      // SERP scraping
-      serpScraper(topTerms, input.region, siteDomain)
-        .then((r) => {
-          sourcesUsed.push("apify_serp");
-          console.log(`[Pipeline] SERP OK: ${r.length} positions`);
-          return r;
-        }),
+      // SERP scraping (timeout: 45s)
+      withTimeout(
+        serpScraper(topTerms, input.region, siteDomain)
+          .then((r) => {
+            sourcesUsed.push("apify_serp");
+            console.log(`[Pipeline] SERP OK: ${r.length} positions`);
+            return r;
+          }),
+        45_000,
+        "SERP",
+      ),
 
-      // Google Maps
-      mapsScraper(input.businessName || input.product, input.region)
-        .then((r) => {
-          sourcesUsed.push("apify_maps");
-          console.log(`[Pipeline] Maps OK: found=${r.found}, rating=${r.rating}`);
-          return r;
-        }),
+      // Google Maps (timeout: 30s)
+      withTimeout(
+        mapsScraper(input.businessName || input.product, input.region)
+          .then((r) => {
+            sourcesUsed.push("apify_maps");
+            console.log(`[Pipeline] Maps OK: found=${r.found}, rating=${r.rating}`);
+            return r;
+          }),
+        30_000,
+        "Maps",
+      ),
 
-      // Instagram (only if handles provided)
+      // Instagram (timeout: 60s — most unstable call)
       instagramHandles.length > 0
-        ? instagramScraper(instagramHandles)
-            .then((r) => {
-              sourcesUsed.push("apify_instagram");
-              console.log(`[Pipeline] Instagram OK: ${r.length} profiles`);
-              return r;
-            })
+        ? withTimeout(
+            instagramScraper(instagramHandles)
+              .then((r) => {
+                sourcesUsed.push("apify_instagram");
+                console.log(`[Pipeline] Instagram OK: ${r.length} profiles`);
+                return r;
+              }),
+            60_000,
+            "Instagram",
+          )
         : Promise.resolve([]),
     ]);
 
