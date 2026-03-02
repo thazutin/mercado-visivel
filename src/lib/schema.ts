@@ -11,24 +11,21 @@ export const leadSchema = z.object({
   lng: z.number().optional(),                        // Longitude from Places
   channels: z.array(z.string()).optional().default([]),
   digitalPresence: z.array(z.string()).optional().default([]),
-  instagram: z.string().min(2, "Instagram é obrigatório"),
+  instagram: z.string().optional().default(""),      // Opcional — só aparece se selecionou Instagram
   site: z.string().optional().default(""),
   differentiator: z.string().min(5, "Descreva o que te diferencia"),
   competitors: z.array(z.object({
     name: z.string(),
     instagram: z.string().optional().default(""),
-  })).min(1).refine(
-    (arr) => arr.length > 0 && arr[0].name.length >= 2,
-    { message: "Informe pelo menos 1 concorrente" }
-  ),
+  })).default([{ name: "", instagram: "" }]),
   ticket: z.union([
-    z.string().min(1, "Ticket médio é obrigatório"),
-    z.number().positive("Ticket deve ser maior que zero"),
-  ]),
+    z.string(),
+    z.number(),
+  ]).default(""),
   challenge: z.string().optional().default(""),
   freeText: z.string().optional().default(""),
   email: z.string().email("Email é obrigatório"),
-  whatsapp: z.string().min(10, "WhatsApp é obrigatório"),
+  whatsapp: z.string().optional().default(""),
   locale: z.string().optional().default("pt"),
   coupon: z.string().optional().default(""),
 });
@@ -57,16 +54,15 @@ export const initialFormData: LeadFormData = {
 };
 
 // ─── Per-step validation (for disabling "Continue" button) ────────
+// Estes são usados no frontend para habilitar/desabilitar o botão "Continuar"
+// A validação real do schema acima é mais permissiva para não bloquear submissões
 export const stepValidation = {
   step1: (data: LeadFormData) =>
     data.product.length >= 2 && data.region.length >= 2,
-  step2: (data: LeadFormData) =>
-    data.instagram.length >= 2,
+  step2: (_data: LeadFormData) =>
+    true,  // Step 2 é sempre válido — instagram e presença digital são opcionais
   step3: (data: LeadFormData) =>
-    data.differentiator.length >= 5 &&
-    data.competitors.length > 0 &&
-    data.competitors[0].name.length >= 2 &&
-    (typeof data.ticket === "number" ? data.ticket > 0 : data.ticket.length >= 1),
+    data.differentiator.length >= 5,
   step4: (data: LeadFormData) =>
-    data.email.includes("@") && data.whatsapp.length >= 10,
+    data.email.includes("@"),
 };
