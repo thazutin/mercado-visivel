@@ -754,6 +754,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 claude_gap_analysis: "IA · Análise",
                 google_ads: "Google Ads",
                 dataforseo: "DataForSEO",
+                ai_visibility: "IA · Visibilidade AI",
               };
               return <Chip key={i} color={V.teal}>{labels[src] || src}</Chip>;
             })}
@@ -777,36 +778,147 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         </Card>
 
         {/* ════════════════════════════════════════════════════════════════
-            CTA — PLANO DE AÇÃO
+            CTA — E AGORA?
             ════════════════════════════════════════════════════════════════ */}
 
         <div style={{ padding: "0 8px", marginBottom: 24 }}>
-          <p style={{ fontSize: 17, color: V.night, lineHeight: 1.6, fontFamily: V.display, marginBottom: 12, fontWeight: 700 }}>
-            Esse mercado existe. Ele não depende de você — já está lá.
+          <p style={{ fontSize: 20, color: V.night, lineHeight: 1.5, fontFamily: V.display, marginBottom: 12, fontWeight: 700 }}>
+            E agora? O que eu faço com isso?
+          </p>
+          <p style={{ fontSize: 14, color: V.zinc, lineHeight: 1.75, marginBottom: 8 }}>
+            Não é sobre seu marketing ser ruim hoje. É sobre não ter uma camada de estratégia 
+            que te permita trabalhar com intenção — para capturar um mercado que já existe 
+            na sua região e que, sem direção, vai inteiro para outros.
+          </p>
+          <p style={{ fontSize: 15, color: V.night, lineHeight: 1.75, fontWeight: 600 }}>
+            Vá daqui para lá: aumente a probabilidade de vender mais no futuro.
+          </p>
+        </div>
+
+        {/* ─── Sample Previews ─── */}
+        <div style={{ marginBottom: 24 }}>
+          <SectionLabel color={V.ash}>O que você recebe — veja amostras reais</SectionLabel>
+
+          {/* Preview 1: Diagnóstico Completo */}
+          <div style={{
+            background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`,
+            padding: "20px", marginBottom: 12, position: "relative" as const,
+            overflow: "hidden",
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <Chip color={V.amber}>Diagnóstico Completo</Chip>
+              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>Amostra</span>
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: V.night, marginBottom: 8 }}>
+              Posicionamento competitivo — {product}
+            </div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+              {["Google", "Instagram", "Maps", "AI"].map((ch, i) => (
+                <div key={i} style={{
+                  flex: 1, padding: "10px 8px", background: V.cloud, borderRadius: 8, textAlign: "center",
+                }}>
+                  <div style={{ fontFamily: V.mono, fontSize: 14, fontWeight: 700, color: V.night }}>—</div>
+                  <div style={{ fontFamily: V.mono, fontSize: 8, color: V.ash, textTransform: "uppercase" as const, marginTop: 2 }}>{ch}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: 12, color: V.zinc, lineHeight: 1.6 }}>
+              Análise completa de posicionamento em cada canal, comparativo direto com seus concorrentes, 
+              oportunidades de palavras-chave que ninguém está atacando e análise de conteúdo.
+            </div>
+            <div style={{
+              position: "absolute" as const, bottom: 0, left: 0, right: 0, height: 40,
+              background: `linear-gradient(transparent, ${V.white})`,
+            }} />
+          </div>
+
+          {/* Preview 2: Plano de 90 dias */}
+          <div style={{
+            background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`,
+            padding: "20px", marginBottom: 12, position: "relative" as const,
+            overflow: "hidden",
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <Chip color={V.teal}>Plano de 90 dias</Chip>
+              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>Amostra</span>
+            </div>
+            {[
+              { week: "Semana 1-2", action: "Criar e otimizar perfil no Google Meu Negócio", tag: "Presença" },
+              { week: "Semana 3-4", action: "Definir posicionamento + primeiros conteúdos", tag: "Conteúdo" },
+              { week: "Semana 5-8", action: "Construir autoridade local com ações específicas", tag: "Autoridade" },
+            ].map((w, i) => (
+              <div key={i} style={{
+                display: "flex", gap: 12, padding: "10px 0",
+                borderBottom: i < 2 ? `1px solid ${V.fog}` : "none",
+                alignItems: "center",
+              }}>
+                <div style={{ fontFamily: V.mono, fontSize: 11, color: V.ash, width: 80, flexShrink: 0 }}>
+                  {w.week}
+                </div>
+                <div style={{ fontSize: 13, color: V.night, flex: 1 }}>{w.action}</div>
+                <Chip color={V.teal}>{w.tag}</Chip>
+              </div>
+            ))}
+            <div style={{ fontSize: 12, color: V.ash, textAlign: "center", marginTop: 8 }}>
+              + 9 semanas de ações detalhadas e priorizadas
+            </div>
+          </div>
+
+          {/* Preview 3: Briefing Semanal */}
+          <div style={{
+            background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`,
+            padding: "20px", position: "relative" as const,
+            overflow: "hidden",
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <Chip color={V.amber}>Briefing Semanal</Chip>
+              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>Amostra</span>
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: V.night, marginBottom: 6 }}>
+              Semana 3 — O que mudou no seu mercado
+            </div>
+            <div style={{ fontSize: 13, color: V.zinc, lineHeight: 1.7, marginBottom: 12 }}>
+              "Seu concorrente principal subiu 4 posições para 'implante dentário mauá'. 
+              Buscas por 'dentista perto de mim' aumentaram 12% essa semana. 
+              Ação recomendada: publicar depoimento de paciente com foco em implantes."
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              <Chip color={V.ash}>Email</Chip>
+              <Chip color={V.ash}>WhatsApp</Chip>
+              <Chip color={V.ash}>3 min leitura</Chip>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Dê o próximo passo ─── */}
+        <div style={{ padding: "0 8px", marginBottom: 16 }}>
+          <p style={{ fontSize: 17, color: V.night, lineHeight: 1.5, fontFamily: V.display, fontWeight: 700 }}>
+            Dê o próximo passo com a Virô.
           </p>
           <p style={{ fontSize: 14, color: V.zinc, lineHeight: 1.75 }}>
-            {results.influencePercent === 0 ? (
-              <>Agora você sabe: as pessoas buscam pelo que você oferece, mas ainda não te encontram. O plano completo de 90 dias mostra exatamente como mudar isso — semana a semana, ação por ação, baseado nesses dados.</>
-            ) : (
-              <>A pergunta é: como aumentar a probabilidade de que, quando alguém nesse mercado precisar do que você oferece, seu negócio seja lembrado? O plano de 90 dias traduz esses dados em ações concretas.</>
-            )}
+            Vá de onde você está para onde quer chegar. Aumente a probabilidade de 
+            vender mais no futuro — com clareza, dados e um plano que faz sentido pro seu negócio.
           </p>
         </div>
 
         {/* What's included */}
         <div style={{ background: V.night, borderRadius: 14, padding: "32px 24px", marginBottom: 12, color: V.white }}>
-          <SectionLabel color={V.amber}>O que Virô desbloqueia</SectionLabel>
-
-          <div style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.04em", color: V.ash, marginBottom: 16, textTransform: "uppercase" as const }}>
-            Pacote completo · pagamento único · R$ 397
+          <div style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.04em", color: V.ash, marginBottom: 8, textTransform: "uppercase" as const }}>
+            Pacote completo · pagamento único
+          </div>
+          <div style={{
+            fontFamily: V.display, fontSize: 36, fontWeight: 700, color: V.white,
+            letterSpacing: "-0.03em", marginBottom: 20,
+          }}>
+            R$ 397
           </div>
 
           {[
-            { title: "Diagnóstico completo", desc: "Posicionamento real vs concorrentes em cada canal — Google, Instagram, Maps, AI" },
-            { title: "Mapa de demanda completo", desc: "Todos os termos com volume, intenção e CPC + oportunidades que concorrentes ignoram" },
-            { title: "Plano de ação de 90 dias", desc: "12 semanas com ações concretas, priorizadas por impacto, personalizadas pro seu negócio" },
-            { title: "12 briefings semanais", desc: "O que mudou no seu mercado, o que importa e o que fazer — entregue por email e WhatsApp" },
-            { title: "Monitoramento contínuo", desc: "Posição no Google, movimentos dos concorrentes, variação de demanda — por 90 dias" },
+            { title: "Diagnóstico completo", desc: "Posicionamento real vs concorrentes em Google, Instagram, Maps e AI" },
+            { title: "Mapa de demanda completo", desc: "Todos os termos com volume, intenção e CPC + oportunidades inexploradas" },
+            { title: "Plano de ação de 90 dias", desc: "12 semanas com ações concretas, priorizadas por impacto, pro seu negócio" },
+            { title: "12 briefings semanais", desc: "O que mudou, o que importa e o que fazer — por email e WhatsApp" },
+            { title: "Monitoramento contínuo", desc: "Posição no Google, concorrentes e demanda — acompanhado por 90 dias" },
           ].map((d, i) => (
             <div key={i} style={{ display: "flex", gap: 14, marginBottom: 14, alignItems: "flex-start" }}>
               <div style={{ width: 5, height: 5, borderRadius: "50%", background: V.amber, marginTop: 8, flexShrink: 0 }} />
@@ -816,15 +928,6 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               </div>
             </div>
           ))}
-
-          <div style={{
-            marginTop: 20, padding: "14px 18px", borderRadius: 10,
-            background: V.graphite, border: `1px solid ${V.slate}`,
-          }}>
-            <p style={{ fontSize: 13, color: V.mist, lineHeight: 1.6, margin: 0 }}>
-              <strong style={{ color: V.amberSoft }}>Dado real → ação clara → resultado seu.</strong> Virô não gera conteúdo genérico nem faz promessas de automação. Cruza dados reais do seu mercado local, toda semana, e traduz em ação específica pro seu negócio.
-            </p>
-          </div>
         </div>
 
         {/* Coupon + CTA */}

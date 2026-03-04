@@ -178,6 +178,7 @@ export default function Home() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [badges, setBadges] = useState<Record<string, string>>({});
   const [placesReady, setPlacesReady] = useState(false);
+  const [noInstagram, setNoInstagram] = useState(false);
 
   // Auto-detect locale
   useEffect(() => {
@@ -317,11 +318,35 @@ export default function Home() {
           <Field label={t.step2PresenceLabel} hint={t.step2PresenceHint}>
             <MultiSelect options={t.step2PresenceOptions} selected={formData.digitalPresence} onToggle={(v: string) => toggleArray("digitalPresence", v)} />
           </Field>
-          {hasInstagram && (
-            <Field label={t.step2InstagramLabel} badge={badges.instagram}>
+          <Field label={t.step2InstagramLabel} badge={badges.instagram}>
+            {noInstagram ? (
+              <div style={{
+                padding: "12px 16px", borderRadius: 10, background: "#F4F4F7",
+                fontSize: 13, color: "#6E6E78", lineHeight: 1.5,
+              }}>
+                {locale === "pt" ? "Sem problema — o diagnóstico vai focar nos outros canais e incluir recomendações para Instagram."
+                  : locale === "es" ? "Sin problema — el diagnóstico se enfocará en otros canales e incluirá recomendaciones para Instagram."
+                  : "No problem — the diagnostic will focus on other channels and include Instagram recommendations."}
+              </div>
+            ) : (
               <input style={inputStyle} type="text" placeholder={t.step2InstagramPlaceholder} value={formData.instagram} onChange={(e: any) => updateField("instagram", e.target.value)} />
-            </Field>
-          )}
+            )}
+            <label style={{
+              display: "flex", alignItems: "center", gap: 8, marginTop: 8,
+              fontSize: 13, color: "#6E6E78", cursor: "pointer", userSelect: "none" as const,
+            }}>
+              <input
+                type="checkbox"
+                checked={noInstagram}
+                onChange={(e: any) => {
+                  setNoInstagram(e.target.checked);
+                  if (e.target.checked) updateField("instagram", "");
+                }}
+                style={{ width: 16, height: 16, accentColor: "#CF8523", cursor: "pointer" }}
+              />
+              {locale === "pt" ? "Não tenho Instagram" : locale === "es" ? "No tengo Instagram" : "I don't have Instagram"}
+            </label>
+          </Field>
           {hasSite && (
             <Field label={t.step2SiteLabel} badge={badges.site}>
               <input style={inputStyle} type="url" placeholder={t.step2SitePlaceholder} value={formData.site} onChange={(e: any) => updateField("site", e.target.value)} />
