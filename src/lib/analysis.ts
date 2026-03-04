@@ -151,7 +151,7 @@ export async function runInstantAnalysis(
   let step1: Step1Output;
   try {
     step1 = await executeStep1(input, claude, {
-      model: "claude-sonnet-4-5-20250929",
+      model: "claude-haiku-4-5-20251001",
       maxRetries: 1,
     });
     console.log(`[Pipeline] Step 1 OK: ${step1.termCount} terms generated`);
@@ -163,10 +163,10 @@ export async function runInstantAnalysis(
   // =========================================================================
   // STEP 2 — Search Volumes + SERP + Maps + Instagram (parallel)
   // =========================================================================
-  // Extract top terms for SERP scraping (max 10 to save Apify credits)
+  // Extract top terms for SERP scraping (max 5 to save Apify credits and speed)
   const topTerms = step1.terms
     .sort((a, b) => b.intentWeight - a.intentWeight)
-    .slice(0, 10)
+    .slice(0, 5)
     .map((t) => t.term);
 
   // Extract instagram handles to scrape
@@ -185,7 +185,7 @@ export async function runInstantAnalysis(
     ? new URL(formData.site.startsWith("http") ? formData.site : `https://${formData.site}`).hostname.replace("www.", "")
     : undefined;
 
-  // Run external calls in parallel (with per-call timeouts to prevent pipeline stall)
+  // Run ALL external calls in parallel (Apify + DataForSEO at the same time)
   let serpPositions: SerpPosition[] = [];
   let mapsPresence: MapsPresence | null = null;
   let instagramProfiles: InstagramProfile[] = [];
@@ -204,15 +204,30 @@ export async function runInstantAnalysis(
     });
   }
 
+  // Build all parallel promises
+  const allTermStrings = step1.terms.map(t => t.term);
+  const parallelPromises: Promise<any>[] = [];
+  const promiseLabels: string[] = [];
+
+  // 1. DataForSEO volumes (runs in parallel with Apify — biggest speed win)
+  parallelPromises.push(
+    withTimeout(
+      fetchTermVolumes(allTermStrings, input.region),
+      30_000,
+      "Volumes",
+    )
+  );
+  promiseLabels.push("volumes");
+
   if (apifyConfig) {
     const serpScraper = createApifySerpScraper(apifyConfig);
     const mapsScraper = createApifyMapsScraper(apifyConfig);
     const instagramScraper = createApifyInstagramScraper(apifyConfig);
 
-    console.log(`[Pipeline] Starting Apify calls: SERP(${topTerms.length} terms), Maps, Instagram(${instagramHandles.length} handles)`);
+    console.log(`[Pipeline] Starting parallel calls: Volumes + SERP(${topTerms.length} terms) + Maps + Instagram(${instagramHandles.length} handles)`);
 
-    const [serpResult, mapsResult, igResult] = await Promise.allSettled([
-      // SERP scraping (timeout: 45s)
+    // 2. SERP scraping (timeout: 30s)
+    parallelPromises.push(
       withTimeout(
         serpScraper(topTerms, input.region, siteDomain)
           .then((r) => {
@@ -220,11 +235,14 @@ export async function runInstantAnalysis(
             console.log(`[Pipeline] SERP OK: ${r.length} positions`);
             return r;
           }),
-        45_000,
+        30_000,
         "SERP",
-      ),
+      )
+    );
+    promiseLabels.push("serp");
 
-      // Google Maps (timeout: 30s)
+    // 3. Google Maps (timeout: 20s)
+    parallelPromises.push(
       withTimeout(
         mapsScraper(input.businessName || input.product, input.region)
           .then((r) => {
@@ -232,11 +250,14 @@ export async function runInstantAnalysis(
             console.log(`[Pipeline] Maps OK: found=${r.found}, rating=${r.rating}`);
             return r;
           }),
-        30_000,
+        20_000,
         "Maps",
-      ),
+      )
+    );
+    promiseLabels.push("maps");
 
-      // Instagram (timeout: 60s — most unstable call)
+    // 4. Instagram (timeout: 25s — if it can't finish in 25s, skip it)
+    parallelPromises.push(
       instagramHandles.length > 0
         ? withTimeout(
             instagramScraper(instagramHandles)
@@ -245,13 +266,37 @@ export async function runInstantAnalysis(
                 console.log(`[Pipeline] Instagram OK: ${r.length} profiles`);
                 return r;
               }),
-            60_000,
+            25_000,
             "Instagram",
           )
-        : Promise.resolve([]),
-    ]);
+        : Promise.resolve([])
+    );
+    promiseLabels.push("instagram");
+  } else {
+    console.warn("[Pipeline] Apify not configured — skipping external data");
+    sourcesUnavailable.push("serp_scraper", "google_maps", "instagram");
+  }
 
-    // Collect results (graceful degradation — failed calls don't break pipeline)
+  // Execute ALL in parallel
+  const parallelResults = await Promise.allSettled(parallelPromises);
+
+  // Collect volume results
+  let fetchedVolumes: TermVolumeData[] = [];
+  let volumeSource = 'none';
+  const volumeResult = parallelResults[0];
+  if (volumeResult.status === "fulfilled") {
+    fetchedVolumes = volumeResult.value.volumes;
+    volumeSource = volumeResult.value.source;
+  } else {
+    console.error("[Pipeline] Volumes failed:", volumeResult.reason);
+  }
+
+  // Collect Apify results (indices 1-3, only if Apify was configured)
+  if (apifyConfig) {
+    const serpResult = parallelResults[1];
+    const mapsResult = parallelResults[2];
+    const igResult = parallelResults[3];
+
     if (serpResult.status === "fulfilled") {
       serpPositions = serpResult.value;
     } else {
@@ -272,19 +317,7 @@ export async function runInstantAnalysis(
       console.error("[Pipeline] Instagram failed:", igResult.reason);
       sourcesUnavailable.push("instagram");
     }
-  } else {
-    console.warn("[Pipeline] Apify not configured — skipping external data");
-    sourcesUnavailable.push("serp_scraper", "google_maps", "instagram");
   }
-
-  // -----------------------------------------------------------------------
-  // FETCH REAL VOLUMES (Google Ads KP → DataForSEO → zeros)
-  // -----------------------------------------------------------------------
-  const allTermStrings = step1.terms.map(t => t.term);
-  const { volumes: fetchedVolumes, source: volumeSource } = await fetchTermVolumes(
-    allTermStrings,
-    input.region,
-  );
 
   if (volumeSource === 'google_ads') {
     sourcesUsed.push('google_ads');
