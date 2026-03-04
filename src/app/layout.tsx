@@ -6,6 +6,13 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Virô — Seu mercado, visível.",
   description: "Quanto do seu mercado local te conhece? Análise real de demanda, concorrência e posicionamento. Grátis. 30 segundos.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
   openGraph: {
     title: "Virô — Seu mercado, visível.",
     description: "Análise real de demanda, concorrência e posicionamento para empresas locais. Grátis.",
