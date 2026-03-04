@@ -1,6 +1,7 @@
 // ============================================================================
-// Step 5 — Gap Analysis (Claude-powered)
+// Step 5 — Gap Analysis + Rotas de Trabalho (Claude-powered)
 // Cruza dados reais com declarações do formulário pra detectar gaps
+// E gera rotas de trabalho priorizadas baseadas no desafio declarado
 // ============================================================================
 
 import type {
@@ -13,7 +14,7 @@ import type {
   GapAnalysis,
 } from '../types/pipeline.types';
 
-export const GAP_ANALYSIS_PROMPT_VERSION = 'gap-analysis-v1.2';
+export const GAP_ANALYSIS_PROMPT_VERSION = 'gap-analysis-v2.0-routes';
 
 // --- PROMPT BUILDER ---
 
@@ -23,8 +24,8 @@ export function buildGapAnalysisPrompt(
   volumes: Step2Output,
   sizing: Step3Output,
   influence: Step4Output,
+  aiVisibility?: { score: number; summary: string; likelyMentioned: boolean } | null,
 ): string {
-  // Compilar dados relevantes num formato legível pro Claude
   const topTermsByVolume = volumes.termVolumes
     .sort((a, b) => b.monthlyVolume - a.monthlyVolume)
     .slice(0, 10)
@@ -55,9 +56,18 @@ DADOS DE INSTAGRAM DOS CONCORRENTES:
 ${competitorIgLines || '  Nenhum concorrente com dados disponíveis'}`;
   }
 
+  const aiVisibilitySection = aiVisibility
+    ? `VISIBILIDADE EM AI (ChatGPT, Perplexity, etc.):
+  Score: ${aiVisibility.score}/100
+  Resumo: ${aiVisibility.summary}
+  Provavelmente mencionado: ${aiVisibility.likelyMentioned ? 'Sim' : 'Não'}`
+    : 'VISIBILIDADE EM AI: Não avaliada';
+
   return `Você é Vero, o agente de inteligência de mercado do Virô. Você analisa dados reais — não opina, não especula. Seu tom é preciso, fundamentado, sem floreio. Direto ao ponto que importa.
 
-Analise os dados abaixo e detecte os 3-5 gaps mais relevantes entre a posição declarada pelo dono e a realidade que os dados mostram.
+Analise os dados abaixo e:
+1. Detecte os gaps mais relevantes entre a posição declarada e a realidade
+2. Gere ROTAS DE TRABALHO PRIORIZADAS que conectam o desafio declarado com os dados reais
 
 DECLARAÇÕES DO DONO:
   Produto/Serviço: ${input.product}
@@ -71,7 +81,7 @@ DECLARAÇÕES DO DONO:
 DADOS REAIS DE MERCADO:
   Volume total de busca: ${volumes.totalMonthlyVolume} buscas/mês
   Volume ponderado por intenção: ${volumes.weightedMonthlyVolume} buscas/mês
-  Mercado potencial anual: R$${sizing.sizing.marketPotential.low.toLocaleString()} — R$${sizing.sizing.marketPotential.high.toLocaleString()}
+  Mercado potencial mensal: R$${sizing.sizing.marketPotential.low.toLocaleString()} — R$${sizing.sizing.marketPotential.high.toLocaleString()}
   Influência digital total: ${influence.influence.totalInfluence}%
 
 TERMOS DE MAIOR VOLUME:
@@ -87,37 +97,39 @@ INFLUÊNCIA POR CANAL:
 
 ${instagramSection}
 
+${aiVisibilitySection}
+
 TAREFA:
-1. Identifique o PADRÃO PRINCIPAL que melhor descreve a situação deste negócio. Escolha UM entre:
-   - "narrative_gap": Tem diferencial real mas não comunica (expertise real, narrativa genérica)
-   - "demand_gap": Demanda existe mas o negócio não é encontrado (demanda existe, influência não)
-   - "asset_gap": Tem ativos (reviews, história, localização) mas não ativa (ativos subutilizados)
-   - "frequency_gap": Concorrência constrói presença consistente, negócio não acompanha
-   - "positioning_gap": Posicionamento confuso — diz uma coisa, comunica outra, mercado entende outra
 
-2. Identifique 3-5 GAPS específicos, cada um com:
-   - Tipo (positioning, presence, content, reputation, frequency)
-   - Severidade (critical, important, opportunity)
-   - Título curto e direto (max 5 palavras)
-   - Evidência: conecte uma declaração do dono com um dado real que contradiz ou expõe um gap
-   - Data points: 2-3 dados específicos que sustentam o gap
+PARTE A — GAPS (mesmo formato anterior)
+1. Identifique o PADRÃO PRINCIPAL (narrative_gap, demand_gap, asset_gap, frequency_gap, positioning_gap)
+2. Identifique 3-5 GAPS específicos com tipo, severidade, título, evidência, data points
+3. Crie o HEADLINE INSIGHT — UMA frase factual e impactante que o dono vai lembrar
 
-3. Crie o HEADLINE INSIGHT — UMA frase que o dono vai lembrar. Deve ser factual, impactante, e baseada nos dados. Exemplos do tom certo:
-   - "2.400 pessoas buscam o que você faz todo mês. Você aparece pra 168."
-   - "Seu diferencial é invisível: nenhum dos seus últimos 20 posts menciona o que te faz diferente."
-   - "Seu concorrente principal alcança 6x mais pessoas que você no Instagram."
+PARTE B — ROTAS DE TRABALHO PRIORIZADAS (NOVO)
+Dado que o principal desafio declarado é "${input.challenge}", e os dados mostram o cenário acima, gere 3 ROTAS DE TRABALHO priorizadas por impacto.
 
-4. Se dados de Instagram estiverem disponíveis, inclua ANÁLISE DE CONTEÚDO:
-   - Temas que o negócio comunica
-   - Temas que os concorrentes comunicam
-   - Temas demandados (pelos termos de busca) mas não comunicados por ninguém
-   - Alinhamento narrativo (0-100): quanto o conteúdo real reflete o diferencial declarado
+Cada rota deve:
+- Ter um título claro e orientado a ação (ex: "Aparecer no Google Maps primeiro")
+- Conectar EXPLICITAMENTE um dado real com uma ação concreta
+- Explicar POR QUE é prioridade (baseado no dado, não em opinião)
+- Indicar o horizonte de impacto: "curto prazo" (1-4 semanas), "médio prazo" (1-3 meses), "longo prazo" (3-6 meses)
+- Ser específica para ESTE negócio, não genérica
+
+IMPORTANTE para as rotas:
+- Rota 1 deve ser a de MAIOR IMPACTO com MENOR ESFORÇO (quick win)
+- Rota 2 deve ser a de MAIOR IMPACTO no desafio declarado
+- Rota 3 deve ser a que CONSTRÓI VANTAGEM COMPETITIVA a longo prazo
+- Cada rota deve citar pelo menos 1 dado específico (número) como fundamento
+- O tom é: "dado o que vemos nos dados, o caminho mais eficiente é..."
+
+4. Se dados de Instagram estiverem disponíveis, inclua ANÁLISE DE CONTEÚDO
 
 REGRAS:
-- NUNCA dê recomendações ou sugira ações. O Momento 1 MOSTRA, não aconselha. O "como resolver" é do diagnóstico pago.
-- Cada gap deve ter evidência concreta — se não tem dado pra sustentar, não inclua.
-- Use números reais, não genéricos. "7%" é melhor que "baixo". "2.400 buscas" é melhor que "volume alto".
-- O tom é Vero: preciso, fundamentado, sem floreio. Sem adjetivos de marketing.
+- Cada gap e rota deve ter evidência concreta — se não tem dado pra sustentar, não inclua
+- Use números reais, não genéricos. "7%" é melhor que "baixo". "2.400 buscas" é melhor que "volume alto"
+- O tom é Vero: preciso, fundamentado, sem floreio. Sem adjetivos de marketing
+- As rotas podem ser específicas e acionáveis — diferente dos gaps, aqui queremos MOSTRAR o caminho
 
 FORMATO DE RESPOSTA (JSON estrito, sem markdown):
 {
@@ -136,10 +148,20 @@ FORMATO DE RESPOSTA (JSON estrito, sem markdown):
       "dataPoints": ["dado 1", "dado 2"]
     }
   ],
+  "workRoutes": [
+    {
+      "priority": 1,
+      "title": "Título orientado a ação",
+      "rationale": "Por que esta é a prioridade #1, com dados",
+      "connection": "Desafio declarado: X → Dado real: Y → Por isso: Z",
+      "horizon": "curto prazo",
+      "expectedImpact": "O que muda se executar esta rota"
+    }
+  ],
   "contentAnalysis": {
-    "businessThemes": ["tema1", "tema2"],
-    "competitorThemes": ["tema1", "tema2"],
-    "marketGapThemes": ["tema1", "tema2"],
+    "businessThemes": ["tema1"],
+    "competitorThemes": ["tema1"],
+    "marketGapThemes": ["tema1"],
     "narrativeAlignment": 35
   }
 }
@@ -150,7 +172,7 @@ Gere APENAS o JSON. Sem texto antes ou depois.`;
 
 // --- RESPONSE PARSER ---
 
-export function parseGapAnalysisResponse(rawResponse: string): GapAnalysis {
+export function parseGapAnalysisResponse(rawResponse: string): GapAnalysis & { workRoutes?: any[] } {
   const cleaned = rawResponse
     .replace(/```json\s*/g, '')
     .replace(/```\s*/g, '')
@@ -163,7 +185,6 @@ export function parseGapAnalysisResponse(rawResponse: string): GapAnalysis {
     throw new Error(`Failed to parse gap analysis response: ${e}`);
   }
 
-  // Validate required fields
   if (!parsed.primaryPattern || !parsed.headlineInsight || !parsed.gaps) {
     throw new Error('Gap analysis response missing required fields');
   }
@@ -178,6 +199,14 @@ export function parseGapAnalysisResponse(rawResponse: string): GapAnalysis {
       evidence: g.evidence,
       dataPoints: g.dataPoints || [],
     })),
+    workRoutes: (parsed.workRoutes || []).map((r: any) => ({
+      priority: r.priority,
+      title: r.title,
+      rationale: r.rationale,
+      connection: r.connection,
+      horizon: r.horizon,
+      expectedImpact: r.expectedImpact,
+    })),
     contentAnalysis: parsed.contentAnalysis || undefined,
   };
 }
@@ -191,17 +220,23 @@ export async function executeStep5(
   sizing: Step3Output,
   influence: Step4Output,
   claudeClient: { createMessage: (params: any) => Promise<any> },
-  options?: { model?: string }
+  options?: {
+    model?: string;
+    aiVisibility?: { score: number; summary: string; likelyMentioned: boolean } | null;
+  }
 ): Promise<Step5Output> {
   const startTime = Date.now();
   const model = options?.model ?? 'claude-sonnet-4-5-20250929';
 
-  const prompt = buildGapAnalysisPrompt(input, terms, volumes, sizing, influence);
+  const prompt = buildGapAnalysisPrompt(
+    input, terms, volumes, sizing, influence,
+    options?.aiVisibility,
+  );
 
   const response = await claudeClient.createMessage({
     model,
     max_tokens: 4000,
-    temperature: 0.2,  // Muito baixa — queremos precisão, não criatividade
+    temperature: 0.2,
     messages: [{ role: 'user', content: prompt }],
   });
 

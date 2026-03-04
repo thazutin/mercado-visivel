@@ -182,13 +182,16 @@ function buildDisplayData(result: any) {
     gapPattern: gaps.primaryPattern || null,
     gaps: gaps.gaps || [],
 
+    // Work Routes (from evolved Step 5)
+    workRoutes: gaps.workRoutes || [],
+
     influenceBreakdown: {
       google: influence.google?.score || 0,
       instagram: influence.instagram?.score || 0,
       web: influence.web?.available ? influence.web.score : null,
     },
 
-    // NEW: Google Maps data
+    // Google Maps data
     maps: mapsData ? {
       found: mapsData.found || false,
       rating: mapsData.rating || null,
@@ -198,7 +201,7 @@ function buildDisplayData(result: any) {
       photos: mapsData.photos || 0,
     } : null,
 
-    // NEW: Instagram data
+    // Instagram data
     instagram: igData?.profile ? {
       handle: igData.profile.handle || "",
       followers: igData.profile.followers || 0,
@@ -209,7 +212,7 @@ function buildDisplayData(result: any) {
       dataAvailable: igData.profile.dataAvailable || false,
     } : null,
 
-    // NEW: Competitor Instagram data
+    // Competitor Instagram data
     competitorInstagram: igData?.competitors
       ?.filter((c: any) => c.dataAvailable)
       ?.map((c: any) => ({
@@ -221,13 +224,16 @@ function buildDisplayData(result: any) {
         avgViews: c.avgViewsReelsLast30d || 0,
       })) || [],
 
-    // NEW: SERP features summary
+    // SERP features summary
     serpSummary: {
       termsScraped: serpPositions.length,
       termsRanked: serpPositions.filter((sp: any) => sp.position && sp.position <= 10).length,
       hasLocalPack: serpPositions.some((sp: any) => sp.serpFeatures?.includes("local_pack")),
       hasAds: serpPositions.some((sp: any) => sp.serpFeatures?.includes("ads")),
     },
+
+    // AI Visibility data
+    aiVisibility: result.aiVisibility || null,
 
     termGeneration: {
       count: result.terms.termCount,

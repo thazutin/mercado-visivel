@@ -1,199 +1,142 @@
 // ============================================================================
-// Virô — AI Visibility Score
-// Checks if a business appears when someone asks AI assistants
-// about the category in their region.
-// This is a DIFFERENTIATOR — no competitor offers this for SMBs.
+// AI Visibility Check
+// Uses Claude to assess whether a business would appear in AI search responses
+// (ChatGPT, Perplexity, Gemini, etc.)
+// Cost: ~0.01 USD per call (Haiku) — no external API needed
 // ============================================================================
-// File: src/lib/pipeline/ai-visibility.ts
-
-import Anthropic from "@anthropic-ai/sdk";
 
 export interface AIVisibilityResult {
-  available: boolean;
-  score: number;                       // 0-100
-  mentionedIn: AISourceResult[];
-  notMentionedIn: string[];
-  queries: string[];                   // The queries we tested
-  summary: string;                     // Human-readable summary
+  score: number;                      // 0-100
+  summary: string;                    // "Seu negócio provavelmente não aparece em respostas de AI para buscas locais"
+  likelyMentioned: boolean;           // Would AI tools mention this business?
+  factors: {
+    factor: string;                   // "Presença web", "Reviews", "Autoridade"
+    status: 'positive' | 'negative' | 'neutral';
+    detail: string;
+  }[];
+  competitorMentions: {
+    name: string;
+    likelyMentioned: boolean;
+    reason: string;
+  }[];
+  processingTimeMs: number;
 }
 
-export interface AISourceResult {
-  source: string;                      // "perplexity" | "chatgpt_proxy" | "google_ai"
-  query: string;
-  mentioned: boolean;
-  context: string;                     // Snippet where business appears
-  position: number | null;             // Position in list if applicable
-}
+export const AI_VISIBILITY_PROMPT_VERSION = 'ai-visibility-v1.0';
 
-/**
- * Test AI visibility by asking Claude to simulate what AI assistants would return
- * for category + region queries. This is a proxy approach:
- * - We use Claude's training data as a proxy for what ChatGPT/Perplexity would know
- * - We also scrape Google AI Overview via Apify SERP (already captured in serpFeatures)
- * - Future: direct Perplexity API when available
- *
- * The key insight: if a business doesn't appear in Claude's knowledge,
- * it almost certainly won't appear in other AI assistants either.
- */
-export async function checkAIVisibility(
-  businessName: string,
+export function buildAIVisibilityPrompt(
   product: string,
   region: string,
-  serpFeatures: { term: string; features: string[] }[]
-): Promise<AIVisibilityResult> {
-  const queries = generateAIQueries(product, region);
-
-  // ─── Source 1: Google AI Overview (from existing SERP data) ───
-  const googleAIResults: AISourceResult[] = [];
-  const termsWithAIOverview = serpFeatures.filter((sf) =>
-    sf.features.some((f) => f === "featured_snippet" || f === "ai_overview" || f === "people_also_ask")
-  );
-
-  for (const sf of termsWithAIOverview) {
-    googleAIResults.push({
-      source: "google_ai",
-      query: sf.term,
-      mentioned: true, // If business ranks for terms with AI features, it might appear
-      context: `Termo "${sf.term}" tem AI features: ${sf.features.join(", ")}`,
-      position: null,
-    });
-  }
-
-  // ─── Source 2: Claude as proxy for AI assistant knowledge ───
-  const claudeResults = await checkClaudeKnowledge(businessName, product, region, queries);
-
-  // ─── Calculate score ───
-  const allResults = [...googleAIResults, ...claudeResults];
-  const mentionedResults = allResults.filter((r) => r.mentioned);
-  const notMentionedSources: string[] = [];
-
-  // Check which major sources don't mention the business
-  const sourcesMentioned = new Set(mentionedResults.map((r) => r.source));
-  if (!sourcesMentioned.has("google_ai")) notMentionedSources.push("Google AI Overview");
-  if (!sourcesMentioned.has("claude_proxy")) notMentionedSources.push("Assistentes de IA (ChatGPT, Perplexity, etc.)");
-
-  // Score: weighted by source importance
-  let score = 0;
-  const googleAIMentions = googleAIResults.filter((r) => r.mentioned).length;
-  const claudeMentions = claudeResults.filter((r) => r.mentioned).length;
-
-  // Google AI features presence: 0-40 points
-  if (termsWithAIOverview.length > 0) {
-    score += Math.min(googleAIMentions / termsWithAIOverview.length, 1.0) * 40;
-  }
-
-  // Claude knowledge presence: 0-60 points
-  if (queries.length > 0) {
-    score += Math.min(claudeMentions / queries.length, 1.0) * 60;
-  }
-
-  score = Math.round(score);
-
-  // ─── Summary ───
-  let summary: string;
-  if (score >= 60) {
-    summary = `${businessName} tem boa visibilidade em IA. Aparece em ${mentionedResults.length} de ${allResults.length} consultas testadas. Quando alguém pergunta a um assistente de IA sobre ${product} em ${region}, há boa chance de ser mencionado.`;
-  } else if (score >= 30) {
-    summary = `${businessName} tem visibilidade parcial em IA. Aparece em algumas consultas, mas não na maioria. Existe espaço significativo para melhorar a presença em respostas de assistentes de IA.`;
-  } else {
-    summary = `${businessName} praticamente não aparece quando alguém pergunta a um assistente de IA sobre ${product} em ${region}. Isso é comum para negócios locais — mas é uma oportunidade: quem aparecer primeiro captura a atenção.`;
-  }
-
-  return {
-    available: true,
-    score,
-    mentionedIn: mentionedResults,
-    notMentionedIn: notMentionedSources,
-    queries,
-    summary,
-  };
-}
-
-// ─── QUERY GENERATION ────────────────────────────────────────────────
-
-function generateAIQueries(product: string, region: string): string[] {
-  return [
-    `melhor ${product} em ${region}`,
-    `${product} recomendado em ${region}`,
-    `onde encontrar ${product} em ${region}`,
-    `${product} ${region} avaliação`,
-  ];
-}
-
-// ─── CLAUDE KNOWLEDGE CHECK ──────────────────────────────────────────
-
-async function checkClaudeKnowledge(
   businessName: string,
-  product: string,
-  region: string,
-  queries: string[]
-): Promise<AISourceResult[]> {
-  try {
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+  differentiator: string,
+  hasWebsite: boolean,
+  hasMapsProfile: boolean,
+  mapsRating: number | null,
+  mapsReviews: number | null,
+  serpPositions: number,          // how many terms ranked in top 10
+  serpTotal: number,              // how many terms scraped
+  competitors: { name: string; instagram?: string }[],
+): string {
+  return `Você é um especialista em visibilidade digital. Analise se o negócio abaixo provavelmente apareceria em respostas de ferramentas de AI (ChatGPT, Perplexity, Gemini, Claude) quando um usuário pergunta sobre "${product}" em "${region}".
 
-    const prompt = `Vou te fazer ${queries.length} perguntas como se fosse um consumidor buscando recomendações. Para cada pergunta, liste os negócios específicos que você conhece na região. Se não conhecer nenhum negócio específico, diga "nenhum conhecido".
+NEGÓCIO:
+  Nome/Produto: ${businessName || product}
+  Diferencial: "${differentiator}"
+  Tem website: ${hasWebsite ? 'Sim' : 'Não'}
+  Google Maps: ${hasMapsProfile ? `Sim, rating ${mapsRating || 'N/A'}, ${mapsReviews || 0} avaliações` : 'Não encontrado'}
+  Aparece no Google: ${serpPositions} de ${serpTotal} termos no top 10
 
-Responda em JSON:
+CONCORRENTES DECLARADOS:
+${competitors.map(c => `  - ${c.name}${c.instagram ? ` (@${c.instagram})` : ''}`).join('\n') || '  Nenhum informado'}
+
+CONTEXTO: Ferramentas de AI como ChatGPT, Perplexity e Gemini usam dados da web (sites, reviews, menções, autoridade de domínio) para gerar respostas. Negócios com forte presença web, muitas avaliações positivas e menções em diretórios/artigos têm mais chance de serem citados. Negócios sem website, sem reviews e sem presença digital dificilmente aparecem.
+
+TAREFA: Avalie a probabilidade deste negócio aparecer em respostas de AI e responda em JSON:
+
 {
-  "results": [
-    {
-      "query": "a pergunta",
-      "businesses_mentioned": ["nome1", "nome2"],
-      "knows_specific_businesses": true/false
-    }
+  "score": 0-100,
+  "summary": "Uma frase descrevendo a situação",
+  "likelyMentioned": true/false,
+  "factors": [
+    { "factor": "Nome do fator", "status": "positive/negative/neutral", "detail": "Explicação" }
+  ],
+  "competitorMentions": [
+    { "name": "Concorrente", "likelyMentioned": true/false, "reason": "Por quê" }
   ]
 }
 
-Perguntas:
-${queries.map((q, i) => `${i + 1}. ${q}`).join("\n")}
+REGRAS:
+- Seja realista. Maioria dos negócios locais pequenos NÃO aparece em AI.
+- Score 0-20: Muito improvável. 20-50: Possível mas raro. 50-80: Provável. 80-100: Quase certo.
+- Negócio sem website = score máximo 30.
+- Negócio sem reviews = penalize -20 pontos.
+- Fatores importantes: website com conteúdo, reviews Google, menções em diretórios, autoridade de domínio, presença em redes sociais com conteúdo relevante.
+- Gere APENAS o JSON, sem texto adicional.`;
+}
 
-Responda APENAS com o JSON.`;
+export function parseAIVisibilityResponse(rawResponse: string): Omit<AIVisibilityResult, 'processingTimeMs'> {
+  const cleaned = rawResponse
+    .replace(/```json\s*/g, '')
+    .replace(/```\s*/g, '')
+    .trim();
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-5-20250929",
-      max_tokens: 1500,
-      system: "Você é um consumidor pesquisando opções locais. Responda com base no que realmente conhece. Não invente nomes. Se não conhece negócios específicos na região, seja honesto. Responda apenas em JSON.",
-      messages: [{ role: "user", content: prompt }],
-    });
+  const parsed = JSON.parse(cleaned);
 
-    const text = response.content[0].type === "text" ? response.content[0].text : "";
-    let parsed: any;
+  return {
+    score: Math.min(100, Math.max(0, parsed.score || 0)),
+    summary: parsed.summary || '',
+    likelyMentioned: parsed.likelyMentioned || false,
+    factors: (parsed.factors || []).map((f: any) => ({
+      factor: f.factor || '',
+      status: f.status || 'neutral',
+      detail: f.detail || '',
+    })),
+    competitorMentions: (parsed.competitorMentions || []).map((c: any) => ({
+      name: c.name || '',
+      likelyMentioned: c.likelyMentioned || false,
+      reason: c.reason || '',
+    })),
+  };
+}
 
-    try {
-      parsed = JSON.parse(text);
-    } catch {
-      const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (match) parsed = JSON.parse(match[1].trim());
-      else return [];
-    }
+export async function executeAIVisibilityCheck(
+  product: string,
+  region: string,
+  businessName: string,
+  differentiator: string,
+  hasWebsite: boolean,
+  hasMapsProfile: boolean,
+  mapsRating: number | null,
+  mapsReviews: number | null,
+  serpPositions: number,
+  serpTotal: number,
+  competitors: { name: string; instagram?: string }[],
+  claudeClient: { createMessage: (params: any) => Promise<any> },
+): Promise<AIVisibilityResult> {
+  const startTime = Date.now();
 
-    return (parsed.results || []).map((r: any) => {
-      const businessMentioned = (r.businesses_mentioned || []).some((name: string) =>
-        name.toLowerCase().includes(businessName.toLowerCase()) ||
-        businessName.toLowerCase().includes(name.toLowerCase())
-      );
+  const prompt = buildAIVisibilityPrompt(
+    product, region, businessName, differentiator,
+    hasWebsite, hasMapsProfile, mapsRating, mapsReviews,
+    serpPositions, serpTotal, competitors,
+  );
 
-      const position = businessMentioned
-        ? (r.businesses_mentioned || []).findIndex((name: string) =>
-            name.toLowerCase().includes(businessName.toLowerCase()) ||
-            businessName.toLowerCase().includes(name.toLowerCase())
-          ) + 1
-        : null;
+  const response = await claudeClient.createMessage({
+    model: 'claude-haiku-4-5-20251001',  // Fast + cheap for this task
+    max_tokens: 2000,
+    temperature: 0.1,
+    messages: [{ role: 'user', content: prompt }],
+  });
 
-      return {
-        source: "claude_proxy",
-        query: r.query,
-        mentioned: businessMentioned,
-        context: businessMentioned
-          ? `Mencionado na posição ${position} entre ${(r.businesses_mentioned || []).length} negócios`
-          : r.knows_specific_businesses
-          ? `Não mencionado. Outros citados: ${(r.businesses_mentioned || []).slice(0, 3).join(", ")}`
-          : "Nenhum negócio específico conhecido para esta consulta",
-        position,
-      };
-    });
-  } catch (err) {
-    console.error("[AIVisibility] Claude check failed:", err);
-    return [];
-  }
+  const text = response.content
+    .filter((c: any) => c.type === 'text')
+    .map((c: any) => c.text)
+    .join('');
+
+  const result = parseAIVisibilityResponse(text);
+
+  return {
+    ...result,
+    processingTimeMs: Date.now() - startTime,
+  };
 }

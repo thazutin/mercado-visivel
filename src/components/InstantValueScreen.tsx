@@ -46,7 +46,6 @@ interface Results {
   confidence: string;
   gapHeadline?: string;
   termGeneration?: { count: number };
-  // Block 2 data
   influenceBreakdown?: {
     google: number;
     instagram: number;
@@ -91,6 +90,21 @@ interface Results {
   };
   gaps?: any[];
   gapPattern?: any;
+  workRoutes?: {
+    priority: number;
+    title: string;
+    rationale: string;
+    connection: string;
+    horizon: string;
+    expectedImpact: string;
+  }[];
+  aiVisibility?: {
+    score: number;
+    summary: string;
+    likelyMentioned: boolean;
+    factors: { factor: string; status: string; detail: string }[];
+    competitorMentions: { name: string; likelyMentioned: boolean; reason: string }[];
+  } | null;
 }
 
 interface Props {
@@ -147,6 +161,27 @@ function BarMini({ value, max, color = V.teal }: { value: number; max: number; c
   );
 }
 
+function IntentTag({ intent }: { intent?: string }) {
+  if (!intent) return null;
+  const colors: Record<string, string> = {
+    transacional: V.teal,
+    transactional: V.teal,
+    informacional: V.amber,
+    informational: V.amber,
+    navegacional: "#4285F4",
+    navigational: "#4285F4",
+    local: V.coral,
+  };
+  const c = colors[intent.toLowerCase()] || V.ash;
+  return <Chip color={c}>{intent}</Chip>;
+}
+
+function formatCurrency(value: number): string {
+  if (value >= 1000000) return `R$ ${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000) return `R$ ${(value / 1000).toFixed(0)}k`;
+  return `R$ ${value.toLocaleString("pt-BR")}`;
+}
+
 // ─── Main Component ─────────────────────────────────────────────────
 
 export default function InstantValueScreen({ product, region, results, onCheckout, loading }: Props) {
@@ -154,7 +189,6 @@ export default function InstantValueScreen({ product, region, results, onCheckou
   const [barWidth, setBarWidth] = useState(0);
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   useEffect(() => {
     setTimeout(() => setShow(true), 100);
@@ -162,12 +196,14 @@ export default function InstantValueScreen({ product, region, results, onCheckou
   }, [results.influencePercent]);
 
   const termCount = results.termGeneration?.count || results.terms.length;
-  const hasRealData = results.pipeline?.sourcesUsed && results.pipeline.sourcesUsed.length > 2;
   const serpData = results.serpSummary;
   const mapsData = results.maps;
   const igData = results.instagram;
   const competitors = results.competitorInstagram || [];
   const breakdown = results.influenceBreakdown;
+  const hasMarketData = results.marketLow > 0 || results.marketHigh > 0;
+  const hasVolumeData = results.totalVolume > 0;
+  const termsWithVolume = results.terms.filter(t => t.volume > 0);
 
   return (
     <div style={{
@@ -190,204 +226,323 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             color: V.amber, background: V.amberWash, padding: "6px 16px", borderRadius: 100,
             display: "inline-block", marginBottom: 20,
           }}>
-            Seu mercado ao redor
+            Seu diagnóstico de mercado
           </div>
           <p style={{ fontSize: 14, color: V.ash }}>{product} · {region}</p>
         </div>
 
-        {/* ═══ INFLUENCE SCORE (hero) ═══ */}
+        {/* ════════════════════════════════════════════════════════════════
+            SEÇÃO 1 — MERCADO TOTAL ENDEREÇÁVEL (TAM)
+            ════════════════════════════════════════════════════════════════ */}
+
         <Card style={{ padding: "36px 28px", marginBottom: 16, textAlign: "center" }}>
-          <SectionLabel color={V.amber}>Sua influência digital local</SectionLabel>
-          <div style={{
-            fontFamily: V.display, fontSize: "clamp(48px, 8vw, 72px)", fontWeight: 700,
-            color: V.night, letterSpacing: "-0.04em", lineHeight: 1,
-          }}>
-            ~{results.influencePercent}%
-          </div>
-          <div style={{ fontFamily: V.mono, fontSize: 12, color: V.ash, marginTop: 8, marginBottom: 20 }}>
-            do mercado digital ao redor
-          </div>
+          <SectionLabel color={V.amber}>Mercado endereçável na sua região</SectionLabel>
 
-          {/* Influence bar */}
-          <div style={{ height: 10, borderRadius: 5, background: V.fog, overflow: "hidden", marginBottom: 20 }}>
+          {hasMarketData ? (
+            <>
+              <div style={{
+                fontFamily: V.display, fontSize: "clamp(36px, 6vw, 56px)", fontWeight: 700,
+                color: V.night, letterSpacing: "-0.04em", lineHeight: 1,
+              }}>
+                {formatCurrency(results.marketLow)} — {formatCurrency(results.marketHigh)}
+              </div>
+              <div style={{ fontFamily: V.mono, fontSize: 12, color: V.ash, marginTop: 8, marginBottom: 24 }}>
+                em vendas potenciais por mês
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{
+                fontFamily: V.display, fontSize: "clamp(36px, 6vw, 56px)", fontWeight: 700,
+                color: V.night, letterSpacing: "-0.04em", lineHeight: 1,
+              }}>
+                {hasVolumeData ? results.totalVolume.toLocaleString("pt-BR") : termCount}
+              </div>
+              <div style={{ fontFamily: V.mono, fontSize: 12, color: V.ash, marginTop: 8, marginBottom: 24 }}>
+                {hasVolumeData ? "buscas mensais mapeadas" : "termos de busca mapeados na sua região"}
+              </div>
+            </>
+          )}
+
+          <p style={{ fontSize: 14, color: V.zinc, lineHeight: 1.7, maxWidth: 520, margin: "0 auto 24px", textAlign: "left" }}>
+            {hasMarketData ? (
+              <>
+                É quanto esse mercado movimenta em vendas mensais na sua região, baseado em{" "}
+                <strong style={{ color: V.night }}>
+                  {hasVolumeData ? results.totalVolume.toLocaleString("pt-BR") : termCount} buscas reais no Google
+                </strong>{" "}
+                por termos como os listados abaixo.
+              </>
+            ) : (
+              <>
+                Mapeamos <strong style={{ color: V.night }}>{termCount} termos</strong> que pessoas na sua região buscam quando precisam do que você oferece.
+                Cada termo representa demanda real — pessoas procurando ativamente por {product}.
+              </>
+            )}
+          </p>
+
+          {/* Premissas do cálculo */}
+          {hasMarketData && (
             <div style={{
-              height: "100%", borderRadius: 5,
-              background: `linear-gradient(90deg, ${V.amber}, ${V.teal})`,
-              width: `${Math.max(barWidth, 1)}%`,
-              transition: "width 1.5s cubic-bezier(0.16, 1, 0.3, 1)",
-            }} />
-          </div>
-
-          {/* Breakdown chips */}
-          {breakdown && (
-            <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4285F4" }} />
-                <span style={{ fontFamily: V.mono, fontSize: 11, color: V.zinc }}>Google {breakdown.google}%</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#E1306C" }} />
-                <span style={{ fontFamily: V.mono, fontSize: 11, color: V.zinc }}>Instagram {breakdown.instagram}%</span>
-              </div>
-              {breakdown.web !== null && (
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: V.teal }} />
-                  <span style={{ fontFamily: V.mono, fontSize: 11, color: V.zinc }}>Web {breakdown.web}%</span>
-                </div>
-              )}
+              background: V.cloud, borderRadius: 10, padding: "14px 18px",
+              fontSize: 12, color: V.ash, lineHeight: 1.6, textAlign: "left",
+            }}>
+              <strong style={{ color: V.zinc }}>Premissas:</strong> CTR médio de mercado para posições orgânicas × taxa de conversão benchmark para a categoria × ticket médio informado.
+              Faixa conservadora (low) a otimista (high).
             </div>
           )}
         </Card>
 
-        {/* ═══ GOOGLE PRESENCE ═══ */}
+        {/* ─── Termos de busca com volume e intenção ─── */}
         <Card style={{ marginBottom: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <SectionLabel color="#4285F4">Presença no Google</SectionLabel>
-            {serpData && (
-              <div style={{ display: "flex", gap: 6 }}>
-                {serpData.hasLocalPack && <Chip color={V.teal}>Local Pack</Chip>}
-                {serpData.hasAds && <Chip color={V.coral}>Ads ativos</Chip>}
-              </div>
-            )}
-          </div>
+          <SectionLabel color={V.amber}>Demanda real — o que buscam na sua região</SectionLabel>
 
-          {/* SERP summary */}
-          {serpData && (
-            <div style={{
-              background: serpData.termsRanked > 0 ? V.tealWash : V.coralWash,
-              borderRadius: 10, padding: "14px 18px", marginBottom: 16,
-            }}>
-              <p style={{ fontSize: 14, color: V.night, margin: 0, lineHeight: 1.6 }}>
-                {serpData.termsRanked === 0 ? (
-                  <>Seu negócio <strong>não aparece no top 10</strong> para nenhum dos {serpData.termsScraped} termos principais pesquisados.</>
-                ) : (
-                  <>Você aparece no top 10 para <strong>{serpData.termsRanked} de {serpData.termsScraped}</strong> termos pesquisados.</>
-                )}
-              </p>
-            </div>
-          )}
-
-          {/* Maps data */}
-          {mapsData && mapsData.found && (
-            <div style={{
-              display: "flex", gap: 16, padding: "14px 0",
-              borderTop: `1px solid ${V.fog}`, alignItems: "center",
-            }}>
-              <div style={{ fontSize: 13, color: V.zinc }}>Google Maps</div>
-              <div style={{ display: "flex", gap: 12, marginLeft: "auto" }}>
-                {mapsData.rating && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <span style={{ color: "#FBBC04", fontSize: 14 }}>★</span>
-                    <span style={{ fontFamily: V.mono, fontSize: 13, color: V.night, fontWeight: 600 }}>{mapsData.rating}</span>
-                  </div>
-                )}
-                {mapsData.reviewCount !== null && mapsData.reviewCount > 0 && (
-                  <span style={{ fontFamily: V.mono, fontSize: 12, color: V.ash }}>
-                    {mapsData.reviewCount} avaliações
-                  </span>
-                )}
-                {mapsData.inLocalPack && <Chip color={V.teal}>Local Pack</Chip>}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, padding: "0 14px" }}>
+              <span style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase" as const, color: V.ash }}>Termo</span>
+              <div style={{ display: "flex", gap: 24 }}>
+                {hasVolumeData && <span style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase" as const, color: V.ash, width: 70, textAlign: "right" }}>Vol/mês</span>}
+                <span style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase" as const, color: V.ash, width: 50, textAlign: "right" }}>Posição</span>
               </div>
             </div>
-          )}
-          {mapsData && !mapsData.found && (
-            <div style={{
-              padding: "14px 0", borderTop: `1px solid ${V.fog}`,
-            }}>
-              <p style={{ fontSize: 13, color: V.ash, margin: 0 }}>
-                Google Maps: perfil não encontrado na busca direta — considere verificar ou criar ficha no Google Meu Negócio.
-              </p>
-            </div>
-          )}
 
-          {/* Terms with positions */}
-          <div style={{ marginTop: 16 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-              <span style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.05em", textTransform: "uppercase" as const, color: V.ash }}>Termo</span>
-              <span style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.05em", textTransform: "uppercase" as const, color: V.ash }}>Posição</span>
-            </div>
-            {results.terms.slice(0, 8).map((t, i) => (
+            {results.terms.slice(0, 10).map((t, i) => (
               <div key={i} style={{
                 display: "flex", justifyContent: "space-between", alignItems: "center",
                 padding: "10px 14px", borderRadius: 8,
                 background: i % 2 === 0 ? V.cloud : "transparent",
               }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1 }}>
-                  <span style={{ fontSize: 14, color: V.night }}>{t.term}</span>
-                  {t.serpFeatures && t.serpFeatures.length > 0 && (
-                    <div style={{ display: "flex", gap: 4 }}>
-                      {t.serpFeatures.includes("people_also_ask") && (
-                        <Chip color={V.ash}>Perguntas</Chip>
-                      )}
-                      {t.serpFeatures.includes("local_pack") && (
-                        <Chip color={V.teal}>Mapa</Chip>
-                      )}
-                      {t.serpFeatures.includes("ads") && (
-                        <Chip color={V.coral}>Anúncio</Chip>
-                      )}
-                      {t.serpFeatures.includes("featured_snippet") && (
-                        <Chip color={V.amber}>Destaque</Chip>
-                      )}
-                    </div>
-                  )}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 14, color: V.night, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{t.term}</span>
+                  <IntentTag intent={t.intent} />
+                  {t.serpFeatures?.includes("people_also_ask") && <Chip color={V.ash}>Perguntas</Chip>}
+                  {t.serpFeatures?.includes("local_pack") && <Chip color={V.teal}>Mapa</Chip>}
                 </div>
-                <span style={{
-                  fontFamily: V.mono, fontSize: 13, fontWeight: 600, minWidth: 40, textAlign: "right",
-                  color: t.position !== "—" && parseInt(t.position) <= 3 ? V.teal
-                    : t.position !== "—" && parseInt(t.position) <= 10 ? V.amber
-                    : V.ash,
-                }}>
-                  {t.position === "—" ? "—" : `#${t.position}`}
-                </span>
+                <div style={{ display: "flex", gap: 24, flexShrink: 0 }}>
+                  {hasVolumeData && (
+                    <span style={{
+                      fontFamily: V.mono, fontSize: 13, color: t.volume > 0 ? V.night : V.ash,
+                      fontWeight: t.volume > 0 ? 600 : 400, width: 70, textAlign: "right",
+                    }}>
+                      {t.volume > 0 ? t.volume.toLocaleString("pt-BR") : "—"}
+                    </span>
+                  )}
+                  <span style={{
+                    fontFamily: V.mono, fontSize: 13, fontWeight: 600, width: 50, textAlign: "right",
+                    color: t.position !== "—" && parseInt(t.position) <= 3 ? V.teal
+                      : t.position !== "—" && parseInt(t.position) <= 10 ? V.amber
+                      : V.ash,
+                  }}>
+                    {t.position === "—" ? "—" : `#${t.position}`}
+                  </span>
+                </div>
               </div>
             ))}
-            {results.terms.length > 8 && (
+            {results.terms.length > 10 && (
               <div style={{ textAlign: "center", padding: "8px", fontSize: 12, color: V.ash }}>
-                +{results.terms.length - 8} termos mapeados
+                +{results.terms.length - 10} termos no diagnóstico completo
               </div>
             )}
           </div>
+
+          {/* Legend for intent tags */}
+          <div style={{
+            display: "flex", gap: 12, flexWrap: "wrap", padding: "12px 0 0",
+            borderTop: `1px solid ${V.fog}`,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: V.ash }}>
+              <div style={{ width: 8, height: 8, borderRadius: 2, background: V.teal }} />
+              Transacional (quer comprar)
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: V.ash }}>
+              <div style={{ width: 8, height: 8, borderRadius: 2, background: V.amber }} />
+              Informacional (pesquisando)
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: V.ash }}>
+              <div style={{ width: 8, height: 8, borderRadius: 2, background: V.coral }} />
+              Local (buscando perto)
+            </div>
+          </div>
         </Card>
 
+        {/* ════════════════════════════════════════════════════════════════
+            SEÇÃO 2 — NÍVEL DE INFLUÊNCIA
+            ════════════════════════════════════════════════════════════════ */}
 
-        {/* ═══ INSTAGRAM ═══ */}
+        <Card style={{ padding: "36px 28px", marginBottom: 16 }}>
+          <SectionLabel color={V.amber}>Sua influência digital local</SectionLabel>
+
+          <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 8 }}>
+            <div style={{
+              fontFamily: V.display, fontSize: "clamp(48px, 8vw, 72px)", fontWeight: 700,
+              color: V.night, letterSpacing: "-0.04em", lineHeight: 1,
+            }}>
+              ~{results.influencePercent}%
+            </div>
+            <div style={{ fontFamily: V.mono, fontSize: 12, color: V.ash }}>
+              do mercado digital ao redor
+            </div>
+          </div>
+
+          {/* Influence bar */}
+          <div style={{ height: 10, borderRadius: 5, background: V.fog, overflow: "hidden", marginBottom: 24 }}>
+            <div style={{
+              height: "100%", borderRadius: 5,
+              background: results.influencePercent > 0
+                ? `linear-gradient(90deg, ${V.amber}, ${V.teal})`
+                : V.coral,
+              width: `${Math.max(barWidth, 2)}%`,
+              transition: "width 1.5s cubic-bezier(0.16, 1, 0.3, 1)",
+            }} />
+          </div>
+
+          {/* Contextual explanation based on actual data */}
+          <div style={{
+            background: results.influencePercent === 0 ? V.coralWash : results.influencePercent < 20 ? V.amberWash : V.tealWash,
+            borderRadius: 10, padding: "16px 18px", marginBottom: 24,
+          }}>
+            <p style={{ fontSize: 14, color: V.night, margin: 0, lineHeight: 1.7 }}>
+              {results.influencePercent === 0 ? (
+                <>
+                  <strong>Você ainda não aparece</strong> quando pessoas na sua região buscam por {product}.
+                  De {hasVolumeData ? results.totalVolume.toLocaleString("pt-BR") + " buscas mensais" : termCount + " termos mapeados"}, nenhuma leva diretamente a você.
+                  {" "}Esse é o dado mais importante deste diagnóstico — e também a maior oportunidade.
+                </>
+              ) : results.influencePercent < 20 ? (
+                <>
+                  Você captura <strong>{results.influencePercent}%</strong> da atenção digital — aparece para {serpData?.termsRanked || 0} de {serpData?.termsScraped || 0} termos.
+                  Há espaço significativo para crescer.
+                </>
+              ) : (
+                <>
+                  Você captura <strong>{results.influencePercent}%</strong> da atenção digital — boa posição.
+                  O diagnóstico completo mostra como defender e ampliar essa posição.
+                </>
+              )}
+            </p>
+          </div>
+
+          {/* Channel breakdown */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+            {/* Google */}
+            <div style={{ padding: "16px 18px", background: V.cloud, borderRadius: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#4285F4" }} />
+                  <span style={{ fontFamily: V.display, fontSize: 14, fontWeight: 600, color: V.night }}>Google</span>
+                </div>
+                {breakdown && <span style={{ fontFamily: V.mono, fontSize: 13, fontWeight: 600, color: V.night }}>{breakdown.google}%</span>}
+              </div>
+              <div style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6 }}>
+                {serpData?.termsRanked === 0 ? (
+                  <>Não aparece no top 10 para nenhum dos {serpData.termsScraped} termos pesquisados.</>
+                ) : serpData ? (
+                  <>Aparece no top 10 para <strong>{serpData.termsRanked} de {serpData.termsScraped}</strong> termos pesquisados.</>
+                ) : (
+                  <>Dados de SERP não disponíveis nesta análise.</>
+                )}
+                {serpData?.hasLocalPack && <> O Local Pack (mapa) aparece nos resultados.</>}
+                {serpData?.hasAds && <> Há anúncios pagos ativos para esses termos.</>}
+              </div>
+              {mapsData && (
+                <div style={{ fontSize: 13, color: V.zinc, marginTop: 8 }}>
+                  {mapsData.found ? (
+                    <>
+                      Google Maps: encontrado
+                      {mapsData.rating && <> · ★ {mapsData.rating}</>}
+                      {mapsData.reviewCount && mapsData.reviewCount > 0 && <> · {mapsData.reviewCount} avaliações</>}
+                      {mapsData.inLocalPack && <> · aparece no Local Pack</>}
+                    </>
+                  ) : (
+                    <>Google Maps: perfil não encontrado — considere criar ficha no Google Meu Negócio.</>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Instagram */}
+            <div style={{ padding: "16px 18px", background: V.cloud, borderRadius: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#E1306C" }} />
+                  <span style={{ fontFamily: V.display, fontSize: 14, fontWeight: 600, color: V.night }}>Instagram</span>
+                </div>
+                {breakdown && <span style={{ fontFamily: V.mono, fontSize: 13, fontWeight: 600, color: V.night }}>{breakdown.instagram}%</span>}
+              </div>
+              <div style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6 }}>
+                {igData?.dataAvailable ? (
+                  <>
+                    Alcance médio: <strong>{(igData.avgViews || igData.avgLikes || 0).toLocaleString("pt-BR")}</strong>
+                    {igData.avgViews > 0 ? " views" : " curtidas"} ·
+                    Engajamento: <strong>{(igData.engagementRate * 100).toFixed(1)}%</strong> ·
+                    {igData.postsLast30d} posts nos últimos 30 dias
+                  </>
+                ) : (
+                  <>Dados de Instagram não disponíveis — perfil não foi informado ou dados não puderam ser coletados.</>
+                )}
+              </div>
+            </div>
+
+            {/* AI Visibility */}
+            <div style={{ padding: "16px 18px", background: V.cloud, borderRadius: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#8B5CF6" }} />
+                  <span style={{ fontFamily: V.display, fontSize: 14, fontWeight: 600, color: V.night }}>Visibilidade em AI</span>
+                </div>
+                {results.aiVisibility && (
+                  <span style={{ fontFamily: V.mono, fontSize: 13, fontWeight: 600, color: V.night }}>{results.aiVisibility.score}%</span>
+                )}
+              </div>
+              <div style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6 }}>
+                {results.aiVisibility ? (
+                  <>
+                    {results.aiVisibility.summary}
+                    {results.aiVisibility.factors && results.aiVisibility.factors.length > 0 && (
+                      <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 4 }}>
+                        {results.aiVisibility.factors.slice(0, 3).map((f, i) => (
+                          <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+                            <span style={{
+                              color: f.status === 'positive' ? V.teal : f.status === 'negative' ? V.coral : V.ash,
+                              fontSize: 10,
+                            }}>
+                              {f.status === 'positive' ? '✓' : f.status === 'negative' ? '✗' : '—'}
+                            </span>
+                            <span style={{ color: V.zinc }}>{f.factor}: {f.detail}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    Quando alguém pergunta a uma AI como ChatGPT ou Perplexity "melhor {product} em {region}", seu negócio aparece?
+                    Esta análise será incluída no diagnóstico completo.
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* ─── Instagram Comparative Table ─── */}
         {(igData?.dataAvailable || competitors.length > 0) && (
           <Card style={{ marginBottom: 16 }}>
-            <SectionLabel color="#E1306C">Instagram · alcance e engajamento</SectionLabel>
+            <SectionLabel color="#E1306C">Comparativo Instagram</SectionLabel>
 
-            {/* Explanation of Instagram influence */}
-            {breakdown && breakdown.instagram > 0 && (
-              <div style={{
-                background: "rgba(225,48,108,0.06)", borderRadius: 10,
-                padding: "14px 18px", marginBottom: 16,
-              }}>
-                <p style={{ fontSize: 13, color: V.night, margin: 0, lineHeight: 1.6 }}>
-                  Seu perfil captura <strong>{breakdown.instagram}%</strong> do alcance total entre você e seus concorrentes diretos.
-                  {igData && competitors.length > 0 && (() => {
-                    const yourReach = igData.avgViews || igData.avgLikes || 0;
-                    const maxCompReach = Math.max(...competitors.map(c => (c as any).avgViews || (c as any).avgLikes || c.followers * 0.1));
-                    if (yourReach < maxCompReach * 0.3) return " Há espaço significativo para crescer em alcance.";
-                    if (yourReach < maxCompReach) return " Você está competindo, mas ainda abaixo dos líderes.";
-                    return " Você tem bom alcance relativo.";
-                  })()}
-                </p>
-              </div>
-            )}
-
-            {/* Comparative table — reach-focused */}
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: V.body }}>
                 <thead>
                   <tr>
                     <td style={{ padding: "8px 12px", fontFamily: V.mono, fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase" as const, color: V.ash }}>Perfil</td>
-                    <td style={{ padding: "8px 12px", fontFamily: V.mono, fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase" as const, color: V.ash, textAlign: "right" }}>Alcance médio</td>
-                    <td style={{ padding: "8px 12px", fontFamily: V.mono, fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase" as const, color: V.ash, textAlign: "right" }}>Engajamento</td>
+                    <td style={{ padding: "8px 12px", fontFamily: V.mono, fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase" as const, color: V.ash, textAlign: "right" }}>Alcance</td>
+                    <td style={{ padding: "8px 12px", fontFamily: V.mono, fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase" as const, color: V.ash, textAlign: "right" }}>Engaj.</td>
                     <td style={{ padding: "8px 12px", fontFamily: V.mono, fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase" as const, color: V.ash, textAlign: "right" }}>Posts/30d</td>
                     <td style={{ padding: "8px 8px", width: 90 }}></td>
                   </tr>
                 </thead>
                 <tbody>
-                  {/* Business row */}
                   {igData?.dataAvailable && (() => {
                     const reach = igData.avgViews || igData.avgLikes || 0;
                     const allReaches = [reach, ...competitors.map(c => (c as any).avgViews || (c as any).avgLikes || c.followers * 0.1)];
@@ -396,11 +551,10 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                       <tr style={{ background: V.amberWash }}>
                         <td style={{ padding: "12px", borderRadius: "8px 0 0 8px" }}>
                           <div style={{ fontSize: 14, fontWeight: 600, color: V.night }}>@{igData.handle}</div>
-                          <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, marginTop: 1 }}>Seu negócio</div>
+                          <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, marginTop: 1 }}>Você</div>
                         </td>
                         <td style={{ padding: "12px", textAlign: "right" }}>
                           <div style={{ fontFamily: V.display, fontSize: 16, fontWeight: 700, color: V.night }}>{reach.toLocaleString("pt-BR")}</div>
-                          <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>{igData.avgViews > 0 ? "views" : "curtidas"}</div>
                         </td>
                         <td style={{ padding: "12px", textAlign: "right" }}>
                           <span style={{
@@ -411,10 +565,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                           </span>
                         </td>
                         <td style={{ padding: "12px", textAlign: "right" }}>
-                          <span style={{
-                            fontFamily: V.mono, fontSize: 13, fontWeight: 600,
-                            color: igData.postsLast30d >= 8 ? V.teal : igData.postsLast30d >= 4 ? V.amber : V.coral,
-                          }}>
+                          <span style={{ fontFamily: V.mono, fontSize: 13, fontWeight: 600, color: V.night }}>
                             {igData.postsLast30d}
                           </span>
                         </td>
@@ -424,8 +575,6 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                       </tr>
                     );
                   })()}
-
-                  {/* Competitor rows */}
                   {competitors.map((c, i) => {
                     const cReach = (c as any).avgViews || (c as any).avgLikes || c.followers * 0.1;
                     const allReaches = [
@@ -441,20 +590,14 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                         </td>
                         <td style={{ padding: "12px", textAlign: "right" }}>
                           <div style={{ fontFamily: V.display, fontSize: 16, fontWeight: 700, color: V.night }}>{Math.round(cReach).toLocaleString("pt-BR")}</div>
-                          <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>{(c as any).avgViews > 0 ? "views" : "est."}</div>
                         </td>
                         <td style={{ padding: "12px", textAlign: "right" }}>
-                          <span style={{
-                            fontFamily: V.mono, fontSize: 13,
-                            color: c.engagementRate >= 0.03 ? V.teal : c.engagementRate >= 0.01 ? V.amber : V.ash,
-                          }}>
+                          <span style={{ fontFamily: V.mono, fontSize: 13, color: c.engagementRate >= 0.03 ? V.teal : c.engagementRate >= 0.01 ? V.amber : V.ash }}>
                             {(c.engagementRate * 100).toFixed(1)}%
                           </span>
                         </td>
                         <td style={{ padding: "12px", textAlign: "right" }}>
-                          <span style={{ fontFamily: V.mono, fontSize: 13, color: V.zinc }}>
-                            {c.postsLast30d}
-                          </span>
+                          <span style={{ fontFamily: V.mono, fontSize: 13, color: V.zinc }}>{c.postsLast30d}</span>
                         </td>
                         <td style={{ padding: "12px 8px", borderRadius: "0 8px 8px 0" }}>
                           <BarMini value={cReach} max={maxReach} color={V.zinc} />
@@ -465,87 +608,136 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 </tbody>
               </table>
             </div>
-
-            {/* Context note */}
-            <div style={{ marginTop: 14, padding: "10px 14px", background: V.cloud, borderRadius: 8 }}>
-              <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.6 }}>
-                Alcance médio = views em reels ou curtidas em posts recentes. 
-                Engajamento = interações ÷ alcance. Dados coletados em tempo real.
-              </p>
-            </div>
           </Card>
         )}
 
-        {/* ═══ MARKET SIZE (when volumes available) ═══ */}
-        {(results.marketLow > 0 || results.totalVolume > 0) && (
-          <Card style={{ marginBottom: 16, textAlign: "center" }}>
-            <SectionLabel>Mercado disponível na sua região</SectionLabel>
-            <div style={{
-              fontFamily: V.display, fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 700,
-              color: V.night, letterSpacing: "-0.03em", lineHeight: 1,
-            }}>
-              R$ <AnimatedCounter target={results.marketLow} duration={1500} /> — <AnimatedCounter target={results.marketHigh} duration={1800} />
-            </div>
-            <div style={{ fontFamily: V.mono, fontSize: 12, color: V.ash, marginTop: 8 }}>por mês</div>
-          </Card>
-        )}
+        {/* ════════════════════════════════════════════════════════════════
+            SEÇÃO 3 — ROTAS DE TRABALHO (qualitativo baseado no desafio)
+            ════════════════════════════════════════════════════════════════ */}
 
-        {/* Stats row */}
-        <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
-          {[
-            ...(results.totalVolume > 0 ? [{ label: "buscas/mês", value: results.totalVolume.toLocaleString("pt-BR") }] : []),
-            ...(results.avgCpc > 0 ? [{ label: "CPC médio", value: `R$ ${results.avgCpc.toFixed(2)}` }] : []),
-            { label: "termos mapeados", value: termCount.toString() },
-            ...(serpData ? [{ label: "termos no top 10", value: `${serpData.termsRanked} de ${serpData.termsScraped}` }] : []),
-          ].map((s, i) => (
-            <div key={i} style={{
-              flex: "1 1 120px", background: V.white, borderRadius: 12,
-              border: `1px solid ${V.fog}`, padding: "16px", textAlign: "center",
-            }}>
-              <div style={{ fontFamily: V.display, fontSize: 22, fontWeight: 700, color: V.night, letterSpacing: "-0.02em" }}>{s.value}</div>
-              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginTop: 4 }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* ═══ GAP ANALYSIS ═══ */}
+        {/* Gap headline — the Claude-generated insight */}
         {results.gapHeadline && (
           <div style={{
             background: V.amberWash, borderLeft: `3px solid ${V.amber}`,
             padding: "16px 20px", borderRadius: "0 10px 10px 0", marginBottom: 16,
           }}>
-            <p style={{ fontSize: 14, color: V.night, lineHeight: 1.7, margin: 0 }}>
+            <p style={{ fontSize: 14, color: V.night, lineHeight: 1.7, margin: 0, fontWeight: 500 }}>
               {results.gapHeadline}
             </p>
           </div>
         )}
 
-        {/* Gap items preview */}
-        {results.gaps && results.gaps.length > 0 && (
-          <Card style={{ marginBottom: 24 }}>
+        {/* Work Routes (prioritized, from evolved Step 5) */}
+        {results.workRoutes && results.workRoutes.length > 0 ? (
+          <Card style={{ marginBottom: 16 }}>
+            <SectionLabel color={V.amber}>Rotas de trabalho priorizadas</SectionLabel>
+            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, marginBottom: 16, marginTop: -8 }}>
+              Baseado no potencial disponível, no seu desafio e nos dados coletados:
+            </p>
+            {results.workRoutes.sort((a, b) => a.priority - b.priority).slice(0, 3).map((route, i) => (
+              <div key={i} style={{
+                padding: "18px", marginBottom: 12, borderRadius: 10,
+                background: i === 0 ? V.amberWash : V.cloud,
+                border: i === 0 ? `1px solid rgba(207,133,35,0.2)` : `1px solid ${V.fog}`,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <div style={{
+                    fontFamily: V.mono, fontSize: 11, fontWeight: 600,
+                    color: i === 0 ? V.amber : V.zinc,
+                    background: i === 0 ? "rgba(207,133,35,0.15)" : V.fog,
+                    width: 24, height: 24, borderRadius: "50%",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {route.priority}
+                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: V.night, flex: 1 }}>
+                    {route.title}
+                  </div>
+                  <Chip color={route.horizon === 'curto prazo' ? V.teal : route.horizon === 'médio prazo' ? V.amber : V.ash}>
+                    {route.horizon}
+                  </Chip>
+                </div>
+                <div style={{ fontSize: 13, color: V.zinc, lineHeight: 1.7, paddingLeft: 32, marginBottom: 8 }}>
+                  {route.rationale}
+                </div>
+                {route.expectedImpact && (
+                  <div style={{
+                    fontSize: 12, color: V.teal, lineHeight: 1.5, paddingLeft: 32,
+                    fontFamily: V.mono, letterSpacing: "0.01em",
+                  }}>
+                    → {route.expectedImpact}
+                  </div>
+                )}
+              </div>
+            ))}
+            <div style={{ fontSize: 12, color: V.ash, marginTop: 8, textAlign: "center" }}>
+              O plano completo de 90 dias detalha cada rota em ações semanais
+            </div>
+          </Card>
+        ) : results.gaps && results.gaps.length > 0 ? (
+          /* Fallback: show gaps if no work routes */
+          <Card style={{ marginBottom: 16 }}>
             <SectionLabel color={V.amber}>Gaps identificados</SectionLabel>
+            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, marginBottom: 16, marginTop: -8 }}>
+              Baseado no potencial disponível e nos gaps identificados:
+            </p>
             {results.gaps.slice(0, 3).map((gap: any, i: number) => (
               <div key={i} style={{
-                padding: "12px 0",
-                borderBottom: i < Math.min(results.gaps!.length, 3) - 1 ? `1px solid ${V.fog}` : "none",
+                padding: "16px 18px", marginBottom: 10, borderRadius: 10,
+                background: i === 0 ? V.amberWash : V.cloud,
+                border: i === 0 ? `1px solid rgba(207,133,35,0.2)` : `1px solid ${V.fog}`,
               }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: V.night, marginBottom: 4 }}>
-                  {gap.title || gap.gap || `Gap ${i + 1}`}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <div style={{
+                    fontFamily: V.mono, fontSize: 11, fontWeight: 600,
+                    color: i === 0 ? V.amber : V.zinc,
+                    background: i === 0 ? "rgba(207,133,35,0.15)" : V.fog,
+                    width: 24, height: 24, borderRadius: "50%",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {i + 1}
+                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: V.night }}>
+                    {gap.title || gap.gap || `Gap ${i + 1}`}
+                  </div>
+                  {i === 0 && <Chip color={V.amber}>Prioridade</Chip>}
                 </div>
-                <div style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6 }}>
-                  {gap.description || gap.detail || ""}
+                <div style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, paddingLeft: 32 }}>
+                  {gap.description || gap.detail || gap.evidence || ""}
                 </div>
               </div>
             ))}
             {results.gaps.length > 3 && (
-              <div style={{ fontSize: 12, color: V.ash, marginTop: 8 }}>
-                +{results.gaps.length - 3} gaps no diagnóstico completo
+              <div style={{ fontSize: 12, color: V.ash, marginTop: 8, textAlign: "center" }}>
+                +{results.gaps.length - 3} gaps detalhados no plano completo
               </div>
             )}
           </Card>
-        )}
+        ) : null}
 
-        {/* ═══ METHODOLOGY ═══ */}
+        {/* ════════════════════════════════════════════════════════════════
+            RESUMO + METODOLOGIA
+            ════════════════════════════════════════════════════════════════ */}
+
+        {/* Stats summary */}
+        <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+          {[
+            ...(hasVolumeData ? [{ label: "buscas/mês", value: results.totalVolume.toLocaleString("pt-BR") }] : []),
+            { label: "termos mapeados", value: termCount.toString() },
+            ...(serpData ? [{ label: "no top 10", value: `${serpData.termsRanked} de ${serpData.termsScraped}` }] : []),
+            { label: "influência", value: `${results.influencePercent}%` },
+          ].map((s, i) => (
+            <div key={i} style={{
+              flex: "1 1 100px", background: V.white, borderRadius: 12,
+              border: `1px solid ${V.fog}`, padding: "14px", textAlign: "center",
+            }}>
+              <div style={{ fontFamily: V.display, fontSize: 20, fontWeight: 700, color: V.night, letterSpacing: "-0.02em" }}>{s.value}</div>
+              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginTop: 4 }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Methodology */}
         <Card style={{ marginBottom: 24, background: V.cloud, border: "none" }}>
           <SectionLabel color={V.ash}>Metodologia</SectionLabel>
           <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.7, margin: "0 0 12px" }}>
@@ -560,23 +752,22 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 apify_maps: "Google Maps",
                 apify_instagram: "Instagram",
                 claude_gap_analysis: "IA · Análise",
-                google_ads: "Google Ads KP",
+                google_ads: "Google Ads",
+                dataforseo: "DataForSEO",
               };
-              return (
-                <Chip key={i} color={V.teal}>{labels[src] || src}</Chip>
-              );
+              return <Chip key={i} color={V.teal}>{labels[src] || src}</Chip>;
             })}
-            {(results.pipeline?.sourcesUnavailable || []).filter(s => s !== "google_trends" && s !== "similarweb").map((src, i) => {
-              const labels: Record<string, string> = {
-                google_ads: "Volume (em breve)",
-                serp_scraper: "SERP",
-                google_maps: "Maps",
-                instagram: "Instagram",
-              };
-              return (
-                <Chip key={`u-${i}`} color={V.ash}>{labels[src] || src}</Chip>
-              );
-            })}
+            {(results.pipeline?.sourcesUnavailable || [])
+              .filter(s => s !== "google_trends" && s !== "similarweb")
+              .map((src, i) => {
+                const labels: Record<string, string> = {
+                  google_ads: "Google Ads (em breve)",
+                  serp_scraper: "SERP",
+                  google_maps: "Maps",
+                  instagram: "Instagram",
+                };
+                return <Chip key={`u-${i}`} color={V.ash}>{labels[src] || src}</Chip>;
+              })}
           </div>
           {results.pipeline?.durationMs && (
             <div style={{ fontFamily: V.mono, fontSize: 11, color: V.ash, marginTop: 12 }}>
@@ -585,27 +776,37 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           )}
         </Card>
 
-        {/* ═══ BRIDGE TEXT ═══ */}
-        <div style={{ padding: "0 8px", marginBottom: 32 }}>
-          <p style={{ fontSize: 16, color: V.night, lineHeight: 1.75, fontFamily: V.body, marginBottom: 12, fontWeight: 600 }}>
+        {/* ════════════════════════════════════════════════════════════════
+            CTA — PLANO DE AÇÃO
+            ════════════════════════════════════════════════════════════════ */}
+
+        <div style={{ padding: "0 8px", marginBottom: 24 }}>
+          <p style={{ fontSize: 17, color: V.night, lineHeight: 1.6, fontFamily: V.display, marginBottom: 12, fontWeight: 700 }}>
             Esse mercado existe. Ele não depende de você — já está lá.
           </p>
           <p style={{ fontSize: 14, color: V.zinc, lineHeight: 1.75 }}>
-            A pergunta é: como aumentar a probabilidade de que, quando alguém nesse mercado precisar do que você oferece, seu negócio seja lembrado? Não existe garantia — mas existe um plano baseado em evidência.
+            {results.influencePercent === 0 ? (
+              <>Agora você sabe: as pessoas buscam pelo que você oferece, mas ainda não te encontram. O plano completo de 90 dias mostra exatamente como mudar isso — semana a semana, ação por ação, baseado nesses dados.</>
+            ) : (
+              <>A pergunta é: como aumentar a probabilidade de que, quando alguém nesse mercado precisar do que você oferece, seu negócio seja lembrado? O plano de 90 dias traduz esses dados em ações concretas.</>
+            )}
           </p>
         </div>
 
-        {/* ═══ WHAT VIRÔ UNLOCKS ═══ */}
+        {/* What's included */}
         <div style={{ background: V.night, borderRadius: 14, padding: "32px 24px", marginBottom: 12, color: V.white }}>
           <SectionLabel color={V.amber}>O que Virô desbloqueia</SectionLabel>
 
-          <div style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.04em", color: V.ash, marginBottom: 12, textTransform: "uppercase" as const }}>
-            Diagnóstico · R$ 497 único
+          <div style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.04em", color: V.ash, marginBottom: 16, textTransform: "uppercase" as const }}>
+            Pacote completo · pagamento único · R$ 397
           </div>
+
           {[
-            { title: "Posicionamento completo", desc: "Sua posição real vs concorrentes em cada canal — Google, Instagram, Maps" },
-            { title: "Mapa de demanda", desc: "Termos com volume real, intenção classificada e CPC da sua região" },
-            { title: "Plano de 12 semanas", desc: "Ações concretas, semana a semana, personalizadas pro seu negócio e mercado" },
+            { title: "Diagnóstico completo", desc: "Posicionamento real vs concorrentes em cada canal — Google, Instagram, Maps, AI" },
+            { title: "Mapa de demanda completo", desc: "Todos os termos com volume, intenção e CPC + oportunidades que concorrentes ignoram" },
+            { title: "Plano de ação de 90 dias", desc: "12 semanas com ações concretas, priorizadas por impacto, personalizadas pro seu negócio" },
+            { title: "12 briefings semanais", desc: "O que mudou no seu mercado, o que importa e o que fazer — entregue por email e WhatsApp" },
+            { title: "Monitoramento contínuo", desc: "Posição no Google, movimentos dos concorrentes, variação de demanda — por 90 dias" },
           ].map((d, i) => (
             <div key={i} style={{ display: "flex", gap: 14, marginBottom: 14, alignItems: "flex-start" }}>
               <div style={{ width: 5, height: 5, borderRadius: "50%", background: V.amber, marginTop: 8, flexShrink: 0 }} />
@@ -616,36 +817,17 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             </div>
           ))}
 
-          <div style={{ borderTop: `1px solid ${V.graphite}`, marginTop: 20, paddingTop: 20 }}>
-            <div style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.04em", color: V.ash, marginBottom: 12, textTransform: "uppercase" as const }}>
-              Acompanhamento semanal · R$ 197/mês
-            </div>
-            {[
-              { title: "Briefing toda semana", desc: "O que mudou no seu mercado, o que importa e o que fazer — em 3 minutos de leitura" },
-              { title: "Monitoramento contínuo", desc: "Posição no Google, movimentos dos concorrentes, variação de demanda" },
-              { title: "Ação da semana", desc: "Uma ação concreta pra executar — sem jargão, sem enrolação" },
-            ].map((d, i) => (
-              <div key={i} style={{ display: "flex", gap: 14, marginBottom: 14, alignItems: "flex-start" }}>
-                <div style={{ width: 5, height: 5, borderRadius: "50%", background: V.teal, marginTop: 8, flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontFamily: V.display, fontSize: 15, fontWeight: 600, color: V.white, marginBottom: 2 }}>{d.title}</div>
-                  <div style={{ fontSize: 13, color: V.ash, lineHeight: 1.5 }}>{d.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-
           <div style={{
             marginTop: 20, padding: "14px 18px", borderRadius: 10,
             background: V.graphite, border: `1px solid ${V.slate}`,
           }}>
             <p style={{ fontSize: 13, color: V.mist, lineHeight: 1.6, margin: 0 }}>
-              <strong style={{ color: V.amberSoft }}>Por que é diferente de "agentes de AI":</strong> Virô não gera conteúdo genérico nem faz promessas de automação mágica. Cruza dados reais do seu mercado local, toda semana, e traduz em ação específica pro seu negócio. Dado real → ação clara → resultado seu.
+              <strong style={{ color: V.amberSoft }}>Dado real → ação clara → resultado seu.</strong> Virô não gera conteúdo genérico nem faz promessas de automação. Cruza dados reais do seu mercado local, toda semana, e traduz em ação específica pro seu negócio.
             </p>
           </div>
         </div>
 
-        {/* ═══ COUPON + CTA ═══ */}
+        {/* Coupon + CTA */}
         <div style={{ textAlign: "center", marginBottom: 24, marginTop: 24 }}>
           <div style={{ marginBottom: 20 }}>
             <div style={{
@@ -674,11 +856,6 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 </button>
               )}
             </div>
-            {couponApplied && (
-              <div style={{ fontSize: 12, color: V.teal, marginTop: 8, fontFamily: V.mono }}>
-                Cupom {coupon} será validado no checkout
-              </div>
-            )}
           </div>
 
           <button onClick={() => onCheckout(couponApplied ? coupon : undefined)} disabled={loading} style={{
@@ -687,29 +864,21 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             cursor: "pointer", fontFamily: V.body, transition: "all 0.15s",
             opacity: loading ? 0.7 : 1,
           }}>
-            {loading ? "Redirecionando..." : couponApplied ? "Desbloquear o como" : "Desbloquear o como — R$ 497"}
+            {loading ? "Redirecionando..." : "Desbloquear o plano completo — R$ 397"}
           </button>
-          {couponApplied && (
-            <p style={{ fontSize: 14, color: V.night, marginTop: 12, fontWeight: 500 }}>
-              <span style={{ textDecoration: "line-through", color: V.ash }}>R$ 497</span>{" "}
-              <span style={{ color: V.teal }}>Desconto aplicado no checkout</span>
-            </p>
-          )}
-          {!couponApplied && (
-            <p style={{ fontSize: 13, color: V.ash, marginTop: 12 }}>
-              Pagamento único · Acompanhamento semanal opcional: R$ 197/mês
-            </p>
-          )}
+          <p style={{ fontSize: 13, color: V.ash, marginTop: 12 }}>
+            Pagamento único · tudo incluso · sem assinatura
+          </p>
         </div>
 
-        {/* ═══ DISCLAIMER ═══ */}
+        {/* Disclaimer */}
         <div style={{ textAlign: "center", padding: "20px 0" }}>
           <p style={{ fontSize: 12, color: V.ash, lineHeight: 1.7, maxWidth: 480, margin: "0 auto", fontStyle: "italic" }}>
             Como plano de treino — resultado depende da execução. Virô dá clareza e direção. Consistência é com você.
           </p>
         </div>
 
-        {/* ═══ FOOTER ═══ */}
+        {/* Footer */}
         <div style={{ textAlign: "center", paddingTop: 24, borderTop: `1px solid ${V.fog}` }}>
           <span style={{ fontFamily: V.display, fontSize: 16, fontWeight: 700, color: V.night, letterSpacing: "-0.03em" }}>Virô</span>
           <p style={{ fontSize: 11, color: V.ash, fontFamily: V.mono, marginTop: 4 }}>virolocal.com</p>

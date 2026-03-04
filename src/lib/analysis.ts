@@ -14,6 +14,7 @@ import {
   calculateCompositeInfluence,
 } from "./models/influence-score";
 import { executeStep5 } from "./pipeline/step5-gap-analysis";
+import { executeAIVisibilityCheck } from "./pipeline/ai-visibility";
 import {
   createApifySerpScraper,
   createApifyMapsScraper,
@@ -454,15 +455,52 @@ export async function runInstantAnalysis(
   console.log(`[Pipeline] Step 4 OK: influence ${step4.influence.totalInfluence}%`);
 
   // =========================================================================
-  // STEP 5 — Gap Analysis (Claude with real data)
+  // STEP 4b — AI Visibility Check (Claude Haiku, runs in parallel with Step 5 prep)
+  // =========================================================================
+  let aiVisibility: { score: number; summary: string; likelyMentioned: boolean; factors: any[]; competitorMentions: any[]; processingTimeMs: number } | null = null;
+  try {
+    const hasSite = !!(formData.site && formData.site.length > 3);
+    const rankedCount = serpPositions.filter(sp => sp.position && sp.position <= 10).length;
+
+    aiVisibility = await withTimeout(
+      executeAIVisibilityCheck(
+        input.product,
+        input.region,
+        input.businessName || input.product,
+        input.differentiator,
+        hasSite,
+        mapsPresence?.found || false,
+        mapsPresence?.rating || null,
+        mapsPresence?.reviewCount || null,
+        rankedCount,
+        serpPositions.length,
+        (formData.competitors || []).filter(c => c.name && c.name.length > 1),
+        claude,
+      ),
+      15_000,
+      "AI Visibility",
+    );
+    sourcesUsed.push("ai_visibility");
+    console.log(`[Pipeline] AI Visibility OK: score=${aiVisibility.score}, mentioned=${aiVisibility.likelyMentioned}`);
+  } catch (err) {
+    console.warn("[Pipeline] AI Visibility failed/skipped:", (err as Error).message);
+  }
+
+  // =========================================================================
+  // STEP 5 — Gap Analysis + Work Routes (Claude with real data + AI visibility)
   // =========================================================================
   let step5: Step5Output;
   try {
     step5 = await executeStep5(input, step1, step2, step3, step4, claude, {
       model: "claude-sonnet-4-5-20250929",
+      aiVisibility: aiVisibility ? {
+        score: aiVisibility.score,
+        summary: aiVisibility.summary,
+        likelyMentioned: aiVisibility.likelyMentioned,
+      } : null,
     });
     sourcesUsed.push("claude_gap_analysis");
-    console.log(`[Pipeline] Step 5 OK: gap analysis complete`);
+    console.log(`[Pipeline] Step 5 OK: gap analysis + work routes complete`);
   } catch (err) {
     console.error("[Pipeline] Step 5 failed:", err);
     step5 = {
@@ -507,6 +545,14 @@ export async function runInstantAnalysis(
     sourcesUsed,
     sourcesUnavailable,
     confidenceLevel,
+    // @ts-ignore — extending Momento1Result with runtime data
+    aiVisibility: aiVisibility ? {
+      score: aiVisibility.score,
+      summary: aiVisibility.summary,
+      likelyMentioned: aiVisibility.likelyMentioned,
+      factors: aiVisibility.factors,
+      competitorMentions: aiVisibility.competitorMentions,
+    } : null,
   };
 
   console.log(
