@@ -1,27 +1,38 @@
 // ============================================================================
-// Virô — Dashboard Index Redirect
-// /dashboard → redirects to /dashboard/[leadId] for the logged-in user
-// ============================================================================
+// Virô — Dashboard Index (redirect to lead-specific page)
 // File: src/app/dashboard/page.tsx
+// ============================================================================
 
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { getLeadsForUser } from "@/lib/auth";
+import { createClient } from "@supabase/supabase-js";
 
 export default async function DashboardIndex() {
   const { userId } = await auth();
 
   if (!userId) {
-    redirect("/sign-in?redirect_url=/dashboard");
+    redirect("/sign-in");
   }
 
-  const leads = await getLeadsForUser(userId);
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
-  if (leads.length === 0) {
-    // No paid leads — redirect to homepage
-    redirect("/");
+  // Find lead by clerk_user_id
+  const { data: lead } = await supabase
+    .from("leads")
+    .select("id")
+    .eq("clerk_user_id", userId)
+    .eq("status", "paid")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (lead) {
+    redirect(`/dashboard/${lead.id}`);
   }
 
-  // Redirect to most recent lead's dashboard
-  redirect(`/dashboard/${leads[0]}`);
+  // No paid lead found
+  redirect("/?error=no_plan");
 }

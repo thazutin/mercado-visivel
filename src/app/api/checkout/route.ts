@@ -1,12 +1,10 @@
 // ============================================================================
-// Virô — Checkout Route (Updated for R$999)
-// Creates Stripe Checkout session with lead_id in metadata
-// ============================================================================
+// Virô — Checkout Route (R$397)
 // File: src/app/api/checkout/route.ts
+// ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { trackEvent } from "@/lib/events";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
@@ -22,20 +20,16 @@ export async function POST(req: NextRequest) {
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://virolocal.com";
 
-    // ─── Pricing by locale ───
     const pricing: Record<string, { amount: number; currency: string }> = {
-      pt: { amount: 99900, currency: "brl" },    // R$999
-      en: { amount: 19900, currency: "usd" },     // $199
-      es: { amount: 19900, currency: "usd" },     // $199
+      pt: { amount: 39700, currency: "brl" },    // R$397
+      en: { amount: 9700, currency: "usd" },      // $97
+      es: { amount: 9700, currency: "usd" },      // $97
     };
     const { amount, currency } = pricing[locale || "pt"] || pricing.pt;
 
-    // ─── Build session params ───
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: "payment",
-      payment_method_types: currency === "brl"
-        ? ["card", "boleto"]
-        : ["card"],
+      payment_method_types: currency === "brl" ? ["card", "boleto"] : ["card"],
       line_items: [
         {
           price_data: {
@@ -44,10 +38,10 @@ export async function POST(req: NextRequest) {
               name: "Virô — Pacote Completo",
               description:
                 locale === "pt"
-                  ? "Diagnóstico completo + Plano 12 semanas + Briefing semanal"
+                  ? "Diagnóstico completo + Plano 90 dias + 12 briefings semanais"
                   : locale === "es"
-                  ? "Diagnóstico completo + Plan 12 semanas + Briefing semanal"
-                  : "Full diagnostic + 12-week plan + Weekly briefing",
+                  ? "Diagnóstico completo + Plan 90 días + 12 briefings semanales"
+                  : "Full diagnostic + 90-day plan + 12 weekly briefings",
             },
             unit_amount: amount,
           },
@@ -55,36 +49,24 @@ export async function POST(req: NextRequest) {
         },
       ],
       customer_email: email || undefined,
-      metadata: {
-        lead_id,
-        email: email || "",
-        locale: locale || "pt",
-      },
+      metadata: { lead_id, email: email || "", locale: locale || "pt" },
       success_url: `${baseUrl}/dashboard/${lead_id}?checkout=success`,
       cancel_url: `${baseUrl}/?checkout=cancelled`,
     };
 
-    // ─── Apply coupon if provided ───
+    // Apply coupon
     if (coupon) {
       try {
-        // Try as promotion code first
         const promoCodes = await stripe.promotionCodes.list({
-          code: coupon,
-          active: true,
-          limit: 1,
+          code: coupon, active: true, limit: 1,
         });
-
         if (promoCodes.data.length > 0) {
-          sessionParams.discounts = [
-            { promotion_code: promoCodes.data[0].id },
-          ];
+          sessionParams.discounts = [{ promotion_code: promoCodes.data[0].id }];
         } else {
-          // Try as coupon directly
           try {
             await stripe.coupons.retrieve(coupon);
             sessionParams.discounts = [{ coupon }];
           } catch {
-            // Invalid coupon — proceed without discount
             console.warn(`[Checkout] Invalid coupon: ${coupon}`);
           }
         }
@@ -95,19 +77,9 @@ export async function POST(req: NextRequest) {
 
     const session = await stripe.checkout.sessions.create(sessionParams);
 
-    // Track event
-    await trackEvent({
-      eventType: "checkout_initiated",
-      leadId: lead_id,
-      metadata: { currency, amount, coupon: coupon || null },
-    });
-
     return NextResponse.json({ url: session.url });
   } catch (err) {
     console.error("[Checkout] Error:", err);
-    return NextResponse.json(
-      { error: "Erro ao criar sessão de pagamento" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erro ao criar sessão de pagamento" }, { status: 500 });
   }
 }

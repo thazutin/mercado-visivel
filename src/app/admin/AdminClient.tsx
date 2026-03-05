@@ -1,371 +1,246 @@
-// ============================================================================
-// Virô — Admin Dashboard (Client)
-// Funnel visualization, leads table, feedback overview, audit
-// ============================================================================
-// File: src/app/admin/AdminClient.tsx
-
 "use client";
 
 import { useState } from "react";
 
-const C = {
-  night: "#161618", slate: "#3A3A40", zinc: "#6E6E78", ash: "#9E9EA8",
+const V = {
+  night: "#161618", zinc: "#6E6E78", ash: "#9E9EA8",
   fog: "#EAEAEE", cloud: "#F4F4F7", white: "#FEFEFF",
-  amber: "#CF8523", amberWash: "rgba(207,133,35,0.08)",
-  teal: "#2D9B83", tealWash: "rgba(45,155,131,0.08)",
-  coral: "#D9534F", coralWash: "rgba(217,83,79,0.08)",
-};
-const font = {
-  display: "'Satoshi', -apple-system, sans-serif",
-  mono: "'JetBrains Mono', monospace",
+  amber: "#CF8523", teal: "#2D9B83", coral: "#D9534F",
 };
 
-type Tab = "funnel" | "leads" | "feedback" | "audit";
-
-interface Props {
-  funnelCounts: Record<string, number>;
-  leads: any[];
-  feedback: any[];
-  diagnoses: any[];
-  plans: any[];
+interface Lead {
+  id: string; email: string; whatsapp: string; product: string; region: string;
+  status: string; plan_status: string; created_at: string; paid_at: string | null;
+  instagram: string; challenge: string; differentiator: string;
 }
 
-export default function AdminClient({ funnelCounts, leads, feedback, diagnoses, plans }: Props) {
-  const [tab, setTab] = useState<Tab>("funnel");
-  const [auditId, setAuditId] = useState<string | null>(null);
+interface Props {
+  leads: Lead[];
+  stats: {
+    total: number; paid: number; processing: number; withPlan: number;
+    diagnosesCount: number; conversionRate: string; avgPipelineMs: number;
+  };
+  pipelineRuns: any[];
+}
+
+export default function AdminClient({ leads, stats, pipelineRuns }: Props) {
+  const [tab, setTab] = useState<"funnel" | "leads" | "pipeline">("funnel");
+  const [search, setSearch] = useState("");
+
+  const filteredLeads = leads.filter(l =>
+    l.email?.toLowerCase().includes(search.toLowerCase()) ||
+    l.product?.toLowerCase().includes(search.toLowerCase()) ||
+    l.region?.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <div style={{ minHeight: "100vh", background: C.cloud }}>
-      {/* Nav */}
-      <nav style={{
-        position: "sticky", top: 0, zIndex: 100,
-        background: "rgba(254,254,255,0.92)", backdropFilter: "blur(16px)",
-        borderBottom: `1px solid ${C.fog}`, padding: "0 24px",
-      }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", gap: 12, padding: "12px 0" }}>
-          <span style={{ fontFamily: font.display, fontWeight: 700, fontSize: 18, color: C.night }}>Virô</span>
-          <span style={{ fontFamily: font.mono, fontSize: 10, color: C.amber, background: C.amberWash, padding: "2px 8px", borderRadius: 4, textTransform: "uppercase", letterSpacing: "0.04em" }}>admin</span>
-          <div style={{ flex: 1 }} />
-          {(["funnel", "leads", "feedback", "audit"] as Tab[]).map((t) => (
-            <button key={t} onClick={() => setTab(t)} style={{
-              fontFamily: font.display, fontSize: 13, fontWeight: 500,
-              color: tab === t ? C.amber : C.zinc,
-              background: tab === t ? C.amberWash : "transparent",
-              border: "none", borderRadius: 8, padding: "6px 14px", cursor: "pointer",
+    <div style={{ minHeight: "100vh", background: V.cloud, padding: "24px" }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
+          <div>
+            <h1 style={{ fontSize: 24, fontWeight: 700, color: V.night, margin: 0 }}>Virô Admin</h1>
+            <p style={{ fontSize: 13, color: V.ash, margin: "4px 0 0" }}>
+              {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+            </p>
+          </div>
+          <a href="/" style={{ fontSize: 13, color: V.zinc, textDecoration: "none" }}>← Voltar ao site</a>
+        </div>
+
+        {/* Stat cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 24 }}>
+          {[
+            { label: "Total Leads", value: stats.total, color: V.night },
+            { label: "Diagnósticos", value: stats.diagnosesCount, color: V.amber },
+            { label: "Pagos", value: stats.paid, color: V.teal },
+            { label: "Com Plano", value: stats.withPlan, color: V.teal },
+            { label: "Conversão", value: `${stats.conversionRate}%`, color: stats.paid > 0 ? V.teal : V.ash },
+            { label: "Pipeline Avg", value: `${(stats.avgPipelineMs / 1000).toFixed(1)}s`, color: V.zinc },
+          ].map((s, i) => (
+            <div key={i} style={{
+              background: V.white, borderRadius: 12, padding: "16px",
+              border: `1px solid ${V.fog}`, textAlign: "center",
             }}>
-              {t === "funnel" ? "Funil" : t === "leads" ? "Leads" : t === "feedback" ? "Feedback" : "Auditoria"}
+              <div style={{ fontSize: 24, fontWeight: 700, color: s.color }}>{s.value}</div>
+              <div style={{ fontSize: 10, color: V.ash, textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 4 }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: 4, marginBottom: 20 }}>
+          {(["funnel", "leads", "pipeline"] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)} style={{
+              padding: "8px 20px", borderRadius: 8, border: "none", cursor: "pointer",
+              background: tab === t ? V.night : V.white,
+              color: tab === t ? V.white : V.zinc,
+              fontSize: 13, fontWeight: 500,
+            }}>
+              {t === "funnel" ? "Funil" : t === "leads" ? "Leads" : "Pipeline"}
             </button>
           ))}
         </div>
-      </nav>
 
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 24px 80px" }}>
-        {tab === "funnel" && <FunnelView counts={funnelCounts} leads={leads} />}
-        {tab === "leads" && <LeadsView leads={leads} plans={plans} />}
-        {tab === "feedback" && <FeedbackView feedback={feedback} />}
-        {tab === "audit" && <AuditView diagnoses={diagnoses} auditId={auditId} onSelect={setAuditId} />}
-      </main>
-    </div>
-  );
-}
-
-// ─── FUNNEL ──────────────────────────────────────────────────────────
-
-function FunnelView({ counts, leads }: { counts: Record<string, number>; leads: any[] }) {
-  const steps = [
-    { key: "page_view", label: "Visitas" },
-    { key: "form_started", label: "Iniciou form" },
-    { key: "form_completed", label: "Completou form" },
-    { key: "instant_value_viewed", label: "Viu resultado" },
-    { key: "checkout_initiated", label: "Iniciou checkout" },
-    { key: "payment_success", label: "Pagou" },
-    { key: "dashboard_viewed", label: "Viu dashboard" },
-  ];
-
-  const maxCount = Math.max(...steps.map((s) => counts[s.key] || 0), 1);
-  const paidLeads = leads.filter((l) => l.status === "paid").length;
-  const totalLeads = leads.length;
-
-  return (
-    <div>
-      {/* Top stats */}
-      <div style={{ display: "flex", gap: 14, marginBottom: 28 }}>
-        {[
-          { label: "Total leads", value: totalLeads, color: C.night },
-          { label: "Pagos", value: paidLeads, color: C.teal },
-          { label: "Conversão", value: totalLeads > 0 ? `${((paidLeads / totalLeads) * 100).toFixed(1)}%` : "—", color: C.amber },
-          { label: "Último 30d", value: Object.values(counts).reduce((s, v) => s + v, 0), color: C.zinc },
-        ].map((stat, i) => (
-          <div key={i} style={{ flex: 1, background: C.white, borderRadius: 12, padding: "18px 20px", border: `1px solid ${C.fog}` }}>
-            <div style={{ fontFamily: font.mono, fontSize: 10, color: C.ash, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>{stat.label}</div>
-            <div style={{ fontFamily: font.display, fontSize: 28, fontWeight: 700, color: stat.color, letterSpacing: "-0.02em" }}>{stat.value}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Funnel bars */}
-      <div style={{ background: C.white, borderRadius: 14, padding: 24, border: `1px solid ${C.fog}` }}>
-        <div style={{ fontFamily: font.display, fontSize: 16, fontWeight: 600, color: C.night, marginBottom: 20 }}>Funil (últimos 30 dias)</div>
-        {steps.map((step, i) => {
-          const count = counts[step.key] || 0;
-          const width = maxCount > 0 ? (count / maxCount) * 100 : 0;
-          const prevCount = i > 0 ? counts[steps[i - 1].key] || 0 : count;
-          const convRate = prevCount > 0 && i > 0 ? ((count / prevCount) * 100).toFixed(0) : "";
-
-          return (
-            <div key={step.key} style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
-              <div style={{ fontFamily: font.display, fontSize: 13, color: C.zinc, minWidth: 130, textAlign: "right" }}>{step.label}</div>
-              <div style={{ flex: 1, background: C.cloud, borderRadius: 6, height: 28, overflow: "hidden", position: "relative" }}>
-                <div style={{
-                  width: `${Math.max(width, 2)}%`, height: "100%", borderRadius: 6,
-                  background: i === steps.length - 1 ? C.teal : C.night,
-                  transition: "width 0.5s ease",
-                }} />
-                <span style={{
-                  position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)",
-                  fontFamily: font.mono, fontSize: 11, fontWeight: 600,
-                  color: width > 20 ? C.white : C.slate,
-                }}>
-                  {count}
-                </span>
+        {/* Tab: Funnel */}
+        {tab === "funnel" && (
+          <div style={{ background: V.white, borderRadius: 14, padding: 24, border: `1px solid ${V.fog}` }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: V.night, marginBottom: 20 }}>Funil de Conversão</h3>
+            {[
+              { label: "Diagnósticos realizados", value: stats.diagnosesCount, pct: 100 },
+              { label: "Checkout iniciado", value: "—", pct: 0 },
+              { label: "Pagamento confirmado", value: stats.paid, pct: stats.diagnosesCount > 0 ? (stats.paid / stats.diagnosesCount) * 100 : 0 },
+              { label: "Plano gerado", value: stats.withPlan, pct: stats.paid > 0 ? (stats.withPlan / stats.paid) * 100 : 0 },
+            ].map((step, i) => (
+              <div key={i} style={{ marginBottom: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ fontSize: 13, color: V.zinc }}>{step.label}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{step.value}</span>
+                </div>
+                <div style={{ height: 8, borderRadius: 4, background: V.fog, overflow: "hidden" }}>
+                  <div style={{
+                    height: "100%", borderRadius: 4,
+                    background: i === 0 ? V.amber : V.teal,
+                    width: `${Math.max(step.pct, 2)}%`,
+                    transition: "width 0.5s",
+                  }} />
+                </div>
               </div>
-              <div style={{ fontFamily: font.mono, fontSize: 11, color: C.ash, minWidth: 40, textAlign: "right" }}>
-                {convRate ? `${convRate}%` : ""}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+            ))}
 
-// ─── LEADS ───────────────────────────────────────────────────────────
-
-function LeadsView({ leads, plans }: { leads: any[]; plans: any[] }) {
-  const planMap = new Map(plans.map((p) => [p.lead_id, p]));
-
-  return (
-    <div style={{ background: C.white, borderRadius: 14, overflow: "hidden", border: `1px solid ${C.fog}` }}>
-      <div style={{ padding: "18px 20px", borderBottom: `1px solid ${C.fog}` }}>
-        <span style={{ fontFamily: font.display, fontSize: 16, fontWeight: 600, color: C.night }}>Leads ({leads.length})</span>
-      </div>
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: font.display, fontSize: 13 }}>
-          <thead>
-            <tr style={{ background: C.cloud }}>
-              {["Email", "Produto", "Região", "Status", "Plano", "Semanas", "Data"].map((h) => (
-                <th key={h} style={{ padding: "10px 14px", textAlign: "left", color: C.ash, fontWeight: 500, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.04em", fontFamily: font.mono }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {leads.map((lead) => {
-              const plan = planMap.get(lead.id);
-              return (
-                <tr key={lead.id} style={{ borderBottom: `1px solid ${C.fog}` }}>
-                  <td style={{ padding: "10px 14px", color: C.night, fontWeight: 500 }}>{lead.email}</td>
-                  <td style={{ padding: "10px 14px", color: C.slate }}>{lead.product}</td>
-                  <td style={{ padding: "10px 14px", color: C.zinc }}>{lead.region}</td>
-                  <td style={{ padding: "10px 14px" }}>
-                    <StatusBadge status={lead.status} />
-                  </td>
-                  <td style={{ padding: "10px 14px" }}>
-                    <StatusBadge status={lead.plan_status || "none"} />
-                  </td>
-                  <td style={{ padding: "10px 14px", fontFamily: font.mono, fontSize: 12, color: C.zinc }}>
-                    {lead.weeks_active || 0}/12
-                  </td>
-                  <td style={{ padding: "10px 14px", fontFamily: font.mono, fontSize: 11, color: C.ash }}>
-                    {new Date(lead.created_at).toLocaleDateString("pt-BR")}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const config: Record<string, { bg: string; color: string }> = {
-    paid: { bg: C.tealWash, color: C.teal },
-    ready: { bg: C.tealWash, color: C.teal },
-    completed: { bg: C.amberWash, color: C.amber },
-    processing: { bg: C.amberWash, color: C.amber },
-    generating: { bg: C.amberWash, color: C.amber },
-    error: { bg: C.coralWash, color: C.coral },
-    none: { bg: C.cloud, color: C.ash },
-  };
-  const c = config[status] || config.none;
-  return (
-    <span style={{
-      fontFamily: font.mono, fontSize: 10, fontWeight: 500,
-      color: c.color, background: c.bg, padding: "3px 8px", borderRadius: 4,
-      textTransform: "uppercase", letterSpacing: "0.04em",
-    }}>
-      {status}
-    </span>
-  );
-}
-
-// ─── FEEDBACK ────────────────────────────────────────────────────────
-
-function FeedbackView({ feedback }: { feedback: any[] }) {
-  const triggers = ["post_instant_value", "post_diagnosis", "week_2", "week_4", "week_6", "week_10", "week_12"];
-  const triggerLabels: Record<string, string> = {
-    post_instant_value: "Pós resultado",
-    post_diagnosis: "Pós diagnóstico",
-    week_2: "Semana 2",
-    week_4: "Semana 4",
-    week_6: "Semana 6",
-    week_10: "Semana 10",
-    week_12: "Semana 12",
-  };
-
-  const byTrigger = triggers.map((t) => {
-    const items = feedback.filter((f) => f.trigger_point === t);
-    const avgRating = items.length > 0
-      ? items.reduce((s, f) => s + (f.rating || 0), 0) / items.length
-      : 0;
-    const lowRatings = items.filter((f) => f.rating !== null && f.rating <= 2).length;
-    const withComments = items.filter((f) => f.comment && f.comment.trim()).length;
-    return { trigger: t, label: triggerLabels[t], count: items.length, avgRating, lowRatings, withComments, items };
-  });
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {/* Summary cards */}
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-        {byTrigger.map((bt) => (
-          <div key={bt.trigger} style={{
-            flex: "1 1 140px", background: C.white, borderRadius: 12, padding: "16px 18px",
-            border: `1px solid ${bt.lowRatings > 0 ? "rgba(217,83,79,0.2)" : C.fog}`,
-          }}>
-            <div style={{ fontFamily: font.mono, fontSize: 10, color: C.ash, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 8 }}>{bt.label}</div>
-            <div style={{ fontFamily: font.display, fontSize: 24, fontWeight: 700, color: C.night, letterSpacing: "-0.02em" }}>
-              {bt.count > 0 ? bt.avgRating.toFixed(1) : "—"}
-            </div>
-            <div style={{ fontFamily: font.mono, fontSize: 10, color: C.zinc, marginTop: 4 }}>
-              {bt.count} resposta{bt.count !== 1 ? "s" : ""}{bt.lowRatings > 0 ? ` · ${bt.lowRatings} baixa${bt.lowRatings > 1 ? "s" : ""}` : ""}
+            {/* Recent products */}
+            <h4 style={{ fontSize: 14, fontWeight: 600, color: V.night, marginTop: 28, marginBottom: 12 }}>Produtos mais buscados</h4>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {Object.entries(
+                leads.reduce((acc: Record<string, number>, l) => {
+                  const p = l.product?.toLowerCase().trim();
+                  if (p) acc[p] = (acc[p] || 0) + 1;
+                  return acc;
+                }, {})
+              )
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10)
+                .map(([product, count], i) => (
+                  <span key={i} style={{
+                    fontSize: 12, padding: "4px 12px", borderRadius: 100,
+                    background: V.cloud, color: V.zinc,
+                  }}>
+                    {product} ({count})
+                  </span>
+                ))}
             </div>
           </div>
-        ))}
-      </div>
-
-      {/* Recent comments */}
-      <div style={{ background: C.white, borderRadius: 14, padding: 24, border: `1px solid ${C.fog}` }}>
-        <div style={{ fontFamily: font.display, fontSize: 16, fontWeight: 600, color: C.night, marginBottom: 16 }}>Comentários recentes</div>
-        {feedback.filter((f) => f.comment && f.comment.trim()).length === 0 ? (
-          <div style={{ fontFamily: font.display, fontSize: 14, color: C.ash }}>Nenhum comentário ainda.</div>
-        ) : (
-          feedback.filter((f) => f.comment && f.comment.trim()).slice(0, 20).map((f, i) => (
-            <div key={i} style={{ padding: "12px 0", borderBottom: i < 19 ? `1px solid ${C.fog}` : "none" }}>
-              <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 4 }}>
-                <span style={{
-                  fontFamily: font.mono, fontSize: 10, color: C.amber, background: C.amberWash,
-                  padding: "2px 6px", borderRadius: 4, textTransform: "uppercase",
-                }}>
-                  {triggerLabels[f.trigger_point] || f.trigger_point}
-                </span>
-                <span style={{ fontFamily: font.mono, fontSize: 10, color: f.rating <= 2 ? C.coral : C.teal }}>
-                  {f.rating_type === "nps" ? `NPS ${f.rating}` : `${f.rating}/5`}
-                </span>
-                <span style={{ fontFamily: font.mono, fontSize: 10, color: C.ash }}>
-                  {new Date(f.created_at).toLocaleDateString("pt-BR")}
-                </span>
-              </div>
-              <div style={{ fontFamily: font.display, fontSize: 14, color: C.slate, lineHeight: 1.5 }}>
-                "{f.comment}"
-              </div>
-            </div>
-          ))
         )}
-      </div>
-    </div>
-  );
-}
 
-// ─── AUDIT ───────────────────────────────────────────────────────────
-
-function AuditView({ diagnoses, auditId, onSelect }: { diagnoses: any[]; auditId: string | null; onSelect: (id: string | null) => void }) {
-  return (
-    <div style={{ display: "flex", gap: 16 }}>
-      {/* List */}
-      <div style={{ width: 350, background: C.white, borderRadius: 14, overflow: "hidden", border: `1px solid ${C.fog}` }}>
-        <div style={{ padding: "16px 18px", borderBottom: `1px solid ${C.fog}` }}>
-          <span style={{ fontFamily: font.display, fontSize: 14, fontWeight: 600, color: C.night }}>Diagnósticos ({diagnoses.length})</span>
-        </div>
-        {diagnoses.map((d) => (
-          <button key={d.id} onClick={() => onSelect(d.id === auditId ? null : d.id)} style={{
-            width: "100%", padding: "12px 18px", border: "none", borderBottom: `1px solid ${C.fog}`,
-            background: d.id === auditId ? C.amberWash : "transparent",
-            cursor: "pointer", textAlign: "left",
-          }}>
-            <div style={{ fontFamily: font.display, fontSize: 13, fontWeight: 500, color: C.night }}>
-              Lead: {d.lead_id?.slice(0, 8)}...
+        {/* Tab: Leads */}
+        {tab === "leads" && (
+          <div style={{ background: V.white, borderRadius: 14, padding: 24, border: `1px solid ${V.fog}` }}>
+            <input
+              type="text"
+              placeholder="Buscar por email, produto ou região..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{
+                width: "100%", padding: "10px 16px", borderRadius: 8,
+                border: `1px solid ${V.fog}`, fontSize: 13, marginBottom: 16,
+                outline: "none",
+              }}
+            />
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                <thead>
+                  <tr style={{ borderBottom: `1px solid ${V.fog}` }}>
+                    {["Email", "Produto", "Região", "Status", "Plano", "Data"].map(h => (
+                      <th key={h} style={{
+                        padding: "8px 12px", textAlign: "left", fontSize: 10,
+                        textTransform: "uppercase", letterSpacing: "0.05em", color: V.ash, fontWeight: 500,
+                      }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredLeads.slice(0, 50).map(l => (
+                    <tr key={l.id} style={{ borderBottom: `1px solid ${V.fog}` }}>
+                      <td style={{ padding: "10px 12px", color: V.night }}>{l.email}</td>
+                      <td style={{ padding: "10px 12px", color: V.zinc }}>{l.product}</td>
+                      <td style={{ padding: "10px 12px", color: V.zinc }}>{l.region}</td>
+                      <td style={{ padding: "10px 12px" }}>
+                        <span style={{
+                          fontSize: 11, padding: "2px 8px", borderRadius: 100,
+                          background: l.status === "paid" ? "rgba(45,155,131,0.1)" : l.status === "processing" ? "rgba(207,133,35,0.1)" : V.cloud,
+                          color: l.status === "paid" ? V.teal : l.status === "processing" ? V.amber : V.ash,
+                        }}>
+                          {l.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: "10px 12px" }}>
+                        <span style={{
+                          fontSize: 11, padding: "2px 8px", borderRadius: 100,
+                          background: l.plan_status === "ready" ? "rgba(45,155,131,0.1)" : V.cloud,
+                          color: l.plan_status === "ready" ? V.teal : V.ash,
+                        }}>
+                          {l.plan_status || "—"}
+                        </span>
+                      </td>
+                      <td style={{ padding: "10px 12px", color: V.ash, fontSize: 12 }}>
+                        {new Date(l.created_at).toLocaleDateString("pt-BR")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-              <span style={{ fontFamily: font.mono, fontSize: 10, color: C.zinc }}>
-                Vol: {d.total_volume} · Inf: {d.influence_percent}%
-              </span>
-              <StatusBadge status={d.confidence_level || "low"} />
-            </div>
-          </button>
-        ))}
-      </div>
+            {filteredLeads.length > 50 && (
+              <p style={{ fontSize: 12, color: V.ash, marginTop: 12 }}>Mostrando 50 de {filteredLeads.length}</p>
+            )}
+          </div>
+        )}
 
-      {/* Detail */}
-      <div style={{ flex: 1, background: C.white, borderRadius: 14, padding: 24, border: `1px solid ${C.fog}`, minHeight: 400 }}>
-        {auditId ? (
-          <AuditDetail diagnosis={diagnoses.find((d) => d.id === auditId)} />
-        ) : (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: C.ash, fontFamily: font.display }}>
-            Selecione um diagnóstico para auditar
+        {/* Tab: Pipeline */}
+        {tab === "pipeline" && (
+          <div style={{ background: V.white, borderRadius: 14, padding: 24, border: `1px solid ${V.fog}` }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: V.night, marginBottom: 20 }}>Performance do Pipeline</h3>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                <thead>
+                  <tr style={{ borderBottom: `1px solid ${V.fog}` }}>
+                    {["Data", "Duração", "Confiança", "Fontes"].map(h => (
+                      <th key={h} style={{
+                        padding: "8px 12px", textAlign: "left", fontSize: 10,
+                        textTransform: "uppercase", letterSpacing: "0.05em", color: V.ash, fontWeight: 500,
+                      }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {pipelineRuns.map((r, i) => (
+                    <tr key={i} style={{ borderBottom: `1px solid ${V.fog}` }}>
+                      <td style={{ padding: "10px 12px", color: V.zinc, fontSize: 12 }}>
+                        {new Date(r.created_at).toLocaleString("pt-BR")}
+                      </td>
+                      <td style={{ padding: "10px 12px", fontWeight: 600, color: V.night }}>
+                        {(r.total_duration_ms / 1000).toFixed(1)}s
+                      </td>
+                      <td style={{ padding: "10px 12px" }}>
+                        <span style={{
+                          fontSize: 11, padding: "2px 8px", borderRadius: 100,
+                          background: r.confidence_level === "high" ? "rgba(45,155,131,0.1)" : r.confidence_level === "medium" ? "rgba(207,133,35,0.1)" : V.cloud,
+                          color: r.confidence_level === "high" ? V.teal : r.confidence_level === "medium" ? V.amber : V.ash,
+                        }}>
+                          {r.confidence_level}
+                        </span>
+                      </td>
+                      <td style={{ padding: "10px 12px", fontSize: 12, color: V.ash }}>
+                        {(r.sources_used || []).length} fontes
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function AuditDetail({ diagnosis }: { diagnosis: any }) {
-  if (!diagnosis) return null;
-
-  return (
-    <div>
-      <div style={{ fontFamily: font.display, fontSize: 16, fontWeight: 600, color: C.night, marginBottom: 16 }}>
-        Auditoria: {diagnosis.lead_id?.slice(0, 8)}...
-      </div>
-
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 20 }}>
-        {[
-          { label: "Volume total", value: diagnosis.total_volume },
-          { label: "Influência", value: `${diagnosis.influence_percent}%` },
-          { label: "Market low", value: `R$${(diagnosis.market_low || 0).toLocaleString("pt-BR")}` },
-          { label: "Market high", value: `R$${(diagnosis.market_high || 0).toLocaleString("pt-BR")}` },
-          { label: "Confiança", value: diagnosis.confidence_level },
-          { label: "Fontes", value: diagnosis.source },
-        ].map((m, i) => (
-          <div key={i} style={{ flex: "1 1 120px", background: C.cloud, borderRadius: 10, padding: "12px 14px" }}>
-            <div style={{ fontFamily: font.mono, fontSize: 9, color: C.ash, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>{m.label}</div>
-            <div style={{ fontFamily: font.display, fontSize: 15, fontWeight: 600, color: C.night }}>{m.value}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ fontFamily: font.mono, fontSize: 10, color: C.ash, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 8 }}>
-        Raw Data (JSON)
-      </div>
-      <pre style={{
-        background: C.night, color: "#8BE9FD", borderRadius: 10, padding: 16,
-        fontFamily: font.mono, fontSize: 11, lineHeight: 1.6,
-        overflow: "auto", maxHeight: 400,
-      }}>
-        {JSON.stringify(diagnosis, null, 2)}
-      </pre>
     </div>
   );
 }

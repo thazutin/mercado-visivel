@@ -1,16 +1,13 @@
 // ============================================================================
-// Virô — Admin Dashboard (Server)
-// Protected by Clerk. Shows funnel, leads, feedback, audit.
-// ============================================================================
+// Virô — Admin Dashboard
 // File: src/app/admin/page.tsx
+// Protected by checking Clerk user ID against ADMIN_CLERK_USER_IDS env var
+// ============================================================================
 
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import AdminClient from "./AdminClient";
-
-// Add admin Clerk user IDs here
-const ADMIN_USER_IDS = (process.env.ADMIN_CLERK_USER_IDS || "").split(",").filter(Boolean);
 
 function getSupabase() {
   return createClient(
@@ -21,61 +18,54 @@ function getSupabase() {
 
 export default async function AdminPage() {
   const { userId } = await auth();
+  const adminIds = (process.env.ADMIN_CLERK_USER_IDS || "").split(",").map(s => s.trim());
 
-  if (!userId || (ADMIN_USER_IDS.length > 0 && !ADMIN_USER_IDS.includes(userId))) {
+  if (!userId || !adminIds.includes(userId)) {
     redirect("/");
   }
 
   const supabase = getSupabase();
 
-  // ─── Load funnel data (last 30 days) ───
-  const { data: funnelData } = await supabase
-    .from("events")
-    .select("event_type, created_at")
-    .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-    .order("created_at", { ascending: false });
-
-  // ─── Load active leads ───
+  // Fetch all leads
   const { data: leads } = await supabase
     .from("leads")
-    .select("id, email, product, region, status, plan_status, weeks_active, created_at, paid_at, instagram")
-    .order("created_at", { ascending: false })
-    .limit(100);
-
-  // ─── Load feedback summary ───
-  const { data: feedback } = await supabase
-    .from("feedback")
-    .select("trigger_point, rating, rating_type, comment, created_at, lead_id")
+    .select("id, email, whatsapp, product, region, status, plan_status, created_at, paid_at, instagram, challenge, differentiator")
     .order("created_at", { ascending: false })
     .limit(200);
 
-  // ─── Load diagnoses for audit ───
-  const { data: diagnoses } = await supabase
+  // Fetch diagnoses count
+  const { count: diagnosesCount } = await supabase
     .from("diagnoses")
-    .select("id, lead_id, confidence_level, source, total_volume, influence_percent, market_low, market_high, created_at")
+    .select("*", { count: "exact", head: true });
+
+  // Fetch pipeline runs for performance
+  const { data: pipelineRuns } = await supabase
+    .from("pipeline_runs")
+    .select("total_duration_ms, confidence_level, sources_used, created_at")
     .order("created_at", { ascending: false })
     .limit(50);
 
-  // ─── Load plans ───
-  const { data: plans } = await supabase
-    .from("plans")
-    .select("id, lead_id, status, plan_version, view_count, generated_at")
-    .order("generated_at", { ascending: false })
-    .limit(50);
-
-  // ─── Compute funnel counts ───
-  const funnelCounts: Record<string, number> = {};
-  for (const event of funnelData || []) {
-    funnelCounts[event.event_type] = (funnelCounts[event.event_type] || 0) + 1;
-  }
+  // Calculate funnel metrics
+  const total = leads?.length || 0;
+  const paid = leads?.filter(l => l.status === "paid").length || 0;
+  const processing = leads?.filter(l => l.status === "processing").length || 0;
+  const withPlan = leads?.filter(l => l.plan_status === "ready").length || 0;
 
   return (
     <AdminClient
-      funnelCounts={funnelCounts}
       leads={leads || []}
-      feedback={feedback || []}
-      diagnoses={diagnoses || []}
-      plans={plans || []}
+      stats={{
+        total,
+        paid,
+        processing,
+        withPlan,
+        diagnosesCount: diagnosesCount || 0,
+        conversionRate: total > 0 ? ((paid / total) * 100).toFixed(1) : "0",
+        avgPipelineMs: pipelineRuns?.length
+          ? Math.round(pipelineRuns.reduce((s, r) => s + (r.total_duration_ms || 0), 0) / pipelineRuns.length)
+          : 0,
+      }}
+      pipelineRuns={pipelineRuns || []}
     />
   );
 }
