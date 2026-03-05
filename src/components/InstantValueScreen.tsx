@@ -777,132 +777,31 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           )}
         </Card>
 
+
         {/* ════════════════════════════════════════════════════════════════
-            CTA — E AGORA?
+            BLOCO DE VENDA — E AGORA? + OFERTA + AMOSTRAS
             ════════════════════════════════════════════════════════════════ */}
 
-        <div style={{ padding: "0 8px", marginBottom: 24 }}>
+        {/* E agora? */}
+        <div style={{ padding: "0 8px", marginBottom: 20 }}>
           <p style={{ fontSize: 20, color: V.night, lineHeight: 1.5, fontFamily: V.display, marginBottom: 12, fontWeight: 700 }}>
             E agora? O que eu faço com isso?
           </p>
           <p style={{ fontSize: 14, color: V.zinc, lineHeight: 1.75, marginBottom: 8 }}>
-            Não é sobre seu marketing ser ruim hoje. É sobre não ter uma camada de estratégia 
-            que te permita trabalhar com intenção — para capturar um mercado que já existe 
-            na sua região e que, sem direção, vai inteiro para outros.
+            Não é sobre seu marketing ser ruim hoje. É sobre não ter uma camada de estratégia baseada em dados
+            que te permita trabalhar com intenção — para capturar um mercado que já existe na sua região e que,
+            sem direção, vai inteiro para outros.
           </p>
           <p style={{ fontSize: 15, color: V.night, lineHeight: 1.75, fontWeight: 600 }}>
             Vá daqui para lá: aumente a probabilidade de vender mais no futuro.
           </p>
         </div>
 
-        {/* ─── Sample Previews ─── */}
-        <div style={{ marginBottom: 24 }}>
-          <SectionLabel color={V.ash}>O que você recebe — veja amostras reais</SectionLabel>
-
-          {/* Preview 1: Diagnóstico Completo */}
-          <div style={{
-            background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`,
-            padding: "20px", marginBottom: 12, position: "relative" as const,
-            overflow: "hidden",
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <Chip color={V.amber}>Diagnóstico Completo</Chip>
-              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>Amostra</span>
-            </div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: V.night, marginBottom: 8 }}>
-              Posicionamento competitivo — {product}
-            </div>
-            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-              {["Google", "Instagram", "Maps", "AI"].map((ch, i) => (
-                <div key={i} style={{
-                  flex: 1, padding: "10px 8px", background: V.cloud, borderRadius: 8, textAlign: "center",
-                }}>
-                  <div style={{ fontFamily: V.mono, fontSize: 14, fontWeight: 700, color: V.night }}>—</div>
-                  <div style={{ fontFamily: V.mono, fontSize: 8, color: V.ash, textTransform: "uppercase" as const, marginTop: 2 }}>{ch}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ fontSize: 12, color: V.zinc, lineHeight: 1.6 }}>
-              Análise completa de posicionamento em cada canal, comparativo direto com seus concorrentes, 
-              oportunidades de palavras-chave que ninguém está atacando e análise de conteúdo.
-            </div>
-            <div style={{
-              position: "absolute" as const, bottom: 0, left: 0, right: 0, height: 40,
-              background: `linear-gradient(transparent, ${V.white})`,
-            }} />
+        {/* Oferta */}
+        <div style={{ background: V.night, borderRadius: 14, padding: "32px 24px", marginBottom: 24, color: V.white }}>
+          <div style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.04em", color: V.ash, marginBottom: 4, textTransform: "uppercase" as const }}>
+            Dê o próximo passo com a Virô
           </div>
-
-          {/* Preview 2: Plano de 90 dias */}
-          <div style={{
-            background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`,
-            padding: "20px", marginBottom: 12, position: "relative" as const,
-            overflow: "hidden",
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <Chip color={V.teal}>Plano de 90 dias</Chip>
-              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>Amostra</span>
-            </div>
-            {[
-              { week: "Semana 1-2", action: "Criar e otimizar perfil no Google Meu Negócio", tag: "Presença" },
-              { week: "Semana 3-4", action: "Definir posicionamento + primeiros conteúdos", tag: "Conteúdo" },
-              { week: "Semana 5-8", action: "Construir autoridade local com ações específicas", tag: "Autoridade" },
-            ].map((w, i) => (
-              <div key={i} style={{
-                display: "flex", gap: 12, padding: "10px 0",
-                borderBottom: i < 2 ? `1px solid ${V.fog}` : "none",
-                alignItems: "center",
-              }}>
-                <div style={{ fontFamily: V.mono, fontSize: 11, color: V.ash, width: 80, flexShrink: 0 }}>
-                  {w.week}
-                </div>
-                <div style={{ fontSize: 13, color: V.night, flex: 1 }}>{w.action}</div>
-                <Chip color={V.teal}>{w.tag}</Chip>
-              </div>
-            ))}
-            <div style={{ fontSize: 12, color: V.ash, textAlign: "center", marginTop: 8 }}>
-              + 9 semanas de ações detalhadas e priorizadas
-            </div>
-          </div>
-
-          {/* Preview 3: Briefing Semanal */}
-          <div style={{
-            background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`,
-            padding: "20px", position: "relative" as const,
-            overflow: "hidden",
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <Chip color={V.amber}>Briefing Semanal</Chip>
-              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>Amostra</span>
-            </div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: V.night, marginBottom: 6 }}>
-              Semana 3 — O que mudou no seu mercado
-            </div>
-            <div style={{ fontSize: 13, color: V.zinc, lineHeight: 1.7, marginBottom: 12 }}>
-              "Seu concorrente principal subiu 4 posições para 'implante dentário mauá'. 
-              Buscas por 'dentista perto de mim' aumentaram 12% essa semana. 
-              Ação recomendada: publicar depoimento de paciente com foco em implantes."
-            </div>
-            <div style={{ display: "flex", gap: 6 }}>
-              <Chip color={V.ash}>Email</Chip>
-              <Chip color={V.ash}>WhatsApp</Chip>
-              <Chip color={V.ash}>3 min leitura</Chip>
-            </div>
-          </div>
-        </div>
-
-        {/* ─── Dê o próximo passo ─── */}
-        <div style={{ padding: "0 8px", marginBottom: 16 }}>
-          <p style={{ fontSize: 17, color: V.night, lineHeight: 1.5, fontFamily: V.display, fontWeight: 700 }}>
-            Dê o próximo passo com a Virô.
-          </p>
-          <p style={{ fontSize: 14, color: V.zinc, lineHeight: 1.75 }}>
-            Vá de onde você está para onde quer chegar. Aumente a probabilidade de 
-            vender mais no futuro — com clareza, dados e um plano que faz sentido pro seu negócio.
-          </p>
-        </div>
-
-        {/* What's included */}
-        <div style={{ background: V.night, borderRadius: 14, padding: "32px 24px", marginBottom: 12, color: V.white }}>
           <div style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.04em", color: V.ash, marginBottom: 8, textTransform: "uppercase" as const }}>
             Pacote completo · pagamento único
           </div>
@@ -928,50 +827,159 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               </div>
             </div>
           ))}
+
+          {/* CTA inside dark block */}
+          <div style={{ textAlign: "center", marginTop: 24, paddingTop: 20, borderTop: `1px solid ${V.graphite}` }}>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                background: V.graphite, border: `1px solid ${couponApplied ? V.teal : V.slate}`,
+                borderRadius: 10, padding: "4px 4px 4px 16px", maxWidth: 300, width: "100%",
+              }}>
+                <input
+                  type="text"
+                  placeholder="Código promocional"
+                  value={coupon}
+                  onChange={(e: any) => { setCoupon(e.target.value.toUpperCase()); setCouponApplied(false); }}
+                  style={{ border: "none", outline: "none", fontSize: 13, fontFamily: V.mono, letterSpacing: "0.04em", color: V.white, background: "transparent", flex: 1, padding: "8px 0" }}
+                />
+                {coupon.length > 0 && (
+                  <button
+                    onClick={() => setCouponApplied(true)}
+                    style={{
+                      background: couponApplied ? V.teal : V.amber, color: V.white,
+                      border: "none", borderRadius: 8, padding: "6px 14px",
+                      fontSize: 11, fontFamily: V.mono, fontWeight: 500, cursor: "pointer",
+                    }}
+                  >
+                    {couponApplied ? "✓" : "Aplicar"}
+                  </button>
+                )}
+              </div>
+            </div>
+            <button onClick={() => onCheckout(couponApplied ? coupon : undefined)} disabled={loading} style={{
+              background: V.white, color: V.night, border: "none",
+              padding: "16px 36px", borderRadius: 10, fontSize: 15, fontWeight: 600,
+              cursor: "pointer", fontFamily: V.body, transition: "all 0.15s",
+              opacity: loading ? 0.7 : 1, width: "100%", maxWidth: 340,
+            }}>
+              {loading ? "Redirecionando..." : "Desbloquear o plano completo — R$ 397"}
+            </button>
+            <p style={{ fontSize: 12, color: V.ash, marginTop: 10 }}>
+              Pagamento único · tudo incluso · sem assinatura
+            </p>
+          </div>
         </div>
 
-        {/* Coupon + CTA */}
-        <div style={{ textAlign: "center", marginBottom: 24, marginTop: 24 }}>
-          <div style={{ marginBottom: 20 }}>
-            <div style={{
-              display: "inline-flex", alignItems: "center", gap: 8,
-              background: V.white, border: `1px solid ${couponApplied ? V.teal : V.fog}`,
-              borderRadius: 10, padding: "4px 4px 4px 16px", maxWidth: 340, width: "100%",
-            }}>
-              <input
-                type="text"
-                placeholder="Código promocional"
-                value={coupon}
-                onChange={(e: any) => { setCoupon(e.target.value.toUpperCase()); setCouponApplied(false); }}
-                style={{ border: "none", outline: "none", fontSize: 14, fontFamily: V.mono, letterSpacing: "0.04em", color: V.night, background: "transparent", flex: 1, padding: "10px 0" }}
-              />
-              {coupon.length > 0 && (
-                <button
-                  onClick={() => setCouponApplied(true)}
-                  style={{
-                    background: couponApplied ? V.teal : V.night, color: V.white,
-                    border: "none", borderRadius: 8, padding: "8px 16px",
-                    fontSize: 12, fontFamily: V.mono, fontWeight: 500, cursor: "pointer",
-                    transition: "all 0.15s", whiteSpace: "nowrap" as const,
-                  }}
-                >
-                  {couponApplied ? "✓ Aplicado" : "Aplicar"}
-                </button>
-              )}
+        {/* ─── Amostras — bloco visual único ─── */}
+        <div style={{
+          background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`,
+          padding: "28px 24px", marginBottom: 24, overflow: "hidden",
+        }}>
+          <SectionLabel color={V.amber}>Prévia do que você recebe</SectionLabel>
+          <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, marginTop: -8, marginBottom: 20 }}>
+            Cada entrega é personalizada para o seu negócio, região e mercado. Exemplos reais do formato:
+          </p>
+
+          {/* Sample 1: Diagnóstico */}
+          <div style={{
+            padding: "20px", background: V.cloud, borderRadius: 10, marginBottom: 16,
+            borderLeft: `3px solid ${V.amber}`,
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: V.night }}>Diagnóstico Completo</span>
+              <Chip color={V.amber}>Entrega 1</Chip>
+            </div>
+            <div style={{ fontSize: 13, color: V.zinc, lineHeight: 1.7, marginBottom: 12 }}>
+              Análise detalhada de posicionamento em cada canal digital. Inclui:
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+              {[
+                "Mapa completo de demanda (todos os termos)",
+                "Posição SERP vs cada concorrente",
+                "Análise de conteúdo do Instagram",
+                "Score de visibilidade em AI",
+                "Comparativo de alcance e engajamento",
+                "Oportunidades que ninguém está atacando",
+              ].map((item, i) => (
+                <div key={i} style={{ display: "flex", gap: 6, alignItems: "flex-start" }}>
+                  <span style={{ color: V.teal, fontSize: 10, marginTop: 3, flexShrink: 0 }}>✓</span>
+                  <span style={{ fontSize: 12, color: V.zinc, lineHeight: 1.4 }}>{item}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          <button onClick={() => onCheckout(couponApplied ? coupon : undefined)} disabled={loading} style={{
-            background: V.night, color: V.white, border: `1px solid ${V.amber}`,
-            padding: "16px 36px", borderRadius: 10, fontSize: 15, fontWeight: 600,
-            cursor: "pointer", fontFamily: V.body, transition: "all 0.15s",
-            opacity: loading ? 0.7 : 1,
+          {/* Sample 2: Plano 90 dias */}
+          <div style={{
+            padding: "20px", background: V.cloud, borderRadius: 10, marginBottom: 16,
+            borderLeft: `3px solid ${V.teal}`,
           }}>
-            {loading ? "Redirecionando..." : "Desbloquear o plano completo — R$ 397"}
-          </button>
-          <p style={{ fontSize: 13, color: V.ash, marginTop: 12 }}>
-            Pagamento único · tudo incluso · sem assinatura
-          </p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: V.night }}>Plano de Ação — 90 dias</span>
+              <Chip color={V.teal}>Entrega 2</Chip>
+            </div>
+            <div style={{ fontSize: 13, color: V.zinc, lineHeight: 1.7, marginBottom: 12 }}>
+              Cada semana tem uma ação principal com roteiro detalhado:
+            </div>
+            {[
+              { week: "Sem 1", title: "Google Meu Negócio: criar perfil otimizado", detail: "Passo a passo de como configurar, fotos ideais, categorias certas, primeiros 5 reviews" },
+              { week: "Sem 3", title: "Primeiro conteúdo Instagram com roteiro completo", detail: "Formato: Reels 30s. Roteiro: gancho + diferencial + CTA. Referência de captação. Hashtags locais" },
+              { week: "Sem 6", title: "Campanha local de avaliações", detail: "Script de abordagem por WhatsApp, template de pedido de review, meta: 10 avaliações em 2 semanas" },
+            ].map((w, i) => (
+              <div key={i} style={{
+                padding: "12px 14px", borderRadius: 8,
+                background: V.white, marginBottom: 8,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontFamily: V.mono, fontSize: 10, color: V.teal, fontWeight: 600 }}>{w.week}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{w.title}</span>
+                </div>
+                <div style={{ fontSize: 12, color: V.ash, lineHeight: 1.5, paddingLeft: 42 }}>
+                  {w.detail}
+                </div>
+              </div>
+            ))}
+            <div style={{ fontSize: 11, color: V.ash, textAlign: "center", marginTop: 4 }}>
+              + 9 semanas com o mesmo nível de detalhe
+            </div>
+          </div>
+
+          {/* Sample 3: Briefing Semanal */}
+          <div style={{
+            padding: "20px", background: V.cloud, borderRadius: 10,
+            borderLeft: `3px solid #8B5CF6`,
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: V.night }}>Briefing Semanal</span>
+              <Chip color={V.ash}>12 entregas</Chip>
+            </div>
+            <div style={{ fontSize: 13, color: V.zinc, lineHeight: 1.7, marginBottom: 12 }}>
+              Toda semana por email e WhatsApp. Exemplo da Semana 4:
+            </div>
+            <div style={{
+              padding: "14px 16px", background: V.white, borderRadius: 8,
+              fontSize: 13, color: V.zinc, lineHeight: 1.7,
+            }}>
+              <div style={{ fontWeight: 600, color: V.night, marginBottom: 6 }}>O que mudou essa semana:</div>
+              <div style={{ marginBottom: 8 }}>
+                Concorrente @clinica_xyz publicou 3 Reels sobre implantes e ganhou 2.400 views.
+                Buscas por "dentista perto de mim" cresceram 8% na região.
+                Seu perfil no Google Meu Negócio já aparece para 1 novo termo.
+              </div>
+              <div style={{ fontWeight: 600, color: V.night, marginBottom: 6 }}>Ação da semana:</div>
+              <div style={{ marginBottom: 8 }}>
+                Gravar Reels mostrando antes/depois de implante (com autorização do paciente).
+                Roteiro: "Sabe aquele sorriso que você perdeu? Olha o que a [nome] recuperou em 2 consultas."
+                Formato: 15-30s, vertical, legenda embutida. Postar terça ou quinta entre 11h-13h.
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <Chip color={V.ash}>Email</Chip>
+                <Chip color={V.ash}>WhatsApp</Chip>
+                <Chip color={V.ash}>3 min leitura</Chip>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Disclaimer */}

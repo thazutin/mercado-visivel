@@ -152,10 +152,61 @@ export async function runInstantAnalysis(
   let step1: Step1Output;
   try {
     step1 = await executeStep1(input, claude, {
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-sonnet-4-5-20250929",
       maxRetries: 1,
     });
     console.log(`[Pipeline] Step 1 OK: ${step1.termCount} terms generated`);
+
+    // Fallback: if too few terms, supplement with a direct Claude query
+    if (step1.termCount < 10) {
+      console.warn(`[Pipeline] Step 1 generated only ${step1.termCount} terms — running fallback`);
+      try {
+        const fallbackResponse = await claude.createMessage({
+          model: "claude-sonnet-4-5-20250929",
+          max_tokens: 3000,
+          temperature: 0.3,
+          messages: [{
+            role: "user",
+            content: `Gere 20 termos de busca de alta intenção local para "${input.product}" na região "${input.region}".
+            
+Foco: termos que um consumidor digita no Google quando está pronto para comprar ou agendar.
+Inclua variações com: nome da cidade, "perto de mim", preço, melhor, agendar, telefone, avaliação.
+
+Responda APENAS em JSON, sem markdown:
+{
+  "terms": [
+    { "term": "termo aqui", "intent": "transactional", "intentWeight": 0.9, "category": "core", "rationale": "motivo" }
+  ]
+}`,
+          }],
+        });
+        const fallbackText = fallbackResponse.content
+          .filter((c: any) => c.type === "text")
+          .map((c: any) => c.text)
+          .join("");
+        const cleaned = fallbackText.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+        const parsed = JSON.parse(cleaned);
+        if (parsed.terms && parsed.terms.length > 0) {
+          // Merge with existing terms, avoiding duplicates
+          const existingTerms = new Set(step1.terms.map(t => t.term.toLowerCase()));
+          const newTerms = parsed.terms
+            .filter((t: any) => !existingTerms.has(t.term.toLowerCase()))
+            .map((t: any) => ({
+              term: t.term,
+              intent: t.intent || "transactional",
+              intentWeight: t.intentWeight || 0.8,
+              category: t.category || "core",
+              rationale: t.rationale || "fallback generation",
+            }));
+          step1.terms = [...step1.terms, ...newTerms];
+          step1.termCount = step1.terms.length;
+          sourcesUsed.push("claude_fallback_terms");
+          console.log(`[Pipeline] Fallback added ${newTerms.length} terms — total now ${step1.termCount}`);
+        }
+      } catch (fallbackErr) {
+        console.error("[Pipeline] Fallback term generation failed:", fallbackErr);
+      }
+    }
   } catch (err) {
     console.error("[Pipeline] Step 1 failed:", err);
     throw new Error("Pipeline aborted: term generation failed");
