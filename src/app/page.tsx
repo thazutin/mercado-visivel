@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import ProgressBar from "@/components/ProgressBar";
 import ProcessingScreen from "@/components/ProcessingScreen";
 import InstantValueScreen from "@/components/InstantValueScreen";
-import { initialFormData, type LeadFormData } from "@/lib/schema";
+import { initialFormData, type LeadFormData, stepValidation } from "@/lib/schema";
 import { dictionaries, type Locale } from "@/lib/i18n";
 import Script from "next/script";
 
@@ -340,6 +340,7 @@ export default function Home() {
                 checked={noInstagram}
                 onChange={(e: any) => {
                   setNoInstagram(e.target.checked);
+                  updateField("noInstagram", e.target.checked);
                   if (e.target.checked) updateField("instagram", "");
                 }}
                 style={{ width: 16, height: 16, accentColor: "#CF8523", cursor: "pointer" }}
@@ -563,11 +564,16 @@ export default function Home() {
               {formStep > 1 ? (
                 <button onClick={() => setFormStep(formStep - 1)} style={{ background: "none", border: "none", color: V.ash, fontSize: 14, cursor: "pointer", padding: "10px 20px", fontFamily: V.body }}>{t.back}</button>
               ) : <div />}
-              <button onClick={() => { if (formStep < 4) setFormStep(formStep + 1); else handleSubmit(); }} style={{
-                background: formStep === 4 ? V.amber : V.night, color: V.white, border: "none",
-                padding: "12px 28px", borderRadius: 10, fontSize: 14, fontWeight: 600,
-                cursor: "pointer", transition: "all 0.15s", fontFamily: V.body,
-              }}>
+              <button
+                onClick={() => { if (formStep < 4) setFormStep(formStep + 1); else handleSubmit(); }}
+                disabled={!(stepValidation as any)[`step${formStep}`]?.(formData)}
+                style={{
+                  background: formStep === 4 ? V.amber : V.night, color: V.white, border: "none",
+                  padding: "12px 28px", borderRadius: 10, fontSize: 14, fontWeight: 600,
+                  cursor: (stepValidation as any)[`step${formStep}`]?.(formData) ? "pointer" : "not-allowed",
+                  transition: "all 0.15s", fontFamily: V.body,
+                  opacity: (stepValidation as any)[`step${formStep}`]?.(formData) ? 1 : 0.4,
+                }}>
                 {formStep === 4 ? t.submit : t.next}
               </button>
             </div>
