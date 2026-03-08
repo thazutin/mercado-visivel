@@ -155,61 +155,73 @@ export async function runInstantAnalysis(
       model: "claude-sonnet-4-5-20250929",
       maxRetries: 1,
     });
-    console.log(`[Pipeline] Step 1 OK: ${step1.termCount} terms generated`);
-
-    // Fallback: if too few terms, supplement with a direct Claude query
-    if (step1.termCount < 10) {
-      console.warn(`[Pipeline] Step 1 generated only ${step1.termCount} terms — running fallback`);
-      try {
-        const fallbackResponse = await claude.createMessage({
-          model: "claude-sonnet-4-5-20250929",
-          max_tokens: 3000,
-          temperature: 0.3,
-          messages: [{
-            role: "user",
-            content: `Gere 20 termos de busca de alta intenção local para "${input.product}" na região "${input.region}".
-            
-Foco: termos que um consumidor digita no Google quando está pronto para comprar ou agendar.
-Inclua variações com: nome da cidade, "perto de mim", preço, melhor, agendar, telefone, avaliação.
-
-Responda APENAS em JSON, sem markdown:
-{
-  "terms": [
-    { "term": "termo aqui", "intent": "transactional", "intentWeight": 0.9, "category": "core", "rationale": "motivo" }
-  ]
-}`,
-          }],
-        });
-        const fallbackText = fallbackResponse.content
-          .filter((c: any) => c.type === "text")
-          .map((c: any) => c.text)
-          .join("");
-        const cleaned = fallbackText.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
-        const parsed = JSON.parse(cleaned);
-        if (parsed.terms && parsed.terms.length > 0) {
-          // Merge with existing terms, avoiding duplicates
-          const existingTerms = new Set(step1.terms.map(t => t.term.toLowerCase()));
-          const newTerms = parsed.terms
-            .filter((t: any) => !existingTerms.has(t.term.toLowerCase()))
-            .map((t: any) => ({
-              term: t.term,
-              intent: t.intent || "transactional",
-              intentWeight: t.intentWeight || 0.8,
-              category: t.category || "core",
-              rationale: t.rationale || "fallback generation",
-            }));
-          step1.terms = [...step1.terms, ...newTerms];
-          step1.termCount = step1.terms.length;
-          sourcesUsed.push("claude_fallback_terms");
-          console.log(`[Pipeline] Fallback added ${newTerms.length} terms — total now ${step1.termCount}`);
-        }
-      } catch (fallbackErr) {
-        console.error("[Pipeline] Fallback term generation failed:", fallbackErr);
-      }
-    }
+    console.log(`[Pipeline] Step 1 OK: ${step1.termCount} terms generated. First 3: ${step1.terms.slice(0, 3).map(t => t.term).join(', ')}`);
   } catch (err) {
     console.error("[Pipeline] Step 1 failed:", err);
-    throw new Error("Pipeline aborted: term generation failed");
+    // Create a minimal step1 so fallback can still run
+    step1 = {
+      terms: [],
+      termCount: 0,
+      generationModel: "fallback",
+      promptVersion: "fallback",
+      processingTimeMs: 0,
+    } as Step1Output;
+  }
+
+  // ALWAYS supplement if we have fewer than 15 terms (whether step1 failed or returned few)
+  if (step1.termCount < 15) {
+    console.warn(`[Pipeline] Only ${step1.termCount} terms — running fallback generation`);
+    try {
+      const fallbackResponse = await claude.createMessage({
+        model: "claude-sonnet-4-5-20250929",
+        max_tokens: 4000,
+        temperature: 0.3,
+        messages: [{
+          role: "user",
+          content: `Gere 25 termos de busca de alta intenção local para "${input.product}" na região "${input.region}".
+
+Foco: termos que um consumidor digita no Google quando está pronto para comprar, agendar ou avaliar opções.
+Inclua variações com: nome da cidade/bairro, "perto de mim", preço, melhor, agendar, telefone, avaliação, comparativo.
+Misture intenções: transactional (quer comprar), informational (pesquisando), navigational (buscando marca), consideration (comparando).
+
+Responda APENAS em JSON, sem markdown, sem texto antes ou depois:
+{
+  "terms": [
+    { "term": "termo aqui", "intent": "transactional", "intentWeight": 0.9, "category": "core", "rationale": "motivo curto" }
+  ]
+}`,
+        }],
+      });
+      const fallbackText = fallbackResponse.content
+        .filter((c: any) => c.type === "text")
+        .map((c: any) => c.text)
+        .join("");
+      const cleaned = fallbackText.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+      const parsed = JSON.parse(cleaned);
+      if (parsed.terms && parsed.terms.length > 0) {
+        const existingTerms = new Set(step1.terms.map(t => t.term.toLowerCase()));
+        const newTerms = parsed.terms
+          .filter((t: any) => t.term && !existingTerms.has(t.term.toLowerCase()))
+          .map((t: any) => ({
+            term: t.term,
+            intent: t.intent || "transactional",
+            intentWeight: t.intentWeight || 0.8,
+            category: t.category || "core",
+            rationale: t.rationale || "fallback generation",
+          }));
+        step1.terms = [...step1.terms, ...newTerms];
+        step1.termCount = step1.terms.length;
+        sourcesUsed.push("claude_fallback_terms");
+        console.log(`[Pipeline] Fallback added ${newTerms.length} terms — total now ${step1.termCount}`);
+      }
+    } catch (fallbackErr) {
+      console.error("[Pipeline] Fallback term generation failed:", fallbackErr);
+    }
+  }
+
+  // If we still have 0 terms, abort
+  if (step1.termCount === 0) {
+    throw new Error("Pipeline aborted: no terms generated even with fallback");
   }
 
   // =========================================================================
@@ -223,14 +235,21 @@ Responda APENAS em JSON, sem markdown:
 
   // Extract instagram handles to scrape
   const instagramHandles: string[] = [];
-  if (formData.instagram) {
-    instagramHandles.push(formData.instagram.replace("@", "").replace("https://www.instagram.com/", "").replace("/", ""));
-  }
-  for (const c of formData.competitors || []) {
-    if (c.instagram) {
-      instagramHandles.push(c.instagram.replace("@", "").replace("https://www.instagram.com/", "").replace("/", ""));
+  if (formData.instagram && formData.instagram.length > 1) {
+    const cleaned = formData.instagram.replace(/@/g, "").replace(/https?:\/\/(www\.)?instagram\.com\//g, "").replace(/\//g, "").trim();
+    if (cleaned.length > 1) {
+      instagramHandles.push(cleaned);
     }
   }
+  for (const c of formData.competitors || []) {
+    if (c.instagram && c.instagram.length > 1) {
+      const cleaned = c.instagram.replace(/@/g, "").replace(/https?:\/\/(www\.)?instagram\.com\//g, "").replace(/\//g, "").trim();
+      if (cleaned.length > 1) {
+        instagramHandles.push(cleaned);
+      }
+    }
+  }
+  console.log(`[Pipeline] Instagram handles to scrape: [${instagramHandles.join(", ")}] (from form: "${formData.instagram}", noInstagram: ${formData.noInstagram})`);
 
   // Extract domain for SERP position matching
   const siteDomain = formData.site

@@ -264,33 +264,12 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             </>
           )}
 
-          <p style={{ fontSize: 14, color: V.zinc, lineHeight: 1.7, maxWidth: 520, margin: "0 auto 24px", textAlign: "left" }}>
-            {hasMarketData ? (
-              <>
-                É quanto esse mercado movimenta em vendas mensais na sua região, baseado em{" "}
-                <strong style={{ color: V.night }}>
-                  {hasVolumeData ? results.totalVolume.toLocaleString("pt-BR") : termCount} buscas reais no Google
-                </strong>{" "}
-                por termos como os listados abaixo.
-              </>
-            ) : (
-              <>
-                Mapeamos <strong style={{ color: V.night }}>{termCount} termos</strong> que pessoas na sua região buscam quando precisam do que você oferece.
-                Cada termo representa demanda real — pessoas procurando ativamente por {product}.
-              </>
-            )}
+          <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, textAlign: "center", margin: "0 auto" }}>
+            {hasMarketData
+              ? `Baseado em ${hasVolumeData ? results.totalVolume.toLocaleString("pt-BR") + " buscas reais" : termCount + " termos"} no Google.`
+              : `${termCount} termos reais que levam a ${product} na sua região.`
+            }
           </p>
-
-          {/* Premissas do cálculo */}
-          {hasMarketData && (
-            <div style={{
-              background: V.cloud, borderRadius: 10, padding: "14px 18px",
-              fontSize: 12, color: V.ash, lineHeight: 1.6, textAlign: "left",
-            }}>
-              <strong style={{ color: V.zinc }}>Premissas:</strong> CTR médio de mercado para posições orgânicas × taxa de conversão benchmark para a categoria × ticket médio informado.
-              Faixa conservadora (low) a otimista (high).
-            </div>
-          )}
         </Card>
 
         {/* ─── Termos de busca com volume e intenção ─── */}
@@ -298,37 +277,15 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           <SectionLabel color={V.amber}>Demanda real — o que buscam na sua região</SectionLabel>
 
           <div style={{ marginBottom: 16 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, padding: "0 14px" }}>
-              <span style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase" as const, color: V.ash }}>Termo</span>
-              <div style={{ display: "flex", gap: 24 }}>
-                {hasVolumeData && <span style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase" as const, color: V.ash, width: 70, textAlign: "right" }}>Vol/mês</span>}
-                <span style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase" as const, color: V.ash, width: 50, textAlign: "right" }}>Posição</span>
-              </div>
-            </div>
-
             {results.terms.slice(0, 10).map((t, i) => (
               <div key={i} style={{
-                display: "flex", justifyContent: "space-between", alignItems: "center",
                 padding: "10px 14px", borderRadius: 8,
                 background: i % 2 === 0 ? V.cloud : "transparent",
               }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: 14, color: V.night, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{t.term}</span>
-                  <IntentTag intent={t.intent} />
-                  {t.serpFeatures?.includes("people_also_ask") && <Chip color={V.ash}>Perguntas</Chip>}
-                  {t.serpFeatures?.includes("local_pack") && <Chip color={V.teal}>Mapa</Chip>}
-                </div>
-                <div style={{ display: "flex", gap: 24, flexShrink: 0 }}>
-                  {hasVolumeData && (
-                    <span style={{
-                      fontFamily: V.mono, fontSize: 13, color: t.volume > 0 ? V.night : V.ash,
-                      fontWeight: t.volume > 0 ? 600 : 400, width: 70, textAlign: "right",
-                    }}>
-                      {t.volume > 0 ? t.volume.toLocaleString("pt-BR") : "—"}
-                    </span>
-                  )}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                  <span style={{ fontSize: 14, color: V.night, lineHeight: 1.4 }}>{t.term}</span>
                   <span style={{
-                    fontFamily: V.mono, fontSize: 13, fontWeight: 600, width: 50, textAlign: "right",
+                    fontFamily: V.mono, fontSize: 12, fontWeight: 600, flexShrink: 0, marginLeft: 8,
                     color: t.position !== "—" && parseInt(t.position) <= 3 ? V.teal
                       : t.position !== "—" && parseInt(t.position) <= 10 ? V.amber
                       : V.ash,
@@ -345,23 +302,9 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             )}
           </div>
 
-          {/* Legend for intent tags */}
-          <div style={{
-            display: "flex", gap: 12, flexWrap: "wrap", padding: "12px 0 0",
-            borderTop: `1px solid ${V.fog}`,
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: V.ash }}>
-              <div style={{ width: 8, height: 8, borderRadius: 2, background: V.teal }} />
-              Transacional (quer comprar)
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: V.ash }}>
-              <div style={{ width: 8, height: 8, borderRadius: 2, background: V.amber }} />
-              Informacional (pesquisando)
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: V.ash }}>
-              <div style={{ width: 8, height: 8, borderRadius: 2, background: V.coral }} />
-              Local (buscando perto)
-            </div>
+          {/* Legend */}
+          <div style={{ fontSize: 11, color: V.ash, padding: "8px 0 0", borderTop: `1px solid ${V.fog}` }}>
+            Termos com intenção de compra na sua região
           </div>
         </Card>
 

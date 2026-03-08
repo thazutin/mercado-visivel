@@ -263,6 +263,7 @@ export default function Home() {
     return (
       <ProcessingScreen
         product={formData.product}
+        region={formData.region}
         onComplete={() => setAnimDone(true)}
         steps={t.processingSteps}
       />

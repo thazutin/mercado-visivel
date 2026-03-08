@@ -11,7 +11,8 @@ export const leadSchema = z.object({
   lng: z.number().optional(),
   channels: z.array(z.string()).optional().default([]),
   digitalPresence: z.array(z.string()).optional().default([]),
-  instagram: z.string().min(2, "Instagram é obrigatório"),
+  instagram: z.string().optional().default(""),
+  noInstagram: z.boolean().optional().default(false),
   site: z.string().optional().default(""),
   differentiator: z.string().min(5, "Descreva o que te diferencia"),
   competitors: z.array(z.object({
@@ -41,6 +42,7 @@ export const initialFormData: LeadFormData = {
   channels: [],
   digitalPresence: [],
   instagram: "",
+  noInstagram: false,
   site: "",
   differentiator: "",
   competitors: [{ name: "", instagram: "" }, { name: "", instagram: "" }, { name: "", instagram: "" }],
@@ -53,11 +55,12 @@ export const initialFormData: LeadFormData = {
   coupon: "",
 };
 
+// ─── Per-step validation (for disabling "Continue" button) ────────
 export const stepValidation = {
   step1: (data: LeadFormData) =>
     data.product.length >= 2 && data.region.length >= 2,
   step2: (data: LeadFormData) =>
-    data.instagram.length >= 2,
+    data.noInstagram || data.instagram.length >= 2,
   step3: (data: LeadFormData) =>
     data.differentiator.length >= 5,
   step4: (data: LeadFormData) =>

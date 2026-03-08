@@ -23,11 +23,12 @@ const V = {
 
 interface Props {
   product: string;
+  region?: string;
   onComplete: () => void;
   steps?: string[];
 }
 
-export default function ProcessingScreen({ product, onComplete, steps: customSteps }: Props) {
+export default function ProcessingScreen({ product, region, onComplete, steps: customSteps }: Props) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [done, setDone] = useState(false);
 
@@ -40,7 +41,6 @@ export default function ProcessingScreen({ product, onComplete, steps: customSte
   ];
 
   useEffect(() => {
-    // Cycle through steps, then hold on last step until API completes
     const stepDuration = 3000;
     const timers: NodeJS.Timeout[] = [];
 
@@ -50,8 +50,6 @@ export default function ProcessingScreen({ product, onComplete, steps: customSte
       }
     });
 
-    // After cycling all steps, call onComplete — parent decides when to transition
-    // If API is still running, parent holds us on processing screen
     timers.push(setTimeout(() => {
       setDone(true);
       onComplete();
@@ -59,6 +57,11 @@ export default function ProcessingScreen({ product, onComplete, steps: customSte
 
     return () => timers.forEach(clearTimeout);
   }, []);
+
+  // Short region for display (take first part before comma)
+  const shortRegion = region
+    ? region.split(",")[0].trim()
+    : "";
 
   return (
     <div style={{
@@ -81,14 +84,17 @@ export default function ProcessingScreen({ product, onComplete, steps: customSte
         </div>
 
         <h2 style={{
-          fontFamily: V.display, fontSize: 24, fontWeight: 700,
-          color: V.white, letterSpacing: "-0.03em", marginBottom: 8,
+          fontFamily: V.display, fontSize: 22, fontWeight: 700,
+          color: V.white, letterSpacing: "-0.03em", marginBottom: 6,
         }}>
-          Analisando seu mercado
+          Analisando {product}
         </h2>
-        <p style={{ color: V.ash, fontSize: 14, fontFamily: V.body, marginBottom: 48 }}>
-          {product}
-        </p>
+        {shortRegion && (
+          <p style={{ color: V.ash, fontSize: 14, fontFamily: V.body, marginBottom: 48 }}>
+            em {shortRegion}
+          </p>
+        )}
+        {!shortRegion && <div style={{ marginBottom: 48 }} />}
 
         {/* Steps */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12, textAlign: "left" }}>
@@ -104,7 +110,6 @@ export default function ProcessingScreen({ product, onComplete, steps: customSte
                 transition: "all 0.4s ease",
                 opacity: i <= activeIdx || done ? 1 : 0.3,
               }}>
-                {/* Icon */}
                 <div style={{
                   width: 22, height: 22, borderRadius: "50%", display: "flex",
                   alignItems: "center", justifyContent: "center", flexShrink: 0,
@@ -123,8 +128,6 @@ export default function ProcessingScreen({ product, onComplete, steps: customSte
                     }} />
                   )}
                 </div>
-
-                {/* Text */}
                 <span style={{
                   fontSize: 13, fontFamily: V.body,
                   color: isDone ? V.mist : isActive ? V.white : V.zinc,
@@ -150,7 +153,6 @@ export default function ProcessingScreen({ product, onComplete, steps: customSte
         </div>
       </div>
 
-      {/* Spinner keyframe */}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
