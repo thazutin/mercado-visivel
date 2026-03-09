@@ -199,14 +199,16 @@ export function createApifyMapsScraper(config: ApifyConfig) {
 
     const presence: MapsPresence = match ? {
       found: true,
+      businessName: match.title || match.name || null,
       rating: match.totalScore || match.rating,
       reviewCount: match.reviewsCount || match.reviews,
       categories: match.categories || match.categoryName ? [match.categoryName] : [],
-      inLocalPack: true,  // Se encontrou no Maps, provavelmente aparece no local pack
-      localPackPosition: 1,  // Aproximação — refinamento futuro com SERP data
+      inLocalPack: true,
+      localPackPosition: 1,
       photos: match.imageCount || match.photosCount,
     } : {
       found: false,
+      businessName: null,
       inLocalPack: false,
     };
 

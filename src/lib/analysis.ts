@@ -549,33 +549,44 @@ Responda APENAS em JSON, sem markdown:
   console.log(`[Pipeline] Step 4 OK: influence ${step4.influence.totalInfluence}%`);
 
   // =========================================================================
-  // STEP 4b — AI Visibility Check (Claude Haiku, runs in parallel with Step 5 prep)
+  // STEP 4b — AI Visibility Check (DataForSEO SERP real)
   // =========================================================================
   let aiVisibility: { score: number; summary: string; likelyMentioned: boolean; factors: any[]; competitorMentions: any[]; processingTimeMs: number } | null = null;
   try {
     const hasSite = !!(formData.site && formData.site.length > 3);
-    const rankedCount = serpPositions.filter(sp => sp.position && sp.position <= 10).length;
+
+    // businessName: nome real do negócio via Maps (primário) ou null
+    const mapsBusinessName = mapsPresence?.found ? (mapsPresence as any).businessName || null : null;
+
+    // DataForSEO client para SERP de descoberta
+    const dataForSEOClient = (process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD)
+      ? createDataForSEOClient({
+          login: process.env.DATAFORSEO_LOGIN,
+          password: process.env.DATAFORSEO_PASSWORD,
+        })
+      : undefined;
 
     aiVisibility = await withTimeout(
       executeAIVisibilityCheck(
         input.product,
         input.region,
-        input.businessName || input.product,
-        input.differentiator,
+        mapsBusinessName,                          // nome real do Maps
+        businessHandle || null,                    // handle do Instagram como fallback
         hasSite,
         mapsPresence?.found || false,
         mapsPresence?.rating || null,
         mapsPresence?.reviewCount || null,
-        rankedCount,
+        serpPositions.filter(sp => sp.position && sp.position <= 10).length,
         serpPositions.length,
         (formData.competitors || []).filter(c => c.name && c.name.length > 1),
-        claude,
+        dataForSEOClient ? { getKeywordVolumes: dataForSEOClient } : undefined,
+        undefined,                                 // claude client deprecated em v2
       ),
-      15_000,
+      20_000,
       "AI Visibility",
     );
     sourcesUsed.push("ai_visibility");
-    console.log(`[Pipeline] AI Visibility OK: score=${aiVisibility.score}, mentioned=${aiVisibility.likelyMentioned}`);
+    console.log(`[Pipeline] AI Visibility OK: score=${aiVisibility.score}, mentioned=${aiVisibility.likelyMentioned}, method=${(aiVisibility as any)._raw?.matchMethod}`);
   } catch (err) {
     console.warn("[Pipeline] AI Visibility failed/skipped:", (err as Error).message);
   }

@@ -157,6 +157,7 @@ export interface SerpPosition {
 
 export interface MapsPresence {
   found: boolean;
+  businessName?: string | null;       // Nome real do negócio no Google Maps (campo title do Apify)
   rating?: number;
   reviewCount?: number;
   categories?: string[];

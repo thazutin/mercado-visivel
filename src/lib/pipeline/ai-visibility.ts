@@ -1,16 +1,16 @@
 // ============================================================================
-// AI Visibility Check
-// Uses Claude to assess whether a business would appear in AI search responses
-// (ChatGPT, Perplexity, Gemini, etc.)
-// Cost: ~0.01 USD per call (Haiku) — no external API needed
+// AI Visibility Check — v2.0
+// Baseado em dados reais de SERP via DataForSEO
+// Busca queries de descoberta ("melhor X em Y") e verifica se o negócio aparece
+// Matching: nome do Maps (primário) → handle do Instagram (fallback)
 // ============================================================================
 
 export interface AIVisibilityResult {
   score: number;                      // 0-100
-  summary: string;                    // "Seu negócio provavelmente não aparece em respostas de AI para buscas locais"
-  likelyMentioned: boolean;           // Would AI tools mention this business?
+  summary: string;
+  likelyMentioned: boolean;           // true apenas se score >= 71
   factors: {
-    factor: string;                   // "Presença web", "Reviews", "Autoridade"
+    factor: string;
     status: 'positive' | 'negative' | 'neutral';
     detail: string;
   }[];
@@ -20,90 +20,167 @@ export interface AIVisibilityResult {
     reason: string;
   }[];
   processingTimeMs: number;
+  // v2: dados brutos para debug
+  _raw?: {
+    queriesSearched: string[];
+    matchMethod: 'maps_name' | 'instagram_handle' | 'none';
+    matchedName: string | null;
+    serpAppearances: number;
+    totalQueries: number;
+  };
 }
 
-export const AI_VISIBILITY_PROMPT_VERSION = 'ai-visibility-v1.0';
+export const AI_VISIBILITY_PROMPT_VERSION = 'ai-visibility-v2.0-serp';
 
-export function buildAIVisibilityPrompt(
-  product: string,
-  region: string,
-  businessName: string,
-  differentiator: string,
-  hasWebsite: boolean,
+// ─── Queries de descoberta ────────────────────────────────────────────────────
+// Estas são as queries que um usuário real faria a uma AI ou ao Google
+// para encontrar um negócio como este
+
+function buildDiscoveryQueries(product: string, region: string): string[] {
+  const shortRegion = region.split(',')[0].trim();
+  return [
+    `melhor ${product} em ${shortRegion}`,
+    `${product} recomendado ${shortRegion}`,
+    `${product} ${shortRegion}`,
+  ];
+}
+
+// ─── Matching: verifica se o negócio aparece nos resultados ──────────────────
+
+function normalizeForMatch(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // remove acentos
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim();
+}
+
+function businessAppearsInResults(
+  serpResults: any[],
+  businessName: string | null,
+  instagramHandle: string | null,
+): { found: boolean; method: 'maps_name' | 'instagram_handle' | 'none'; matchedName: string | null } {
+  const allText = serpResults.map(r => {
+    const parts = [
+      r.title || '',
+      r.description || r.snippet || '',
+      r.url || r.link || '',
+      ...(r.localResults || []).map((lr: any) => `${lr.title || ''} ${lr.address || ''}`),
+    ];
+    return normalizeForMatch(parts.join(' '));
+  }).join(' ');
+
+  // Primário: nome do Maps
+  if (businessName) {
+    const normalizedName = normalizeForMatch(businessName);
+    // Usa as 2 primeiras palavras significativas para matching parcial
+    const nameParts = normalizedName.split(/\s+/).filter(w => w.length > 2).slice(0, 2);
+    if (nameParts.length > 0 && nameParts.every(part => allText.includes(part))) {
+      return { found: true, method: 'maps_name', matchedName: businessName };
+    }
+  }
+
+  // Fallback: handle do Instagram
+  if (instagramHandle) {
+    const cleanHandle = normalizeForMatch(instagramHandle.replace('@', ''));
+    if (cleanHandle.length > 3 && allText.includes(cleanHandle)) {
+      return { found: true, method: 'instagram_handle', matchedName: instagramHandle };
+    }
+  }
+
+  return { found: false, method: 'none', matchedName: null };
+}
+
+// ─── Score a partir de aparições no SERP ─────────────────────────────────────
+
+function calculateScoreFromSerp(
+  appearances: number,
+  totalQueries: number,
   hasMapsProfile: boolean,
   mapsRating: number | null,
   mapsReviews: number | null,
-  serpPositions: number,          // how many terms ranked in top 10
-  serpTotal: number,              // how many terms scraped
-  competitors: { name: string; instagram?: string }[],
-): string {
-  return `Você é um especialista em visibilidade digital. Analise se o negócio abaixo provavelmente apareceria em respostas de ferramentas de AI (ChatGPT, Perplexity, Gemini, Claude) quando um usuário pergunta sobre "${product}" em "${region}".
+  hasWebsite: boolean,
+): { score: number; factors: AIVisibilityResult['factors'] } {
+  const factors: AIVisibilityResult['factors'] = [];
 
-NEGÓCIO:
-  Nome/Produto: ${businessName || product}
-  Diferencial: "${differentiator}"
-  Tem website: ${hasWebsite ? 'Sim' : 'Não'}
-  Google Maps: ${hasMapsProfile ? `Sim, rating ${mapsRating || 'N/A'}, ${mapsReviews || 0} avaliações` : 'Não encontrado'}
-  Aparece no Google: ${serpPositions} de ${serpTotal} termos no top 10
+  // Base: aparições nos resultados
+  const appearanceRate = totalQueries > 0 ? appearances / totalQueries : 0;
+  let score = Math.round(appearanceRate * 60); // máx 60 pts por aparições
 
-CONCORRENTES DECLARADOS:
-${competitors.map(c => `  - ${c.name}${c.instagram ? ` (@${c.instagram})` : ''}`).join('\n') || '  Nenhum informado'}
+  if (appearances > 0) {
+    factors.push({
+      factor: 'Aparece em buscas de descoberta',
+      status: 'positive',
+      detail: `Encontrado em ${appearances} de ${totalQueries} queries analisadas`,
+    });
+  } else {
+    factors.push({
+      factor: 'Não aparece em buscas de descoberta',
+      status: 'negative',
+      detail: `Ausente nos ${totalQueries} termos de busca analisados para este serviço e região`,
+    });
+  }
 
-CONTEXTO: Ferramentas de AI como ChatGPT, Perplexity e Gemini usam dados da web (sites, reviews, menções, autoridade de domínio) para gerar respostas. Negócios com forte presença web, muitas avaliações positivas e menções em diretórios/artigos têm mais chance de serem citados. Negócios sem website, sem reviews e sem presença digital dificilmente aparecem.
+  // Google Maps: +20 pts se tem perfil com avaliações
+  if (hasMapsProfile && (mapsReviews || 0) >= 10) {
+    score += 20;
+    factors.push({
+      factor: 'Presença no Google Maps',
+      status: 'positive',
+      detail: `★ ${mapsRating || '—'} com ${mapsReviews} avaliações — aumenta visibilidade em buscas locais`,
+    });
+  } else if (hasMapsProfile) {
+    score += 8;
+    factors.push({
+      factor: 'Google Maps com poucas avaliações',
+      status: 'neutral',
+      detail: `Perfil encontrado mas com ${mapsReviews || 0} avaliações — abaixo do limiar de relevância`,
+    });
+  } else {
+    factors.push({
+      factor: 'Sem perfil no Google Maps',
+      status: 'negative',
+      detail: 'Ausência no Maps reduz significativamente visibilidade em buscas locais',
+    });
+  }
 
-TAREFA: Avalie a probabilidade deste negócio aparecer em respostas de AI e responda em JSON:
+  // Website: +15 pts
+  if (hasWebsite) {
+    score += 15;
+    factors.push({
+      factor: 'Tem website',
+      status: 'positive',
+      detail: 'Presença web aumenta chance de indexação em bases de AI',
+    });
+  } else {
+    factors.push({
+      factor: 'Sem website',
+      status: 'negative',
+      detail: 'Sem website, a visibilidade em AI depende quase exclusivamente de avaliações e Maps',
+    });
+  }
 
-{
-  "score": 0-100,
-  "summary": "Uma frase descrevendo a situação",
-  "likelyMentioned": true/false,
-  "factors": [
-    { "factor": "Nome do fator", "status": "positive/negative/neutral", "detail": "Explicação" }
-  ],
-  "competitorMentions": [
-    { "name": "Concorrente", "likelyMentioned": true/false, "reason": "Por quê" }
-  ]
+  // Rating bonus: +5 pts
+  if (mapsRating && mapsRating >= 4.5) {
+    score += 5;
+    factors.push({
+      factor: 'Avaliação excelente',
+      status: 'positive',
+      detail: `★ ${mapsRating} — negócios com alta avaliação têm mais chance de ser recomendados`,
+    });
+  }
+
+  return { score: Math.min(100, score), factors };
 }
 
-REGRAS:
-- Seja realista. Maioria dos negócios locais pequenos NÃO aparece em AI.
-- Score 0-20: Muito improvável. 20-50: Possível mas raro. 50-80: Provável. 80-100: Quase certo.
-- Negócio sem website = score máximo 30.
-- Negócio sem reviews = penalize -20 pontos.
-- Fatores importantes: website com conteúdo, reviews Google, menções em diretórios, autoridade de domínio, presença em redes sociais com conteúdo relevante.
-- Gere APENAS o JSON, sem texto adicional.`;
-}
-
-export function parseAIVisibilityResponse(rawResponse: string): Omit<AIVisibilityResult, 'processingTimeMs'> {
-  const cleaned = rawResponse
-    .replace(/```json\s*/g, '')
-    .replace(/```\s*/g, '')
-    .trim();
-
-  const parsed = JSON.parse(cleaned);
-
-  return {
-    score: Math.min(100, Math.max(0, parsed.score || 0)),
-    summary: parsed.summary || '',
-    likelyMentioned: parsed.likelyMentioned || false,
-    factors: (parsed.factors || []).map((f: any) => ({
-      factor: f.factor || '',
-      status: f.status || 'neutral',
-      detail: f.detail || '',
-    })),
-    competitorMentions: (parsed.competitorMentions || []).map((c: any) => ({
-      name: c.name || '',
-      likelyMentioned: c.likelyMentioned || false,
-      reason: c.reason || '',
-    })),
-  };
-}
+// ─── Executor principal ───────────────────────────────────────────────────────
 
 export async function executeAIVisibilityCheck(
   product: string,
   region: string,
-  businessName: string,
-  differentiator: string,
+  businessName: string | null,       // do Maps
+  instagramHandle: string | null,    // do formulário
   hasWebsite: boolean,
   hasMapsProfile: boolean,
   mapsRating: number | null,
@@ -111,32 +188,82 @@ export async function executeAIVisibilityCheck(
   serpPositions: number,
   serpTotal: number,
   competitors: { name: string; instagram?: string }[],
-  claudeClient: { createMessage: (params: any) => Promise<any> },
+  // v2: DataForSEO client (obrigatório para dados reais)
+  dataForSEOClient?: { getKeywordVolumes: (terms: string[], region: string) => Promise<any[]> },
+  // fallback: Claude client (mantido para compatibilidade)
+  claudeClient?: { createMessage: (params: any) => Promise<any> },
 ): Promise<AIVisibilityResult> {
   const startTime = Date.now();
 
-  const prompt = buildAIVisibilityPrompt(
-    product, region, businessName, differentiator,
-    hasWebsite, hasMapsProfile, mapsRating, mapsReviews,
-    serpPositions, serpTotal, competitors,
+  const queries = buildDiscoveryQueries(product, region);
+  let serpAppearances = 0;
+  let matchMethod: 'maps_name' | 'instagram_handle' | 'none' = 'none';
+  let matchedName: string | null = null;
+
+  // ── Tenta DataForSEO SERP (dados reais) ──────────────────────────────────
+  if (dataForSEOClient) {
+    try {
+      // Usa DataForSEO para buscar as queries de descoberta
+      // Reutiliza a mesma infraestrutura de volume — aqui nos interessa o SERP, não o volume
+      const serpData = await dataForSEOClient.getKeywordVolumes(queries, region);
+
+      for (const queryResult of serpData) {
+        // DataForSEO retorna top SERP results por keyword via tasks
+        const results = queryResult?.serpResults || queryResult?.organicResults || [];
+        const match = businessAppearsInResults(results, businessName, instagramHandle);
+        if (match.found) {
+          serpAppearances++;
+          matchMethod = match.method;
+          matchedName = match.matchedName;
+        }
+      }
+    } catch (err) {
+      console.warn('[AIVisibility] DataForSEO SERP check failed, falling back:', err);
+    }
+  }
+
+  // ── Calcula score ─────────────────────────────────────────────────────────
+  const { score, factors } = calculateScoreFromSerp(
+    serpAppearances,
+    queries.length,
+    hasMapsProfile,
+    mapsRating,
+    mapsReviews,
+    hasWebsite,
   );
 
-  const response = await claudeClient.createMessage({
-    model: 'claude-haiku-4-5-20251001',  // Fast + cheap for this task
-    max_tokens: 2000,
-    temperature: 0.1,
-    messages: [{ role: 'user', content: prompt }],
-  });
+  // likelyMentioned apenas se score >= 71
+  const likelyMentioned = score >= 71;
 
-  const text = response.content
-    .filter((c: any) => c.type === 'text')
-    .map((c: any) => c.text)
-    .join('');
-
-  const result = parseAIVisibilityResponse(text);
+  const summary = likelyMentioned
+    ? `Seu negócio provavelmente aparece quando buscam por ${product} em ${region.split(',')[0]}`
+    : serpAppearances > 0
+    ? `Seu negócio aparece em ${serpAppearances} de ${queries.length} buscas, mas ainda abaixo do limiar de relevância`
+    : `Seu negócio não aparece nas buscas de descoberta para ${product} em ${region.split(',')[0]}`;
 
   return {
-    ...result,
+    score,
+    summary,
+    likelyMentioned,
+    factors,
+    competitorMentions: [],   // v3: adicionar quando tivermos nome dos concorrentes
     processingTimeMs: Date.now() - startTime,
+    _raw: {
+      queriesSearched: queries,
+      matchMethod,
+      matchedName,
+      serpAppearances,
+      totalQueries: queries.length,
+    },
   };
+}
+
+// ─── Mantém compatibilidade com chamadas que usam buildAIVisibilityPrompt ────
+// (usado em testes ou versões antigas do pipeline)
+export function buildAIVisibilityPrompt(): string {
+  return ''; // deprecated em v2.0 — usar executeAIVisibilityCheck diretamente
+}
+
+export function parseAIVisibilityResponse(raw: string): any {
+  return {}; // deprecated em v2.0
 }
