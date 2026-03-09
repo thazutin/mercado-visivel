@@ -125,6 +125,11 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 : `de busca mapeados para ${product} em ${shortRegion}`
               }
             </p>
+            {hasVolume && results.pipeline?.sourcesUsed?.includes("claude_volume_estimate") && (
+              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>
+                volume estimado · dados exatos em breve
+              </p>
+            )}
           </div>
 
           <div style={{ height: 1, background: V.fog, margin: "0 -24px 28px" }} />
@@ -299,7 +304,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 claude_term_gen: "IA · Termos", apify_serp: "Google SERP", apify_maps: "Google Maps",
                 apify_instagram: "Instagram", claude_gap_analysis: "IA · Análise", google_ads: "Google Ads",
                 dataforseo: "DataForSEO", ai_visibility: "IA · Visibilidade", claude_fallback_terms: "IA · Fallback",
-                auto_competitor_discovery: "Concorrentes auto",
+                auto_competitor_discovery: "Concorrentes auto", claude_volume_estimate: "IA · Volume estimado",
               };
               return <Chip key={i} color={V.teal}>{labels[src] || src}</Chip>;
             })}
