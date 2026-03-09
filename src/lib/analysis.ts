@@ -501,9 +501,7 @@ Responda APENAS em JSON, sem markdown:
   );
 
   // Split profiles: first = business, rest = competitors
-  const businessHandle = formData.instagram
-    ? formData.instagram.replace("@", "").replace("https://www.instagram.com/", "").replace("/", "")
-    : "";
+  // (businessHandle already defined above in Instagram extraction section)
   
   // Debug: log what Instagram scraper returned
   console.log(`[Pipeline] Instagram profiles received: ${instagramProfiles.length}`);
