@@ -1,9 +1,8 @@
 // ============================================================================
-// Virô — Diagnose Route (fire-and-forget)
-// 1. Salva lead imediatamente → responde com leadId
-// 2. Pipeline roda em background via waitUntil
-// 3. Ao terminar: salva resultado + notifica via WhatsApp + email
-// Frontend faz polling em /api/diagnose/status/[leadId]
+// Virô — Diagnose Route (síncrono + notificações)
+// Pipeline roda de forma síncrona — Vercel maxDuration=180s garante o tempo
+// Ao terminar: salva resultado + notifica via WhatsApp + email
+// GET ?leadId=X — polling endpoint para ResultadoClient
 // File: src/app/api/diagnose/route.ts
 // ============================================================================
 
@@ -21,97 +20,6 @@ function getSupabaseAdmin() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
-}
-
-// ─── Background pipeline ─────────────────────────────────────────────────────
-
-async function runPipelineInBackground(
-  leadId: string,
-  formData: any,
-  locale: string
-) {
-  const supabase = getSupabaseAdmin();
-
-  try {
-    const pipelineResult = await runInstantAnalysis(formData, locale);
-    pipelineResult.leadId = leadId;
-
-    // Salva diagnóstico
-    try {
-      await insertDiagnosis({
-        lead_id: leadId,
-        terms: pipelineResult.terms.terms.map((t: any) => {
-          const serpMatch = pipelineResult.influence?.influence?.rawGoogle?.serpPositions?.find(
-            (sp: any) => sp.term.toLowerCase() === t.term.toLowerCase()
-          );
-          return {
-            term: t.term,
-            volume:
-              pipelineResult.volumes.termVolumes.find(
-                (v: any) => v.term === t.term
-              )?.monthlyVolume || 0,
-            cpc:
-              pipelineResult.volumes.termVolumes.find(
-                (v: any) => v.term === t.term
-              )?.cpcBrl || 0,
-            position: serpMatch?.position ? String(serpMatch.position) : "—",
-          };
-        }),
-        total_volume: pipelineResult.volumes.totalMonthlyVolume,
-        avg_cpc: 0,
-        market_low: pipelineResult.marketSizing.sizing.marketPotential.low,
-        market_high: pipelineResult.marketSizing.sizing.marketPotential.high,
-        influence_percent: pipelineResult.influence.influence.totalInfluence,
-        source: pipelineResult.sourcesUsed.join(", "),
-        confidence: pipelineResult.confidenceLevel,
-        pipeline_run_id: null,
-        raw_data: pipelineResult,
-        confidence_level: pipelineResult.confidenceLevel,
-      });
-    } catch (err) {
-      console.error("[Diagnose] insertDiagnosis failed:", err);
-    }
-
-    // Salva pipeline_run
-    try {
-      await supabase.from("pipeline_runs").insert({
-        lead_id: leadId,
-        pipeline_version: pipelineResult.pipelineVersion,
-        total_duration_ms: pipelineResult.totalProcessingTimeMs,
-        steps_timing: {
-          step1_ms: pipelineResult.terms.processingTimeMs,
-          step5_ms: pipelineResult.gaps.processingTimeMs,
-        },
-        sources_used: pipelineResult.sourcesUsed,
-        sources_unavailable: pipelineResult.sourcesUnavailable,
-        confidence_level: pipelineResult.confidenceLevel,
-      });
-    } catch (err) {
-      console.warn("[Diagnose] pipeline_runs insert skipped:", (err as Error).message);
-    }
-
-    // Monta display data e salva no lead para o polling
-    const display = buildDisplayData(pipelineResult);
-    await supabase
-      .from("leads")
-      .update({ status: "done", diagnosis_display: display })
-      .eq("id", leadId);
-
-    // Notifica por WhatsApp + email
-    await notifyDiagnosisReady({
-      email: formData.email,
-      whatsapp: formData.whatsapp,
-      leadId,
-      product: formData.product,
-      region: formData.region,
-      influencePercent: Math.round(pipelineResult.influence.influence.totalInfluence),
-    });
-
-    console.log(`[Diagnose] Pipeline complete for lead ${leadId}`);
-  } catch (err) {
-    console.error(`[Diagnose] Pipeline failed for lead ${leadId}:`, err);
-    await updateLeadStatus(leadId, "pending"); // reset para reprocessar se necessário
-  }
 }
 
 // ─── POST /api/diagnose ──────────────────────────────────────────────────────
@@ -136,7 +44,7 @@ export async function POST(req: NextRequest) {
     const formData = parsed.data;
     const locale = formData.locale || "pt";
 
-    // 1. Salva lead imediatamente
+    // 1. Salva lead
     let lead: { id: string };
     try {
       lead = await insertLead({
@@ -170,20 +78,91 @@ export async function POST(req: NextRequest) {
       lead = { id: "temp_" + Date.now() };
     }
 
-    // 2. Dispara pipeline em background (não bloqueia a resposta)
-    // waitUntil mantém a execução viva no Vercel após o response ser enviado
-    const ctx = (req as any)[Symbol.for("next.request.context")];
-    if (ctx?.waitUntil) {
-      ctx.waitUntil(runPipelineInBackground(lead.id, formData, locale));
-    } else {
-      // Fallback: roda normalmente (comportamento anterior) se waitUntil não disponível
-      runPipelineInBackground(lead.id, formData, locale).catch(console.error);
+    // 2. Roda pipeline (síncrono — Vercel aguarda até maxDuration=180s)
+    const pipelineResult = await runInstantAnalysis(formData, locale);
+    pipelineResult.leadId = lead.id;
+
+    // 3. Salva diagnóstico
+    try {
+      await insertDiagnosis({
+        lead_id: lead.id,
+        terms: pipelineResult.terms.terms.map((t: any) => {
+          const serpMatch = pipelineResult.influence?.influence?.rawGoogle?.serpPositions?.find(
+            (sp: any) => sp.term.toLowerCase() === t.term.toLowerCase()
+          );
+          return {
+            term: t.term,
+            volume: pipelineResult.volumes.termVolumes.find(
+              (v: any) => v.term === t.term
+            )?.monthlyVolume || 0,
+            cpc: pipelineResult.volumes.termVolumes.find(
+              (v: any) => v.term === t.term
+            )?.cpcBrl || 0,
+            position: serpMatch?.position ? String(serpMatch.position) : "—",
+          };
+        }),
+        total_volume: pipelineResult.volumes.totalMonthlyVolume,
+        avg_cpc: 0,
+        market_low: pipelineResult.marketSizing.sizing.marketPotential.low,
+        market_high: pipelineResult.marketSizing.sizing.marketPotential.high,
+        influence_percent: pipelineResult.influence.influence.totalInfluence,
+        source: pipelineResult.sourcesUsed.join(", "),
+        confidence: pipelineResult.confidenceLevel,
+        pipeline_run_id: null,
+        raw_data: pipelineResult,
+        confidence_level: pipelineResult.confidenceLevel,
+      });
+    } catch (err) {
+      console.error("[Diagnose] insertDiagnosis failed:", err);
     }
 
-    // 3. Responde imediatamente com leadId — frontend faz polling
+    // 4. Salva pipeline_run
+    try {
+      const supabase = getSupabaseAdmin();
+      await supabase.from("pipeline_runs").insert({
+        lead_id: lead.id,
+        pipeline_version: pipelineResult.pipelineVersion,
+        total_duration_ms: pipelineResult.totalProcessingTimeMs,
+        steps_timing: {
+          step1_ms: pipelineResult.terms.processingTimeMs,
+          step5_ms: pipelineResult.gaps.processingTimeMs,
+        },
+        sources_used: pipelineResult.sourcesUsed,
+        sources_unavailable: pipelineResult.sourcesUnavailable,
+        confidence_level: pipelineResult.confidenceLevel,
+      });
+    } catch (err) {
+      console.warn("[Diagnose] pipeline_runs skipped:", (err as Error).message);
+    }
+
+    // 5. Monta display data
+    const display = buildDisplayData(pipelineResult);
+
+    // 6. Salva display no lead (para /resultado/[leadId] e polling)
+    try {
+      const supabase = getSupabaseAdmin();
+      await supabase
+        .from("leads")
+        .update({ status: "done", diagnosis_display: display })
+        .eq("id", lead.id);
+    } catch (err) {
+      console.error("[Diagnose] update lead display failed:", err);
+    }
+
+    // 7. Notifica por WhatsApp + email (non-blocking — erros não quebram a resposta)
+    notifyDiagnosisReady({
+      email: formData.email,
+      whatsapp: formData.whatsapp,
+      leadId: lead.id,
+      product: formData.product,
+      region: formData.region,
+      influencePercent: Math.round(pipelineResult.influence.influence.totalInfluence),
+    }).catch((err) => console.error("[Diagnose] notify failed:", err));
+
+    // 8. Responde com resultado completo (frontend exibe imediatamente)
     return NextResponse.json({
       lead_id: lead.id,
-      status: "processing",
+      results: display,
     });
   } catch (err) {
     console.error("[Diagnose] Unexpected error:", err);
@@ -194,8 +173,8 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// ─── GET /api/diagnose/status/[leadId] ───────────────────────────────────────
-// Polling endpoint — retorna { status, results? }
+// ─── GET /api/diagnose?leadId=X ──────────────────────────────────────────────
+// Polling endpoint — usado por /resultado/[leadId] para carregar diagnóstico salvo
 
 export async function GET(req: NextRequest) {
   const leadId = req.nextUrl.searchParams.get("leadId");
@@ -217,20 +196,17 @@ export async function GET(req: NextRequest) {
     }
 
     if (lead.status === "done" && lead.diagnosis_display) {
-      return NextResponse.json({
-        status: "done",
-        results: lead.diagnosis_display,
-      });
+      return NextResponse.json({ status: "done", results: lead.diagnosis_display });
     }
 
     return NextResponse.json({ status: lead.status || "processing" });
   } catch (err) {
-    console.error("[Diagnose] Status check error:", err);
+    console.error("[Diagnose] GET error:", err);
     return NextResponse.json({ status: "processing" });
   }
 }
 
-// ─── buildDisplayData (igual ao original) ───────────────────────────────────
+// ─── buildDisplayData ────────────────────────────────────────────────────────
 
 function buildDisplayData(result: any) {
   const sizing = result.marketSizing.sizing;
@@ -242,9 +218,7 @@ function buildDisplayData(result: any) {
   const igData = influence.rawInstagram || null;
 
   const terms = result.terms.terms.slice(0, 10).map((t: any) => {
-    const volumeMatch = result.volumes.termVolumes.find(
-      (v: any) => v.term === t.term
-    );
+    const volumeMatch = result.volumes.termVolumes.find((v: any) => v.term === t.term);
     const serpMatch = serpPositions.find(
       (sp: any) => sp.term?.toLowerCase() === t.term.toLowerCase()
     );
@@ -282,49 +256,38 @@ function buildDisplayData(result: any) {
       instagram: influence.instagram?.score || 0,
       web: influence.web?.available ? influence.web.score : null,
     },
-    maps: mapsData
-      ? {
-          found: mapsData.found || false,
-          rating: mapsData.rating || null,
-          reviewCount: mapsData.reviewCount || null,
-          categories: mapsData.categories || [],
-          inLocalPack: mapsData.inLocalPack || false,
-          photos: mapsData.photos || 0,
-        }
-      : null,
-    instagram: igData?.profile
-      ? {
-          handle: igData.profile.handle || "",
-          followers: igData.profile.followers || 0,
-          engagementRate: igData.profile.engagementRate || 0,
-          postsLast30d: igData.profile.postsLast30d || 0,
-          avgLikes: igData.profile.avgLikesLast30d || 0,
-          avgViews: igData.profile.avgViewsReelsLast30d || 0,
-          dataAvailable: igData.profile.dataAvailable || false,
-        }
-      : null,
-    competitorInstagram:
-      igData?.competitors
-        ?.filter((c: any) => c.dataAvailable)
-        ?.map((c: any) => ({
-          handle: c.handle,
-          followers: c.followers || 0,
-          engagementRate: c.engagementRate || 0,
-          postsLast30d: c.postsLast30d || 0,
-          avgLikes: c.avgLikesLast30d || 0,
-          avgViews: c.avgViewsReelsLast30d || 0,
-        })) || [],
+    maps: mapsData ? {
+      found: mapsData.found || false,
+      rating: mapsData.rating || null,
+      reviewCount: mapsData.reviewCount || null,
+      categories: mapsData.categories || [],
+      inLocalPack: mapsData.inLocalPack || false,
+      photos: mapsData.photos || 0,
+    } : null,
+    instagram: igData?.profile ? {
+      handle: igData.profile.handle || "",
+      followers: igData.profile.followers || 0,
+      engagementRate: igData.profile.engagementRate || 0,
+      postsLast30d: igData.profile.postsLast30d || 0,
+      avgLikes: igData.profile.avgLikesLast30d || 0,
+      avgViews: igData.profile.avgViewsReelsLast30d || 0,
+      dataAvailable: igData.profile.dataAvailable || false,
+    } : null,
+    competitorInstagram: igData?.competitors
+      ?.filter((c: any) => c.dataAvailable)
+      ?.map((c: any) => ({
+        handle: c.handle,
+        followers: c.followers || 0,
+        engagementRate: c.engagementRate || 0,
+        postsLast30d: c.postsLast30d || 0,
+        avgLikes: c.avgLikesLast30d || 0,
+        avgViews: c.avgViewsReelsLast30d || 0,
+      })) || [],
     serpSummary: {
       termsScraped: serpPositions.length,
-      termsRanked: serpPositions.filter(
-        (sp: any) => sp.position && sp.position <= 10
-      ).length,
-      hasLocalPack: serpPositions.some((sp: any) =>
-        sp.serpFeatures?.includes("local_pack")
-      ),
-      hasAds: serpPositions.some((sp: any) =>
-        sp.serpFeatures?.includes("ads")
-      ),
+      termsRanked: serpPositions.filter((sp: any) => sp.position && sp.position <= 10).length,
+      hasLocalPack: serpPositions.some((sp: any) => sp.serpFeatures?.includes("local_pack")),
+      hasAds: serpPositions.some((sp: any) => sp.serpFeatures?.includes("ads")),
     },
     aiVisibility: result.aiVisibility || null,
     termGeneration: {

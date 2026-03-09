@@ -2,7 +2,7 @@
 // Virô — Clerk Middleware
 // Protects /dashboard/* and /admin/* routes
 // Public: landing page, API routes for diagnose/checkout/webhook/events/feedback
-// Rate limiting: /api/diagnose — máx 3 requisições por IP a cada 60 minutos
+// Rate limiting: /api/diagnose POST — máx 3 submissões por IP a cada 60 minutos
 // ============================================================================
 // File: src/middleware.ts
 
@@ -23,7 +23,7 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 // ─── Rate Limit Store (in-memory, por instância Vercel) ───────────────────
-// Suficiente para bloquear abuso simples. Para escala, substituir por Redis/Upstash.
+// Conta apenas POSTs — GETs de polling não consomem o limite
 const rateLimitStore = new Map<string, { count: number; windowStart: number }>();
 const RATE_LIMIT_MAX = 3;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hora
@@ -44,8 +44,8 @@ function isRateLimited(ip: string): boolean {
 }
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
-  // Rate limiting apenas para /api/diagnose
-  if (req.nextUrl.pathname.startsWith("/api/diagnose")) {
+  // Rate limiting: apenas POST (GET é polling de status, não conta)
+  if (req.method === "POST" && req.nextUrl.pathname.startsWith("/api/diagnose")) {
     const ip =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       req.headers.get("x-real-ip") ||

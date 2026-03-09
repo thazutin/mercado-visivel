@@ -103,7 +103,6 @@ export default function Home() {
 
   const [apiDone, setApiDone] = useState(false);
   const [animDone, setAnimDone] = useState(false);
-  const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (apiDone && animDone && results) {
@@ -113,30 +112,6 @@ export default function Home() {
       }
     }
   }, [apiDone, animDone, results, leadId]);
-
-  // Cleanup polling on unmount
-  useEffect(() => {
-    return () => { if (pollingRef.current) clearTimeout(pollingRef.current); };
-  }, []);
-
-  // Polling: checa /api/diagnose?leadId=X a cada 3s até status=done
-  const startPolling = useCallback((id: string) => {
-    const poll = async () => {
-      try {
-        const res = await fetch(`/api/diagnose?leadId=${id}`);
-        const data = await res.json();
-        if (data.status === "done" && data.results) {
-          setResults(data.results);
-          setApiDone(true);
-          return;
-        }
-      } catch (err) {
-        console.error("Polling error:", err);
-      }
-      pollingRef.current = setTimeout(poll, 3000);
-    };
-    pollingRef.current = setTimeout(poll, 4000); // primeira checagem após 4s
-  }, []);
 
   const handleSubmit = useCallback(async () => {
     if (honeypot) return;
@@ -152,15 +127,16 @@ export default function Home() {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
-      if (data.lead_id) {
+      if (data.results) {
+        setResults(data.results);
         setLeadId(data.lead_id);
-        startPolling(data.lead_id); // API responde imediatamente, polling busca o resultado
       }
     } catch (err) {
       console.error("Submit error:", err);
-      setApiDone(true); // evita loading infinito
+    } finally {
+      setApiDone(true);
     }
-  }, [formData, honeypot, startPolling]);
+  }, [formData, honeypot]);
 
   const handleCheckout = useCallback(async (coupon?: string) => {
     setCheckoutLoading(true);
