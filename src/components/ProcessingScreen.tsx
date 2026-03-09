@@ -41,6 +41,7 @@ export default function ProcessingScreen({ product, region, onComplete, steps: c
   ];
 
   useEffect(() => {
+    // Cycle through steps, then hold on last step until API completes
     const stepDuration = 3000;
     const timers: NodeJS.Timeout[] = [];
 
@@ -50,6 +51,8 @@ export default function ProcessingScreen({ product, region, onComplete, steps: c
       }
     });
 
+    // After cycling all steps, call onComplete — parent decides when to transition
+    // If API is still running, parent holds us on processing screen
     timers.push(setTimeout(() => {
       setDone(true);
       onComplete();
@@ -58,13 +61,10 @@ export default function ProcessingScreen({ product, region, onComplete, steps: c
     return () => timers.forEach(clearTimeout);
   }, []);
 
-  // Short region for display (take first part before comma)
-  const shortRegion = region
-    ? region.split(",")[0].trim()
-    : "";
+  const shortRegion = region ? region.split(",")[0].trim() : "";
 
   return (
-    <div style={{
+    <div id="viro-processing-screen" style={{
       minHeight: "100vh",
       background: V.night,
       display: "flex",
@@ -84,17 +84,24 @@ export default function ProcessingScreen({ product, region, onComplete, steps: c
         </div>
 
         <h2 style={{
-          fontFamily: V.display, fontSize: 22, fontWeight: 700,
-          color: V.white, letterSpacing: "-0.03em", marginBottom: 6,
+          fontFamily: V.display, fontSize: 24, fontWeight: 700,
+          color: V.white, letterSpacing: "-0.03em", marginBottom: 8,
         }}>
           Analisando {product}
         </h2>
-        {shortRegion && (
-          <p style={{ color: V.ash, fontSize: 14, fontFamily: V.body, marginBottom: 48 }}>
+        {shortRegion ? (
+          <p style={{ color: V.ash, fontSize: 14, fontFamily: V.body, marginBottom: 12 }}>
             em {shortRegion}
           </p>
+        ) : (
+          <p style={{ color: V.ash, fontSize: 14, fontFamily: V.body, marginBottom: 12 }}>
+            {product}
+          </p>
         )}
-        {!shortRegion && <div style={{ marginBottom: 48 }} />}
+
+        <p style={{ color: V.zinc, fontSize: 12, fontFamily: V.mono, marginBottom: 48 }}>
+          Isso pode levar até 60 segundos
+        </p>
 
         {/* Steps */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12, textAlign: "left" }}>
@@ -110,6 +117,7 @@ export default function ProcessingScreen({ product, region, onComplete, steps: c
                 transition: "all 0.4s ease",
                 opacity: i <= activeIdx || done ? 1 : 0.3,
               }}>
+                {/* Icon */}
                 <div style={{
                   width: 22, height: 22, borderRadius: "50%", display: "flex",
                   alignItems: "center", justifyContent: "center", flexShrink: 0,
@@ -128,6 +136,8 @@ export default function ProcessingScreen({ product, region, onComplete, steps: c
                     }} />
                   )}
                 </div>
+
+                {/* Text */}
                 <span style={{
                   fontSize: 13, fontFamily: V.body,
                   color: isDone ? V.mist : isActive ? V.white : V.zinc,
@@ -153,6 +163,7 @@ export default function ProcessingScreen({ product, region, onComplete, steps: c
         </div>
       </div>
 
+      {/* Spinner keyframe */}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
