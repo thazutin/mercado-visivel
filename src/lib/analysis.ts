@@ -155,73 +155,61 @@ export async function runInstantAnalysis(
       model: "claude-sonnet-4-5-20250929",
       maxRetries: 1,
     });
-    console.log(`[Pipeline] Step 1 OK: ${step1.termCount} terms generated. First 3: ${step1.terms.slice(0, 3).map(t => t.term).join(', ')}`);
-  } catch (err) {
-    console.error("[Pipeline] Step 1 failed:", err);
-    // Create a minimal step1 so fallback can still run
-    step1 = {
-      terms: [],
-      termCount: 0,
-      generationModel: "fallback",
-      promptVersion: "fallback",
-      processingTimeMs: 0,
-    } as Step1Output;
-  }
+    console.log(`[Pipeline] Step 1 OK: ${step1.termCount} terms generated`);
 
-  // ALWAYS supplement if we have fewer than 15 terms (whether step1 failed or returned few)
-  if (step1.termCount < 15) {
-    console.warn(`[Pipeline] Only ${step1.termCount} terms — running fallback generation`);
-    try {
-      const fallbackResponse = await claude.createMessage({
-        model: "claude-sonnet-4-5-20250929",
-        max_tokens: 4000,
-        temperature: 0.3,
-        messages: [{
-          role: "user",
-          content: `Gere 25 termos de busca de alta intenção local para "${input.product}" na região "${input.region}".
+    // Fallback: if too few terms, supplement with a direct Claude query
+    if (step1.termCount < 10) {
+      console.warn(`[Pipeline] Step 1 generated only ${step1.termCount} terms — running fallback`);
+      try {
+        const fallbackResponse = await claude.createMessage({
+          model: "claude-sonnet-4-5-20250929",
+          max_tokens: 3000,
+          temperature: 0.3,
+          messages: [{
+            role: "user",
+            content: `Gere 20 termos de busca de alta intenção local para "${input.product}" na região "${input.region}".
+            
+Foco: termos que um consumidor digita no Google quando está pronto para comprar ou agendar.
+Inclua variações com: nome da cidade, "perto de mim", preço, melhor, agendar, telefone, avaliação.
 
-Foco: termos que um consumidor digita no Google quando está pronto para comprar, agendar ou avaliar opções.
-Inclua variações com: nome da cidade/bairro, "perto de mim", preço, melhor, agendar, telefone, avaliação, comparativo.
-Misture intenções: transactional (quer comprar), informational (pesquisando), navigational (buscando marca), consideration (comparando).
-
-Responda APENAS em JSON, sem markdown, sem texto antes ou depois:
+Responda APENAS em JSON, sem markdown:
 {
   "terms": [
-    { "term": "termo aqui", "intent": "transactional", "intentWeight": 0.9, "category": "core", "rationale": "motivo curto" }
+    { "term": "termo aqui", "intent": "transactional", "intentWeight": 0.9, "category": "core", "rationale": "motivo" }
   ]
 }`,
-        }],
-      });
-      const fallbackText = fallbackResponse.content
-        .filter((c: any) => c.type === "text")
-        .map((c: any) => c.text)
-        .join("");
-      const cleaned = fallbackText.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
-      const parsed = JSON.parse(cleaned);
-      if (parsed.terms && parsed.terms.length > 0) {
-        const existingTerms = new Set(step1.terms.map(t => t.term.toLowerCase()));
-        const newTerms = parsed.terms
-          .filter((t: any) => t.term && !existingTerms.has(t.term.toLowerCase()))
-          .map((t: any) => ({
-            term: t.term,
-            intent: t.intent || "transactional",
-            intentWeight: t.intentWeight || 0.8,
-            category: t.category || "core",
-            rationale: t.rationale || "fallback generation",
-          }));
-        step1.terms = [...step1.terms, ...newTerms];
-        step1.termCount = step1.terms.length;
-        sourcesUsed.push("claude_fallback_terms");
-        console.log(`[Pipeline] Fallback added ${newTerms.length} terms — total now ${step1.termCount}`);
+          }],
+        });
+        const fallbackText = fallbackResponse.content
+          .filter((c: any) => c.type === "text")
+          .map((c: any) => c.text)
+          .join("");
+        const cleaned = fallbackText.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+        const parsed = JSON.parse(cleaned);
+        if (parsed.terms && parsed.terms.length > 0) {
+          // Merge with existing terms, avoiding duplicates
+          const existingTerms = new Set(step1.terms.map(t => t.term.toLowerCase()));
+          const newTerms = parsed.terms
+            .filter((t: any) => !existingTerms.has(t.term.toLowerCase()))
+            .map((t: any) => ({
+              term: t.term,
+              intent: t.intent || "transactional",
+              intentWeight: t.intentWeight || 0.8,
+              category: t.category || "core",
+              rationale: t.rationale || "fallback generation",
+            }));
+          step1.terms = [...step1.terms, ...newTerms];
+          step1.termCount = step1.terms.length;
+          sourcesUsed.push("claude_fallback_terms");
+          console.log(`[Pipeline] Fallback added ${newTerms.length} terms — total now ${step1.termCount}`);
+        }
+      } catch (fallbackErr) {
+        console.error("[Pipeline] Fallback term generation failed:", fallbackErr);
       }
-    } catch (fallbackErr) {
-      console.error("[Pipeline] Fallback term generation failed:", fallbackErr);
     }
-  }
-
-  // If we still have 0 terms, abort
-  if (step1.termCount === 0) {
-    throw new Error("Pipeline aborted: no terms generated even with fallback");
+  } catch (err) {
+    console.error("[Pipeline] Step 1 failed:", err);
+    throw new Error("Pipeline aborted: term generation failed");
   }
 
   // =========================================================================
@@ -232,34 +220,6 @@ Responda APENAS em JSON, sem markdown, sem texto antes ou depois:
     .sort((a, b) => b.intentWeight - a.intentWeight)
     .slice(0, 5)
     .map((t) => t.term);
-
-  // Extract instagram handles to scrape
-  const instagramHandles: string[] = [];
-  if (formData.instagram && formData.instagram.length > 1) {
-    const cleaned = formData.instagram.replace(/@/g, "").replace(/https?:\/\/(www\.)?instagram\.com\//g, "").replace(/\//g, "").trim();
-    if (cleaned.length > 1) {
-      instagramHandles.push(cleaned);
-    }
-  }
-  for (const c of formData.competitors || []) {
-    if (c.instagram && c.instagram.length > 1) {
-      const cleaned = c.instagram.replace(/@/g, "").replace(/https?:\/\/(www\.)?instagram\.com\//g, "").replace(/\//g, "").trim();
-      if (cleaned.length > 1) {
-        instagramHandles.push(cleaned);
-      }
-    }
-  }
-  console.log(`[Pipeline] Instagram handles to scrape: [${instagramHandles.join(", ")}] (from form: "${formData.instagram}", noInstagram: ${formData.noInstagram})`);
-
-  // Extract domain for SERP position matching
-  const siteDomain = formData.site
-    ? new URL(formData.site.startsWith("http") ? formData.site : `https://${formData.site}`).hostname.replace("www.", "")
-    : undefined;
-
-  // Run ALL external calls in parallel (Apify + DataForSEO at the same time)
-  let serpPositions: SerpPosition[] = [];
-  let mapsPresence: MapsPresence | null = null;
-  let instagramProfiles: InstagramProfile[] = [];
 
   // Helper: wrap a promise with a timeout (rejects if not resolved in time)
   function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
@@ -274,6 +234,72 @@ Responda APENAS em JSON, sem markdown, sem texto antes ou depois:
       );
     });
   }
+
+  // Extract & auto-discover Instagram handles
+  const instagramHandles: string[] = [];
+  const businessHandle = formData.instagram
+    ? formData.instagram.replace(/@/g, "").replace(/https?:\/\/(www\.)?instagram\.com\//g, "").replace(/\//g, "").trim()
+    : "";
+  if (businessHandle.length > 1) {
+    instagramHandles.push(businessHandle);
+  }
+
+  // Add any manually declared competitors
+  for (const c of formData.competitors || []) {
+    if (c.instagram && c.instagram.length > 1) {
+      const cleaned = c.instagram.replace(/@/g, "").replace(/https?:\/\/(www\.)?instagram\.com\//g, "").replace(/\//g, "").trim();
+      if (cleaned.length > 1) instagramHandles.push(cleaned);
+    }
+  }
+
+  // AUTO-DISCOVER competitors via SERP if no competitors declared
+  if (instagramHandles.length <= 1 && apifyConfig) {
+    try {
+      console.log(`[Pipeline] Auto-discovering Instagram competitors for "${input.product}" in "${input.region}"...`);
+      const serpScraper = createApifySerpScraper(apifyConfig);
+      const searchQuery = `instagram ${input.product} ${input.region.split(",")[0].trim()}`;
+      const discoveryResults = await withTimeout(
+        serpScraper([searchQuery], input.region, undefined),
+        20_000,
+        "Competitor Discovery",
+      );
+      
+      // Extract Instagram handles from SERP results
+      const discoveredHandles: string[] = [];
+      for (const result of discoveryResults) {
+        const url = result.url || result.link || "";
+        const match = url.match(/instagram\.com\/([a-zA-Z0-9_.]+)/);
+        if (match && match[1] && !["explore", "p", "reel", "stories", "accounts"].includes(match[1])) {
+          const handle = match[1].toLowerCase();
+          if (handle !== businessHandle.toLowerCase() && !discoveredHandles.includes(handle)) {
+            discoveredHandles.push(handle);
+          }
+        }
+      }
+      
+      // Take top 4 discovered competitors
+      const competitorHandles = discoveredHandles.slice(0, 4);
+      instagramHandles.push(...competitorHandles);
+      if (competitorHandles.length > 0) {
+        sourcesUsed.push("auto_competitor_discovery");
+        console.log(`[Pipeline] Discovered ${competitorHandles.length} competitors: [${competitorHandles.join(", ")}]`);
+      }
+    } catch (err) {
+      console.warn("[Pipeline] Competitor auto-discovery failed:", (err as Error).message);
+    }
+  }
+
+  console.log(`[Pipeline] Instagram handles to scrape: [${instagramHandles.join(", ")}] (business: "${businessHandle}", total: ${instagramHandles.length})`);
+
+  // Extract domain for SERP position matching
+  const siteDomain = formData.site
+    ? new URL(formData.site.startsWith("http") ? formData.site : `https://${formData.site}`).hostname.replace("www.", "")
+    : undefined;
+
+  // Run ALL external calls in parallel (Apify + DataForSEO at the same time)
+  let serpPositions: SerpPosition[] = [];
+  let mapsPresence: MapsPresence | null = null;
+  let instagramProfiles: InstagramProfile[] = [];
 
   // Build all parallel promises
   const allTermStrings = step1.terms.map(t => t.term);
@@ -312,7 +338,7 @@ Responda APENAS em JSON, sem markdown, sem texto antes ou depois:
     );
     promiseLabels.push("serp");
 
-    // 3. Google Maps (timeout: 20s)
+    // 3. Google Maps (timeout: 45s)
     parallelPromises.push(
       withTimeout(
         mapsScraper(input.businessName || input.product, input.region)
@@ -321,13 +347,13 @@ Responda APENAS em JSON, sem markdown, sem texto antes ou depois:
             console.log(`[Pipeline] Maps OK: found=${r.found}, rating=${r.rating}`);
             return r;
           }),
-        20_000,
+        45_000,
         "Maps",
       )
     );
     promiseLabels.push("maps");
 
-    // 4. Instagram (timeout: 25s — if it can't finish in 25s, skip it)
+    // 4. Instagram (timeout: 90s — Actor makes 2 parallel calls internally)
     parallelPromises.push(
       instagramHandles.length > 0
         ? withTimeout(
@@ -337,7 +363,7 @@ Responda APENAS em JSON, sem markdown, sem texto antes ou depois:
                 console.log(`[Pipeline] Instagram OK: ${r.length} profiles`);
                 return r;
               }),
-            25_000,
+            90_000,
             "Instagram",
           )
         : Promise.resolve([])
