@@ -94,6 +94,7 @@ export default function Home() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [placesReady, setPlacesReady] = useState(false);
   const [noInstagram, setNoInstagram] = useState(false);
+  const [isNational, setIsNational] = useState(false);
 
   useEffect(() => { setTimeout(() => setHeroVisible(true), 200); }, []);
 
@@ -103,8 +104,14 @@ export default function Home() {
   const [animDone, setAnimDone] = useState(false);
 
   useEffect(() => {
-    if (apiDone && animDone && results) setScreen("value");
-  }, [apiDone, animDone, results]);
+    if (apiDone && animDone && results) {
+      setScreen("value");
+      // Update URL so user can bookmark/return to this result
+      if (leadId) {
+        window.history.replaceState({}, "", `/resultado/${leadId}`);
+      }
+    }
+  }, [apiDone, animDone, results, leadId]);
 
   const handleSubmit = useCallback(async () => {
     setScreen("processing");
@@ -222,8 +229,12 @@ export default function Home() {
             </label>
           </Field>
 
-          <Field label="Onde você atende?" hint="Endereço completo — quanto mais preciso, melhor a análise">
-            {placesReady ? (
+          <Field label="Onde você atende?" hint={isNational ? "Análise nacional — sem filtro de região" : "Endereço completo — quanto mais preciso, melhor"}>
+            {isNational ? (
+              <div style={{ padding: "14px 16px", borderRadius: 10, background: V.cloud, fontSize: 13, color: V.zinc }}>
+                Análise nacional — vamos buscar dados de todo o Brasil.
+              </div>
+            ) : placesReady ? (
               <PlacesAutocomplete
                 value={formData.region}
                 onChange={(val) => updateField("region", val)}
@@ -234,6 +245,14 @@ export default function Home() {
               <input style={inputStyle} type="text" placeholder="Rua, número — bairro, cidade" value={formData.region}
                 onChange={(e: any) => updateField("region", e.target.value)} />
             )}
+            <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 13, color: V.ash, cursor: "pointer" }}>
+              <input type="checkbox" checked={isNational} onChange={(e: any) => {
+                setIsNational(e.target.checked);
+                if (e.target.checked) updateField("region", "Brasil (nacional)");
+                else updateField("region", "");
+              }} style={{ width: 16, height: 16, accentColor: V.amber }} />
+              Atendo todo o Brasil / online
+            </label>
           </Field>
 
           <Field label="Tem site?" hint="Opcional — analisamos se disponível">
