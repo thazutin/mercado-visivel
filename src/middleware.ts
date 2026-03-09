@@ -1,8 +1,7 @@
 // ============================================================================
 // Virô — Clerk Middleware
 // Protects /dashboard/* and /admin/* routes
-// Public: landing page, API routes for diagnose/checkout/webhook/events/feedback
-// Rate limiting: /api/diagnose POST — máx 3 submissões por IP a cada 60 minutos
+// Rate limiting: /api/diagnose POST apenas — máx 3 submissões por IP/hora
 // ============================================================================
 // File: src/middleware.ts
 
@@ -14,6 +13,7 @@ const isPublicRoute = createRouteMatcher([
   "/",
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/resultado(.*)",
   "/api/diagnose(.*)",
   "/api/checkout(.*)",
   "/api/webhook(.*)",
@@ -66,9 +66,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and static files
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes
     "/(api|trpc)(.*)",
   ],
 };
