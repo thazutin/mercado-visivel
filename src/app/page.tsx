@@ -95,6 +95,7 @@ export default function Home() {
   const [placesReady, setPlacesReady] = useState(false);
   const [noInstagram, setNoInstagram] = useState(false);
   const [isNational, setIsNational] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
 
   useEffect(() => { setTimeout(() => setHeroVisible(true), 200); }, []);
 
@@ -102,18 +103,44 @@ export default function Home() {
 
   const [apiDone, setApiDone] = useState(false);
   const [animDone, setAnimDone] = useState(false);
+  const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (apiDone && animDone && results) {
       setScreen("value");
-      // Update URL so user can bookmark/return to this result
       if (leadId) {
         window.history.replaceState({}, "", `/resultado/${leadId}`);
       }
     }
   }, [apiDone, animDone, results, leadId]);
 
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => { if (pollingRef.current) clearTimeout(pollingRef.current); };
+  }, []);
+
+  // Polling: checa /api/diagnose?leadId=X a cada 3s até status=done
+  const startPolling = useCallback((id: string) => {
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/diagnose?leadId=${id}`);
+        const data = await res.json();
+        if (data.status === "done" && data.results) {
+          setResults(data.results);
+          setApiDone(true);
+          return;
+        }
+      } catch (err) {
+        console.error("Polling error:", err);
+      }
+      pollingRef.current = setTimeout(poll, 3000);
+    };
+    pollingRef.current = setTimeout(poll, 4000); // primeira checagem após 4s
+  }, []);
+
   const handleSubmit = useCallback(async () => {
+    if (honeypot) return;
+
     setScreen("processing");
     setApiDone(false);
     setAnimDone(false);
@@ -125,16 +152,15 @@ export default function Home() {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
-      if (data.results) {
-        setResults(data.results);
+      if (data.lead_id) {
         setLeadId(data.lead_id);
+        startPolling(data.lead_id); // API responde imediatamente, polling busca o resultado
       }
     } catch (err) {
       console.error("Submit error:", err);
-    } finally {
-      setApiDone(true);
+      setApiDone(true); // evita loading infinito
     }
-  }, [formData]);
+  }, [formData, honeypot, startPolling]);
 
   const handleCheckout = useCallback(async (coupon?: string) => {
     setCheckoutLoading(true);
@@ -357,7 +383,17 @@ export default function Home() {
 
           <div key={formStep}>{currentStep.content}</div>
 
-          {/* Navigation */}
+          {/* Honeypot — invisível para humanos, bots preenchem automaticamente */}
+          <div style={{ position: "absolute", left: "-9999px", top: "-9999px", opacity: 0, pointerEvents: "none" }} aria-hidden="true">
+            <input
+              type="text"
+              name="website_url"
+              tabIndex={-1}
+              autoComplete="off"
+              value={honeypot}
+              onChange={(e: any) => setHoneypot(e.target.value)}
+            />
+          </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 28, paddingTop: 16, borderTop: `1px solid ${V.fog}` }}>
             {formStep > 1 ? (
               <button onClick={() => setFormStep(formStep - 1)} style={{

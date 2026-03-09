@@ -99,8 +99,11 @@ export default function ProcessingScreen({ product, region, onComplete, steps: c
           </p>
         )}
 
-        <p style={{ color: V.zinc, fontSize: 12, fontFamily: V.mono, marginBottom: 48 }}>
+        <p style={{ color: V.zinc, fontSize: 12, fontFamily: V.mono, marginBottom: 12 }}>
           Isso pode levar até 60 segundos
+        </p>
+        <p style={{ color: V.ash, fontSize: 12, fontFamily: V.body, marginBottom: 48, lineHeight: 1.5 }}>
+          Fique aqui — seu resultado aparece nessa tela assim que ficar pronto.
         </p>
 
         {/* Steps */}

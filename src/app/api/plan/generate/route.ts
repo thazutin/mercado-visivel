@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
+import { notifyPlanReady } from "@/lib/notify";
 
 export const maxDuration = 120;
 
@@ -99,11 +100,14 @@ export async function POST(req: NextRequest) {
       .update({ plan_status: "ready" })
       .eq("id", leadId);
 
-    // 5. Send email with plan link
-    await sendPlanEmail(lead.email, leadId, lead.product, lead.region);
-
-    // 6. Send WhatsApp notification
-    await sendPlanWhatsApp(lead.whatsapp, leadId, lead.product);
+    // 5. Notifica por WhatsApp + email
+    await notifyPlanReady({
+      email: lead.email,
+      whatsapp: lead.whatsapp,
+      leadId,
+      product: lead.product,
+      region: lead.region,
+    });
 
     console.log(`[PlanGen] Plan ready for lead ${leadId}`);
 
@@ -234,91 +238,4 @@ REGRAS PARA OS BLOCOS:
 Gere APENAS o JSON. Sem texto antes ou depois.`;
 }
 
-// ─── EMAIL DELIVERY ─────────────────────────────────────────────────
-
-async function sendPlanEmail(email: string, leadId: string, product: string, region: string) {
-  if (!process.env.RESEND_API_KEY || !email) return;
-
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://virolocal.com";
-  const dashboardUrl = `${baseUrl}/dashboard/${leadId}`;
-
-  try {
-    await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "Virô <entrega@virolocal.com>",
-        to: email,
-        subject: `Seu diagnóstico completo está pronto — ${product} em ${region}`,
-        html: `
-          <div style="font-family: -apple-system, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px;">
-            <div style="text-align: center; margin-bottom: 32px;">
-              <div style="width: 44px; height: 44px; border-radius: 14px; background: #161618; display: inline-flex; align-items: center; justify-content: center;">
-                <span style="font-weight: 700; font-size: 20px; color: #FEFEFF;">V</span>
-              </div>
-            </div>
-            <h1 style="font-size: 22px; color: #161618; margin-bottom: 16px;">Seu plano está pronto.</h1>
-            <p style="font-size: 15px; color: #6E6E78; line-height: 1.7; margin-bottom: 24px;">
-              O diagnóstico completo e o plano de ação de 90 dias para <strong>${product}</strong> em <strong>${region}</strong> 
-              estão disponíveis no seu dashboard.
-            </p>
-            <div style="text-align: center; margin: 32px 0;">
-              <a href="${dashboardUrl}" style="background: #161618; color: #FEFEFF; padding: 14px 32px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 15px; display: inline-block;">
-                Acessar meu plano
-              </a>
-            </div>
-            <p style="font-size: 13px; color: #9E9EA8; line-height: 1.6;">
-              A partir de agora, toda segunda-feira você receberá um briefing semanal com o que mudou no seu mercado 
-              e a ação da semana. O primeiro chega na próxima segunda.
-            </p>
-            <hr style="border: none; border-top: 1px solid #EAEAEE; margin: 32px 0;" />
-            <p style="font-size: 11px; color: #9E9EA8; text-align: center;">
-              Virô · virolocal.com · inteligência de mercado local
-            </p>
-          </div>
-        `,
-      }),
-    });
-    console.log(`[PlanGen] Email sent to ${email}`);
-  } catch (err) {
-    console.error("[PlanGen] Email failed:", err);
-  }
-}
-
-// ─── WHATSAPP NOTIFICATION ──────────────────────────────────────────
-
-async function sendPlanWhatsApp(whatsapp: string, leadId: string, product: string) {
-  if (!process.env.TWILIO_ACCOUNT_SID || !whatsapp) return;
-
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://virolocal.com";
-  const dashboardUrl = `${baseUrl}/dashboard/${leadId}`;
-
-  // Clean phone number
-  const phone = whatsapp.replace(/\D/g, "");
-  const fullPhone = phone.startsWith("55") ? phone : `55${phone}`;
-
-  try {
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const from = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
-
-    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        From: from,
-        To: `whatsapp:+${fullPhone}`,
-        Body: `✅ Seu diagnóstico completo para *${product}* está pronto!\n\nAcesse aqui: ${dashboardUrl}\n\nA partir de agora, toda segunda você recebe o briefing semanal com as mudanças no seu mercado e a ação da semana.\n\n— Virô`,
-      }),
-    });
-    console.log(`[PlanGen] WhatsApp sent to ${fullPhone}`);
-  } catch (err) {
-    console.error("[PlanGen] WhatsApp failed:", err);
-  }
-}
+// (Email e WhatsApp centralizados em src/lib/notify.ts)

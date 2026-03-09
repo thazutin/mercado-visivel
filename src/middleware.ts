@@ -2,10 +2,13 @@
 // Virô — Clerk Middleware
 // Protects /dashboard/* and /admin/* routes
 // Public: landing page, API routes for diagnose/checkout/webhook/events/feedback
+// Rate limiting: /api/diagnose — máx 3 requisições por IP a cada 60 minutos
 // ============================================================================
 // File: src/middleware.ts
 
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -19,7 +22,43 @@ const isPublicRoute = createRouteMatcher([
   "/api/cron(.*)",
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
+// ─── Rate Limit Store (in-memory, por instância Vercel) ───────────────────
+// Suficiente para bloquear abuso simples. Para escala, substituir por Redis/Upstash.
+const rateLimitStore = new Map<string, { count: number; windowStart: number }>();
+const RATE_LIMIT_MAX = 3;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hora
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitStore.get(ip);
+
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    rateLimitStore.set(ip, { count: 1, windowStart: now });
+    return false;
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX) return true;
+
+  entry.count++;
+  return false;
+}
+
+export default clerkMiddleware(async (auth, req: NextRequest) => {
+  // Rate limiting apenas para /api/diagnose
+  if (req.nextUrl.pathname.startsWith("/api/diagnose")) {
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
+      "unknown";
+
+    if (isRateLimited(ip)) {
+      return NextResponse.json(
+        { error: "Muitas requisições. Tente novamente em 1 hora." },
+        { status: 429 }
+      );
+    }
+  }
+
   if (!isPublicRoute(req)) {
     await auth.protect();
   }
