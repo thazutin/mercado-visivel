@@ -52,6 +52,25 @@ function getClaudeClient() {
   return { createMessage: (params: any) => client.messages.create(params) };
 }
 
+// --- Extract city via Claude Haiku ---
+async function extractCity(region: string): Promise<string> {
+  try {
+    const claude = getClaudeClient();
+    const res = await claude.createMessage({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 50,
+      messages: [{
+        role: 'user',
+        content: `Extraia apenas o nome da cidade desta string de endereço/região. Responda somente com o nome da cidade, sem mais nada: ${region}`,
+      }],
+    });
+    const text = (res.content as any[]).filter((c: any) => c.type === 'text').map((c: any) => c.text).join('').trim();
+    return text || region.split(',')[0].trim();
+  } catch {
+    return region.split(',')[0].trim();
+  }
+}
+
 // --- Apify config ---
 function getApifyConfig() {
   const token = process.env.APIFY_API_TOKEN;
@@ -507,13 +526,19 @@ Responda APENAS em JSON, sem markdown:
   console.log(`[Pipeline] Step 2 OK: ${termVolumes.length} terms, totalVolume=${totalMonthlyVolume}, source=${volumeSource}`);
 
   // =========================================================================
+  // Extract city (cached for reuse in IBGE + Perplexity)
+  // =========================================================================
+  const extractedCity = await extractCity(input.region);
+  console.log(`[Pipeline] Cidade extraída: "${extractedCity}"`);
+
+  // =========================================================================
   // STEP 3 — Market Sizing (com dados IBGE opcionais)
   // =========================================================================
   const category = detectCategory(input.product, input.differentiator);
 
   let ibgeData: IBGEData | null = null;
   try {
-    ibgeData = await getIBGEMunicipalData(input.region);
+    ibgeData = await getIBGEMunicipalData(extractedCity);
     if (ibgeData) {
       console.log(`[Pipeline] IBGE OK: ${ibgeData.municipio}/${ibgeData.estado} — pop=${ibgeData.populacao.toLocaleString('pt-BR')}`);
     }
@@ -615,9 +640,9 @@ Responda APENAS em JSON, sem markdown:
         })
       : undefined;
 
-    // Perplexity AI client para verificar menções em respostas de IA
+    // Perplexity AI client para verificar menções em respostas de IA (5 dimensões geográficas)
     const perplexityClient = process.env.PERPLEXITY_API_KEY
-      ? createPerplexityAIVisibilityChecker()
+      ? createPerplexityAIVisibilityChecker(claude)
       : undefined;
 
     aiVisibility = await withTimeout(

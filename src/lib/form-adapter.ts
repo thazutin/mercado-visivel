@@ -74,7 +74,7 @@ export function adaptFormToInput(form: LeadFormData, locale: string): FormInput 
         high1: 2500,
         high2: 7500,
       };
-      ticket = rangeMap[form.ticket] || 200;
+      ticket = rangeMap[form.ticket] || 0;
     }
   }
 

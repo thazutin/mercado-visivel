@@ -210,10 +210,18 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 <span style={{ fontFamily: V.mono, fontSize: 12, color: V.night }}>{results.aiVisibility.score}/100</span>
               </div>
               <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
-                {results.aiVisibility.likelyMentioned
-                  ? `Seu negócio provavelmente é mencionado em respostas de AI. Score ${results.aiVisibility.score}/100.`
-                  : `Seu negócio provavelmente não aparece quando alguém pergunta a uma AI "melhor ${product} em ${shortRegion}". ${results.aiVisibility.summary}`
-                }
+                {(() => {
+                  const aiDimFactor = results.aiVisibility.factors?.find(
+                    (f: any) => f.status === 'positive' && f.factor.startsWith('Aparece em buscas de IA')
+                  );
+                  if (aiDimFactor) {
+                    return aiDimFactor.factor + `. Score ${results.aiVisibility.score}/100.`;
+                  }
+                  if (results.aiVisibility.likelyMentioned) {
+                    return `Seu negócio provavelmente é mencionado em respostas de AI. Score ${results.aiVisibility.score}/100.`;
+                  }
+                  return `Não aparece em nenhuma busca de IA local. ${results.aiVisibility.summary}`;
+                })()}
               </p>
             </div>
           )}

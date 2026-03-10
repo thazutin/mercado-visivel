@@ -187,11 +187,14 @@ function diagnosisEmailHtml(opts: {
     </div>
     <div style="text-align:center;margin:0 0 28px;">
       <a href="${url}" style="background:#161618;color:#FEFEFF;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;display:inline-block;">
-        Ver resultado completo
+        Ver minha inteligência de mercado
       </a>
     </div>
+    <p style="font-size:14px;color:#3A3A40;line-height:1.6;margin:0 0 12px;">
+      Veja onde estão suas oportunidades e o que fazer essa semana.
+    </p>
     <p style="font-size:13px;color:#9E9EA8;line-height:1.6;margin:0;">
-      O resultado inclui os termos de busca mapeados, sua posição no Google, 
+      O resultado inclui os termos de busca mapeados, sua posição no Google,
       análise do Instagram e as rotas de trabalho priorizadas.
     </p>
   `);

@@ -75,7 +75,7 @@ DECLARAÇÕES DO DONO:
   Diferencial declarado: "${input.differentiator}"
   Maior desafio: "${input.challenge}"
   Canais de aquisição: ${input.customerSources.join(', ')}
-  Ticket médio: R$${input.ticket}
+  ${input.ticket > 0 ? `Ticket médio: R$${input.ticket}` : ''}
   ${input.freeText ? `Contexto adicional: "${input.freeText}"` : ''}
 
 DADOS REAIS DE MERCADO:

@@ -270,12 +270,32 @@ export function createApifyMapsScraper(config: ApifyConfig) {
   };
 }
 
-// --- PERPLEXITY AI VISIBILITY CHECKER ---
+// --- PERPLEXITY AI VISIBILITY CHECKER (5 dimensões geográficas) ---
+
+export interface PerplexityDimensionResult {
+  mentioned: boolean;
+  context?: string;
+}
 
 export interface PerplexityVisibilityResult {
   mentioned: boolean;
-  mentionContext: string | null;
-  rawResponse: string;
+  bestDimension: string | null;
+  dimensions: {
+    street?: PerplexityDimensionResult;
+    neighborhood?: PerplexityDimensionResult;
+    city?: PerplexityDimensionResult;
+    region?: PerplexityDimensionResult;
+    state?: PerplexityDimensionResult;
+  };
+  rawResponses: string[];
+}
+
+export interface GeoDimensions {
+  street: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  region: string | null;
+  state: string | null;
 }
 
 function removeAccents(str: string): string {
@@ -286,7 +306,75 @@ function removeAccents(str: string): string {
     .trim();
 }
 
-export function createPerplexityAIVisibilityChecker() {
+function checkMentionInResponse(
+  rawResponse: string,
+  businessName: string | null,
+  instagramHandle: string | null,
+): { mentioned: boolean; context?: string } {
+  const normalizedResponse = removeAccents(rawResponse);
+
+  if (businessName) {
+    const normalizedName = removeAccents(businessName);
+    if (normalizedName.length > 2 && normalizedResponse.includes(normalizedName)) {
+      const idx = normalizedResponse.indexOf(normalizedName);
+      const start = Math.max(0, idx - 60);
+      const end = Math.min(rawResponse.length, idx + normalizedName.length + 60);
+      return { mentioned: true, context: rawResponse.substring(start, end) };
+    }
+  }
+
+  if (instagramHandle) {
+    const cleanHandle = removeAccents(instagramHandle.replace('@', ''));
+    if (cleanHandle.length > 3 && normalizedResponse.includes(cleanHandle)) {
+      const idx = normalizedResponse.indexOf(cleanHandle);
+      const start = Math.max(0, idx - 60);
+      const end = Math.min(rawResponse.length, idx + cleanHandle.length + 60);
+      return { mentioned: true, context: rawResponse.substring(start, end) };
+    }
+  }
+
+  return { mentioned: false };
+}
+
+async function queryPerplexity(
+  apiKey: string,
+  product: string,
+  dimensionValue: string,
+): Promise<string> {
+  const res = await fetch('https://api.perplexity.ai/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'sonar',
+      messages: [
+        {
+          role: 'system',
+          content: 'Responda APENAS em JSON válido. Sem texto adicional fora do JSON.',
+        },
+        {
+          role: 'user',
+          content: `Quais são os melhores negócios de ${product} em ${dimensionValue}? Liste os 5 principais com nome.`,
+        },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const errBody = await res.text();
+    console.error('[Perplexity] Chamada falhou:', res.status, errBody);
+    return '';
+  }
+
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+
+export function createPerplexityAIVisibilityChecker(
+  claudeClient: { createMessage: (params: any) => Promise<any> },
+) {
   return async function checkAIVisibility(
     product: string,
     region: string,
@@ -294,75 +382,90 @@ export function createPerplexityAIVisibilityChecker() {
     instagramHandle: string | null,
   ): Promise<PerplexityVisibilityResult> {
     const apiKey = process.env.PERPLEXITY_API_KEY;
+    const emptyResult: PerplexityVisibilityResult = {
+      mentioned: false, bestDimension: null, dimensions: {}, rawResponses: [],
+    };
+
     if (!apiKey) {
       console.warn('[Perplexity] PERPLEXITY_API_KEY não configurada');
-      return { mentioned: false, mentionContext: null, rawResponse: '' };
+      return emptyResult;
     }
 
     try {
-      const res = await fetch('https://api.perplexity.ai/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'sonar',
-          messages: [
-            {
-              role: 'system',
-              content: 'Responda APENAS em JSON válido. Sem texto adicional fora do JSON.',
-            },
-            {
-              role: 'user',
-              content: `Quais são os melhores negócios de ${product} em ${region}? Liste os 5 principais com nome.`,
-            },
-          ],
-        }),
-      });
+      // 1. Extrair dimensões geográficas via Claude Haiku
+      let geoDimensions: GeoDimensions = {
+        street: null, neighborhood: null, city: null, region: null, state: null,
+      };
 
-      if (!res.ok) {
-        const errBody = await res.text();
-        console.error('[Perplexity] Chamada falhou:', res.status, errBody);
-        return { mentioned: false, mentionContext: null, rawResponse: '' };
+      try {
+        const geoRes = await claudeClient.createMessage({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 200,
+          messages: [{
+            role: 'user',
+            content: `A partir deste endereço/região: '${region}', extraia em JSON as dimensões geográficas: { "street": "...", "neighborhood": "...", "city": "...", "region": "...", "state": "..." }. Retorne apenas o JSON, sem explicações. Use null para dimensões não identificáveis. O campo "region" é a mesorregião ou região metropolitana (ex: "ABC Paulista", "Vale do Paraíba").`,
+          }],
+        });
+        const geoText = (geoRes.content as any[]).filter((c: any) => c.type === 'text').map((c: any) => c.text).join('').trim();
+        const cleaned = geoText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+        geoDimensions = {
+          street: parsed.street || null,
+          neighborhood: parsed.neighborhood || null,
+          city: parsed.city || null,
+          region: parsed.region || null,
+          state: parsed.state || null,
+        };
+      } catch (err) {
+        console.warn('[Perplexity] Geo extraction failed, using region as city:', err);
+        geoDimensions.city = region.split(',')[0].trim();
       }
 
-      const data = await res.json();
-      const rawResponse = data.choices?.[0]?.message?.content || '';
-      const normalizedResponse = removeAccents(rawResponse);
+      console.log('[Perplexity] Dimensões geográficas:', JSON.stringify(geoDimensions));
 
+      // 2. Query Perplexity em paralelo para cada dimensão com valor
+      type DimKey = keyof GeoDimensions;
+      const dimEntries: [DimKey, string][] = (Object.entries(geoDimensions) as [DimKey, string | null][])
+        .filter((e): e is [DimKey, string] => e[1] !== null && e[1].length > 1);
+
+      const perplexityResults = await Promise.allSettled(
+        dimEntries.map(([_, value]) => queryPerplexity(apiKey, product, value))
+      );
+
+      // 3. Consolidar resultados
+      const dimensions: PerplexityVisibilityResult['dimensions'] = {};
+      const rawResponses: string[] = [];
+
+      for (let i = 0; i < dimEntries.length; i++) {
+        const [dimKey] = dimEntries[i];
+        const result = perplexityResults[i];
+        const rawResponse = result.status === 'fulfilled' ? result.value : '';
+        rawResponses.push(rawResponse);
+
+        if (rawResponse) {
+          dimensions[dimKey] = checkMentionInResponse(rawResponse, businessName, instagramHandle);
+        } else {
+          dimensions[dimKey] = { mentioned: false };
+        }
+      }
+
+      // 4. Determinar melhor dimensão
+      const dimPriority: DimKey[] = ['street', 'neighborhood', 'city', 'region', 'state'];
+      let bestDimension: string | null = null;
       let mentioned = false;
-      let mentionContext: string | null = null;
 
-      // Verifica businessName
-      if (businessName) {
-        const normalizedName = removeAccents(businessName);
-        if (normalizedName.length > 2 && normalizedResponse.includes(normalizedName)) {
+      for (const dim of dimPriority) {
+        if (dimensions[dim]?.mentioned) {
           mentioned = true;
-          // Extrai contexto ao redor da menção
-          const idx = normalizedResponse.indexOf(normalizedName);
-          const start = Math.max(0, idx - 60);
-          const end = Math.min(rawResponse.length, idx + normalizedName.length + 60);
-          mentionContext = rawResponse.substring(start, end);
+          bestDimension = dim;
+          break;
         }
       }
 
-      // Fallback: verifica instagramHandle
-      if (!mentioned && instagramHandle) {
-        const cleanHandle = removeAccents(instagramHandle.replace('@', ''));
-        if (cleanHandle.length > 3 && normalizedResponse.includes(cleanHandle)) {
-          mentioned = true;
-          const idx = normalizedResponse.indexOf(cleanHandle);
-          const start = Math.max(0, idx - 60);
-          const end = Math.min(rawResponse.length, idx + cleanHandle.length + 60);
-          mentionContext = rawResponse.substring(start, end);
-        }
-      }
-
-      return { mentioned, mentionContext, rawResponse };
+      return { mentioned, bestDimension, dimensions, rawResponses };
     } catch (err) {
       console.error('[Perplexity] Erro ao consultar API:', err);
-      return { mentioned: false, mentionContext: null, rawResponse: '' };
+      return emptyResult;
     }
   };
 }

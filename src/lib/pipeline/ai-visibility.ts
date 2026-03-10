@@ -194,7 +194,7 @@ export async function executeAIVisibilityCheck(
   dataForSEOClient?: { getKeywordVolumes: (terms: string[], region: string) => Promise<any[]> },
   // fallback: Claude client (mantido para compatibilidade)
   claudeClient?: { createMessage: (params: any) => Promise<any> },
-  // v2.1: Perplexity AI client (opcional — adiciona +25 pts se mencionado)
+  // v2.1: Perplexity AI client (opcional — +10 a +35 pts dependendo da dimensão)
   perplexityClient?: (product: string, region: string, businessName: string | null, instagramHandle: string | null) => Promise<PerplexityVisibilityResult>,
 ): Promise<AIVisibilityResult> {
   const startTime = Date.now();
@@ -236,24 +236,35 @@ export async function executeAIVisibilityCheck(
     hasWebsite,
   );
 
-  // ── Perplexity AI check (opcional) ─────────────────────────────────────
+  // ── Perplexity AI check (5 dimensões geográficas) ───────────────────
   if (perplexityClient) {
     try {
       const perplexityResult = await perplexityClient(product, region, businessName, instagramHandle);
-      if (perplexityResult.mentioned) {
-        score = Math.min(100, score + 25);
+      if (perplexityResult.mentioned && perplexityResult.bestDimension) {
+        // Pontuação por dimensão (não acumula — usa o maior match)
+        const dimScores: Record<string, number> = {
+          street: 35, neighborhood: 35, city: 25, region: 15, state: 10,
+        };
+        const dimLabels: Record<string, string> = {
+          street: 'rua/bairro', neighborhood: 'bairro', city: 'cidade',
+          region: 'região metropolitana', state: 'estado',
+        };
+        const bonus = dimScores[perplexityResult.bestDimension] || 25;
+        score = Math.min(100, score + bonus);
+        const dimLabel = dimLabels[perplexityResult.bestDimension] || perplexityResult.bestDimension;
+        const dimResult = perplexityResult.dimensions[perplexityResult.bestDimension as keyof typeof perplexityResult.dimensions];
         factors.push({
-          factor: 'Aparece em respostas de IA',
+          factor: `Aparece em buscas de IA para ${dimLabel}`,
           status: 'positive',
-          detail: perplexityResult.mentionContext
-            ? `Mencionado em resposta AI: "...${perplexityResult.mentionContext}..."`
-            : 'Negócio mencionado quando AI é perguntada sobre o segmento na região',
+          detail: dimResult?.context
+            ? `Mencionado em resposta AI (${dimLabel}): "...${dimResult.context}..."`
+            : `Negócio mencionado quando AI é perguntada sobre os melhores do segmento na ${dimLabel}`,
         });
       } else {
         factors.push({
-          factor: 'Não aparece em respostas de IA',
+          factor: 'Não aparece em nenhuma busca de IA local',
           status: 'negative',
-          detail: 'AI não menciona o negócio quando perguntada sobre os melhores do segmento na região',
+          detail: 'AI não menciona o negócio em nenhuma dimensão geográfica testada (rua, bairro, cidade, região, estado)',
         });
       }
     } catch (err) {
