@@ -9,6 +9,7 @@ import type {
   MonthlyDataPoint,
   SerpPosition,
   MapsPresence,
+  OrganicPresence,
   InstagramProfile,
   WebInfluence,
 } from '../types/pipeline.types';
@@ -891,6 +892,102 @@ function buildZeroVolume(term: string): TermVolumeData {
   };
 }
 
+
+// ============================================================================
+// DATAFORSEO ORGANIC POSITION CHECKER
+// ============================================================================
+
+export function createDataForSEOOrganicChecker(config: DataForSEOConfig) {
+  const baseUrl = 'https://api.dataforseo.com/v3';
+  const authHeader = 'Basic ' + Buffer.from(`${config.login}:${config.password}`).toString('base64');
+
+  return async function checkOrganicPositions(
+    domain: string,
+    terms: string[],
+    region: string,
+    locationCode: number = 2076,
+    languageCode: string = 'pt',
+  ): Promise<OrganicPresence> {
+    if (terms.length === 0) {
+      return { available: false, domain, rankedTerms: [], totalRanked: 0, avgPosition: null, topPosition: null };
+    }
+
+    const cacheKey = `organic:${domain}:${terms.sort().join('+')}`;
+    if (config.cache) {
+      const cached = await getCached<OrganicPresence>(config.cache, cacheKey);
+      if (cached) return cached;
+    }
+
+    try {
+      // Uma task por termo — DataForSEO SERP Organic Live Advanced
+      const tasks = terms.map(term => ({
+        keyword: term,
+        location_code: locationCode,
+        language_code: languageCode,
+        device: 'desktop',
+        os: 'windows',
+        depth: 30,
+      }));
+
+      const res = await fetch(`${baseUrl}/serp/google/organic/live/advanced`, {
+        method: 'POST',
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(tasks),
+      });
+
+      if (!res.ok) {
+        console.error('[OrganicChecker] DataForSEO falhou:', res.status);
+        return { available: false, domain, rankedTerms: [], totalRanked: 0, avgPosition: null, topPosition: null };
+      }
+
+      const data = await res.json();
+      const rankedTerms: { term: string; position: number; url: string }[] = [];
+
+      for (const task of (data.tasks || [])) {
+        if (task.status_code !== 20000) continue;
+        const keyword = task.data?.keyword || '';
+        const items = task.result?.[0]?.items || [];
+
+        for (const item of items) {
+          if (item.type !== 'organic') continue;
+          const itemDomain = (item.domain || '').replace('www.', '');
+          if (itemDomain === domain) {
+            rankedTerms.push({
+              term: keyword,
+              position: item.rank_group || item.rank_absolute,
+              url: item.url || '',
+            });
+            break; // pega só a primeira aparição do domínio por termo
+          }
+        }
+      }
+
+      const positions = rankedTerms.map(r => r.position);
+      const result: OrganicPresence = {
+        available: true,
+        domain,
+        rankedTerms,
+        totalRanked: rankedTerms.length,
+        avgPosition: positions.length > 0
+          ? Math.round((positions.reduce((s, p) => s + p, 0) / positions.length) * 10) / 10
+          : null,
+        topPosition: positions.length > 0 ? Math.min(...positions) : null,
+      };
+
+      if (config.cache) {
+        await setCache(config.cache, cacheKey, 'dataforseo_organic', result, 7);
+      }
+
+      return result;
+    } catch (err) {
+      console.error('[OrganicChecker] Erro:', err);
+      return { available: false, domain, rankedTerms: [], totalRanked: 0, avgPosition: null, topPosition: null };
+    }
+  };
+}
 
 // ============================================================================
 // MODUS AI / SIMILARWEB WRAPPER

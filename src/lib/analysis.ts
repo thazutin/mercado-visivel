@@ -22,6 +22,7 @@ import {
   createGoogleAdsKPClient,
   createDataForSEOClient,
   createPerplexityAIVisibilityChecker,
+  createDataForSEOOrganicChecker,
 } from "./pipeline/external-services";
 import type {
   FormInput,
@@ -34,6 +35,7 @@ import type {
   TermVolumeData,
   SerpPosition,
   MapsPresence,
+  OrganicPresence,
   InstagramProfile,
   GoogleInfluence,
   InstagramInfluence,
@@ -301,6 +303,7 @@ Responda APENAS em JSON, sem markdown:
   let serpPositions: SerpPosition[] = [];
   let mapsPresence: MapsPresence | null = null;
   let instagramProfiles: InstagramProfile[] = [];
+  let organicPresence: OrganicPresence | null = null;
 
   // Build all parallel promises
   const allTermStrings = step1.terms.map(t => t.term);
@@ -370,6 +373,27 @@ Responda APENAS em JSON, sem markdown:
         : Promise.resolve([])
     );
     promiseLabels.push("instagram");
+
+    // 5. Organic position check (se site declarado + DataForSEO configurado)
+    if (siteDomain && process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD) {
+      const organicChecker = createDataForSEOOrganicChecker({
+        login: process.env.DATAFORSEO_LOGIN,
+        password: process.env.DATAFORSEO_PASSWORD,
+      });
+      parallelPromises.push(
+        withTimeout(
+          organicChecker(siteDomain, topTerms, input.region)
+            .then((r) => {
+              sourcesUsed.push("dataforseo_organic");
+              console.log(`[Pipeline] Organic OK: ${r.totalRanked} terms ranked, top=${r.topPosition}`);
+              return r;
+            }),
+          30_000,
+          "Organic",
+        )
+      );
+      promiseLabels.push("organic");
+    }
   } else {
     console.warn("[Pipeline] Apify not configured — skipping external data");
     sourcesUnavailable.push("serp_scraper", "google_maps", "instagram");
@@ -414,6 +438,17 @@ Responda APENAS em JSON, sem markdown:
     } else {
       console.error("[Pipeline] Instagram failed:", igResult.reason);
       sourcesUnavailable.push("instagram");
+    }
+
+    // Collect organic results (index 4, only if organic promise was added)
+    const organicIdx = promiseLabels.indexOf("organic");
+    if (organicIdx >= 0) {
+      const organicResult = parallelResults[organicIdx];
+      if (organicResult.status === "fulfilled") {
+        organicPresence = organicResult.value;
+      } else {
+        console.error("[Pipeline] Organic failed:", organicResult.reason);
+      }
     }
   }
 
@@ -544,7 +579,7 @@ Responda APENAS em JSON, sem markdown:
     googleInfluence,
     instagramInfluence,
     webInfluence,
-    serpPositions
+    organicPresence,
   );
 
   console.log(`[Pipeline] Step 4 OK: influence ${step4.influence.totalInfluence}%`);

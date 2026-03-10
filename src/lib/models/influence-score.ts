@@ -12,6 +12,7 @@ import type {
   Step4Output,
   SerpPosition,
   MapsPresence,
+  OrganicPresence,
   TermVolumeData,
 } from '../types/pipeline.types';
 import { CTR_BENCHMARKS } from './market-sizing';
@@ -228,11 +229,19 @@ export function calculateCompositeInfluence(
   google: GoogleInfluence,
   instagram: InstagramInfluence,
   webData: WebInfluence,
-  _extra?: any, // backward compat — analysis.ts passes serpPositions here
+  organicPresence?: OrganicPresence | null,
 ): Step4Output {
   const startTime = Date.now();
 
-  const googleScore = google.ctrShare;
+  let googleScore = google.ctrShare;
+
+  // Organic presence bonus: até +15pts (cada termo rankeado = +3pts, cap 15)
+  let organicBonus = 0;
+  if (organicPresence?.available && organicPresence.totalRanked > 0) {
+    organicBonus = Math.min(15, organicPresence.totalRanked * 3);
+    googleScore = Math.min(1.0, googleScore + organicBonus / 100);
+    console.log(`[Influence] Organic bonus: +${organicBonus}pts (${organicPresence.totalRanked} terms ranked, top=${organicPresence.topPosition})`);
+  }
   const instagramScore = instagram.relativeShare;
   const instagramAvailable = instagram.profile.dataAvailable;
 
@@ -286,6 +295,12 @@ export function calculateCompositeInfluence(
       score: Math.round(googleScore * 100),
       weight: googleWeight,
       available: true,
+      organic: organicPresence?.available ? {
+        totalRanked: organicPresence.totalRanked,
+        avgPosition: organicPresence.avgPosition,
+        topPosition: organicPresence.topPosition,
+        bonus: organicBonus,
+      } : undefined,
     },
     instagram: {
       score: Math.round(instagramScore * 100),

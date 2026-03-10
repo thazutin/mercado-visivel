@@ -169,6 +169,16 @@ export interface MapsPresence {
   openNow?: boolean;
 }
 
+// 4a+ — Organic presence (DataForSEO SERP)
+export interface OrganicPresence {
+  available: boolean;
+  domain: string;
+  rankedTerms: { term: string; position: number; url: string }[];
+  totalRanked: number;
+  avgPosition: number | null;
+  topPosition: number | null;
+}
+
 // 4b — Instagram influence
 export interface InstagramInfluence {
   profile: InstagramProfile;
@@ -232,6 +242,12 @@ export interface InfluenceScore {
     score: number;                    // 0-100
     weight: number;                   // Peso usado (0.50 ou 0.60 se web indisponível)
     available: boolean;
+    organic?: {
+      totalRanked: number;
+      avgPosition: number | null;
+      topPosition: number | null;
+      bonus: number;
+    };
   };
   instagram: {
     score: number;
