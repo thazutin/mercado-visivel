@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(cd \"C:\\\\Users\\\\ThalesZutin\\\\Downloads\\\\mercado-visivel\\\\mercado-visivel\" && npx next build 2>&1 | tail -20)"
+    ]
+  }
+}

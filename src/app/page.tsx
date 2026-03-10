@@ -395,6 +395,44 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* ═══ COMO OBTEMOS OS DADOS ═══ */}
+      <div style={{ background: V.cloud, padding: "48px 24px", borderTop: `1px solid ${V.fog}` }}>
+        <div style={{ maxWidth: 600, margin: "0 auto" }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: V.night, marginBottom: 16, fontFamily: V.display }}>
+            Como obtemos os dados
+          </h2>
+          <p style={{ fontSize: 14, lineHeight: 1.7, color: V.zinc, marginBottom: 12 }}>
+            O Virô cruza dados de múltiplas fontes públicas para montar o diagnóstico do seu mercado local:
+            Google Search, Google Maps, Instagram (dados públicos), Perplexity AI e DataForSEO.
+          </p>
+          <p style={{ fontSize: 14, lineHeight: 1.7, color: V.zinc }}>
+            O Virô utiliza a Google Ads API para acessar dados agregados de volume de busca por região,
+            permitindo identificar a demanda real pelo seu serviço no mercado local.
+            Não criamos, gerenciamos ou modificamos campanhas de anúncios.
+          </p>
+        </div>
+      </div>
+
+      {/* ═══ FOOTER ═══ */}
+      <footer style={{ background: V.night, padding: "32px 24px", textAlign: "center" }}>
+        <div style={{ maxWidth: 600, margin: "0 auto" }}>
+          <span style={{ fontFamily: V.display, fontSize: 16, fontWeight: 700, color: V.white, letterSpacing: "-0.02em" }}>
+            Virô
+          </span>
+          <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 16 }}>
+            <a href="/privacidade" style={{ fontSize: 13, color: V.ash, textDecoration: "none" }}>
+              Política de Privacidade
+            </a>
+            <a href="/termos" style={{ fontSize: 13, color: V.ash, textDecoration: "none" }}>
+              Termos de Serviço
+            </a>
+          </div>
+          <p style={{ fontSize: 12, color: V.slate, marginTop: 16 }}>
+            © {new Date().getFullYear()} Virô. Todos os direitos reservados.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
