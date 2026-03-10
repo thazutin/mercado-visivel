@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import AnimatedCounter from "./AnimatedCounter";
+import FeedbackWidget from "./FeedbackWidget";
 
 const V = {
   night: "#161618", graphite: "#232326", slate: "#3A3A40",
@@ -32,7 +33,7 @@ interface Results {
   workRoutes?: { priority: number; title: string; rationale: string; connection: string; horizon: string; expectedImpact: string }[];
   aiVisibility?: { score: number; summary: string; likelyMentioned: boolean; factors: any[]; competitorMentions: any[] } | null;
 }
-interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; }
+interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; leadId?: string; }
 
 function Expandable({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -59,7 +60,7 @@ function Chip({ children, color = V.ash }: { children: React.ReactNode; color?: 
   return <span style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.04em", textTransform: "uppercase" as const, color, background: `${color}18`, padding: "3px 8px", borderRadius: 100, fontWeight: 500 }}>{children}</span>;
 }
 
-export default function InstantValueScreen({ product, region, results, onCheckout, loading }: Props) {
+export default function InstantValueScreen({ product, region, results, onCheckout, loading, leadId }: Props) {
   const [show, setShow] = useState(false);
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
@@ -339,6 +340,13 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             </div>
           </div>
         </Expandable>
+
+        {/* Feedback */}
+        {leadId && (
+          <div style={{ marginTop: 8, marginBottom: 12 }}>
+            <FeedbackWidget leadId={leadId} triggerPoint="post_instant_value" />
+          </div>
+        )}
 
         {/* Footer */}
         <div style={{ textAlign: "center", padding: "20px 0 0" }}>

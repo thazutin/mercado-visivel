@@ -107,6 +107,7 @@ export default function Home() {
   useEffect(() => {
     if (apiDone && animDone && results) {
       setScreen("value");
+      // Update URL so user can bookmark/return to this result
       if (leadId) {
         window.history.replaceState({}, "", `/resultado/${leadId}`);
       }
@@ -190,6 +191,7 @@ export default function Home() {
         results={results}
         onCheckout={handleCheckout}
         loading={checkoutLoading}
+        leadId={leadId}
       />
     );
   }
@@ -370,6 +372,8 @@ export default function Home() {
               onChange={(e: any) => setHoneypot(e.target.value)}
             />
           </div>
+
+          {/* Navigation */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 28, paddingTop: 16, borderTop: `1px solid ${V.fog}` }}>
             {formStep > 1 ? (
               <button onClick={() => setFormStep(formStep - 1)} style={{

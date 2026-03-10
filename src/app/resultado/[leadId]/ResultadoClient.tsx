@@ -43,6 +43,7 @@ export default function ResultadoClient({ product, region, leadId, results, isPa
       results={results}
       onCheckout={handleCheckout}
       loading={checkoutLoading}
+      leadId={leadId}
     />
   );
 }
