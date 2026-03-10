@@ -20,6 +20,8 @@ const isPublicRoute = createRouteMatcher([
   "/api/events(.*)",
   "/api/feedback(.*)",
   "/api/cron(.*)",
+  "/privacidade",
+  "/termos",
 ]);
 
 // ─── Rate Limit Store (in-memory, por instância Vercel) ───────────────────

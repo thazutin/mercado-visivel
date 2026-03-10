@@ -96,7 +96,7 @@ export default function PrivacidadePage() {
           </ul>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc, marginTop: 12 }}>
             Para exercer qualquer um desses direitos, entre em contato pelo e-mail{" "}
-            <a href="mailto:contato@virolocal.com" style={{ color: V.amber, textDecoration: "none" }}>contato@virolocal.com</a>.
+            <a href="mailto:viro@virolocal.com" style={{ color: V.amber, textDecoration: "none" }}>viro@virolocal.com</a>.
             Responderemos em até 15 dias úteis.
           </p>
         </section>
@@ -114,7 +114,7 @@ export default function PrivacidadePage() {
           <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>8. Contato</h2>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
             Para dúvidas, solicitações ou esclarecimentos sobre esta Política de Privacidade, entre em contato pelo e-mail{" "}
-            <a href="mailto:contato@virolocal.com" style={{ color: V.amber, textDecoration: "none" }}>contato@virolocal.com</a>.
+            <a href="mailto:viro@virolocal.com" style={{ color: V.amber, textDecoration: "none" }}>viro@virolocal.com</a>.
           </p>
         </section>
 
