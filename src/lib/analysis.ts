@@ -15,6 +15,7 @@ import {
 } from "./models/influence-score";
 import { executeStep5 } from "./pipeline/step5-gap-analysis";
 import { executeAIVisibilityCheck } from "./pipeline/ai-visibility";
+import { getIBGEMunicipalData } from "./pipeline/ibge";
 import {
   createApifySerpScraper,
   createApifyMapsScraper,
@@ -36,6 +37,7 @@ import type {
   SerpPosition,
   MapsPresence,
   OrganicPresence,
+  IBGEData,
   InstagramProfile,
   GoogleInfluence,
   InstagramInfluence,
@@ -505,15 +507,26 @@ Responda APENAS em JSON, sem markdown:
   console.log(`[Pipeline] Step 2 OK: ${termVolumes.length} terms, totalVolume=${totalMonthlyVolume}, source=${volumeSource}`);
 
   // =========================================================================
-  // STEP 3 — Market Sizing
+  // STEP 3 — Market Sizing (com dados IBGE opcionais)
   // =========================================================================
   const category = detectCategory(input.product, input.differentiator);
+
+  let ibgeData: IBGEData | null = null;
+  try {
+    ibgeData = await getIBGEMunicipalData(input.region);
+    if (ibgeData) {
+      console.log(`[Pipeline] IBGE OK: ${ibgeData.municipio}/${ibgeData.estado} — pop=${ibgeData.populacao.toLocaleString('pt-BR')}`);
+    }
+  } catch (err) {
+    console.warn('[Pipeline] IBGE falhou/ignorado:', (err as Error).message);
+  }
 
   const step3: Step3Output = calculateMarketSizing(
     step2,
     serpPositions,
     input.ticket,
-    category
+    category,
+    ibgeData,
   );
 
   console.log(
@@ -693,6 +706,7 @@ Responda APENAS em JSON, sem markdown:
     sourcesUnavailable,
     confidenceLevel,
     // @ts-ignore — extending Momento1Result with runtime data
+    ibgeData: ibgeData || null,
     aiVisibility: aiVisibility ? {
       score: aiVisibility.score,
       summary: aiVisibility.summary,

@@ -10,6 +10,7 @@ import type {
   MarketSizing,
   TermVolumeData,
   SerpPosition,
+  IBGEData,
 } from '../types/pipeline.types';
 
 // --- CTR BENCHMARKS POR POSIÇÃO ORGÂNICA ---
@@ -203,6 +204,7 @@ export function calculateMarketSizing(
   serpPositions: SerpPosition[],
   ticket: number,
   category: string,
+  ibgeData?: IBGEData | null,
 ): Step3Output {
   const startTime = Date.now();
   const benchmark = CATEGORY_BENCHMARKS[category] || CATEGORY_BENCHMARKS['default'];
@@ -247,17 +249,29 @@ export function calculateMarketSizing(
     ticketUsed: ticket,
   };
 
+  // Ajuste IBGE: normaliza para cidade de 500k hab (cap 2x, floor 0.3x)
+  let adjustedMid = marketMid;
+  if (ibgeData && ibgeData.populacao > 0) {
+    const ratio = Math.max(0.3, Math.min(2.0, ibgeData.populacao / 500_000));
+    adjustedMid = Math.round(marketMid * ratio);
+  }
+
+  let disclaimer = 'Dimensionamento baseado em intenção digital de busca. Representa o mercado que busca ativamente online — não inclui demanda offline, indicações ou tráfego de passagem. Números são estimativas fundamentadas, não projeções garantidas.';
+  if (ibgeData && ibgeData.populacao > 0) {
+    disclaimer += ` Mercado baseado em população real de ${ibgeData.municipio}: ${ibgeData.populacao.toLocaleString('pt-BR')} habitantes (IBGE 2021).`;
+  }
+
   const sizing: MarketSizing = {
     totalSearchVolume: totalVolume,
     weightedSearchVolume: weightedVolume,
     marketPotential: {
       low: marketLow,
-      mid: marketMid,
+      mid: adjustedMid,
       high: marketHigh,
       currency: 'BRL',
     },
     assumptions,
-    disclaimer: 'Dimensionamento baseado em intenção digital de busca. Representa o mercado que busca ativamente online — não inclui demanda offline, indicações ou tráfego de passagem. Números são estimativas fundamentadas, não projeções garantidas.',
+    disclaimer,
   };
 
   return {

@@ -376,6 +376,15 @@ export interface CacheEntry {
   hitCount: number;
 }
 
+// --- IBGE DATA ---
+
+export interface IBGEData {
+  municipio: string;
+  estado: string;
+  populacao: number;
+  codigoIBGE: string;
+}
+
 // --- ERROR HANDLING ---
 
 export interface StepError {
