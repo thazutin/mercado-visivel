@@ -21,6 +21,7 @@ import {
   createApifyInstagramScraper,
   createGoogleAdsKPClient,
   createDataForSEOClient,
+  createPerplexityAIVisibilityChecker,
 } from "./pipeline/external-services";
 import type {
   FormInput,
@@ -566,6 +567,11 @@ Responda APENAS em JSON, sem markdown:
         })
       : undefined;
 
+    // Perplexity AI client para verificar menções em respostas de IA
+    const perplexityClient = process.env.PERPLEXITY_API_KEY
+      ? createPerplexityAIVisibilityChecker()
+      : undefined;
+
     aiVisibility = await withTimeout(
       executeAIVisibilityCheck(
         input.product,
@@ -581,6 +587,7 @@ Responda APENAS em JSON, sem markdown:
         (formData.competitors || []).filter(c => c.name && c.name.length > 1),
         dataForSEOClient ? { getKeywordVolumes: dataForSEOClient } : undefined,
         undefined,                                 // claude client deprecated em v2
+        perplexityClient,
       ),
       20_000,
       "AI Visibility",

@@ -1,9 +1,11 @@
 // ============================================================================
-// AI Visibility Check — v2.0
-// Baseado em dados reais de SERP via DataForSEO
+// AI Visibility Check — v2.1
+// Baseado em dados reais de SERP via DataForSEO + Perplexity AI
 // Busca queries de descoberta ("melhor X em Y") e verifica se o negócio aparece
 // Matching: nome do Maps (primário) → handle do Instagram (fallback)
 // ============================================================================
+
+import type { PerplexityVisibilityResult } from './external-services';
 
 export interface AIVisibilityResult {
   score: number;                      // 0-100
@@ -192,6 +194,8 @@ export async function executeAIVisibilityCheck(
   dataForSEOClient?: { getKeywordVolumes: (terms: string[], region: string) => Promise<any[]> },
   // fallback: Claude client (mantido para compatibilidade)
   claudeClient?: { createMessage: (params: any) => Promise<any> },
+  // v2.1: Perplexity AI client (opcional — adiciona +25 pts se mencionado)
+  perplexityClient?: (product: string, region: string, businessName: string | null, instagramHandle: string | null) => Promise<PerplexityVisibilityResult>,
 ): Promise<AIVisibilityResult> {
   const startTime = Date.now();
 
@@ -223,7 +227,7 @@ export async function executeAIVisibilityCheck(
   }
 
   // ── Calcula score ─────────────────────────────────────────────────────────
-  const { score, factors } = calculateScoreFromSerp(
+  let { score, factors } = calculateScoreFromSerp(
     serpAppearances,
     queries.length,
     hasMapsProfile,
@@ -231,6 +235,31 @@ export async function executeAIVisibilityCheck(
     mapsReviews,
     hasWebsite,
   );
+
+  // ── Perplexity AI check (opcional) ─────────────────────────────────────
+  if (perplexityClient) {
+    try {
+      const perplexityResult = await perplexityClient(product, region, businessName, instagramHandle);
+      if (perplexityResult.mentioned) {
+        score = Math.min(100, score + 25);
+        factors.push({
+          factor: 'Aparece em respostas de IA',
+          status: 'positive',
+          detail: perplexityResult.mentionContext
+            ? `Mencionado em resposta AI: "...${perplexityResult.mentionContext}..."`
+            : 'Negócio mencionado quando AI é perguntada sobre o segmento na região',
+        });
+      } else {
+        factors.push({
+          factor: 'Não aparece em respostas de IA',
+          status: 'negative',
+          detail: 'AI não menciona o negócio quando perguntada sobre os melhores do segmento na região',
+        });
+      }
+    } catch (err) {
+      console.warn('[AIVisibility] Perplexity check failed:', err);
+    }
+  }
 
   // likelyMentioned apenas se score >= 71
   const likelyMentioned = score >= 71;

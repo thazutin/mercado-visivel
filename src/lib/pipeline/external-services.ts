@@ -269,6 +269,103 @@ export function createApifyMapsScraper(config: ApifyConfig) {
   };
 }
 
+// --- PERPLEXITY AI VISIBILITY CHECKER ---
+
+export interface PerplexityVisibilityResult {
+  mentioned: boolean;
+  mentionContext: string | null;
+  rawResponse: string;
+}
+
+function removeAccents(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+export function createPerplexityAIVisibilityChecker() {
+  return async function checkAIVisibility(
+    product: string,
+    region: string,
+    businessName: string | null,
+    instagramHandle: string | null,
+  ): Promise<PerplexityVisibilityResult> {
+    const apiKey = process.env.PERPLEXITY_API_KEY;
+    if (!apiKey) {
+      console.warn('[Perplexity] PERPLEXITY_API_KEY não configurada');
+      return { mentioned: false, mentionContext: null, rawResponse: '' };
+    }
+
+    try {
+      const res = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'sonar',
+          messages: [
+            {
+              role: 'system',
+              content: 'Responda APENAS em JSON válido. Sem texto adicional fora do JSON.',
+            },
+            {
+              role: 'user',
+              content: `Quais são os melhores negócios de ${product} em ${region}? Liste os 5 principais com nome.`,
+            },
+          ],
+        }),
+      });
+
+      if (!res.ok) {
+        const errBody = await res.text();
+        console.error('[Perplexity] Chamada falhou:', res.status, errBody);
+        return { mentioned: false, mentionContext: null, rawResponse: '' };
+      }
+
+      const data = await res.json();
+      const rawResponse = data.choices?.[0]?.message?.content || '';
+      const normalizedResponse = removeAccents(rawResponse);
+
+      let mentioned = false;
+      let mentionContext: string | null = null;
+
+      // Verifica businessName
+      if (businessName) {
+        const normalizedName = removeAccents(businessName);
+        if (normalizedName.length > 2 && normalizedResponse.includes(normalizedName)) {
+          mentioned = true;
+          // Extrai contexto ao redor da menção
+          const idx = normalizedResponse.indexOf(normalizedName);
+          const start = Math.max(0, idx - 60);
+          const end = Math.min(rawResponse.length, idx + normalizedName.length + 60);
+          mentionContext = rawResponse.substring(start, end);
+        }
+      }
+
+      // Fallback: verifica instagramHandle
+      if (!mentioned && instagramHandle) {
+        const cleanHandle = removeAccents(instagramHandle.replace('@', ''));
+        if (cleanHandle.length > 3 && normalizedResponse.includes(cleanHandle)) {
+          mentioned = true;
+          const idx = normalizedResponse.indexOf(cleanHandle);
+          const start = Math.max(0, idx - 60);
+          const end = Math.min(rawResponse.length, idx + cleanHandle.length + 60);
+          mentionContext = rawResponse.substring(start, end);
+        }
+      }
+
+      return { mentioned, mentionContext, rawResponse };
+    } catch (err) {
+      console.error('[Perplexity] Erro ao consultar API:', err);
+      return { mentioned: false, mentionContext: null, rawResponse: '' };
+    }
+  };
+}
+
 // --- GOOGLE TRENDS SCRAPER ---
 
 export function createApifyTrendsScraper(config: ApifyConfig) {
