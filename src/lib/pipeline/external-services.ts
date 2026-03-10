@@ -184,39 +184,88 @@ export function createApifyMapsScraper(config: ApifyConfig) {
       if (cached) return cached;
     }
 
-    // Actor: compass~crawler-google-places (official Google Maps Scraper)
-    // Docs: https://apify.com/compass/crawler-google-places
-    const results = await runApifyActor(config, 'compass~crawler-google-places', {
-      searchStringsArray: [`${businessName} ${region}`],
-      maxCrawledPlacesPerSearch: 5,
-      language: 'pt-BR',
-    }, 120);
-
-    // Find the best match
-    const match = results.find((r: any) =>
-      r.title?.toLowerCase().includes(businessName.toLowerCase())
-    );
-
-    const presence: MapsPresence = match ? {
-      found: true,
-      businessName: match.title || match.name || null,
-      rating: match.totalScore || match.rating,
-      reviewCount: match.reviewsCount || match.reviews,
-      categories: match.categories || match.categoryName ? [match.categoryName] : [],
-      inLocalPack: true,
-      localPackPosition: 1,
-      photos: match.imageCount || match.photosCount,
-    } : {
-      found: false,
-      businessName: null,
-      inLocalPack: false,
-    };
-
-    if (config.cache) {
-      await setCache(config.cache, cacheKey, 'apify_maps', presence, 14);
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    if (!apiKey) {
+      console.error('[Maps] GOOGLE_PLACES_API_KEY não configurada');
+      return { found: false, businessName: null, inLocalPack: false };
     }
 
-    return presence;
+    try {
+      // 1. Text Search — busca o negócio por nome + região
+      const searchRes = await fetch('https://places.googleapis.com/v1/places:searchText', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask': 'places.id,places.displayName,places.rating,places.userRatingCount,places.types,places.photos',
+        },
+        body: JSON.stringify({
+          textQuery: `${businessName} ${region}`,
+          languageCode: 'pt-BR',
+          maxResultCount: 5,
+        }),
+      });
+
+      if (!searchRes.ok) {
+        const errBody = await searchRes.text();
+        console.error('[Maps] Text Search falhou:', searchRes.status, errBody);
+        return { found: false, businessName: null, inLocalPack: false };
+      }
+
+      const searchData = await searchRes.json();
+      const places = searchData.places || [];
+
+      if (places.length === 0) {
+        const notFound: MapsPresence = { found: false, businessName: null, inLocalPack: false };
+        if (config.cache) await setCache(config.cache, cacheKey, 'google_places', notFound, 14);
+        return notFound;
+      }
+
+      // Primeiro resultado como match principal
+      const match = places[0];
+      const placeId = match.id;
+
+      // 2. Place Details — busca campos extras (website, telefone, horário)
+      const detailsRes = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, {
+        method: 'GET',
+        headers: {
+          'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask': 'displayName,rating,userRatingCount,types,photos,websiteUri,nationalPhoneNumber,regularOpeningHours',
+        },
+      });
+
+      let details: any = null;
+      if (detailsRes.ok) {
+        details = await detailsRes.json();
+      } else {
+        console.warn('[Maps] Place Details falhou, usando dados do Text Search');
+      }
+
+      const source = details || match;
+
+      const presence: MapsPresence = {
+        found: true,
+        businessName: source.displayName?.text || null,
+        rating: source.rating,
+        reviewCount: source.userRatingCount,
+        categories: source.types || [],
+        inLocalPack: true,
+        localPackPosition: 1,
+        photos: source.photos?.length || 0,
+        website: details?.websiteUri,
+        phone: details?.nationalPhoneNumber,
+        openNow: details?.regularOpeningHours?.openNow,
+      };
+
+      if (config.cache) {
+        await setCache(config.cache, cacheKey, 'google_places', presence, 14);
+      }
+
+      return presence;
+    } catch (err) {
+      console.error('[Maps] Erro ao consultar Google Places API:', err);
+      return { found: false, businessName: null, inLocalPack: false };
+    }
   };
 }
 

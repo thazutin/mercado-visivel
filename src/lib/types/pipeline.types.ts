@@ -157,13 +157,16 @@ export interface SerpPosition {
 
 export interface MapsPresence {
   found: boolean;
-  businessName?: string | null;       // Nome real do negócio no Google Maps (campo title do Apify)
+  businessName?: string | null;       // Nome real do negócio no Google Maps
   rating?: number;
   reviewCount?: number;
   categories?: string[];
   inLocalPack: boolean;               // Aparece no local pack?
   localPackPosition?: number;
   photos?: number;
+  website?: string;
+  phone?: string;
+  openNow?: boolean;
 }
 
 // 4b — Instagram influence
