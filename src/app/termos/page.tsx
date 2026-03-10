@@ -29,93 +29,88 @@ export default function TermosPage() {
         <section style={{ marginBottom: 36 }}>
           <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>1. O que é o Virô</h2>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
-            O <strong style={{ color: V.night }}>Virô</strong> (operado sob a marca "Mercado Visível") é uma plataforma de inteligência de mercado local
-            que gera diagnósticos de presença digital para empresas. Nosso serviço analisa a visibilidade do seu negócio em buscas do Google,
-            Google Maps, Instagram e outras fontes públicas, entregando um relatório com dados de mercado, análise de concorrência
-            e um plano de ação personalizado.
+            O Virô é uma consultoria de inteligência de mercado local. Combinamos dados reais de múltiplas
+            fontes — buscas no Google, presença em mapas, redes sociais e visibilidade em ferramentas de IA —
+            para entregar diagnósticos precisos sobre onde seu negócio está e onde está a demanda do seu mercado.
+            A partir do diagnóstico, o Virô oferece planos de ação personalizados e pode apoiar a execução —
+            incluindo a criação de campanhas de mídia paga no Google Ads, com base nos dados e termos
+            identificados na análise.
           </p>
         </section>
 
         <section style={{ marginBottom: 36 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>2. O que não somos</h2>
-          <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
-            O Virô é uma ferramenta de inteligência e diagnóstico. <strong style={{ color: V.night }}>Não somos uma agência de marketing,
-            não gerenciamos campanhas de anúncios, não operamos contas de Google Ads ou Meta Ads em nome de terceiros,
-            e não garantimos resultados específicos</strong> (como aumento de faturamento, ranking ou número de clientes).
-            O diagnóstico é uma fotografia analítica do seu mercado — a execução das recomendações é de responsabilidade do usuário.
-          </p>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>2. O que entregamos</h2>
+          <ul style={{ fontSize: 15, lineHeight: 1.8, color: V.zinc, paddingLeft: 20 }}>
+            <li><strong style={{ color: V.night }}>Diagnóstico gratuito de presença digital:</strong> score de influência por canal, comparativo com o mercado local e identificação de lacunas</li>
+            <li><strong style={{ color: V.night }}>Diagnóstico completo pago:</strong> análise detalhada por canal (Google, Instagram, IA), dimensionamento de mercado, plano de ação com rotas priorizadas por prazo e esforço</li>
+            <li><strong style={{ color: V.night }}>Módulo Google Ads:</strong> criação de rascunhos de campanhas de busca local e campanhas no Google Maps, com base nos termos de maior demanda do diagnóstico, diretamente na conta Google Ads do usuário</li>
+          </ul>
         </section>
 
         <section style={{ marginBottom: 36 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>3. Módulo Google Ads</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>3. Google Ads e execução de campanhas</h2>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
-            O Virô oferece, como parte do diagnóstico completo, um módulo de criação de campanhas Google Ads.
-            Com autorização explícita do usuário via OAuth 2.0, o Virô utiliza a Google Ads API para criar
-            rascunhos de campanhas de busca local e campanhas no Google Maps, com base nos termos de maior
-            demanda identificados no diagnóstico. Os rascunhos são criados em estado pausado — o usuário
-            revisa e ativa manualmente. O Virô não gerencia campanhas ativas, não realiza lances automáticos,
-            e não acessa dados de desempenho de campanhas existentes sem solicitação explícita do usuário.
+            Com autorização explícita do usuário via OAuth 2.0, o Virô utiliza a Google Ads API para criar e
+            configurar campanhas de busca local e campanhas no Google Maps. As campanhas são criadas com base
+            nos dados do diagnóstico — termos de busca relevantes, geografia de atuação e orçamento mínimo
+            sugerido. O usuário mantém controle total: os rascunhos são criados em estado pausado e o usuário
+            decide quando e como ativar. O Virô pode, mediante solicitação, acompanhar e otimizar campanhas
+            ativas como parte de serviços de consultoria contínua.
           </p>
         </section>
 
         <section style={{ marginBottom: 36 }}>
           <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>4. Uso aceitável</h2>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
-            O serviço deve ser utilizado apenas para fins legítimos de negócio. É proibido:
+            O serviço deve ser utilizado apenas para fins legítimos de negócio. É proibido fornecer informações
+            falsas no formulário de diagnóstico, tentar sobrecarregar ou comprometer os sistemas do Virô, e
+            revender ou redistribuir os diagnósticos sem autorização.
           </p>
-          <ul style={{ fontSize: 15, lineHeight: 1.8, color: V.zinc, paddingLeft: 20 }}>
-            <li>Usar o Virô para coletar dados de concorrentes com fins anticompetitivos ou ilegais.</li>
-            <li>Fornecer informações falsas no formulário de diagnóstico.</li>
-            <li>Tentar acessar, sobrecarregar ou comprometer nossos sistemas ou APIs.</li>
-            <li>Revender, redistribuir ou sublicenciar o acesso à plataforma sem autorização.</li>
-          </ul>
         </section>
 
         <section style={{ marginBottom: 36 }}>
           <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>5. Pagamento</h2>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
-            O diagnóstico completo do Virô tem o valor de <strong style={{ color: V.night }}>R$ 397,00 (trezentos e noventa e sete reais)</strong>,
-            em pagamento único. O diagnóstico gratuito (prévia) não possui custo. Após a entrega do diagnóstico completo,
-            <strong style={{ color: V.night }}> não oferecemos reembolso</strong>, pois o serviço já foi integralmente prestado
-            (geração do relatório com dados em tempo real). Em caso de falha técnica comprovada que impeça a entrega do diagnóstico,
-            o valor será restituído integralmente.
+            O diagnóstico gratuito não possui custo. O diagnóstico completo tem o valor de{" "}
+            <strong style={{ color: V.night }}>R$ 397,00 (trezentos e noventa e sete reais)</strong>, em
+            pagamento único. Após a entrega do diagnóstico completo,{" "}
+            <strong style={{ color: V.night }}>não oferecemos reembolso</strong>, pois o serviço foi
+            integralmente prestado. Em caso de falha técnica comprovada que impeça a entrega, o valor será
+            restituído integralmente.
           </p>
         </section>
 
         <section style={{ marginBottom: 36 }}>
           <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>6. Propriedade intelectual</h2>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
-            O diagnóstico gerado é de propriedade do usuário — você pode usá-lo, compartilhá-lo e apresentá-lo como quiser.
-            A metodologia de análise, os modelos de scoring, a interface e o código da plataforma são propriedade intelectual do Virô
-            e não podem ser copiados, reproduzidos ou engenharia-reversa.
+            O diagnóstico gerado é de propriedade do usuário — você pode usá-lo, compartilhá-lo e apresentá-lo
+            como quiser. A metodologia, os modelos de análise e a plataforma Virô são de propriedade exclusiva
+            da empresa.
           </p>
         </section>
 
         <section style={{ marginBottom: 36 }}>
           <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>7. Limitação de responsabilidade</h2>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
-            Os dados apresentados no diagnóstico são baseados em fontes públicas (Google, Instagram, bases de dados de busca)
-            e modelos estatísticos. <strong style={{ color: V.night }}>Esses dados podem apresentar variações em relação à realidade</strong>,
-            pois dependem da disponibilidade e atualização das fontes no momento da análise. O Virô não se responsabiliza por
-            decisões de negócio tomadas exclusivamente com base no diagnóstico. Recomendamos que o relatório seja utilizado como
-            uma das fontes de informação para a tomada de decisão, e não como a única.
+            Os dados do diagnóstico são baseados em fontes públicas e podem apresentar variações em relação à
+            realidade de mercado. O Virô não garante resultados específicos de faturamento, ranking ou captação
+            de clientes. As recomendações são baseadas em evidências — a execução e os resultados dependem de
+            fatores externos ao controle do Virô.
           </p>
         </section>
 
         <section style={{ marginBottom: 36 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>8. Lei aplicável e foro</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>8. Lei aplicável</h2>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
-            Estes Termos de Serviço são regidos pelas leis da República Federativa do Brasil. Fica eleito o foro da Comarca de
-            São Paulo, Estado de São Paulo, para dirimir quaisquer controvérsias decorrentes destes termos, com renúncia a
-            qualquer outro, por mais privilegiado que seja.
+            Estes Termos são regidos pelas leis brasileiras. Fica eleito o foro da Comarca de São Paulo para
+            dirimir quaisquer controvérsias.
           </p>
         </section>
 
         <section style={{ marginBottom: 36 }}>
           <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>9. Contato</h2>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
-            Para dúvidas sobre estes Termos de Serviço, entre em contato pelo e-mail{" "}
-            <a href="mailto:viro@virolocal.com" style={{ color: V.amber, textDecoration: "none" }}>viro@virolocal.com</a>.
+            <a href="mailto:viro@virolocal.com" style={{ color: V.amber, textDecoration: "none" }}>viro@virolocal.com</a>
           </p>
         </section>
 
