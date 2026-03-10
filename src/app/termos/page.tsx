@@ -47,7 +47,19 @@ export default function TermosPage() {
         </section>
 
         <section style={{ marginBottom: 36 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>3. Uso aceitável</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>3. Módulo Google Ads</h2>
+          <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
+            O Virô oferece, como parte do diagnóstico completo, um módulo de criação de campanhas Google Ads.
+            Com autorização explícita do usuário via OAuth 2.0, o Virô utiliza a Google Ads API para criar
+            rascunhos de campanhas de busca local e campanhas no Google Maps, com base nos termos de maior
+            demanda identificados no diagnóstico. Os rascunhos são criados em estado pausado — o usuário
+            revisa e ativa manualmente. O Virô não gerencia campanhas ativas, não realiza lances automáticos,
+            e não acessa dados de desempenho de campanhas existentes sem solicitação explícita do usuário.
+          </p>
+        </section>
+
+        <section style={{ marginBottom: 36 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>4. Uso aceitável</h2>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
             O serviço deve ser utilizado apenas para fins legítimos de negócio. É proibido:
           </p>
@@ -60,7 +72,7 @@ export default function TermosPage() {
         </section>
 
         <section style={{ marginBottom: 36 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>4. Pagamento</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>5. Pagamento</h2>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
             O diagnóstico completo do Virô tem o valor de <strong style={{ color: V.night }}>R$ 397,00 (trezentos e noventa e sete reais)</strong>,
             em pagamento único. O diagnóstico gratuito (prévia) não possui custo. Após a entrega do diagnóstico completo,
@@ -71,7 +83,7 @@ export default function TermosPage() {
         </section>
 
         <section style={{ marginBottom: 36 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>5. Propriedade intelectual</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>6. Propriedade intelectual</h2>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
             O diagnóstico gerado é de propriedade do usuário — você pode usá-lo, compartilhá-lo e apresentá-lo como quiser.
             A metodologia de análise, os modelos de scoring, a interface e o código da plataforma são propriedade intelectual do Virô
@@ -80,7 +92,7 @@ export default function TermosPage() {
         </section>
 
         <section style={{ marginBottom: 36 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>6. Limitação de responsabilidade</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>7. Limitação de responsabilidade</h2>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
             Os dados apresentados no diagnóstico são baseados em fontes públicas (Google, Instagram, bases de dados de busca)
             e modelos estatísticos. <strong style={{ color: V.night }}>Esses dados podem apresentar variações em relação à realidade</strong>,
@@ -91,7 +103,7 @@ export default function TermosPage() {
         </section>
 
         <section style={{ marginBottom: 36 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>7. Lei aplicável e foro</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>8. Lei aplicável e foro</h2>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
             Estes Termos de Serviço são regidos pelas leis da República Federativa do Brasil. Fica eleito o foro da Comarca de
             São Paulo, Estado de São Paulo, para dirimir quaisquer controvérsias decorrentes destes termos, com renúncia a
@@ -100,7 +112,7 @@ export default function TermosPage() {
         </section>
 
         <section style={{ marginBottom: 36 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>8. Contato</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>9. Contato</h2>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
             Para dúvidas sobre estes Termos de Serviço, entre em contato pelo e-mail{" "}
             <a href="mailto:viro@virolocal.com" style={{ color: V.amber, textDecoration: "none" }}>viro@virolocal.com</a>.

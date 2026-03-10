@@ -65,7 +65,7 @@ export default function PrivacidadePage() {
           </p>
           <ul style={{ fontSize: 15, lineHeight: 1.8, color: V.zinc, paddingLeft: 20 }}>
             <li><strong style={{ color: V.night }}>Google (Places API e Search)</strong> — Dados de localização, avaliações públicas e resultados de busca orgânica relacionados ao seu segmento e região.</li>
-            <li><strong style={{ color: V.night }}>Google Ads API</strong> — Utilizamos a Google Ads API para acessar dados agregados de volume de busca e demanda local. Não acessamos, gerenciamos ou modificamos campanhas de anúncios de usuários.</li>
+            <li><strong style={{ color: V.night }}>Google Ads API</strong> — Utilizada para criar rascunhos de campanhas de busca e campanhas locais (Google Maps) diretamente na conta Google Ads do usuário, com base nos dados do diagnóstico de mercado. O Virô solicita autorização explícita do usuário via OAuth antes de acessar qualquer conta. Não acessamos campanhas existentes sem permissão, não fazemos alterações automáticas, e não armazenamos credenciais de acesso às contas Google Ads dos usuários.</li>
             <li><strong style={{ color: V.night }}>Instagram</strong> — Coletamos apenas dados públicos do perfil informado (número de seguidores, frequência de publicações, engajamento público).</li>
             <li><strong style={{ color: V.night }}>Perplexity AI</strong> — Utilizada para enriquecer a análise com informações contextuais sobre o mercado e segmento.</li>
             <li><strong style={{ color: V.night }}>DataForSEO</strong> — Dados complementares de volume de busca, presença orgânica e métricas de mercado digital.</li>
