@@ -81,13 +81,19 @@ async function runApifyActor(
   input: Record<string, any>,
   timeoutSecs: number = 60,
 ): Promise<any[]> {
+  // timeout query param = server-side limit (Apify aborts the actor run after this)
+  // AbortSignal.timeout = client-side limit (abort fetch if server doesn't respond)
+  // Client-side gets 5s extra margin so Apify can return a partial/error response
+  const serverTimeout = timeoutSecs;
+  const clientTimeout = timeoutSecs + 5;
+
   const response = await fetch(
-    `https://api.apify.com/v2/acts/${actorId}/run-sync-get-dataset-items?token=${config.apiToken}`,
+    `https://api.apify.com/v2/acts/${actorId}/run-sync-get-dataset-items?token=${config.apiToken}&timeout=${serverTimeout}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
-      signal: AbortSignal.timeout(timeoutSecs * 1000),
+      signal: AbortSignal.timeout(clientTimeout * 1000),
     },
   );
 
@@ -121,7 +127,7 @@ export function createApifySerpScraper(config: ApifyConfig) {
       countryCode: 'br',
       maxPagesPerQuery: 1,
       includeUnfilteredResults: false,
-    }, 120);
+    }, 40);
 
     // Parse results → SerpPosition[]
     const positions: SerpPosition[] = terms.map(term => {
@@ -541,20 +547,21 @@ export function createApifyInstagramScraper(config: ApifyConfig) {
     const urls = toFetch.map(h => `https://www.instagram.com/${h}/`);
 
     // Two parallel calls: profile details + posts
+    // Internal timeout = 50s each (fits within 60s outer withTimeout with margin)
     const [detailsResult, postsResult] = await Promise.allSettled([
       // Call 1: Profile details (followers, bio, etc.)
       runApifyActor(config, 'apify~instagram-scraper', {
         directUrls: urls,
         resultsType: 'details',
         resultsLimit: 1,
-      }, 90),
+      }, 50),
 
       // Call 2: Posts (captions, likes, views, timestamps)
       runApifyActor(config, 'apify~instagram-scraper', {
         directUrls: urls,
         resultsType: 'posts',
         resultsLimit: 20,  // Last 20 posts per profile
-      }, 90),
+      }, 50),
     ]);
 
     const details = detailsResult.status === 'fulfilled' ? detailsResult.value : [];

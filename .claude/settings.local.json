@@ -10,7 +10,10 @@
       "Bash(find /c/Users/ThalesZutin/Downloads/mercado-visivel -name \"*Resultado*\" -o -name \"*resultado*\" -o -name \"*InstantValue*\" | grep -E \"\\\\.\\(tsx|ts\\)$\")",
       "Bash(find /c/Users/ThalesZutin/Downloads/mercado-visivel -name \"*.ts\" -o -name \"*.tsx\" | xargs grep -l \"avgViewsReelsLast30d\\\\|avgLikesLast30d\\\\|postsLast30d\" | head -10)",
       "Bash(head -150 /c/Users/ThalesZutin/Downloads/mercado-visivel/mercado-visivel/src/app/resultado/\\\\[leadId\\\\]/page.tsx)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(cd \"C:\\\\Users\\\\ThalesZutin\\\\Downloads\\\\mercado-visivel\\\\mercado-visivel\" && npm run build 2>&1 | tail -25)"
     ]
   }
 }

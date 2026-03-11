@@ -339,7 +339,7 @@ Responda APENAS em JSON, sem markdown:
   parallelPromises.push(
     withTimeout(
       fetchTermVolumes(allTermStrings, input.region),
-      20_000,
+      30_000,
       "Volumes",
     )
   );
@@ -352,47 +352,68 @@ Responda APENAS em JSON, sem markdown:
 
     console.log(`[Pipeline] Starting parallel calls: Volumes + SERP(${topTerms.length} terms) + Maps + Instagram(${instagramHandles.length} handles)`);
 
-    // 2. SERP scraping (timeout: 20s)
+    // 2. SERP scraping (timeout: 45s — Apify actor needs warm-up time)
     parallelPromises.push(
       withTimeout(
-        serpScraper(topTerms, input.region, siteDomain)
-          .then((r) => {
+        (async () => {
+          const t0 = Date.now();
+          console.log('[SERP] started');
+          try {
+            const r = await serpScraper(topTerms, input.region, siteDomain);
             sourcesUsed.push("apify_serp");
-            console.log(`[Pipeline] SERP OK: ${r.length} positions`);
+            console.log(`[SERP] completed in ${((Date.now() - t0) / 1000).toFixed(1)}s — ${r.length} positions`);
             return r;
-          }),
-        20_000,
+          } catch (err) {
+            console.error(`[SERP] failed after ${((Date.now() - t0) / 1000).toFixed(1)}s:`, (err as Error).message);
+            throw err;
+          }
+        })(),
+        45_000,
         "SERP",
       )
     );
     promiseLabels.push("serp");
 
-    // 3. Google Maps (timeout: 20s)
+    // 3. Google Maps (timeout: 45s — Google Places API can be slow)
     parallelPromises.push(
       withTimeout(
-        mapsScraper(input.businessName || input.product, input.region)
-          .then((r) => {
+        (async () => {
+          const t0 = Date.now();
+          console.log('[Maps] started');
+          try {
+            const r = await mapsScraper(input.businessName || input.product, input.region);
             sourcesUsed.push("apify_maps");
-            console.log(`[Pipeline] Maps OK: found=${r.found}, rating=${r.rating}`);
+            console.log(`[Maps] completed in ${((Date.now() - t0) / 1000).toFixed(1)}s — found=${r.found}, rating=${r.rating}`);
             return r;
-          }),
-        20_000,
+          } catch (err) {
+            console.error(`[Maps] failed after ${((Date.now() - t0) / 1000).toFixed(1)}s:`, (err as Error).message);
+            throw err;
+          }
+        })(),
+        45_000,
         "Maps",
       )
     );
     promiseLabels.push("maps");
 
-    // 4. Instagram (timeout: 20s)
+    // 4. Instagram (timeout: 60s — Instagram actor is heavier, runs 2 parallel calls internally)
     parallelPromises.push(
       instagramHandles.length > 0
         ? withTimeout(
-            instagramScraper(instagramHandles)
-              .then((r) => {
+            (async () => {
+              const t0 = Date.now();
+              console.log(`[Instagram] started — ${instagramHandles.length} handles`);
+              try {
+                const r = await instagramScraper(instagramHandles);
                 sourcesUsed.push("apify_instagram");
-                console.log(`[Pipeline] Instagram OK: ${r.length} profiles`);
+                console.log(`[Instagram] completed in ${((Date.now() - t0) / 1000).toFixed(1)}s — ${r.length} profiles`);
                 return r;
-              }),
-            20_000,
+              } catch (err) {
+                console.error(`[Instagram] failed after ${((Date.now() - t0) / 1000).toFixed(1)}s:`, (err as Error).message);
+                throw err;
+              }
+            })(),
+            60_000,
             "Instagram",
           )
         : Promise.resolve([])
@@ -407,13 +428,20 @@ Responda APENAS em JSON, sem markdown:
       });
       parallelPromises.push(
         withTimeout(
-          organicChecker(siteDomain, topTerms, input.region)
-            .then((r) => {
+          (async () => {
+            const t0 = Date.now();
+            console.log('[DataForSEO Organic] started');
+            try {
+              const r = await organicChecker(siteDomain, topTerms, input.region);
               sourcesUsed.push("dataforseo_organic");
-              console.log(`[Pipeline] Organic OK: ${r.totalRanked} terms ranked, top=${r.topPosition}`);
+              console.log(`[DataForSEO Organic] completed in ${((Date.now() - t0) / 1000).toFixed(1)}s — ${r.totalRanked} terms ranked, top=${r.topPosition}`);
               return r;
-            }),
-          20_000,
+            } catch (err) {
+              console.error(`[DataForSEO Organic] failed after ${((Date.now() - t0) / 1000).toFixed(1)}s:`, (err as Error).message);
+              throw err;
+            }
+          })(),
+          30_000,
           "Organic",
         )
       );
