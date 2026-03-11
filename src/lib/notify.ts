@@ -6,19 +6,42 @@
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://virolocal.com";
 
+// ─── WhatsApp Content Templates (Twilio) ────────────────────────────────────
+const WHATSAPP_TEMPLATES = {
+  diagnostico_pronto: "HXccdbed413b828a2e04c8b474e16920df",
+  plano_pronto: "HX904aa5fc3eaee7c3fc2351626ce3fb52",
+} as const;
+
 function cleanPhone(whatsapp: string): string {
   const digits = whatsapp.replace(/\D/g, "");
   return digits.startsWith("55") ? digits : `55${digits}`;
 }
 
-// ─── WhatsApp via Twilio ─────────────────────────────────────────────────────
+// ─── WhatsApp via Twilio (Content Templates) ─────────────────────────────────
 
-export async function sendWhatsApp(to: string, body: string): Promise<void> {
+export async function sendWhatsApp(
+  to: string,
+  contentSid: string,
+  contentVariables: Record<string, string>,
+): Promise<void> {
+  if (process.env.WHATSAPP_ENABLED !== "true") {
+    console.log("[Notify] WhatsApp desativado — setar WHATSAPP_ENABLED=true");
+    return;
+  }
+
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const from = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
+  const rawFrom = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
+  const from = rawFrom.startsWith("whatsapp:") ? rawFrom : `whatsapp:${rawFrom}`;
 
-  if (!accountSid || !authToken || !to) return;
+  if (!accountSid || !authToken) {
+    console.warn("[Notify] Skipping WhatsApp — TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN missing");
+    return;
+  }
+  if (!to) {
+    console.warn("[Notify] Skipping WhatsApp — no recipient number");
+    return;
+  }
 
   const phone = cleanPhone(to);
 
@@ -34,18 +57,19 @@ export async function sendWhatsApp(to: string, body: string): Promise<void> {
         body: new URLSearchParams({
           From: from,
           To: `whatsapp:+${phone}`,
-          Body: body,
+          ContentSid: contentSid,
+          ContentVariables: JSON.stringify(contentVariables),
         }),
       }
     );
     if (!res.ok) {
       const err = await res.text();
-      console.error("[Notify] WhatsApp failed:", err);
+      console.error(`[Notify] WhatsApp failed to +${phone}:`, err);
     } else {
-      console.log(`[Notify] WhatsApp sent to +${phone}`);
+      console.log(`[Notify] WhatsApp sent to +${phone} (template: ${contentSid})`);
     }
   } catch (err) {
-    console.error("[Notify] WhatsApp error:", err);
+    console.error(`[Notify] WhatsApp error sending to +${phone}:`, err);
   }
 }
 
@@ -56,7 +80,14 @@ export async function sendEmail(opts: {
   subject: string;
   html: string;
 }): Promise<void> {
-  if (!process.env.RESEND_API_KEY || !opts.to) return;
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("[Notify] Skipping email — RESEND_API_KEY missing");
+    return;
+  }
+  if (!opts.to) {
+    console.warn("[Notify] Skipping email — no recipient address");
+    return;
+  }
 
   try {
     const res = await fetch("https://api.resend.com/emails", {
@@ -74,12 +105,12 @@ export async function sendEmail(opts: {
     });
     if (!res.ok) {
       const err = await res.text();
-      console.error("[Notify] Email failed:", err);
+      console.error(`[Notify] Email failed to ${opts.to}:`, err);
     } else {
       console.log(`[Notify] Email sent to ${opts.to}`);
     }
   } catch (err) {
-    console.error("[Notify] Email error:", err);
+    console.error(`[Notify] Email error sending to ${opts.to}:`, err);
   }
 }
 
@@ -100,15 +131,13 @@ export async function notifyDiagnosisReady(opts: {
   await Promise.allSettled([
     sendWhatsApp(
       whatsapp,
-      `📊 Seu diagnóstico de mercado ficou pronto!\n\n` +
-      `*${product}* em ${shortRegion}\n` +
-      `Influência digital: *${influencePercent}%*\n\n` +
-      `Acesse o resultado completo aqui:\n${url}`
+      WHATSAPP_TEMPLATES.diagnostico_pronto,
+      { "1": product, "2": shortRegion, "3": String(influencePercent) },
     ),
 
     sendEmail({
       to: email,
-      subject: `Seu diagnóstico está pronto — ${product} em ${shortRegion}`,
+      subject: `Seu diagnóstico de mercado está pronto — ${product} em ${shortRegion}`,
       html: diagnosisEmailHtml({ product, shortRegion, influencePercent, url }),
     }),
   ]);
@@ -124,15 +153,14 @@ export async function notifyPlanReady(opts: {
   region: string;
 }): Promise<void> {
   const { email, whatsapp, leadId, product, region } = opts;
-  const url = `${BASE_URL}/dashboard/${leadId}`;
+  const url = `${BASE_URL}/resultado/${leadId}`;
   const shortRegion = region.split(",")[0].trim();
 
   await Promise.allSettled([
     sendWhatsApp(
       whatsapp,
-      `✅ Seu diagnóstico completo para *${product}* está pronto!\n\n` +
-      `Acesse aqui: ${url}\n\n` +
-      `A partir de agora, toda segunda você recebe o briefing semanal com as mudanças no seu mercado e a ação da semana.\n\n— Virô`
+      WHATSAPP_TEMPLATES.plano_pronto,
+      { "1": product, "2": shortRegion },
     ),
 
     sendEmail({
@@ -191,7 +219,7 @@ function diagnosisEmailHtml(opts: {
       </a>
     </div>
     <p style="font-size:14px;color:#3A3A40;line-height:1.6;margin:0 0 12px;">
-      Veja onde estão suas oportunidades e o que fazer essa semana.
+      Veja onde estão suas oportunidades de mercado e como aumentar sua visibilidade local.
     </p>
     <p style="font-size:13px;color:#9E9EA8;line-height:1.6;margin:0;">
       O resultado inclui os termos de busca mapeados, sua posição no Google,
@@ -212,9 +240,9 @@ function planEmailHtml(opts: {
       Seu plano de 90 dias está pronto.
     </h1>
     <p style="font-size:15px;color:#6E6E78;line-height:1.7;margin:0 0 24px;">
-      O diagnóstico completo e o plano de ação de 90 dias para 
-      <strong>${product}</strong> em <strong>${shortRegion}</strong> 
-      estão disponíveis no seu dashboard.
+      O diagnóstico completo e o plano de ação de 90 dias para
+      <strong>${product}</strong> em <strong>${shortRegion}</strong>
+      estão disponíveis na sua página de resultado.
     </p>
     <div style="margin:0 0 20px;">
       ${[
@@ -233,7 +261,7 @@ function planEmailHtml(opts: {
     </div>
     <div style="text-align:center;margin:0 0 28px;">
       <a href="${url}" style="background:#161618;color:#FEFEFF;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;display:inline-block;">
-        Acessar meu plano
+        Acessar meu resultado
       </a>
     </div>
     <p style="font-size:13px;color:#9E9EA8;line-height:1.6;margin:0;">

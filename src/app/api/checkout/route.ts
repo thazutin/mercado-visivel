@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       ],
       customer_email: email || undefined,
       metadata: { lead_id, email: email || "", locale: locale || "pt" },
-      success_url: `${baseUrl}/dashboard/${lead_id}?checkout=success`,
+      success_url: `${baseUrl}/resultado/${lead_id}?paid=true`,
       cancel_url: `${baseUrl}/?checkout=cancelled`,
     };
 

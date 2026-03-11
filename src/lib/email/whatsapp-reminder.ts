@@ -23,7 +23,8 @@ interface WhatsAppInput {
 export async function sendWhatsAppReminder(input: WhatsAppInput): Promise<void> {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const fromNumber = process.env.TWILIO_WHATSAPP_FROM;
+  const rawFrom = process.env.TWILIO_WHATSAPP_FROM;
+  const fromNumber = rawFrom?.startsWith("whatsapp:") ? rawFrom : rawFrom ? `whatsapp:${rawFrom}` : undefined;
 
   if (!accountSid || !authToken || !fromNumber) {
     console.warn("[WhatsApp] Twilio not configured, skipping reminder");

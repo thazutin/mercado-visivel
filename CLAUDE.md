@@ -58,6 +58,26 @@ Pipeline types are centralized in `src/lib/types/pipeline.types.ts`.
 
 `src/lib/schema.ts` defines the Zod schema (`leadSchema`) with per-step validation (`stepValidation.step1`, `stepValidation.step2`). The form adapter (`src/lib/form-adapter.ts`) converts form data to pipeline input format.
 
+### Notifications (`src/lib/notify.ts`)
+
+Two notification channels: **Email (Resend)** and **WhatsApp (Twilio)**.
+
+- **WhatsApp ativo** — gated por `WHATSAPP_ENABLED !== "true"` em `sendWhatsApp()`. Usa Content Templates (ContentSid + ContentVariables) em vez de Body livre.
+
+#### Templates Twilio aprovados
+
+| Template name | ContentSid | Variáveis body | Variáveis botão | Uso |
+|---|---|---|---|---|
+| `viro_diagnostico_pronto` | `HXccdbed413b828a2e04c8b474e16920df` | `{{1}}` produto, `{{2}}` região, `{{3}}` influência% | `{{1}}` leadId (URL) | `notifyDiagnosisReady` |
+| `viro_plano_pronto` | `HX904aa5fc3eaee7c3fc2351626ce3fb52` | `{{1}}` produto, `{{2}}` região | `{{1}}` leadId (URL) | `notifyPlanReady` |
+
+#### Fluxo pós-pagamento
+
+1. Stripe `success_url` redireciona para `/resultado/{leadId}?paid=true` (rota pública)
+2. `ResultadoClient.tsx` exibe banner verde de confirmação e remove `?paid=true` após 3s
+3. Webhook `checkout.session.completed` dispara geração do plano completo em background
+4. `notifyPlanReady` envia email + WhatsApp (quando ativado) com link para `/resultado/{leadId}`
+
 ### Conventions
 
 - Language: all UI copy and comments are in Portuguese
@@ -65,3 +85,11 @@ Pipeline types are centralized in `src/lib/types/pipeline.types.ts`.
 - Fonts: Satoshi / General Sans
 - Path aliases: `@/` maps to `src/`
 - The `src/lib/supabase.ts` client uses the anon key; API routes needing admin access create a separate client with `SUPABASE_SERVICE_ROLE_KEY`
+
+## Próximos Passos
+
+1. ~~**Aprovar templates Twilio**~~ — ✅ Concluído. Templates aprovados e `sendWhatsApp` usando ContentSid. Falta setar `WHATSAPP_ENABLED=true` no Vercel (Settings > Environment Variables).
+2. **Testar email com Resend** — Validar entrega do email de diagnóstico (`notifyDiagnosisReady`) e plano (`notifyPlanReady`) com domínio `entrega@virolocal.com`.
+3. **Instagram recência 15 dias** — Ajustar scraping/pontuação do Instagram para considerar apenas posts dos últimos 15 dias na análise de atividade.
+4. **IBGE nos resultados** — Exibir dados IBGE (população, PIB, empresas) na página de resultado quando disponível para o município.
+5. **Copy loading screen e passo 2 form** — Melhorar textos da tela de processamento e do segundo passo do formulário (contato).

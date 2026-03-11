@@ -134,8 +134,11 @@ export default function ProcessingScreen({ product, region, onComplete, steps: c
           </p>
         )}
 
-        <p style={{ color: V.zinc, fontSize: 11, fontFamily: V.mono, marginBottom: 20 }}>
+        <p style={{ color: V.zinc, fontSize: 11, fontFamily: V.mono, marginBottom: 4 }}>
           Isso pode levar até 60 segundos · fique aqui
+        </p>
+        <p style={{ color: V.ash, fontSize: 11, fontFamily: V.body, marginBottom: 20 }}>
+          Você também receberá o resultado por email e WhatsApp.
         </p>
 
         {/* Steps */}
