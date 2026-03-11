@@ -322,6 +322,7 @@ export async function fetchAudienciaEstimada(
   lat?: number,
   lng?: number,
 ): Promise<AudienciaEstimada | null> {
+  console.log(`[IBGE Audiência] START: city="${city}", state="${state}", nacional=${nacional}, lat=${lat}, lng=${lng}`);
   if (nacional) {
     return {
       populacaoRaio: POPULACAO_BRASIL,
@@ -383,5 +384,6 @@ export async function fetchAudienciaEstimada(
     return null;
   } finally {
     clearTimeout(timeout);
+    console.log(`[IBGE Audiência] END: city="${city}"`);
   }
 }

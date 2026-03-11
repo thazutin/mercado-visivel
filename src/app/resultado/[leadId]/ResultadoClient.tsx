@@ -61,6 +61,9 @@ export default function ResultadoClient({ product, region, leadId, results, isPa
           fontFamily: "'Satoshi', 'General Sans', -apple-system, sans-serif",
         }}>
           ✓ Pagamento confirmado — seu diagnóstico completo está sendo preparado.
+          <div style={{ fontSize: 12, fontWeight: 400, marginTop: 4, opacity: 0.9 }}>
+            O diagnóstico completo será enviado por email em até 5 minutos.
+          </div>
         </div>
       )}
       <InstantValueScreen

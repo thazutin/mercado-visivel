@@ -339,7 +339,7 @@ Responda APENAS em JSON, sem markdown:
   parallelPromises.push(
     withTimeout(
       fetchTermVolumes(allTermStrings, input.region),
-      30_000,
+      20_000,
       "Volumes",
     )
   );
@@ -352,7 +352,7 @@ Responda APENAS em JSON, sem markdown:
 
     console.log(`[Pipeline] Starting parallel calls: Volumes + SERP(${topTerms.length} terms) + Maps + Instagram(${instagramHandles.length} handles)`);
 
-    // 2. SERP scraping (timeout: 30s)
+    // 2. SERP scraping (timeout: 20s)
     parallelPromises.push(
       withTimeout(
         serpScraper(topTerms, input.region, siteDomain)
@@ -361,13 +361,13 @@ Responda APENAS em JSON, sem markdown:
             console.log(`[Pipeline] SERP OK: ${r.length} positions`);
             return r;
           }),
-        30_000,
+        20_000,
         "SERP",
       )
     );
     promiseLabels.push("serp");
 
-    // 3. Google Maps (timeout: 45s)
+    // 3. Google Maps (timeout: 20s)
     parallelPromises.push(
       withTimeout(
         mapsScraper(input.businessName || input.product, input.region)
@@ -376,13 +376,13 @@ Responda APENAS em JSON, sem markdown:
             console.log(`[Pipeline] Maps OK: found=${r.found}, rating=${r.rating}`);
             return r;
           }),
-        45_000,
+        20_000,
         "Maps",
       )
     );
     promiseLabels.push("maps");
 
-    // 4. Instagram (timeout: 90s — Actor makes 2 parallel calls internally)
+    // 4. Instagram (timeout: 20s)
     parallelPromises.push(
       instagramHandles.length > 0
         ? withTimeout(
@@ -392,7 +392,7 @@ Responda APENAS em JSON, sem markdown:
                 console.log(`[Pipeline] Instagram OK: ${r.length} profiles`);
                 return r;
               }),
-            90_000,
+            20_000,
             "Instagram",
           )
         : Promise.resolve([])
@@ -413,7 +413,7 @@ Responda APENAS em JSON, sem markdown:
               console.log(`[Pipeline] Organic OK: ${r.totalRanked} terms ranked, top=${r.topPosition}`);
               return r;
             }),
-          30_000,
+          20_000,
           "Organic",
         )
       );
@@ -425,7 +425,13 @@ Responda APENAS em JSON, sem markdown:
   }
 
   // Execute ALL in parallel
+  const parallelStart = Date.now();
   const parallelResults = await Promise.allSettled(parallelPromises);
+  console.log(`[Pipeline] All parallel calls resolved in ${Date.now() - parallelStart}ms`);
+  for (let i = 0; i < promiseLabels.length; i++) {
+    const r = parallelResults[i];
+    console.log(`[Pipeline]   ${promiseLabels[i]}: ${r.status}${r.status === 'rejected' ? ` (${(r as any).reason?.message || r.reason})` : ''}`);
+  }
 
   // Collect volume results
   let fetchedVolumes: TermVolumeData[] = [];

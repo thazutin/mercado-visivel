@@ -133,8 +133,8 @@ export default function InstantValueScreen({ product, region, results, onCheckou
 
         {/* ═══ HERO: 3 BIG NUMBERS ═══ */}
         <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+          display: "flex",
+          flexDirection: "column",
           gap: 12,
           marginBottom: 16,
         }}>
@@ -462,7 +462,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             })()}
           </div>
           <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 12px", lineHeight: 1.6 }}>
-            O score de influência digital mede quanto do mercado local você captura nos canais onde as decisões de compra acontecem. Google recebe peso 60% (busca + maps), Instagram 40%. O score é normalizado contra benchmarks do segmento — não é absoluto, é relativo ao mercado local. O dimensionamento de mercado cruza volume de busca com dados populacionais para estimar a demanda total disponível. Todos os dados são coletados em tempo real no momento do diagnóstico.
+            O score de influência digital mede quanto do mercado local você captura nos canais onde as decisões de compra acontecem — Google (busca + Maps) e Instagram. O score é normalizado contra benchmarks do segmento — não é absoluto, é relativo ao mercado local. O dimensionamento de mercado cruza volume de busca com dados populacionais para estimar a demanda total disponível. Todos os dados são coletados em tempo real no momento do diagnóstico.
           </p>
           {results.pipeline?.durationMs && (
             <p style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, marginTop: 8 }}>{(results.pipeline.durationMs / 1000).toFixed(1)}s · {results.pipeline.version}</p>

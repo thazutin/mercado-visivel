@@ -136,6 +136,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Monta display data
+    console.log(`[Diagnose] audiencia object:`, JSON.stringify(pipelineResult.audiencia || null));
     const display = buildDisplayData(pipelineResult);
 
     // 6. Salva display no lead (para /resultado/[leadId] e polling)

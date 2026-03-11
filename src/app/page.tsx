@@ -270,11 +270,12 @@ export default function Home() {
       title: t.formStep2Title,
       content: (
         <>
-          <Field label={t.formEmailLabel} hint={t.formEmailHint}>
+          <p style={{ fontSize: 13, color: V.ash, margin: "0 0 16px", lineHeight: 1.5 }}>{t.formStep2Subtitle}</p>
+          <Field label={t.formEmailLabel}>
             <input style={inputStyle} type="email" placeholder={t.formEmailPlaceholder} value={formData.email}
               onChange={(e: any) => updateField("email", e.target.value)} />
           </Field>
-          <Field label={t.formWhatsappLabel} hint={t.formWhatsappHint}>
+          <Field label={t.formWhatsappLabel}>
             <input style={inputStyle} type="tel" placeholder={t.formWhatsappPlaceholder} value={formData.whatsapp}
               onChange={(e: any) => updateField("whatsapp", e.target.value)} />
           </Field>

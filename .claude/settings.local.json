@@ -4,7 +4,13 @@
       "Bash(npx tsc:*)",
       "Bash(cd \"C:\\\\Users\\\\ThalesZutin\\\\Downloads\\\\mercado-visivel\\\\mercado-visivel\" && npx next build 2>&1 | tail -20)",
       "Bash(cd \"C:\\\\Users\\\\ThalesZutin\\\\Downloads\\\\mercado-visivel\\\\mercado-visivel\" && npx next build 2>&1 | tail -25)",
-      "Bash(cd \"C:\\\\Users\\\\ThalesZutin\\\\Downloads\\\\mercado-visivel\\\\mercado-visivel\" && npx next build 2>&1 | tail -15)"
+      "Bash(cd \"C:\\\\Users\\\\ThalesZutin\\\\Downloads\\\\mercado-visivel\\\\mercado-visivel\" && npx next build 2>&1 | tail -15)",
+      "Bash(which vercel:*)",
+      "Bash(cd \"C:\\\\Users\\\\ThalesZutin\\\\Downloads\\\\mercado-visivel\\\\mercado-visivel\" && npx vercel ls --limit 3 2>&1 | head -20)",
+      "Bash(find /c/Users/ThalesZutin/Downloads/mercado-visivel -name \"*Resultado*\" -o -name \"*resultado*\" -o -name \"*InstantValue*\" | grep -E \"\\\\.\\(tsx|ts\\)$\")",
+      "Bash(find /c/Users/ThalesZutin/Downloads/mercado-visivel -name \"*.ts\" -o -name \"*.tsx\" | xargs grep -l \"avgViewsReelsLast30d\\\\|avgLikesLast30d\\\\|postsLast30d\" | head -10)",
+      "Bash(head -150 /c/Users/ThalesZutin/Downloads/mercado-visivel/mercado-visivel/src/app/resultado/\\\\[leadId\\\\]/page.tsx)",
+      "Bash(git add:*)"
     ]
   }
 }

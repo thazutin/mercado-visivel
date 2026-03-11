@@ -165,7 +165,7 @@ export async function notifyPlanReady(opts: {
 
     sendEmail({
       to: email,
-      subject: `Seu plano de 90 dias está pronto — ${product} em ${shortRegion}`,
+      subject: `Seu diagnóstico completo está pronto — ${product} em ${shortRegion}`,
       html: planEmailHtml({ product, shortRegion, url }),
     }),
   ]);
@@ -222,8 +222,7 @@ function diagnosisEmailHtml(opts: {
       Veja onde estão suas oportunidades de mercado e como aumentar sua visibilidade local.
     </p>
     <p style="font-size:13px;color:#9E9EA8;line-height:1.6;margin:0;">
-      O resultado inclui os termos de busca mapeados, sua posição no Google,
-      análise do Instagram e as rotas de trabalho priorizadas.
+      Você vai descobrir exatamente onde está perdendo clientes para concorrentes — e o que fazer primeiro para virar esse jogo.
     </p>
   `);
 }
