@@ -65,7 +65,7 @@ async function extractCity(region: string): Promise<string> {
       max_tokens: 50,
       messages: [{
         role: 'user',
-        content: `Extraia apenas o nome da cidade desta string de endereço/região. Responda somente com o nome da cidade, sem mais nada: ${region}`,
+        content: `Extraia apenas o nome completo da cidade (sem abreviações) desta string de endereço/região. Responda somente com o nome da cidade, sem mais nada. Exemplo: "R. Jundiaí" → "Jundiaí", "S. Paulo" → "São Paulo". Região: ${region}`,
       }],
     });
     const text = (res.content as any[]).filter((c: any) => c.type === 'text').map((c: any) => c.text).join('').trim();

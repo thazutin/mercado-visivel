@@ -161,26 +161,51 @@ async function getMunicipioInfo(city: string, state: string): Promise<MunicipioI
   const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const cityNorm = normalize(city);
 
-  // 1. Busca município
-  const res = await fetch(
-    `https://servicodados.ibge.gov.br/api/v1/localidades/municipios`,
-  );
-  if (!res.ok) return null;
-  const all = await res.json();
+  // Remove abreviações comuns de nomes de cidade (R. → Rio, S. → São, Sta. → Santa, etc.)
+  const expandedCity = city
+    .replace(/^R\.\s*/i, 'Rio ')
+    .replace(/^S\.\s*/i, 'São ')
+    .replace(/^Sta\.\s*/i, 'Santa ')
+    .replace(/^Sto\.\s*/i, 'Santo ')
+    .trim();
+  const expandedCityNorm = normalize(expandedCity);
 
-  // Filtra por nome e opcionalmente UF
+  console.log(`[IBGE getMunicipioInfo] city="${city}", expanded="${expandedCity}", state="${state}"`);
+
+  // 1. Busca município por nome (endpoint filtrado — evita baixar todos os 5570)
+  const res = await fetch(
+    `https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodeURIComponent(expandedCity)}`,
+  );
+  if (!res.ok) {
+    console.warn(`[IBGE getMunicipioInfo] Busca falhou: HTTP ${res.status}`);
+    return null;
+  }
+  const candidates = await res.json();
+  console.log(`[IBGE getMunicipioInfo] ${candidates.length} candidatos para "${expandedCity}"`);
+
+  if (!Array.isArray(candidates) || candidates.length === 0) {
+    console.warn(`[IBGE getMunicipioInfo] Nenhum município encontrado para "${expandedCity}"`);
+    return null;
+  }
+
+  // Filtra por nome exato e opcionalmente UF
   const stateNorm = normalize(state);
-  const match = all.find((m: any) => {
+  const match = candidates.find((m: any) => {
     const nomeNorm = normalize(m.nome);
     const uf = m.microrregiao?.mesorregiao?.UF;
     const ufSigla = uf?.sigla?.toLowerCase() || '';
     const ufNome = normalize(uf?.nome || '');
-    const nameMatch = nomeNorm === cityNorm;
+    const nameMatch = nomeNorm === expandedCityNorm || nomeNorm === cityNorm;
     if (!stateNorm) return nameMatch;
     return nameMatch && (ufSigla === stateNorm || ufNome.includes(stateNorm));
-  }) || all.find((m: any) => normalize(m.nome) === cityNorm);
+  }) || candidates.find((m: any) => {
+    const nomeNorm = normalize(m.nome);
+    return nomeNorm === expandedCityNorm || nomeNorm === cityNorm;
+  }) || candidates[0]; // Fallback: primeiro resultado se busca por nome retornou resultados
 
   if (!match) return null;
+  console.log(`[IBGE getMunicipioInfo] Match: ${match.nome} (id=${match.id})`);
+
 
   const id = Number(match.id);
   const nome = match.nome;
@@ -334,12 +359,16 @@ export async function fetchAudienciaEstimada(
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  const timeout = setTimeout(() => controller.abort(), 15000); // 15s — chamadas IBGE são filtradas por nome agora
 
   try {
     // 1. Info do município principal
     const info = await getMunicipioInfo(city, state);
-    if (!info) return null;
+    if (!info) {
+      console.warn(`[IBGE Audiência] getMunicipioInfo retornou null para city="${city}"`);
+      return null;
+    }
+    console.log(`[IBGE Audiência] Município: ${info.nome}, pop=${info.populacao}, area=${info.areaKm2}km², densidade=${info.densidadeHabKm2.toFixed(0)} hab/km²`);
 
     // Usa lat/lng do Google Places se disponível, senão não faz raio
     const useLat = lat || info.lat;

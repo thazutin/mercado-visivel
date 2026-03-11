@@ -574,21 +574,40 @@ export function createApifyInstagramScraper(config: ApifyConfig) {
       console.warn('[Instagram] Posts call failed:', postsResult.reason?.message || postsResult.reason);
     }
 
+    // Log RAW data from Apify before transformation
+    console.log(`[Instagram RAW] details count=${details.length}, posts count=${posts.length}`);
+    if (details.length > 0) {
+      const sample = details[0];
+      console.log(`[Instagram RAW] details[0] keys: ${Object.keys(sample).join(', ')}`);
+      console.log(`[Instagram RAW] details[0] sample: username=${sample.username}, ownerUsername=${sample.ownerUsername}, followersCount=${sample.followersCount}, followers=${sample.followers}, followedByCount=${sample.followedByCount}, id=${sample.id}`);
+    }
+    if (posts.length > 0) {
+      const sample = posts[0];
+      console.log(`[Instagram RAW] posts[0] keys: ${Object.keys(sample).join(', ')}`);
+      console.log(`[Instagram RAW] posts[0] sample: ownerUsername=${sample.ownerUsername}, username=${sample.username}, likesCount=${sample.likesCount}, likes=${sample.likes}, videoViewCount=${sample.videoViewCount}, videoPlayCount=${sample.videoPlayCount}, type=${sample.type}, timestamp=${sample.timestamp}, takenAt=${sample.takenAt}`);
+    }
+
     // Parse results → InstagramProfile[]
     const profiles: InstagramProfile[] = toFetch.map(handle => {
-      // Find profile in details results
+      // Find profile in details results (try multiple field patterns)
+      const handleLower = handle.toLowerCase();
       const profileData = details.find((r: any) =>
-        r.username === handle || r.ownerUsername === handle ||
-        r.id?.includes(handle) || r.url?.includes(handle)
+        (r.username || '').toLowerCase() === handleLower ||
+        (r.ownerUsername || '').toLowerCase() === handleLower ||
+        (r.id || '').toLowerCase().includes(handleLower) ||
+        (r.url || '').toLowerCase().includes(handleLower) ||
+        (r.inputUrl || '').toLowerCase().includes(`/${handleLower}`)
       );
 
-      // Find posts for this handle
+      // Find posts for this handle (case-insensitive matching)
       const handlePosts = posts.filter((r: any) =>
-        r.ownerUsername === handle ||
-        r.username === handle ||
-        r.profileUrl?.includes(handle) ||
-        r.inputUrl?.includes(handle)
+        (r.ownerUsername || '').toLowerCase() === handleLower ||
+        (r.username || '').toLowerCase() === handleLower ||
+        (r.profileUrl || '').toLowerCase().includes(`/${handleLower}`) ||
+        (r.inputUrl || '').toLowerCase().includes(`/${handleLower}`)
       );
+
+      console.log(`[Instagram] @${handle}: profileData found=${!!profileData}, posts matched=${handlePosts.length}/${posts.length}`);
 
       const followers = profileData?.followersCount || profileData?.followers || profileData?.followedByCount || 0;
       const bio = profileData?.biography || profileData?.bio || '';
@@ -924,6 +943,7 @@ export function createDataForSEOClient(config: DataForSEOConfig) {
 
       // Validar resposta
       const task = raw.tasks?.[0];
+      console.log(`[DataForSEO] Response: status=${raw.status_code}, task_status=${task?.status_code}, task_msg="${task?.status_message}"`);
       if (!task || task.status_code !== 20000) {
         console.error('[DataForSEO] Task error:', task?.status_message || 'no task returned');
         allResults.push(...chunk.map(term => buildZeroVolume(term)));
@@ -931,6 +951,8 @@ export function createDataForSEOClient(config: DataForSEOConfig) {
       }
 
       const items = task.result?.[0]?.items ?? [];
+      const withVolume = items.filter(i => (i.search_volume ?? 0) > 0).length;
+      console.log(`[DataForSEO] ${items.length} items returned, ${withVolume} with volume > 0`);
 
       // Indexar por keyword (lowercase) para lookup rápido
       const itemMap = new Map<string, DataForSEOKeywordResult>();
