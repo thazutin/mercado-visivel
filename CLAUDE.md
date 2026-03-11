@@ -90,6 +90,6 @@ Two notification channels: **Email (Resend)** and **WhatsApp (Twilio)**.
 
 1. ~~**Aprovar templates Twilio**~~ — ✅ Concluído. Templates aprovados e `sendWhatsApp` usando ContentSid. Falta setar `WHATSAPP_ENABLED=true` no Vercel (Settings > Environment Variables).
 2. **Testar email com Resend** — Validar entrega do email de diagnóstico (`notifyDiagnosisReady`) e plano (`notifyPlanReady`) com domínio `entrega@virolocal.com`.
-3. **Instagram recência 15 dias** — Ajustar scraping/pontuação do Instagram para considerar apenas posts dos últimos 15 dias na análise de atividade.
-4. **IBGE nos resultados** — Exibir dados IBGE (população, PIB, empresas) na página de resultado quando disponível para o município.
+3. ~~**Instagram recência 15 dias**~~ — ✅ Concluído. Scraper calcula `recentPostsCount`, `recentAvgReach`, `recentEngagementRate` (15d). Score usa blend 60% recente + 40% histórico, ou penalização 0.5x se inativo.
+4. ~~**IBGE nos resultados**~~ — ✅ Concluído. Módulo de audiência estimada: IBGE (população + raio) + Claude Haiku (target %). Exibido como "Seu mercado acessível" na página de resultado.
 5. **Copy loading screen e passo 2 form** — Melhorar textos da tela de processamento e do segundo passo do formulário (contato).

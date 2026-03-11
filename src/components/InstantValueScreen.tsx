@@ -25,27 +25,60 @@ interface Results {
   termGeneration?: { count: number };
   influenceBreakdown?: { google: number; instagram: number; web: number | null };
   maps?: { found: boolean; rating: number | null; reviewCount: number | null; categories: string[]; inLocalPack: boolean; photos: number };
-  instagram?: { handle: string; followers: number; engagementRate: number; postsLast30d: number; avgLikes: number; avgViews: number; dataAvailable: boolean };
+  instagram?: { handle: string; followers: number; engagementRate: number; postsLast30d: number; avgLikes: number; avgViews: number; recentPostsCount?: number; recentAvgReach?: number; dataAvailable: boolean };
   competitorInstagram?: { handle: string; followers: number; engagementRate: number; postsLast30d: number; avgLikes?: number; avgViews?: number }[];
   serpSummary?: { termsScraped: number; termsRanked: number; hasLocalPack: boolean; hasAds: boolean };
   pipeline?: { version: string; durationMs: number; sourcesUsed: string[]; sourcesUnavailable: string[] };
   gaps?: any[]; gapPattern?: any;
   workRoutes?: { priority: number; title: string; rationale: string; connection: string; horizon: string; expectedImpact: string }[];
   aiVisibility?: { score: number; summary: string; likelyMentioned: boolean; factors: any[]; competitorMentions: any[] } | null;
+  audiencia?: {
+    populacaoRaio: number; raioKm: number | null; densidade: 'alta' | 'baixa' | 'nacional';
+    municipioNome: string; targetProfile: string; estimatedPercentage: number;
+    audienciaTarget: number; rationale: string;
+  } | null;
 }
 interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; leadId?: string; }
 
-function Expandable({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function fmtPop(n: number): string {
+  if (n >= 1_000_000) {
+    const m = n / 1_000_000;
+    return m >= 2 ? `${m.toFixed(1).replace(".", ",")} milhões` : `${m.toFixed(1).replace(".", ",")} milhão`;
+  }
+  if (n >= 1_000) return `${Math.round(n / 1_000)} mil`;
+  return n.toLocaleString("pt-BR");
+}
+
+function inferIntent(term: string): { label: string; color: string } {
+  const t = term.toLowerCase();
+  if (/contrat|preço|preco|quanto custa|orçamento|orcamento|comprar|agendar|marcar|valor/.test(t)) {
+    return { label: "Transacional", color: V.teal };
+  }
+  if (/perto|próximo|proximo|bairro|centro|zona|região|regiao|em\s+\w+$/.test(t)) {
+    return { label: "Local", color: "#3B82F6" };
+  }
+  return { label: "Informacional", color: V.ash };
+}
+
+function Expandable({ title, icon, children, defaultOpen = false, badge }: {
+  title: string; icon?: string; children: React.ReactNode; defaultOpen?: boolean; badge?: React.ReactNode;
+}) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div style={{ marginBottom: 12 }}>
       <button onClick={() => setOpen(!open)} style={{
         width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center",
         padding: "14px 18px", borderRadius: 10, border: `1px solid ${V.fog}`,
-        background: V.white, cursor: "pointer", textAlign: "left",
+        background: V.white, cursor: "pointer", textAlign: "left", gap: 10,
       }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: V.night }}>{title}</span>
-        <span style={{ fontSize: 16, color: V.ash, transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0)" }}>▾</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 8, flex: 1 }}>
+          {icon && <span style={{ fontSize: 15 }}>{icon}</span>}
+          <span style={{ fontSize: 14, fontWeight: 600, color: V.night }}>{title}</span>
+          {badge}
+        </span>
+        <span style={{ fontSize: 16, color: V.ash, transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0)", flexShrink: 0 }}>▾</span>
       </button>
       {open && (
         <div style={{ padding: "16px 18px", background: V.white, borderRadius: "0 0 10px 10px", border: `1px solid ${V.fog}`, borderTopColor: "transparent", marginTop: -1 }}>
@@ -60,6 +93,8 @@ function Chip({ children, color = V.ash }: { children: React.ReactNode; color?: 
   return <span style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.04em", textTransform: "uppercase" as const, color, background: `${color}18`, padding: "3px 8px", borderRadius: 100, fontWeight: 500 }}>{children}</span>;
 }
 
+// ─── Main Component ──────────────────────────────────────────────────────────
+
 export default function InstantValueScreen({ product, region, results, onCheckout, loading, leadId }: Props) {
   const [show, setShow] = useState(false);
   const [coupon, setCoupon] = useState("");
@@ -73,6 +108,16 @@ export default function InstantValueScreen({ product, region, results, onCheckou
   const breakdown = results.influenceBreakdown;
   const competitors = results.competitorInstagram || [];
   const shortRegion = region.split(",")[0].trim();
+  const aud = results.audiencia;
+  const hasAudiencia = aud && aud.audienciaTarget > 0;
+  const hasInfluence = results.influencePercent > 0;
+
+  // Audiência sublabel
+  const audSublabel = aud
+    ? aud.densidade === "nacional"
+      ? "Nacional"
+      : `Raio ${aud.raioKm}km · ${aud.densidade === "alta" ? "Alta" : "Baixa"} densidade`
+    : "";
 
   return (
     <div style={{ minHeight: "100vh", background: V.cloud, padding: "48px 20px", opacity: show ? 1 : 0, transition: "opacity 0.5s ease" }}>
@@ -86,26 +131,64 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           <p style={{ fontSize: 13, color: V.ash, margin: 0 }}>{product} · {shortRegion}</p>
         </div>
 
-        {/* ═══ HERO ═══ */}
-        <div style={{ background: V.white, borderRadius: 16, padding: "32px 24px", marginBottom: 16, textAlign: "center", border: `1px solid ${V.fog}` }}>
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ fontFamily: V.display, fontWeight: 700, letterSpacing: "-0.04em", lineHeight: 1, fontSize: hasVolume ? "clamp(40px, 8vw, 64px)" : "clamp(36px, 7vw, 52px)", color: V.night }}>
-              {hasVolume ? <><AnimatedCounter target={results.totalVolume} duration={1500} />/mês</> : <>{termCount} termos</>}
+        {/* ═══ HERO: 3 BIG NUMBERS ═══ */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+          gap: 12,
+          marginBottom: 16,
+        }}>
+          {/* (a) Audiência Potencial */}
+          {hasAudiencia ? (
+            <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}` }}>
+              <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
+                ~{fmtPop(aud!.audienciaTarget)}
+              </div>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>pessoas no seu mercado</p>
+              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>{audSublabel}</p>
             </div>
-            <p style={{ fontSize: 13, color: V.zinc, margin: "8px 0 0", lineHeight: 1.5 }}>
-              {hasVolume ? `buscas no Google por ${product} na sua região` : `de busca mapeados para ${product} em ${shortRegion}`}
-            </p>
-            {hasVolume && results.pipeline?.sourcesUsed?.includes("claude_volume_estimate") && (
-              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>volume estimado · dados exatos em breve</p>
-            )}
-          </div>
-          <div style={{ height: 1, background: V.fog, margin: "0 -24px 28px" }} />
-          <div>
-            <div style={{ fontFamily: V.display, fontSize: "clamp(40px, 8vw, 64px)", fontWeight: 700, color: results.influencePercent === 0 ? V.coral : results.influencePercent < 20 ? V.amber : V.teal, letterSpacing: "-0.04em", lineHeight: 1 }}>
-              {results.influencePercent}%
+          ) : (
+            <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, opacity: 0.6 }}>
+              <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Audiência local indisponível para este município</p>
             </div>
-            <p style={{ fontSize: 13, color: V.zinc, margin: "8px 0 0", lineHeight: 1.5 }}>é sua influência digital nesse mercado</p>
-          </div>
+          )}
+
+          {/* (b) Buscas por mês */}
+          {hasVolume ? (
+            <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}` }}>
+              <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.night, letterSpacing: "-0.03em", lineHeight: 1 }}>
+                <AnimatedCounter target={results.totalVolume} duration={1500} />
+              </div>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>buscas/mês nos seus termos</p>
+              {results.pipeline?.sourcesUsed?.includes("claude_volume_estimate") && (
+                <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>volume estimado</p>
+              )}
+            </div>
+          ) : (
+            <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, opacity: 0.6 }}>
+              <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Volume de buscas indisponível para este mercado</p>
+            </div>
+          )}
+
+          {/* (c) Influência Digital */}
+          {hasInfluence ? (
+            <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}` }}>
+              <div style={{
+                fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1,
+                color: results.influencePercent < 20 ? V.amber : V.teal,
+              }}>
+                {results.influencePercent}%
+              </div>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>de influência digital</p>
+              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>Google + Instagram + AI</p>
+            </div>
+          ) : (
+            <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}` }}>
+              <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.coral, letterSpacing: "-0.03em", lineHeight: 1 }}>0%</div>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>de influência digital</p>
+              <p style={{ fontSize: 10, color: V.coral, margin: "4px 0 0" }}>Invisível no mercado</p>
+            </div>
+          )}
         </div>
 
         {/* Contexto */}
@@ -119,22 +202,115 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           </p>
         </div>
 
-        {/* ═══ DRILL-DOWNS ═══ */}
+        {/* ═══ 5 BLOCOS COLAPSÁVEIS ═══ */}
 
-        <Expandable title={`${termCount} termos mapeados`}>
+        {/* Bloco 1 — Tamanho da audiência */}
+        <Expandable title="Tamanho da audiência" icon="👥" defaultOpen={!!hasAudiencia}>
+          {aud && aud.populacaoRaio > 0 ? (
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
+                <span style={{ fontSize: 12, color: V.zinc }}>População no raio</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>
+                  {fmtPop(aud.populacaoRaio)} pessoas
+                  {aud.densidade !== "nacional" && aud.raioKm && (
+                    <span style={{ fontSize: 11, fontWeight: 400, color: V.ash }}> em {aud.raioKm}km</span>
+                  )}
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
+                <span style={{ fontSize: 12, color: V.zinc }}>Densidade</span>
+                <span style={{ fontSize: 12, fontWeight: 500, color: V.night }}>
+                  {aud.densidade === "nacional" ? (
+                    <span style={{ background: V.amberWash, color: V.amber, padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600 }}>Nacional</span>
+                  ) : aud.densidade === "alta"
+                    ? "Alta densidade populacional"
+                    : "Baixa densidade populacional"}
+                </span>
+              </div>
+              {aud.targetProfile && (
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
+                  <span style={{ fontSize: 12, color: V.zinc }}>Perfil target</span>
+                  <span style={{ fontSize: 12, fontWeight: 500, color: V.night, textAlign: "right", maxWidth: "60%" }}>{aud.targetProfile}</span>
+                </div>
+              )}
+              {aud.audienciaTarget > 0 && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${V.fog}` }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Audiência estimada</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: V.teal }}>
+                    ~{fmtPop(aud.audienciaTarget)} pessoas
+                    <span style={{ fontSize: 11, fontWeight: 400, color: V.ash, marginLeft: 4 }}>
+                      ({Math.round(aud.estimatedPercentage * 100)}%)
+                    </span>
+                  </span>
+                </div>
+              )}
+              {aud.rationale && (
+                <p style={{ fontSize: 11, color: V.ash, margin: "8px 0 0", fontStyle: "italic", lineHeight: 1.5 }}>{aud.rationale}</p>
+              )}
+              <p style={{ fontSize: 10, color: V.ash, margin: "10px 0 0", fontFamily: V.mono }}>Fonte: IBGE · Estimativa Virô</p>
+            </div>
+          ) : (
+            <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Dados IBGE indisponíveis para este município.</p>
+          )}
+        </Expandable>
+
+        {/* Bloco 2 — Volume de buscas */}
+        <Expandable
+          title="Volume de buscas"
+          icon="🔍"
+          badge={<Chip color={V.amber}>Em breve: Google Ads API</Chip>}
+        >
           <p style={{ fontSize: 12, color: V.ash, margin: "0 0 12px", lineHeight: 1.5 }}>
             Termos reais que pessoas buscam no Google quando precisam de {product} na sua região.
           </p>
-          {results.terms.slice(0, 15).map((t, i) => (
-            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "8px 0", borderBottom: i < 14 ? `1px solid ${V.fog}` : "none" }}>
-              <span style={{ fontSize: 13, color: V.night, lineHeight: 1.4 }}>{t.term}</span>
-              {t.volume > 0 && <span style={{ fontFamily: V.mono, fontSize: 11, color: V.zinc, flexShrink: 0, marginLeft: 8 }}>{t.volume.toLocaleString("pt-BR")}/mês</span>}
-            </div>
-          ))}
-          {results.terms.length > 15 && <p style={{ fontSize: 11, color: V.ash, marginTop: 8, textAlign: "center" }}>+{results.terms.length - 15} termos no diagnóstico completo</p>}
+          {/* Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: `1px solid ${V.fog}`, fontSize: 10, color: V.ash, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
+            <span style={{ flex: 1 }}>Termo</span>
+            <span style={{ width: 70, textAlign: "right" }}>Vol/mês</span>
+            <span style={{ width: 90, textAlign: "right" }}>Intenção</span>
+          </div>
+          {/* Rows */}
+          {(() => {
+            const maxVol = Math.max(...results.terms.slice(0, 15).map(t => t.volume), 0);
+            return results.terms.slice(0, 15).map((t, i) => {
+              const intent = inferIntent(t.term);
+              const isTop = t.volume > 0 && t.volume === maxVol;
+              return (
+                <div key={i} style={{
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                  padding: "8px 0", borderBottom: i < 14 ? `1px solid ${V.fog}` : "none",
+                  background: isTop ? V.amberWash : "transparent",
+                  marginLeft: isTop ? -4 : 0, marginRight: isTop ? -4 : 0,
+                  paddingLeft: isTop ? 4 : 0, paddingRight: isTop ? 4 : 0,
+                  borderRadius: isTop ? 4 : 0,
+                }}>
+                  <span style={{ fontSize: 13, color: V.night, lineHeight: 1.4, flex: 1 }}>{t.term}</span>
+                  <span style={{ fontFamily: V.mono, fontSize: 11, color: t.volume > 0 ? V.night : V.ash, width: 70, textAlign: "right", flexShrink: 0 }}>
+                    {t.volume > 0 ? t.volume.toLocaleString("pt-BR") : "—"}
+                  </span>
+                  <span style={{ width: 90, textAlign: "right", flexShrink: 0 }}>
+                    <span style={{
+                      fontFamily: V.mono, fontSize: 9, letterSpacing: "0.04em",
+                      color: intent.color, background: `${intent.color}18`,
+                      padding: "2px 6px", borderRadius: 100,
+                    }}>
+                      {intent.label}
+                    </span>
+                  </span>
+                </div>
+              );
+            });
+          })()}
+          {results.terms.length > 15 && (
+            <p style={{ fontSize: 11, color: V.ash, marginTop: 8, textAlign: "center" }}>+{results.terms.length - 15} termos no diagnóstico completo</p>
+          )}
+          <p style={{ fontSize: 10, color: V.ash, margin: "12px 0 0", fontFamily: V.mono }}>
+            Dados: DataForSEO · Precisão aumentará com Google Ads API
+          </p>
         </Expandable>
 
-        <Expandable title="Como medimos sua influência">
+        {/* Bloco 3 — Capacidade de influência */}
+        <Expandable title="Capacidade de influência" icon="📊">
           <p style={{ fontSize: 12, color: V.ash, margin: "0 0 12px", lineHeight: 1.5 }}>
             Cruzamos dados de Google, Instagram e AI para calcular quanto do mercado digital local você captura.
           </p>
@@ -153,7 +329,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             </p>
           </div>
 
-          {/* Instagram with full details */}
+          {/* Instagram */}
           <div style={{ padding: "10px 0", borderBottom: `1px solid ${V.fog}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Instagram</span>
@@ -161,10 +337,21 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             </div>
             {igData?.dataAvailable ? (
               <>
-                <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px", lineHeight: 1.5 }}>
+                <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 4px", lineHeight: 1.5 }}>
                   @{igData.handle}: {igData.followers.toLocaleString("pt-BR")} seguidores · {(igData.avgViews || igData.avgLikes || 0).toLocaleString("pt-BR")} alcance médio · {(igData.engagementRate * 100).toFixed(1)}% engajamento · {igData.postsLast30d} posts/30d
                 </p>
-                {/* Competitor table */}
+                {(igData.recentPostsCount ?? 0) > 0 ? (
+                  <p style={{ fontSize: 11, color: V.teal, margin: "0 0 8px", fontWeight: 500 }}>
+                    {igData.recentPostsCount} {igData.recentPostsCount === 1 ? "post" : "posts"} nos últimos 15 dias · {(igData.recentAvgReach || 0).toLocaleString("pt-BR")} alcance médio recente
+                  </p>
+                ) : (
+                  <p style={{
+                    fontSize: 11, color: V.amber, margin: "0 0 8px", fontWeight: 600,
+                    background: V.amberWash, display: "inline-block", padding: "3px 8px", borderRadius: 4,
+                  }}>
+                    Perfil inativo — 0 posts nos últimos 15 dias
+                  </p>
+                )}
                 {competitors.length > 0 && (
                   <div style={{ background: V.cloud, borderRadius: 8, padding: "10px 12px", marginTop: 4 }}>
                     <p style={{ fontSize: 10, color: V.ash, margin: "0 0 6px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>Comparativo</p>
@@ -174,14 +361,12 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                       <span style={{ color: V.ash, width: "25%", textAlign: "right" }}>Alcance</span>
                       <span style={{ color: V.ash, width: "25%", textAlign: "right" }}>Engaj.</span>
                     </div>
-                    {/* You */}
                     <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontSize: 12, background: V.amberWash, borderRadius: 4, paddingLeft: 4, paddingRight: 4, marginTop: 2 }}>
                       <span style={{ color: V.amber, fontWeight: 600, width: "30%" }}>@{igData.handle}</span>
                       <span style={{ color: V.night, width: "20%", textAlign: "right" }}>{igData.followers.toLocaleString("pt-BR")}</span>
                       <span style={{ color: V.night, width: "25%", textAlign: "right" }}>{(igData.avgViews || igData.avgLikes || 0).toLocaleString("pt-BR")}</span>
                       <span style={{ color: V.night, width: "25%", textAlign: "right" }}>{(igData.engagementRate * 100).toFixed(1)}%</span>
                     </div>
-                    {/* Competitors */}
                     {competitors.map((c, i) => (
                       <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 4px", fontSize: 12, borderBottom: i < competitors.length - 1 ? `1px solid ${V.fog}` : "none" }}>
                         <span style={{ color: V.zinc, width: "30%" }}>@{c.handle}</span>
@@ -212,25 +397,21 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               </div>
               <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
                 {(() => {
-                  const aiDimFactor = results.aiVisibility.factors?.find(
+                  const aiDimFactor = results.aiVisibility!.factors?.find(
                     (f: any) => f.status === 'positive' && f.factor.startsWith('Aparece em buscas de IA')
                   );
-                  if (aiDimFactor) {
-                    return aiDimFactor.factor + `. Score ${results.aiVisibility.score}/100.`;
-                  }
-                  if (results.aiVisibility.likelyMentioned) {
-                    return `Seu negócio provavelmente é mencionado em respostas de AI. Score ${results.aiVisibility.score}/100.`;
-                  }
-                  return `Não aparece em nenhuma busca de IA local. ${results.aiVisibility.summary}`;
+                  if (aiDimFactor) return aiDimFactor.factor + `. Score ${results.aiVisibility!.score}/100.`;
+                  if (results.aiVisibility!.likelyMentioned) return `Seu negócio provavelmente é mencionado em respostas de AI. Score ${results.aiVisibility!.score}/100.`;
+                  return `Não aparece em nenhuma busca de IA local. ${results.aiVisibility!.summary}`;
                 })()}
               </p>
             </div>
           )}
         </Expandable>
 
-        {/* Rotas */}
+        {/* Bloco 4 — Rotas de trabalho priorizadas */}
         {results.workRoutes && results.workRoutes.length > 0 && (
-          <Expandable title="Rotas de trabalho priorizadas" defaultOpen={true}>
+          <Expandable title="Rotas de trabalho priorizadas" icon="🎯" defaultOpen={true}>
             {results.gapHeadline && (
               <p style={{ fontSize: 13, color: V.night, margin: "0 0 12px", fontWeight: 500, lineHeight: 1.5 }}>{results.gapHeadline}</p>
             )}
@@ -247,8 +428,8 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           </Expandable>
         )}
 
-        {/* Metodologia */}
-        <Expandable title="Fontes de dados e metodologia">
+        {/* Bloco 5 — Fontes de dados e metodologia */}
+        <Expandable title="Fontes de dados e metodologia" icon="🔬">
           <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
             {(() => {
               const allSources: Record<string, string> = {
@@ -261,18 +442,17 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 ai_visibility: "IA · Visibilidade",
                 claude_gap_analysis: "IA · Análise",
                 ibge: "IBGE",
+                ibge_audiencia: "IBGE · Audiência",
                 auto_competitor_discovery: "Concorrentes auto",
                 claude_fallback_terms: "IA · Fallback",
                 claude_volume_estimate: "IA · Volume estimado",
                 google_ads: "Google Ads",
               };
               const used = results.pipeline?.sourcesUsed || [];
-              // Show used sources first (teal), then unused known sources (ash)
               const chips: { label: string; active: boolean }[] = [];
               for (const [key, label] of Object.entries(allSources)) {
                 if (used.includes(key)) chips.unshift({ label, active: true });
               }
-              // Add any used sources not in our known list
               for (const src of used) {
                 if (!allSources[src]) chips.push({ label: src, active: true });
               }
@@ -337,7 +517,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           </div>
         </div>
 
-        {/* Prévia — focado no COMO */}
+        {/* Prévia */}
         <Expandable title="Prévia do que você recebe">
           <div style={{ padding: "12px", borderRadius: 8, background: V.cloud, marginBottom: 8, borderLeft: `3px solid ${V.amber}` }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: V.night, marginBottom: 4 }}>Diagnóstico completo</div>

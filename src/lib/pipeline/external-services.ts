@@ -601,6 +601,9 @@ export function createApifyInstagramScraper(config: ApifyConfig) {
           postsLast30d: 0,
           avgLikesLast30d: 0,
           avgViewsReelsLast30d: 0,
+          recentPostsCount: 0,
+          recentAvgReach: 0,
+          recentEngagementRate: 0,
           bio: '',
           lastPostsCaptions: [],
           isPrivate: false,
@@ -608,14 +611,16 @@ export function createApifyInstagramScraper(config: ApifyConfig) {
         };
       }
 
-      // Calculate metrics from posts (last 30 days)
+      // Calculate metrics from posts (last 30 days + last 15 days)
       const now = Date.now();
       const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+      const fifteenDaysAgo = now - 15 * 24 * 60 * 60 * 1000;
 
-      const recentPosts = handlePosts.filter((p: any) => {
-        const ts = new Date(p.timestamp || p.takenAt || p.takenAtTimestamp * 1000 || 0).getTime();
-        return ts > thirtyDaysAgo;
-      });
+      const getPostTimestamp = (p: any) =>
+        new Date(p.timestamp || p.takenAt || p.takenAtTimestamp * 1000 || 0).getTime();
+
+      const recentPosts = handlePosts.filter((p: any) => getPostTimestamp(p) > thirtyDaysAgo);
+      const recentPosts15d = handlePosts.filter((p: any) => getPostTimestamp(p) > fifteenDaysAgo);
 
       // Reels/videos
       const reels = handlePosts.filter((p: any) =>
@@ -640,6 +645,20 @@ export function createApifyInstagramScraper(config: ApifyConfig) {
       const reachRelative = followers > 0 ? reachAbsolute / followers : 0;
       const engagementRate = reachAbsolute > 0 ? avgLikes / reachAbsolute : (followers > 0 ? avgLikes / followers : 0);
 
+      // Recência: métricas dos últimos 15 dias
+      const reels15d = recentPosts15d.filter((p: any) =>
+        p.type === 'Video' || p.videoViewCount || p.videoPlayCount || p.videoUrl
+      );
+      const avgViews15d = reels15d.length > 0
+        ? reels15d.reduce((s: number, p: any) => s + (p.videoViewCount || p.videoPlayCount || p.viewCount || 0), 0) / reels15d.length
+        : 0;
+      const likes15d = recentPosts15d.filter((p: any) => (p.likesCount || p.likes || 0) > 0);
+      const avgLikes15d = likes15d.length > 0
+        ? likes15d.reduce((s: number, p: any) => s + (p.likesCount || p.likes || 0), 0) / likes15d.length
+        : 0;
+      const recentAvgReach = avgViews15d || avgLikes15d;
+      const recentEngagementRate = recentAvgReach > 0 ? avgLikes15d / recentAvgReach : 0;
+
       // Extract captions for content analysis
       const captions = handlePosts
         .slice(0, 20)
@@ -657,13 +676,16 @@ export function createApifyInstagramScraper(config: ApifyConfig) {
         postsLast30d: recentPosts.length,
         avgLikesLast30d: Math.round(avgLikes),
         avgViewsReelsLast30d: Math.round(avgViews),
+        recentPostsCount: recentPosts15d.length,
+        recentAvgReach: Math.round(recentAvgReach),
+        recentEngagementRate: Math.round(recentEngagementRate * 1000) / 1000,
         bio,
         lastPostsCaptions: captions,
         isPrivate,
         dataAvailable: !isPrivate && (followers > 0 || handlePosts.length > 0),
       };
 
-      console.log(`[Instagram] @${handle}: ${followers} followers, ${handlePosts.length} posts scraped, ${recentPosts.length} last 30d, avgLikes=${Math.round(avgLikes)}, avgViews=${Math.round(avgViews)}, captions=${captions.length}`);
+      console.log(`[Instagram] @${handle}: ${followers} followers, ${handlePosts.length} posts scraped, ${recentPosts.length} last 30d, ${recentPosts15d.length} last 15d, avgLikes=${Math.round(avgLikes)}, avgViews=${Math.round(avgViews)}, recentReach=${Math.round(recentAvgReach)}`);
 
       // Cache per handle for 3 days
       if (config.cache) {

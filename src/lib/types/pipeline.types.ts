@@ -196,11 +196,16 @@ export interface InstagramProfile {
   reachAbsolute: number;              // Média de views dos reels
   reachRelative: number;              // views / seguidores
   engagementRate: number;             // likes / views
-  
+
   // Métricas brutas
   postsLast30d: number;
   avgLikesLast30d: number;
   avgViewsReelsLast30d: number;
+
+  // Recência (últimos 15 dias)
+  recentPostsCount: number;           // Posts nos últimos 15 dias
+  recentAvgReach: number;             // Alcance médio dos posts recentes (15d)
+  recentEngagementRate: number;       // Engajamento médio dos posts recentes (15d)
   
   // Conteúdo (para Step 5)
   bio: string;
@@ -383,6 +388,34 @@ export interface IBGEData {
   estado: string;
   populacao: number;
   codigoIBGE: string;
+}
+
+// --- AUDIÊNCIA ESTIMADA ---
+
+export interface AudienciaEstimada {
+  populacaoRaio: number;
+  raioKm: number | null;
+  densidade: 'alta' | 'baixa' | 'nacional';
+  municipioNome: string;
+  municipioId: number;
+}
+
+export interface AudienciaTarget {
+  targetProfile: string;
+  estimatedPercentage: number;
+  audienciaTarget: number;
+  rationale: string;
+}
+
+export interface AudienciaDisplay {
+  populacaoRaio: number;
+  raioKm: number | null;
+  densidade: 'alta' | 'baixa' | 'nacional';
+  municipioNome: string;
+  targetProfile: string;
+  estimatedPercentage: number;
+  audienciaTarget: number;
+  rationale: string;
 }
 
 // --- ERROR HANDLING ---

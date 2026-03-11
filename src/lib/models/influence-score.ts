@@ -127,20 +127,23 @@ export function calculateInstagramInfluence(
     // Score absoluto baseado em métricas brutas
     // Benchmarks para negócios locais: ~500 followers = 0.2, ~2000 = 0.5, ~10000 = 0.8
     const followerScore = Math.min(businessProfile.followers / 5000, 1.0);
-    
+
     // Engagement rate: >3% = excelente, 1-3% = bom, <1% = baixo
     const engScore = Math.min(businessProfile.engagementRate / 0.03, 1.0);
-    
+
     // Posts frequency: >8/month = ativo, 4-8 = médio, <4 = baixo
     const freqScore = Math.min(businessProfile.postsLast30d / 8, 1.0);
-    
+
     // Score absoluto (não relativo a concorrentes)
     const absoluteScore = followerScore * 0.4 + engScore * 0.35 + freqScore * 0.25;
+
+    // Aplica fator de recência
+    const recencyAdjusted = applyRecencyFactor(absoluteScore, businessProfile);
 
     return {
       profile: businessProfile,
       competitors: competitorProfiles,
-      relativeShare: Math.min(absoluteScore, 1.0),
+      relativeShare: Math.min(recencyAdjusted, 1.0),
     };
   }
 
@@ -154,11 +157,45 @@ export function calculateInstagramInfluence(
   const businessScore = scores.find(s => s.handle === businessProfile.handle)?.score || 0;
   const relativeShare = totalScore > 0 ? businessScore / totalScore : 0;
 
+  // Aplica fator de recência ao share do negócio
+  const recencyAdjusted = applyRecencyFactor(relativeShare, businessProfile);
+
   return {
     profile: businessProfile,
     competitors: competitorProfiles,
-    relativeShare,
+    relativeShare: recencyAdjusted,
   };
+}
+
+/**
+ * Aplica fator de recência ao score do Instagram.
+ * - Com posts nos últimos 15d: 60% score recente + 40% score histórico
+ * - Sem posts nos últimos 15d: penaliza em 50% (perfil inativo)
+ */
+function applyRecencyFactor(historicalScore: number, profile: InstagramProfile): number {
+  const hasRecentPosts = (profile.recentPostsCount ?? 0) > 0;
+
+  if (!hasRecentPosts) {
+    // Perfil inativo: penalização de 50%
+    console.log(`[Influence] Instagram @${profile.handle}: inativo (0 posts em 15d), penalização 0.5x`);
+    return historicalScore * 0.5;
+  }
+
+  // Score recente baseado no alcance e engajamento dos últimos 15 dias
+  const recentReach = profile.recentAvgReach ?? 0;
+  const recentEng = profile.recentEngagementRate ?? 0;
+
+  // Normaliza score recente com mesmos benchmarks
+  const recentReachScore = profile.followers > 0
+    ? Math.min(recentReach / profile.followers, 1.0)
+    : 0;
+  const recentEngScore = Math.min(recentEng / 0.03, 1.0);
+  const recentScore = recentReachScore * 0.6 + recentEngScore * 0.4;
+
+  // Blend: 60% recente + 40% histórico
+  const blended = recentScore * 0.6 + historicalScore * 0.4;
+  console.log(`[Influence] Instagram @${profile.handle}: ${profile.recentPostsCount} posts em 15d, blend=0.6×recent(${recentScore.toFixed(3)})+0.4×hist(${historicalScore.toFixed(3)})=${blended.toFixed(3)}`);
+  return blended;
 }
 
 /**

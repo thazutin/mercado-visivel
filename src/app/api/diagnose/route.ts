@@ -271,6 +271,8 @@ function buildDisplayData(result: any) {
       postsLast30d: igData.profile.postsLast30d || 0,
       avgLikes: igData.profile.avgLikesLast30d || 0,
       avgViews: igData.profile.avgViewsReelsLast30d || 0,
+      recentPostsCount: igData.profile.recentPostsCount || 0,
+      recentAvgReach: igData.profile.recentAvgReach || 0,
       dataAvailable: igData.profile.dataAvailable || false,
     } : null,
     competitorInstagram: igData?.competitors
@@ -290,6 +292,7 @@ function buildDisplayData(result: any) {
       hasAds: serpPositions.some((sp: any) => sp.serpFeatures?.includes("ads")),
     },
     aiVisibility: result.aiVisibility || null,
+    audiencia: result.audiencia || null,
     termGeneration: {
       count: result.terms.termCount,
       model: result.terms.generationModel,

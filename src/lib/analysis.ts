@@ -15,7 +15,8 @@ import {
 } from "./models/influence-score";
 import { executeStep5 } from "./pipeline/step5-gap-analysis";
 import { executeAIVisibilityCheck } from "./pipeline/ai-visibility";
-import { getIBGEMunicipalData } from "./pipeline/ibge";
+import { getIBGEMunicipalData, fetchAudienciaEstimada } from "./pipeline/ibge";
+import { inferirTargetAudiencia } from "./pipeline/audience-target";
 import {
   createApifySerpScraper,
   createApifyMapsScraper,
@@ -38,6 +39,9 @@ import type {
   MapsPresence,
   OrganicPresence,
   IBGEData,
+  AudienciaEstimada,
+  AudienciaTarget,
+  AudienciaDisplay,
   InstagramProfile,
   GoogleInfluence,
   InstagramInfluence,
@@ -597,6 +601,9 @@ Responda APENAS em JSON, sem markdown:
     postsLast30d: 0,
     avgLikesLast30d: 0,
     avgViewsReelsLast30d: 0,
+    recentPostsCount: 0,
+    recentAvgReach: 0,
+    recentEngagementRate: 0,
     bio: "",
     lastPostsCaptions: [],
     isPrivate: false,
@@ -621,6 +628,34 @@ Responda APENAS em JSON, sem markdown:
   );
 
   console.log(`[Pipeline] Step 4 OK: influence ${step4.influence.totalInfluence}%`);
+
+  // =========================================================================
+  // AUDIÊNCIA ESTIMADA (IBGE + Claude Haiku) — roda em paralelo com AI Visibility
+  // =========================================================================
+  const isNacional = /brasil.*nacional|nacional|todo o brasil/i.test(input.region);
+  const extractedState = input.region.split(/[,\-–]/)?.[1]?.trim() || '';
+
+  const audienciaPromise = (async (): Promise<{ estimada: AudienciaEstimada | null; target: AudienciaTarget | null }> => {
+    try {
+      const estimada = await fetchAudienciaEstimada(
+        extractedCity,
+        extractedState,
+        isNacional,
+      );
+      if (!estimada) return { estimada: null, target: null };
+
+      const target = await inferirTargetAudiencia(
+        input.product,
+        input.differentiator || input.product,
+        estimada.populacaoRaio,
+        claude,
+      );
+      return { estimada, target };
+    } catch (err) {
+      console.warn('[Pipeline] Audiência falhou/ignorado:', (err as Error).message);
+      return { estimada: null, target: null };
+    }
+  })();
 
   // =========================================================================
   // STEP 4b — AI Visibility Check (DataForSEO SERP real)
@@ -705,6 +740,40 @@ Responda APENAS em JSON, sem markdown:
   }
 
   // =========================================================================
+  // AWAIT AUDIÊNCIA (started in parallel with AI Visibility + Step 5)
+  // =========================================================================
+  const audienciaResult = await audienciaPromise;
+  let audienciaDisplay: AudienciaDisplay | null = null;
+  if (audienciaResult.estimada && audienciaResult.target) {
+    audienciaDisplay = {
+      populacaoRaio: audienciaResult.estimada.populacaoRaio,
+      raioKm: audienciaResult.estimada.raioKm,
+      densidade: audienciaResult.estimada.densidade,
+      municipioNome: audienciaResult.estimada.municipioNome,
+      targetProfile: audienciaResult.target.targetProfile,
+      estimatedPercentage: audienciaResult.target.estimatedPercentage,
+      audienciaTarget: audienciaResult.target.audienciaTarget,
+      rationale: audienciaResult.target.rationale,
+    };
+    sourcesUsed.push('ibge_audiencia');
+    console.log(`[Pipeline] Audiência OK: ${audienciaDisplay.populacaoRaio.toLocaleString('pt-BR')} pop raio, ${audienciaDisplay.audienciaTarget.toLocaleString('pt-BR')} target`);
+  } else if (audienciaResult.estimada) {
+    // Temos IBGE mas não target — exibe só população
+    audienciaDisplay = {
+      populacaoRaio: audienciaResult.estimada.populacaoRaio,
+      raioKm: audienciaResult.estimada.raioKm,
+      densidade: audienciaResult.estimada.densidade,
+      municipioNome: audienciaResult.estimada.municipioNome,
+      targetProfile: '',
+      estimatedPercentage: 0,
+      audienciaTarget: 0,
+      rationale: '',
+    };
+    sourcesUsed.push('ibge_audiencia');
+    console.log(`[Pipeline] Audiência parcial: ${audienciaDisplay.populacaoRaio.toLocaleString('pt-BR')} pop raio (sem target)`);
+  }
+
+  // =========================================================================
   // ASSEMBLE RESULT + determine confidence
   // =========================================================================
   const totalProcessingTimeMs = Date.now() - pipelineStart;
@@ -732,6 +801,7 @@ Responda APENAS em JSON, sem markdown:
     confidenceLevel,
     // @ts-ignore — extending Momento1Result with runtime data
     ibgeData: ibgeData || null,
+    audiencia: audienciaDisplay,
     aiVisibility: aiVisibility ? {
       score: aiVisibility.score,
       summary: aiVisibility.summary,
