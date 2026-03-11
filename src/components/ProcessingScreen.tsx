@@ -105,51 +105,48 @@ export default function ProcessingScreen({ product, region, onComplete, steps: c
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      justifyContent: "center",
-      padding: "60px 24px",
+      justifyContent: "space-between",
+      padding: "32px 20px 24px",
     }}>
       <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
         {/* Brand */}
         <div style={{
-          width: 48, height: 48, borderRadius: 14,
+          width: 36, height: 36, borderRadius: 10,
           background: V.graphite, display: "flex", alignItems: "center", justifyContent: "center",
-          margin: "0 auto 24px",
+          margin: "0 auto 16px",
         }}>
-          <span style={{ fontFamily: V.display, fontWeight: 700, fontSize: 22, color: V.white, letterSpacing: "-0.03em" }}>V</span>
+          <span style={{ fontFamily: V.display, fontWeight: 700, fontSize: 17, color: V.white, letterSpacing: "-0.03em" }}>V</span>
         </div>
 
         <h2 style={{
-          fontFamily: V.display, fontSize: 24, fontWeight: 700,
-          color: V.white, letterSpacing: "-0.03em", marginBottom: 8,
+          fontFamily: V.display, fontSize: 20, fontWeight: 700,
+          color: V.white, letterSpacing: "-0.03em", marginBottom: 4,
         }}>
           Analisando {product}
         </h2>
         {shortRegion ? (
-          <p style={{ color: V.ash, fontSize: 14, fontFamily: V.body, marginBottom: 12 }}>
+          <p style={{ color: V.ash, fontSize: 13, fontFamily: V.body, marginBottom: 8 }}>
             em {shortRegion}
           </p>
         ) : (
-          <p style={{ color: V.ash, fontSize: 14, fontFamily: V.body, marginBottom: 12 }}>
+          <p style={{ color: V.ash, fontSize: 13, fontFamily: V.body, marginBottom: 8 }}>
             {product}
           </p>
         )}
 
-        <p style={{ color: V.zinc, fontSize: 12, fontFamily: V.mono, marginBottom: 12 }}>
-          Isso pode levar até 60 segundos
-        </p>
-        <p style={{ color: V.ash, fontSize: 12, fontFamily: V.body, marginBottom: 48, lineHeight: 1.5 }}>
-          Fique aqui — seu resultado aparece nessa tela assim que ficar pronto.
+        <p style={{ color: V.zinc, fontSize: 11, fontFamily: V.mono, marginBottom: 20 }}>
+          Isso pode levar até 60 segundos · fique aqui
         </p>
 
         {/* Steps */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, textAlign: "left" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, textAlign: "left" }}>
           {steps.map((step, i) => {
             const isActive = i === activeIdx;
             const isDone = i < activeIdx || done;
             return (
               <div key={i} style={{
-                display: "flex", alignItems: "center", gap: 14,
-                padding: "14px 18px", borderRadius: 10,
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "10px 14px", borderRadius: 8,
                 background: isDone ? V.tealWash : isActive ? V.graphite : "transparent",
                 border: isActive ? `1px solid rgba(207,133,35,0.2)` : "1px solid transparent",
                 transition: "all 0.4s ease",
@@ -157,9 +154,9 @@ export default function ProcessingScreen({ product, region, onComplete, steps: c
               }}>
                 {/* Icon */}
                 <div style={{
-                  width: 22, height: 22, borderRadius: "50%", display: "flex",
+                  width: 20, height: 20, borderRadius: "50%", display: "flex",
                   alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  fontSize: 11, fontWeight: 600,
+                  fontSize: 10, fontWeight: 600,
                   background: isDone ? V.teal : isActive ? V.graphite : V.slate,
                   color: isDone ? V.white : "transparent",
                   border: isActive && !isDone ? `2px solid ${V.amber}` : "none",
@@ -168,7 +165,7 @@ export default function ProcessingScreen({ product, region, onComplete, steps: c
                   {isDone && "✓"}
                   {isActive && !isDone && (
                     <div style={{
-                      width: 10, height: 10, borderRadius: "50%",
+                      width: 8, height: 8, borderRadius: "50%",
                       border: "2px solid transparent", borderTopColor: V.amber,
                       animation: "spin 0.8s linear infinite",
                     }} />
@@ -190,7 +187,7 @@ export default function ProcessingScreen({ product, region, onComplete, steps: c
 
         {/* Progress bar */}
         <div style={{
-          marginTop: 40, height: 3, borderRadius: 2,
+          marginTop: 20, height: 3, borderRadius: 2,
           background: V.graphite, overflow: "hidden",
         }}>
           <div style={{
@@ -202,12 +199,12 @@ export default function ProcessingScreen({ product, region, onComplete, steps: c
 
         {/* Educational facts carousel */}
         <div style={{
-          marginTop: 40,
-          padding: "20px 24px",
+          marginTop: 20,
+          padding: "16px 20px",
           background: V.graphite,
-          borderRadius: 12,
+          borderRadius: 10,
           border: `1px solid ${V.slate}`,
-          minHeight: 88,
+          minHeight: 76,
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
@@ -217,10 +214,10 @@ export default function ProcessingScreen({ product, region, onComplete, steps: c
             transition: "opacity 0.4s ease",
           }}>
             <p style={{
-              fontSize: 14,
+              fontSize: 13,
               color: V.white,
-              margin: "0 0 8px",
-              lineHeight: 1.6,
+              margin: "0 0 6px",
+              lineHeight: 1.5,
               fontFamily: V.body,
             }}>
               {currentFact.text}

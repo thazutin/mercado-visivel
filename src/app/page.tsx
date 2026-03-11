@@ -201,26 +201,26 @@ export default function Home() {
 
   const formSteps: Record<number, { title: string; content: React.ReactNode }> = {
     1: {
-      title: "Sobre seu negócio",
+      title: t.formStep1Title,
       content: (
         <>
-          <Field label="O que você faz?" hint="Ex: implantes dentários, barbearia masculina, açaí artesanal">
-            <input style={inputStyle} type="text" placeholder="Descreva em poucas palavras" value={formData.product}
+          <Field label={t.formProductLabel} hint={t.formProductHint}>
+            <input style={inputStyle} type="text" placeholder={t.formProductPlaceholder} value={formData.product}
               onChange={(e: any) => updateField("product", e.target.value)} />
           </Field>
 
-          <Field label="O que te diferencia?" hint="Opcional — o que te faz único comparado aos outros">
-            <input style={inputStyle} type="text" placeholder="Ex: atendimento humanizado, 15 anos de experiência" value={formData.differentiator}
+          <Field label={t.formDiffLabel} hint={t.formDiffHint}>
+            <input style={inputStyle} type="text" placeholder={t.formDiffPlaceholder} value={formData.differentiator}
               onChange={(e: any) => updateField("differentiator", e.target.value)} />
           </Field>
 
-          <Field label="Seu Instagram" hint="Usamos para analisar seu posicionamento e comparar com concorrentes">
+          <Field label={t.formInstagramLabel} hint={t.formInstagramHint}>
             {noInstagram ? (
               <div style={{ padding: "14px 16px", borderRadius: 10, background: V.cloud, fontSize: 13, color: V.zinc }}>
-                Sem problema — vamos focar nos outros canais.
+                {t.formNoInstagramMsg}
               </div>
             ) : (
-              <input style={inputStyle} type="text" placeholder="@seunegocio" value={formData.instagram}
+              <input style={inputStyle} type="text" placeholder={t.formInstagramPlaceholder} value={formData.instagram}
                 onChange={(e: any) => updateField("instagram", e.target.value)} />
             )}
             <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 13, color: V.ash, cursor: "pointer" }}>
@@ -229,24 +229,24 @@ export default function Home() {
                 updateField("noInstagram", e.target.checked);
                 if (e.target.checked) updateField("instagram", "");
               }} style={{ width: 16, height: 16, accentColor: V.amber }} />
-              Não tenho Instagram
+              {t.formNoInstagram}
             </label>
           </Field>
 
-          <Field label="Onde você atende?" hint={isNational ? "Análise nacional — sem filtro de região" : "Endereço completo — quanto mais preciso, melhor"}>
+          <Field label={t.formRegionLabel} hint={isNational ? t.formRegionNationalHint : t.formRegionHint}>
             {isNational ? (
               <div style={{ padding: "14px 16px", borderRadius: 10, background: V.cloud, fontSize: 13, color: V.zinc }}>
-                Análise nacional — vamos buscar dados de todo o Brasil.
+                {t.formNationalMsg}
               </div>
             ) : placesReady ? (
               <PlacesAutocomplete
                 value={formData.region}
                 onChange={(val) => updateField("region", val)}
                 onPlaceSelected={handlePlaceSelected}
-                placeholder="Rua, número — bairro, cidade"
+                placeholder={t.formRegionPlaceholder}
               />
             ) : (
-              <input style={inputStyle} type="text" placeholder="Rua, número — bairro, cidade" value={formData.region}
+              <input style={inputStyle} type="text" placeholder={t.formRegionPlaceholder} value={formData.region}
                 onChange={(e: any) => updateField("region", e.target.value)} />
             )}
             <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 13, color: V.ash, cursor: "pointer" }}>
@@ -255,27 +255,27 @@ export default function Home() {
                 if (e.target.checked) updateField("region", "Brasil (nacional)");
                 else updateField("region", "");
               }} style={{ width: 16, height: 16, accentColor: V.amber }} />
-              Atendo todo o Brasil / online
+              {t.formNationalCheckbox}
             </label>
           </Field>
 
-          <Field label="Tem site?" hint="Opcional — analisamos se disponível">
-            <input style={inputStyle} type="url" placeholder="https://seunegocio.com.br" value={formData.site}
+          <Field label={t.formSiteLabel} hint={t.formSiteHint}>
+            <input style={inputStyle} type="url" placeholder={t.formSitePlaceholder} value={formData.site}
               onChange={(e: any) => updateField("site", e.target.value)} />
           </Field>
         </>
       ),
     },
     2: {
-      title: "Como te encontramos",
+      title: t.formStep2Title,
       content: (
         <>
-          <Field label="Seu melhor email" hint="Para enviar o diagnóstico">
-            <input style={inputStyle} type="email" placeholder="voce@email.com" value={formData.email}
+          <Field label={t.formEmailLabel} hint={t.formEmailHint}>
+            <input style={inputStyle} type="email" placeholder={t.formEmailPlaceholder} value={formData.email}
               onChange={(e: any) => updateField("email", e.target.value)} />
           </Field>
-          <Field label="WhatsApp" hint="Para o briefing semanal">
-            <input style={inputStyle} type="tel" placeholder="(11) 99999-9999" value={formData.whatsapp}
+          <Field label={t.formWhatsappLabel} hint={t.formWhatsappHint}>
+            <input style={inputStyle} type="tel" placeholder={t.formWhatsappPlaceholder} value={formData.whatsapp}
               onChange={(e: any) => updateField("whatsapp", e.target.value)} />
           </Field>
         </>
@@ -324,13 +324,13 @@ export default function Home() {
             fontFamily: V.display, fontSize: "clamp(28px, 5vw, 38px)", fontWeight: 700,
             color: V.white, letterSpacing: "-0.03em", margin: "24px 0 16px", lineHeight: 1.2,
           }}>
-            Quanto do seu mercado local <span style={{ color: V.amber }}>te conhece?</span>
+            {t.heroTitle1} <span style={{ color: V.amber }}>{t.heroTitle2}</span>
           </h1>
           <p style={{ fontSize: 15, color: V.ash, lineHeight: 1.6, margin: "0 0 8px" }}>
-            Análise real de demanda, concorrência e posicionamento.
+            {t.heroSubShort}
           </p>
           <p style={{ fontSize: 13, color: V.zinc }}>
-            Grátis. 60 segundos.
+            {t.heroFree}
           </p>
         </div>
       </div>
@@ -353,7 +353,7 @@ export default function Home() {
           </div>
 
           <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 6 }}>
-            Passo {formStep} de {totalSteps}
+            {t.formStepOf(formStep, totalSteps)}
           </div>
           <div style={{ fontSize: 20, fontWeight: 700, color: V.night, marginBottom: 24 }}>
             {currentStep.title}
@@ -378,7 +378,7 @@ export default function Home() {
             {formStep > 1 ? (
               <button onClick={() => setFormStep(formStep - 1)} style={{
                 background: "none", border: "none", color: V.ash, fontSize: 14, cursor: "pointer", padding: "10px 16px",
-              }}>Voltar</button>
+              }}>{t.formBack}</button>
             ) : <div />}
             <button
               onClick={() => { if (formStep < totalSteps) setFormStep(formStep + 1); else handleSubmit(); }}
@@ -390,7 +390,7 @@ export default function Home() {
                 opacity: isStepValid ? 1 : 0.4, transition: "all 0.15s",
               }}
             >
-              {formStep === totalSteps ? "Ver meu mercado →" : "Continuar →"}
+              {formStep === totalSteps ? t.formSubmit : t.formNext}
             </button>
           </div>
         </div>
@@ -402,14 +402,10 @@ export default function Home() {
           <h2 style={{ fontSize: 18, fontWeight: 700, color: V.night, marginBottom: 16, fontFamily: V.display }}>
             Como obtemos os dados
           </h2>
-          <p style={{ fontSize: 14, lineHeight: 1.7, color: V.zinc, marginBottom: 12 }}>
-            O Virô cruza dados de múltiplas fontes públicas para montar o diagnóstico do seu mercado local:
-            Google Search, Google Maps, Instagram (dados públicos), Perplexity AI e DataForSEO.
-          </p>
           <p style={{ fontSize: 14, lineHeight: 1.7, color: V.zinc }}>
-            O Virô utiliza a Google Ads API para acessar dados agregados de volume de busca por região,
-            permitindo identificar a demanda real pelo seu serviço no mercado local.
-            Não criamos, gerenciamos ou modificamos campanhas de anúncios.
+            O Virô cruza 8 fontes em tempo real para montar o diagnóstico do seu mercado local:
+            Google Search, Google Maps, Instagram (dados públicos), Perplexity AI, DataForSEO, IBGE
+            e modelos proprietários de scoring e análise.
           </p>
         </div>
       </div>

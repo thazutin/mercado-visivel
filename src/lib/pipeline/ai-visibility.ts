@@ -147,13 +147,12 @@ function calculateScoreFromSerp(
     });
   }
 
-  // Website: +15 pts
+  // Website: fator informativo (não pontua — AI visibility mede menções reais)
   if (hasWebsite) {
-    score += 15;
     factors.push({
       factor: 'Tem website',
-      status: 'positive',
-      detail: 'Presença web aumenta chance de indexação em bases de AI',
+      status: 'neutral',
+      detail: 'Presença web aumenta chance de indexação em bases de AI, mas não garante menção',
     });
   } else {
     factors.push({

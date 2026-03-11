@@ -538,7 +538,7 @@ Responda APENAS em JSON, sem markdown:
 
   let ibgeData: IBGEData | null = null;
   try {
-    ibgeData = await getIBGEMunicipalData(extractedCity);
+    ibgeData = await getIBGEMunicipalData(extractedCity, input.region);
     if (ibgeData) {
       console.log(`[Pipeline] IBGE OK: ${ibgeData.municipio}/${ibgeData.estado} — pop=${ibgeData.populacao.toLocaleString('pt-BR')}`);
     }

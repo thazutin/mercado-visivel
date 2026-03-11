@@ -249,20 +249,41 @@ export default function InstantValueScreen({ product, region, results, onCheckou
 
         {/* Metodologia */}
         <Expandable title="Fontes de dados e metodologia">
-          <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px", lineHeight: 1.5 }}>
-            Cruzamos {results.pipeline?.sourcesUsed?.length || 2} fontes em tempo real.
-          </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-            {(results.pipeline?.sourcesUsed || []).map((src, i) => {
-              const labels: Record<string, string> = {
-                claude_term_gen: "IA · Termos", apify_serp: "Google SERP", apify_maps: "Google Maps",
-                apify_instagram: "Instagram", claude_gap_analysis: "IA · Análise", google_ads: "Google Ads",
-                dataforseo: "DataForSEO", ai_visibility: "IA · Visibilidade", claude_fallback_terms: "IA · Fallback",
-                auto_competitor_discovery: "Concorrentes auto", claude_volume_estimate: "IA · Volume estimado",
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
+            {(() => {
+              const allSources: Record<string, string> = {
+                claude_term_gen: "IA · Termos",
+                apify_serp: "Google SERP",
+                dataforseo: "DataForSEO",
+                apify_maps: "Google Maps",
+                dataforseo_organic: "DataForSEO Organic",
+                apify_instagram: "Instagram",
+                ai_visibility: "IA · Visibilidade",
+                claude_gap_analysis: "IA · Análise",
+                ibge: "IBGE",
+                auto_competitor_discovery: "Concorrentes auto",
+                claude_fallback_terms: "IA · Fallback",
+                claude_volume_estimate: "IA · Volume estimado",
+                google_ads: "Google Ads",
               };
-              return <Chip key={i} color={V.teal}>{labels[src] || src}</Chip>;
-            })}
+              const used = results.pipeline?.sourcesUsed || [];
+              // Show used sources first (teal), then unused known sources (ash)
+              const chips: { label: string; active: boolean }[] = [];
+              for (const [key, label] of Object.entries(allSources)) {
+                if (used.includes(key)) chips.unshift({ label, active: true });
+              }
+              // Add any used sources not in our known list
+              for (const src of used) {
+                if (!allSources[src]) chips.push({ label: src, active: true });
+              }
+              return chips.map((c, i) => (
+                <Chip key={i} color={c.active ? V.teal : V.ash}>{c.label}</Chip>
+              ));
+            })()}
           </div>
+          <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 12px", lineHeight: 1.6 }}>
+            O score de influência digital mede quanto do mercado local você captura nos canais onde as decisões de compra acontecem. Google recebe peso 60% (busca + maps), Instagram 40%. O score é normalizado contra benchmarks do segmento — não é absoluto, é relativo ao mercado local. O dimensionamento de mercado cruza volume de busca com dados populacionais para estimar a demanda total disponível. Todos os dados são coletados em tempo real no momento do diagnóstico.
+          </p>
           {results.pipeline?.durationMs && (
             <p style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, marginTop: 8 }}>{(results.pipeline.durationMs / 1000).toFixed(1)}s · {results.pipeline.version}</p>
           )}

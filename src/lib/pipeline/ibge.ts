@@ -49,12 +49,14 @@ function extractCidadeFromRegion(region: string): string {
   return region.split(/[,\-–(]/)[0].trim();
 }
 
-export async function getIBGEMunicipalData(region: string): Promise<IBGEData | null> {
-  if (!isRegiaoBrasileira(region)) {
+export async function getIBGEMunicipalData(cityOrRegion: string, originalRegion?: string): Promise<IBGEData | null> {
+  // Verifica se é BR usando a região original (com estado/sigla) OU a cidade extraída
+  const regionToCheck = originalRegion || cityOrRegion;
+  if (!isRegiaoBrasileira(regionToCheck)) {
     return null;
   }
 
-  const cidade = extractCidadeFromRegion(region);
+  const cidade = extractCidadeFromRegion(cityOrRegion);
   if (!cidade || cidade.length < 2) return null;
 
   try {
