@@ -111,6 +111,7 @@ export async function POST(req: NextRequest) {
         pipeline_run_id: null,
         raw_data: pipelineResult,
         confidence_level: pipelineResult.confidenceLevel,
+        audiencia: pipelineResult.audiencia || null,
       });
     } catch (err) {
       console.error("[Diagnose] insertDiagnosis failed:", err);
@@ -137,7 +138,10 @@ export async function POST(req: NextRequest) {
 
     // 5. Monta display data
     console.log(`[Diagnose] audiencia object:`, JSON.stringify(pipelineResult.audiencia || null));
+    console.log(`[Diagnose] volumes: totalMonthly=${pipelineResult.volumes?.totalMonthlyVolume}, termCount=${pipelineResult.volumes?.termVolumes?.length}`);
     const display = buildDisplayData(pipelineResult);
+    console.log(`[Diagnose] buildDisplayData keys:`, Object.keys(display));
+    console.log(`[Diagnose] display.totalVolume=${display.totalVolume}, display.audiencia=${JSON.stringify(display.audiencia)}, display.influencePercent=${display.influencePercent}, display.marketLow=${display.marketLow}, display.marketHigh=${display.marketHigh}`);
 
     // 6. Salva display no lead (para /resultado/[leadId] e polling)
     try {

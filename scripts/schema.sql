@@ -77,7 +77,13 @@ create table if not exists public.diagnoses (
   confidence text default 'Estimativa',
   
   -- Claude enrichment (when available)
-  enrichment jsonb
+  enrichment jsonb,
+
+  -- Pipeline metadata
+  pipeline_run_id uuid,
+  raw_data jsonb,
+  confidence_level text,
+  audiencia jsonb
 );
 
 -- ─── Indexes ────────────────────────────────────────────────────────────
@@ -130,5 +136,18 @@ begin
   end if;
   if not exists (select 1 from information_schema.columns where table_name='leads' and column_name='last_active_at') then
     alter table public.leads add column last_active_at timestamp with time zone;
+  end if;
+  -- diagnoses columns
+  if not exists (select 1 from information_schema.columns where table_name='diagnoses' and column_name='pipeline_run_id') then
+    alter table public.diagnoses add column pipeline_run_id uuid;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='diagnoses' and column_name='raw_data') then
+    alter table public.diagnoses add column raw_data jsonb;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='diagnoses' and column_name='confidence_level') then
+    alter table public.diagnoses add column confidence_level text;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='diagnoses' and column_name='audiencia') then
+    alter table public.diagnoses add column audiencia jsonb;
   end if;
 end $$;

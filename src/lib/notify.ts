@@ -14,7 +14,11 @@ const WHATSAPP_TEMPLATES = {
 
 function cleanPhone(whatsapp: string): string {
   const digits = whatsapp.replace(/\D/g, "");
-  return digits.startsWith("55") ? digits : `55${digits}`;
+  if (!digits) return "";
+  // Garante formato E.164 brasileiro: +55 + DDD (2 dígitos) + número (8-9 dígitos)
+  const withCountry = digits.startsWith("55") ? digits : `55${digits}`;
+  console.log(`[Notify] cleanPhone: "${whatsapp}" → "+${withCountry}"`);
+  return withCountry;
 }
 
 // ─── WhatsApp via Twilio (Content Templates) ─────────────────────────────────
@@ -103,11 +107,11 @@ export async function sendEmail(opts: {
         html: opts.html,
       }),
     });
+    const resBody = await res.text();
     if (!res.ok) {
-      const err = await res.text();
-      console.error(`[Notify] Email failed to ${opts.to}:`, err);
+      console.error(`[Notify] Email failed to ${opts.to}: status=${res.status}`, resBody);
     } else {
-      console.log(`[Notify] Email sent to ${opts.to}`);
+      console.log(`[Notify] Email sent to ${opts.to}: status=${res.status}`, resBody);
     }
   } catch (err) {
     console.error(`[Notify] Email error sending to ${opts.to}:`, err);
@@ -125,10 +129,11 @@ export async function notifyDiagnosisReady(opts: {
   influencePercent: number;
 }): Promise<void> {
   const { email, whatsapp, leadId, product, region, influencePercent } = opts;
+  console.log(`[NOTIFY] iniciando email/whatsapp para email=${email}, phone=${whatsapp}, leadId=${leadId}`);
   const url = `${BASE_URL}/resultado/${leadId}`;
   const shortRegion = region.split(",")[0].trim();
 
-  await Promise.allSettled([
+  const results = await Promise.allSettled([
     sendWhatsApp(
       whatsapp,
       WHATSAPP_TEMPLATES.diagnostico_pronto,
@@ -141,6 +146,15 @@ export async function notifyDiagnosisReady(opts: {
       html: diagnosisEmailHtml({ product, shortRegion, influencePercent, url }),
     }),
   ]);
+
+  results.forEach((r, i) => {
+    const channel = i === 0 ? "WhatsApp" : "Email";
+    if (r.status === "rejected") {
+      console.error(`[NOTIFY] ${channel} promise rejected:`, r.reason);
+    } else {
+      console.log(`[NOTIFY] ${channel} promise fulfilled`);
+    }
+  });
 }
 
 // ─── Plano completo pós-pagamento ────────────────────────────────────────────

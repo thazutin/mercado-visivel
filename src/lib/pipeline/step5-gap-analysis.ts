@@ -91,9 +91,9 @@ TERMOS ONDE O NEGÓCIO NÃO APARECE:
 ${zeroInfluenceTerms || '  Negócio aparece em todos os termos principais'}
 
 INFLUÊNCIA POR CANAL:
-  Google: ${influence.influence.google.score}% (peso ${(influence.influence.google.weight * 100).toFixed(0)}%)
-  Instagram: ${influence.influence.instagram.available ? `${influence.influence.instagram.score}%` : 'indisponível'} (peso ${(influence.influence.instagram.weight * 100).toFixed(0)}%)
-  Web: ${influence.influence.web.available ? `${influence.influence.web.score}%` : 'indisponível'} (peso ${(influence.influence.web.weight * 100).toFixed(0)}%)
+  Google: ${influence.influence.google.score}%
+  Instagram: ${influence.influence.instagram.available ? `${influence.influence.instagram.score}%` : 'indisponível'}
+  Web: ${influence.influence.web.available ? `${influence.influence.web.score}%` : 'indisponível'}
 
 ${instagramSection}
 
@@ -130,6 +130,7 @@ REGRAS:
 - Use números reais, não genéricos. "7%" é melhor que "baixo". "2.400 buscas" é melhor que "volume alto"
 - O tom é Vero: preciso, fundamentado, sem floreio. Sem adjetivos de marketing
 - As rotas podem ser específicas e acionáveis — diferente dos gaps, aqui queremos MOSTRAR o caminho
+- NUNCA mencione pesos percentuais internos da metodologia (ex: "60% Google + 40% Instagram", "peso de X%"). Apresente apenas os scores por canal, sem revelar como são ponderados
 
 FORMATO DE RESPOSTA (JSON estrito, sem markdown):
 {

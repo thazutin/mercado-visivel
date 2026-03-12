@@ -82,24 +82,31 @@ export async function getIBGEMunicipalData(cityOrRegion: string, originalRegion?
     const nomeMunicipio = municipio.nome;
     const estado = municipio.microrregiao?.mesorregiao?.UF?.nome || municipio.microrregiao?.mesorregiao?.UF?.sigla || '';
 
-    // 2. Busca população estimada (agregado 4709, variável 93)
-    const popRes = await fetch(
-      `https://servicodados.ibge.gov.br/api/v3/agregados/4709/periodos/2021/variaveis/93?localidades=N6[${id}]`,
-    );
-
+    // 2. Busca população estimada (agregado 6579, variável 9324)
+    // Tenta 2024 → 2023 → 2022 (fallback)
     let populacao = 0;
-    if (popRes.ok) {
-      const popData = await popRes.json();
-      // Navega na estrutura: [0].resultados[0].series[0].serie["2021"]
-      const serie = popData?.[0]?.resultados?.[0]?.series?.[0]?.serie;
-      if (serie) {
-        // Pega o valor do período mais recente disponível
-        const valores = Object.values(serie) as string[];
-        const ultimo = valores[valores.length - 1];
-        populacao = parseInt(ultimo, 10) || 0;
+    for (const ano of ['2024', '2023', '2022']) {
+      const popRes = await fetch(
+        `https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/${ano}/variaveis/9324?localidades=N6[${id}]`,
+      );
+      if (popRes.ok) {
+        const popData = await popRes.json();
+        const serie = popData?.[0]?.resultados?.[0]?.series?.[0]?.serie;
+        if (serie) {
+          const valores = Object.values(serie) as string[];
+          const ultimo = valores[valores.length - 1];
+          const parsed = parseInt(ultimo, 10);
+          if (parsed > 0) {
+            populacao = parsed;
+            console.log(`[IBGE] População ${nomeMunicipio}: ${populacao} (período ${ano})`);
+            break;
+          }
+        }
       }
-    } else {
-      console.warn('[IBGE] Busca de população falhou:', popRes.status);
+      console.log(`[IBGE] População período ${ano} não disponível para ${nomeMunicipio}, tentando anterior...`);
+    }
+    if (populacao === 0) {
+      console.warn('[IBGE] Nenhum período de população disponível para', nomeMunicipio);
     }
 
     if (populacao === 0) {
@@ -211,18 +218,27 @@ async function getMunicipioInfo(city: string, state: string): Promise<MunicipioI
   const nome = match.nome;
   const estado = match.microrregiao?.mesorregiao?.UF?.nome || '';
 
-  // 2. Busca população (agregado 4709, variável 93)
-  const popRes = await fetch(
-    `https://servicodados.ibge.gov.br/api/v3/agregados/4709/periodos/2021/variaveis/93?localidades=N6[${id}]`,
-  );
+  // 2. Busca população estimada (agregado 6579, variável 9324)
+  // Tenta 2024 → 2023 → 2022 (fallback)
   let populacao = 0;
-  if (popRes.ok) {
-    const popData = await popRes.json();
-    const serie = popData?.[0]?.resultados?.[0]?.series?.[0]?.serie;
-    if (serie) {
-      const valores = Object.values(serie) as string[];
-      populacao = parseInt(valores[valores.length - 1], 10) || 0;
+  for (const ano of ['2024', '2023', '2022']) {
+    const popRes = await fetch(
+      `https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/${ano}/variaveis/9324?localidades=N6[${id}]`,
+    );
+    if (popRes.ok) {
+      const popData = await popRes.json();
+      const serie = popData?.[0]?.resultados?.[0]?.series?.[0]?.serie;
+      if (serie) {
+        const valores = Object.values(serie) as string[];
+        const parsed = parseInt(valores[valores.length - 1], 10);
+        if (parsed > 0) {
+          populacao = parsed;
+          console.log(`[IBGE getMunicipioInfo] População ${nome}: ${populacao} (período ${ano})`);
+          break;
+        }
+      }
     }
+    console.log(`[IBGE getMunicipioInfo] População período ${ano} não disponível para ${nome}`);
   }
 
   // 3. Área (agregado 6579, variável 9324 — censo 2022)
@@ -295,16 +311,22 @@ async function getPopulacaoTotal(municipioIds: number[]): Promise<number> {
     const batch = municipioIds.slice(i, i + 50);
     const idsStr = batch.join('|');
     try {
-      const res = await fetch(
-        `https://servicodados.ibge.gov.br/api/v3/agregados/4709/periodos/2021/variaveis/93?localidades=N6[${idsStr}]`,
-      );
-      if (!res.ok) continue;
-      const data = await res.json();
-      const series = data?.[0]?.resultados?.[0]?.series || [];
-      for (const s of series) {
-        const valores = Object.values(s.serie) as string[];
-        total += parseInt(valores[valores.length - 1], 10) || 0;
+      // Tenta 2024 → 2023 → 2022 (fallback)
+      let batchTotal = 0;
+      for (const ano of ['2024', '2023', '2022']) {
+        const res = await fetch(
+          `https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/${ano}/variaveis/9324?localidades=N6[${idsStr}]`,
+        );
+        if (!res.ok) continue;
+        const data = await res.json();
+        const series = data?.[0]?.resultados?.[0]?.series || [];
+        for (const s of series) {
+          const valores = Object.values(s.serie) as string[];
+          batchTotal += parseInt(valores[valores.length - 1], 10) || 0;
+        }
+        if (batchTotal > 0) break;
       }
+      total += batchTotal;
     } catch {
       continue;
     }
