@@ -3,25 +3,25 @@
 // Estima o percentual da população que é público-alvo do negócio
 // ============================================================================
 
-import Anthropic from "@anthropic-ai/sdk";
 import type { AudienciaTarget } from "../types/pipeline.types";
 
 /**
  * Usa Claude Haiku para inferir o público-alvo e estimar
  * o percentual da população local que representa clientes potenciais.
- * Timeout: 5s, falha silenciosa retornando null.
+ * Timeout: 8s, falha silenciosa retornando null.
  */
 export async function inferirTargetAudiencia(
   segmento: string,
   descricao: string,
   populacaoRaio: number,
-  claude: Anthropic,
+  claudeClient: { createMessage: (params: any) => Promise<any> },
 ): Promise<AudienciaTarget | null> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
+  const timeout = setTimeout(() => controller.abort(), 8000);
 
   try {
-    const res = await claude.messages.create({
+    console.log(`[Audience Target] START: segmento="${segmento}", pop=${populacaoRaio}`);
+    const res = await claudeClient.createMessage({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 200,
       messages: [
@@ -44,7 +44,11 @@ Considere fatores como: faixa etária típica do cliente, poder aquisitivo neces
       ],
     });
 
-    const text = res.content[0]?.type === "text" ? res.content[0].text : "";
+    const text = (res.content || [])
+      .filter((c: any) => c.type === "text")
+      .map((c: any) => c.text)
+      .join("");
+    console.log(`[Audience Target] Claude response: "${text.slice(0, 150)}"`);
     // Extrai JSON mesmo se vier com markdown
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {

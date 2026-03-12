@@ -146,7 +146,7 @@ export async function notifyDiagnosisReady(opts: {
     sendWhatsApp(
       whatsapp,
       WHATSAPP_TEMPLATES.diagnostico_pronto,
-      { "1": product, "2": shortRegion, "3": String(influencePercent) },
+      { "1": product, "2": shortRegion, "3": String(influencePercent), "4": leadId },
     ),
 
     sendEmail({
@@ -183,7 +183,7 @@ export async function notifyPlanReady(opts: {
     sendWhatsApp(
       whatsapp,
       WHATSAPP_TEMPLATES.plano_pronto,
-      { "1": product, "2": shortRegion },
+      { "1": product, "2": shortRegion, "3": leadId },
     ),
 
     sendEmail({
