@@ -156,12 +156,46 @@ function getRaioKm(densidade: 'alta' | 'baixa'): number {
 interface MunicipioInfo {
   id: number;
   nome: string;
+  uf: string;
   estado: string;
   populacao: number;
   areaKm2: number;
   densidadeHabKm2: number;
   lat: number;
   lng: number;
+}
+
+/**
+ * Geocode via Nominatim (OpenStreetMap) — fallback para obter lat/lng do município.
+ */
+async function geocodeNominatim(city: string, state: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const params = new URLSearchParams({
+      city,
+      country: 'Brazil',
+      format: 'json',
+      limit: '1',
+    });
+    if (state) params.set('state', state);
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?${params}`,
+      { headers: { 'User-Agent': 'ViroLocal/1.0 (contato@virolocal.com)' } },
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (Array.isArray(data) && data.length > 0) {
+      const lat = parseFloat(data[0].lat);
+      const lng = parseFloat(data[0].lon);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        console.log(`[IBGE Nominatim] ${city}, ${state} → lat=${lat}, lng=${lng}`);
+        return { lat, lng };
+      }
+    }
+    return null;
+  } catch (err) {
+    console.warn('[IBGE Nominatim] Geocoding falhou:', (err as Error).message);
+    return null;
+  }
 }
 
 async function getMunicipioInfo(city: string, state: string): Promise<MunicipioInfo | null> {
@@ -211,12 +245,14 @@ async function getMunicipioInfo(city: string, state: string): Promise<MunicipioI
   }) || candidates[0]; // Fallback: primeiro resultado se busca por nome retornou resultados
 
   if (!match) return null;
-  console.log(`[IBGE getMunicipioInfo] Match: ${match.nome} (id=${match.id})`);
-
+  const uf = match.microrregiao?.mesorregiao?.UF;
+  const ufSigla = uf?.sigla || '';
+  const ufNome = uf?.nome || '';
+  console.log(`[IBGE getMunicipioInfo] Match: ${match.nome} (id=${match.id}, UF=${ufSigla}/${ufNome})`);
 
   const id = Number(match.id);
   const nome = match.nome;
-  const estado = match.microrregiao?.mesorregiao?.UF?.nome || '';
+  const estado = ufNome;
 
   // 2. Busca população estimada (agregado 6579, variável 9324)
   // Tenta 2024 → 2023 → 2022 (fallback)
@@ -241,11 +277,11 @@ async function getMunicipioInfo(city: string, state: string): Promise<MunicipioI
     console.log(`[IBGE getMunicipioInfo] População período ${ano} não disponível para ${nome}`);
   }
 
-  // 3. Área (agregado 6579, variável 9324 — censo 2022)
+  // 3. Área territorial (agregado 4714, variável 614 — Censo 2022)
   let areaKm2 = 0;
   try {
     const areaRes = await fetch(
-      `https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/2022/variaveis/9324?localidades=N6[${id}]`,
+      `https://servicodados.ibge.gov.br/api/v3/agregados/4714/periodos/2022/variaveis/614?localidades=N6[${id}]`,
     );
     if (areaRes.ok) {
       const areaData = await areaRes.json();
@@ -255,24 +291,33 @@ async function getMunicipioInfo(city: string, state: string): Promise<MunicipioI
         areaKm2 = parseFloat(valores[valores.length - 1]) || 0;
       }
     }
+    console.log(`[IBGE getMunicipioInfo] Área ${nome}: ${areaKm2} km²`);
   } catch { /* área opcional */ }
 
   if (populacao === 0) return null;
 
-  // 4. Lat/Lng: usa coordenadas aproximadas do centroide via IBGE malha
-  // A API de localidades não retorna coordenadas, então estimamos pela capital do estado
-  // ou usamos o Google Places lat/lng que já temos no pipeline
+  // 4. Lat/Lng via Nominatim (OpenStreetMap geocoding)
+  let lat = 0;
+  let lng = 0;
+  const geo = await geocodeNominatim(nome, estado);
+  if (geo) {
+    lat = geo.lat;
+    lng = geo.lng;
+  }
+
   const densidadeHabKm2 = areaKm2 > 0 ? populacao / areaKm2 : 0;
+  console.log(`[IBGE getMunicipioInfo] ${nome}/${ufSigla}: pop=${populacao}, area=${areaKm2}km², densidade=${densidadeHabKm2.toFixed(0)}, lat=${lat}, lng=${lng}`);
 
   return {
     id,
     nome,
+    uf: ufSigla,
     estado,
     populacao,
     areaKm2,
     densidadeHabKm2,
-    lat: 0, // será preenchido pelo pipeline (lat/lng do Google Places)
-    lng: 0,
+    lat,
+    lng,
   };
 }
 

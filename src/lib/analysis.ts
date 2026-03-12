@@ -675,6 +675,8 @@ Responda APENAS em JSON, sem markdown:
         extractedCity,
         extractedState,
         isNacional,
+        formData.lat,
+        formData.lng,
       );
       if (!estimada) return { estimada: null, target: null };
 

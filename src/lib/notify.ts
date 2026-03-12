@@ -28,8 +28,10 @@ export async function sendWhatsApp(
   contentSid: string,
   contentVariables: Record<string, string>,
 ): Promise<void> {
-  if (process.env.WHATSAPP_ENABLED !== "true") {
-    console.log("[Notify] WhatsApp desativado — setar WHATSAPP_ENABLED=true");
+  const whatsappEnabled = process.env.WHATSAPP_ENABLED;
+  console.log(`[Notify] WhatsApp check: WHATSAPP_ENABLED="${whatsappEnabled}", to="${to}", contentSid="${contentSid}"`);
+  if (whatsappEnabled !== "true") {
+    console.log("[Notify] WhatsApp desativado — setar WHATSAPP_ENABLED=true no Vercel Environment Variables");
     return;
   }
 
@@ -43,11 +45,23 @@ export async function sendWhatsApp(
     return;
   }
   if (!to) {
-    console.warn("[Notify] Skipping WhatsApp — no recipient number");
+    console.warn("[Notify] Skipping WhatsApp — no recipient number (to is empty)");
     return;
   }
 
   const phone = cleanPhone(to);
+  if (!phone) {
+    console.warn(`[Notify] Skipping WhatsApp — cleanPhone returned empty for "${to}"`);
+    return;
+  }
+
+  const requestBody = {
+    From: from,
+    To: `whatsapp:+${phone}`,
+    ContentSid: contentSid,
+    ContentVariables: JSON.stringify(contentVariables),
+  };
+  console.log(`[Notify] WhatsApp request:`, JSON.stringify(requestBody));
 
   try {
     const res = await fetch(
@@ -58,19 +72,14 @@ export async function sendWhatsApp(
           Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`,
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: new URLSearchParams({
-          From: from,
-          To: `whatsapp:+${phone}`,
-          ContentSid: contentSid,
-          ContentVariables: JSON.stringify(contentVariables),
-        }),
+        body: new URLSearchParams(requestBody),
       }
     );
+    const resBody = await res.text();
     if (!res.ok) {
-      const err = await res.text();
-      console.error(`[Notify] WhatsApp failed to +${phone}:`, err);
+      console.error(`[Notify] WhatsApp failed to +${phone}: status=${res.status}`, resBody);
     } else {
-      console.log(`[Notify] WhatsApp sent to +${phone} (template: ${contentSid})`);
+      console.log(`[Notify] WhatsApp sent to +${phone}: status=${res.status}`, resBody);
     }
   } catch (err) {
     console.error(`[Notify] WhatsApp error sending to +${phone}:`, err);
