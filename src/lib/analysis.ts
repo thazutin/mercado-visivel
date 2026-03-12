@@ -15,7 +15,7 @@ import {
 } from "./models/influence-score";
 import { executeStep5 } from "./pipeline/step5-gap-analysis";
 import { executeAIVisibilityCheck } from "./pipeline/ai-visibility";
-import { getIBGEMunicipalData, fetchAudienciaEstimada } from "./pipeline/ibge";
+import { getIBGEMunicipalData, fetchAudienciaEstimada, geocodeNominatim } from "./pipeline/ibge";
 import { inferirTargetAudiencia } from "./pipeline/audience-target";
 import {
   createApifySerpScraper,
@@ -564,10 +564,32 @@ Responda APENAS em JSON, sem markdown:
   console.log(`[Pipeline] Step 2 OK: ${termVolumes.length} terms, totalVolume=${totalMonthlyVolume}, source=${volumeSource}`);
 
   // =========================================================================
-  // Extract city (cached for reuse in IBGE + Perplexity)
+  // Extract city + resolve lat/lng (reused by IBGE, Perplexity, etc.)
   // =========================================================================
   const extractedCity = await extractCity(input.region);
-  console.log(`[Pipeline] Cidade extraída: "${extractedCity}"`);
+  const extractedState = input.region.split(/[,\-–]/)?.[1]?.trim() || '';
+  console.log(`[Pipeline] Cidade extraída: "${extractedCity}", estado: "${extractedState}"`);
+
+  // Resolve lat/lng: form (Google Places) → Nominatim fallback
+  let pipelineLat = formData.lat || 0;
+  let pipelineLng = formData.lng || 0;
+  if (!pipelineLat || !pipelineLng) {
+    console.log(`[Pipeline] Lat/lng não veio do form (lat=${formData.lat}, lng=${formData.lng}) — geocodificando via Nominatim...`);
+    try {
+      const geo = await geocodeNominatim(extractedCity, extractedState);
+      if (geo) {
+        pipelineLat = geo.lat;
+        pipelineLng = geo.lng;
+        console.log(`[Pipeline] Nominatim geocoding OK: lat=${pipelineLat}, lng=${pipelineLng}`);
+      } else {
+        console.warn('[Pipeline] Nominatim geocoding retornou null — audiência sem coordenadas');
+      }
+    } catch (err) {
+      console.warn('[Pipeline] Nominatim geocoding falhou:', (err as Error).message);
+    }
+  } else {
+    console.log(`[Pipeline] Lat/lng do form (Google Places): lat=${pipelineLat}, lng=${pipelineLng}`);
+  }
 
   // =========================================================================
   // STEP 3 — Market Sizing (com dados IBGE opcionais)
@@ -667,7 +689,6 @@ Responda APENAS em JSON, sem markdown:
   // AUDIÊNCIA ESTIMADA (IBGE + Claude Haiku) — roda em paralelo com AI Visibility
   // =========================================================================
   const isNacional = /brasil.*nacional|nacional|todo o brasil/i.test(input.region);
-  const extractedState = input.region.split(/[,\-–]/)?.[1]?.trim() || '';
 
   const audienciaPromise = (async (): Promise<{ estimada: AudienciaEstimada | null; target: AudienciaTarget | null }> => {
     try {
@@ -675,8 +696,8 @@ Responda APENAS em JSON, sem markdown:
         extractedCity,
         extractedState,
         isNacional,
-        formData.lat,
-        formData.lng,
+        pipelineLat,
+        pipelineLng,
       );
       if (!estimada) return { estimada: null, target: null };
 
