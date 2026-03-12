@@ -380,20 +380,11 @@ export async function fetchAudienciaEstimada(
       : 'baixa';
     const raioKm = getRaioKm(densidade);
 
-    // 3. Tenta buscar municípios no raio
-    let populacaoRaio = info.populacao;
-    if (useLat && useLng) {
-      const idsNoRaio = await getMunicipiosNoRaio(useLat, useLng, raioKm);
-      if (idsNoRaio.length > 0) {
-        populacaoRaio = await getPopulacaoTotal(idsNoRaio);
-      }
-    }
-
-    // Se a população do raio é menor que a do município (fallback não encontrou vizinhos)
-    // usa a população do município como base
-    if (populacaoRaio < info.populacao) {
-      populacaoRaio = info.populacao;
-    }
+    // 3. População do raio
+    // A API do IBGE não retorna coordenadas, então o cálculo por raio (Haversine)
+    // não funciona — getAllMunicipiosWithCoords retorna lat/lng=0 para todos.
+    // Usamos a população do município principal como base.
+    const populacaoRaio = info.populacao;
 
     console.log(`[IBGE Audiência] ${info.nome}: pop=${info.populacao}, densidade=${densidade}, raio=${raioKm}km, popRaio=${populacaoRaio}`);
 

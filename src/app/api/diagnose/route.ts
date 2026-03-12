@@ -142,10 +142,15 @@ export async function POST(req: NextRequest) {
     // 6. Salva display no lead (para /resultado/[leadId] e polling)
     try {
       const supabase = getSupabaseAdmin();
-      await supabase
+      const { error: updateError } = await supabase
         .from("leads")
         .update({ status: "done", diagnosis_display: display })
         .eq("id", lead.id);
+      if (updateError) {
+        console.error("[Diagnose] update lead display SUPABASE ERROR:", updateError.message, updateError.details, updateError.hint);
+      } else {
+        console.log(`[Diagnose] lead ${lead.id} updated: status=done, display keys=${Object.keys(display).join(',')}, audiencia=${display.audiencia ? 'present' : 'null'}`);
+      }
     } catch (err) {
       console.error("[Diagnose] update lead display failed:", err);
     }

@@ -953,6 +953,11 @@ export function createDataForSEOClient(config: DataForSEOConfig) {
       const items = task.result?.[0]?.items ?? [];
       const withVolume = items.filter(i => (i.search_volume ?? 0) > 0).length;
       console.log(`[DataForSEO] ${items.length} items returned, ${withVolume} with volume > 0`);
+      if (items.length > 0) {
+        const sample = items[0];
+        console.log(`[DataForSEO RAW] item[0] keys: ${Object.keys(sample).join(', ')}`);
+        console.log(`[DataForSEO RAW] item[0]: keyword="${sample.keyword}", search_volume=${sample.search_volume}, cpc=${sample.cpc}, competition=${sample.competition}, competition_level=${sample.competition_level}`);
+      }
 
       // Indexar por keyword (lowercase) para lookup rápido
       const itemMap = new Map<string, DataForSEOKeywordResult>();

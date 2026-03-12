@@ -11,34 +11,46 @@ create table if not exists public.leads (
   
   -- Contact
   email text not null,
-  
+  whatsapp text default '',
+
   -- Digital presence (step 2)
   site text default '',
   instagram text default '',
   other_social text default '',
   google_maps text default '',
   digital_presence text[] default '{}',
-  
+
   -- Business info (step 1 now)
   product text not null,
   region text not null,
   address text default '',
   ticket text default '',
-  
+
   -- Business vision (step 3)
   channels text[] default '{}',
   differentiator text default '',
   competitors text[] default '{}',
-  
+
   -- Final (step 4)
   challenge text default '',
   free_text text default '',
-  
+
   -- Status tracking
   status text default 'pending' check (status in ('pending', 'processing', 'done', 'paid')),
   locale text default 'pt',
   coupon text default '',
-  
+
+  -- Pipeline results (JSONB — full display data saved after diagnosis)
+  diagnosis_display jsonb,
+
+  -- Plan generation
+  plan_status text default null,
+
+  -- User tracking
+  clerk_user_id text,
+  weeks_active integer default 0,
+  last_active_at timestamp with time zone,
+
   -- Stripe
   stripe_session_id text,
   paid_at timestamp with time zone
@@ -94,3 +106,29 @@ create policy "Allow anonymous reads" on public.diagnoses
 -- Allow status updates
 create policy "Allow anonymous updates" on public.leads
   for update using (true);
+
+-- ─── Migration: add columns if missing ───────────────────────────────────
+-- Run these if the table already exists but is missing newer columns.
+-- ALTER TABLE is idempotent with IF NOT EXISTS (Postgres 9.6+).
+do $$
+begin
+  -- leads columns
+  if not exists (select 1 from information_schema.columns where table_name='leads' and column_name='whatsapp') then
+    alter table public.leads add column whatsapp text default '';
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='leads' and column_name='diagnosis_display') then
+    alter table public.leads add column diagnosis_display jsonb;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='leads' and column_name='plan_status') then
+    alter table public.leads add column plan_status text default null;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='leads' and column_name='clerk_user_id') then
+    alter table public.leads add column clerk_user_id text;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='leads' and column_name='weeks_active') then
+    alter table public.leads add column weeks_active integer default 0;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='leads' and column_name='last_active_at') then
+    alter table public.leads add column last_active_at timestamp with time zone;
+  end if;
+end $$;
