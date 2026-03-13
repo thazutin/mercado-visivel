@@ -261,7 +261,6 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         <Expandable
           title="Volume de buscas"
           icon="🔍"
-          badge={<Chip color={V.amber}>Em breve: Google Ads API</Chip>}
         >
           <p style={{ fontSize: 12, color: V.ash, margin: "0 0 12px", lineHeight: 1.5 }}>
             Termos reais que pessoas buscam no Google quando precisam de {product} na sua região.
@@ -269,8 +268,9 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           {/* Header */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: `1px solid ${V.fog}`, fontSize: 10, color: V.ash, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
             <span style={{ flex: 1 }}>Termo</span>
-            <span style={{ width: 70, textAlign: "right" }}>Vol/mês</span>
-            <span style={{ width: 90, textAlign: "right" }}>Intenção</span>
+            <span style={{ width: 60, textAlign: "right" }}>Vol/mês</span>
+            <span style={{ width: 60, textAlign: "right" }}>Posição</span>
+            <span style={{ width: 80, textAlign: "right" }}>Intenção</span>
           </div>
           {/* Rows */}
           {(() => {
@@ -278,6 +278,9 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             return results.terms.slice(0, 15).map((t, i) => {
               const intent = inferIntent(t.term);
               const isTop = t.volume > 0 && t.volume === maxVol;
+              const pos = t.position && t.position !== "—" ? Number(t.position) : null;
+              const posLabel = pos ? (pos <= 3 ? "Top 3" : pos <= 10 ? "Top 10" : `#${pos}`) : "—";
+              const posColor = pos ? (pos <= 3 ? V.teal : pos <= 10 ? V.amber : V.ash) : V.ash;
               return (
                 <div key={i} style={{
                   display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -288,10 +291,13 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                   borderRadius: isTop ? 4 : 0,
                 }}>
                   <span style={{ fontSize: 13, color: V.night, lineHeight: 1.4, flex: 1 }}>{t.term}</span>
-                  <span style={{ fontFamily: V.mono, fontSize: 11, color: t.volume > 0 ? V.night : V.ash, width: 70, textAlign: "right", flexShrink: 0 }}>
+                  <span style={{ fontFamily: V.mono, fontSize: 11, color: t.volume > 0 ? V.night : V.ash, width: 60, textAlign: "right", flexShrink: 0 }}>
                     {t.volume > 0 ? t.volume.toLocaleString("pt-BR") : "—"}
                   </span>
-                  <span style={{ width: 90, textAlign: "right", flexShrink: 0 }}>
+                  <span style={{ fontFamily: V.mono, fontSize: 11, color: posColor, fontWeight: pos && pos <= 10 ? 600 : 400, width: 60, textAlign: "right", flexShrink: 0 }}>
+                    {posLabel}
+                  </span>
+                  <span style={{ width: 80, textAlign: "right", flexShrink: 0 }}>
                     <span style={{
                       fontFamily: V.mono, fontSize: 9, letterSpacing: "0.04em",
                       color: intent.color, background: `${intent.color}18`,
@@ -308,7 +314,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             <p style={{ fontSize: 11, color: V.ash, marginTop: 8, textAlign: "center" }}>+{results.terms.length - 15} termos no diagnóstico completo</p>
           )}
           <p style={{ fontSize: 10, color: V.ash, margin: "12px 0 0", fontFamily: V.mono }}>
-            Dados: DataForSEO · Precisão aumentará com Google Ads API
+            Dados: DataForSEO (volume + SERP)
           </p>
         </Expandable>
 

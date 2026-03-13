@@ -47,53 +47,91 @@ function PlacesAutocomplete({ value, onChange, onPlaceSelected, placeholder }: {
   placeholder: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const elementRef = useRef<any>(null);
   const onChangeRef = useRef(onChange);
   const onPlaceSelectedRef = useRef(onPlaceSelected);
+  const [useFallback, setUseFallback] = useState(false);
   onChangeRef.current = onChange;
   onPlaceSelectedRef.current = onPlaceSelected;
 
+  // Try to initialize PlaceAutocompleteElement, fallback to plain input after 2s
   useEffect(() => {
-    if (!containerRef.current || !window.google?.maps?.places) return;
     if (elementRef.current) return;
 
-    const placeAC = new window.google.maps.places.PlaceAutocompleteElement({
-      componentRestrictions: { country: "br" },
-      types: ["address"],
-    });
-
-    placeAC.setAttribute("placeholder", placeholder);
-
-    // Capture typing via standard input events (bubble through shadow DOM)
-    placeAC.addEventListener("input", (e: any) => {
-      const source = e.composedPath?.()?.[0] as HTMLInputElement | undefined;
-      if (source?.value !== undefined) {
-        onChangeRef.current(source.value);
-      }
-    });
-
-    // Capture place selection
-    placeAC.addEventListener("gmp-placeselect", async (event: any) => {
-      const place = event.place;
+    function tryInit() {
+      if (!containerRef.current || !window.google?.maps?.places?.PlaceAutocompleteElement) return false;
       try {
-        await place.fetchFields({ fields: ["formattedAddress", "location", "id"] });
-        const address = place.formattedAddress || "";
-        const lat = place.location?.lat() || 0;
-        const lng = place.location?.lng() || 0;
-        const placeId = place.id || "";
-        onChangeRef.current(address);
-        onPlaceSelectedRef.current({ address, placeId, lat, lng });
-      } catch (err) {
-        console.error("[PlacesAutocomplete] fetchFields failed:", err);
-      }
-    });
+        const placeAC = new window.google.maps.places.PlaceAutocompleteElement({
+          componentRestrictions: { country: "br" },
+          types: ["address"],
+        });
 
-    containerRef.current.appendChild(placeAC);
-    elementRef.current = placeAC;
+        placeAC.setAttribute("placeholder", placeholder);
+
+        placeAC.addEventListener("input", (e: any) => {
+          const source = e.composedPath?.()?.[0] as HTMLInputElement | undefined;
+          if (source?.value !== undefined) {
+            onChangeRef.current(source.value);
+          }
+        });
+
+        placeAC.addEventListener("gmp-placeselect", async (event: any) => {
+          const place = event.place;
+          try {
+            await place.fetchFields({ fields: ["formattedAddress", "location", "id"] });
+            const address = place.formattedAddress || "";
+            const lat = place.location?.lat() || 0;
+            const lng = place.location?.lng() || 0;
+            const placeId = place.id || "";
+            onChangeRef.current(address);
+            onPlaceSelectedRef.current({ address, placeId, lat, lng });
+          } catch (err) {
+            console.error("[PlacesAutocomplete] fetchFields failed:", err);
+          }
+        });
+
+        // Hide the fallback input, show the Google element
+        if (inputRef.current) inputRef.current.style.display = "none";
+        containerRef.current!.appendChild(placeAC);
+        elementRef.current = placeAC;
+        return true;
+      } catch (err) {
+        console.warn("[PlacesAutocomplete] Init failed, using fallback input:", err);
+        return false;
+      }
+    }
+
+    // Try immediately
+    if (tryInit()) return;
+
+    // Retry after Google Maps script loads (up to 2s)
+    const t = setTimeout(() => {
+      if (!tryInit()) {
+        setUseFallback(true);
+        console.log("[PlacesAutocomplete] Google Maps unavailable after 2s, using plain input");
+      }
+    }, 2000);
+
+    return () => clearTimeout(t);
   }, [placeholder]);
 
   return (
     <div ref={containerRef} style={{ width: "100%" }}>
+      {/* Fallback plain input — always rendered, hidden when Google element mounts */}
+      <input
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        style={inputStyle}
+      />
+      {useFallback && (
+        <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0" }}>
+          Geocoding automático pelo servidor (Nominatim)
+        </p>
+      )}
       <style>{`
         gmp-place-autocomplete {
           width: 100%;

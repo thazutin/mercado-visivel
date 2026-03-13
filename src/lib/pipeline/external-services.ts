@@ -1104,49 +1104,56 @@ export function createDataForSEOOrganicChecker(config: DataForSEOConfig) {
     }
 
     try {
-      // Uma task por termo — DataForSEO SERP Organic Live Advanced
-      const tasks = terms.map(term => ({
-        keyword: term,
-        location_code: locationCode,
-        language_code: languageCode,
-        device: 'desktop',
-        os: 'windows',
-        depth: 30,
-      }));
-
-      const res = await fetch(`${baseUrl}/serp/google/organic/live/advanced`, {
-        method: 'POST',
-        headers: {
-          'Authorization': authHeader,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(tasks),
-      });
-
-      if (!res.ok) {
-        console.error('[OrganicChecker] DataForSEO falhou:', res.status);
-        return { available: false, domain, rankedTerms: [], totalRanked: 0, avgPosition: null, topPosition: null };
-      }
-
-      const data = await res.json();
+      // Serializa tasks (uma por vez) — DataForSEO SERP Live não aceita múltiplas tasks simultâneas
       const rankedTerms: { term: string; position: number; url: string }[] = [];
 
-      for (const task of (data.tasks || [])) {
-        if (task.status_code !== 20000) continue;
-        const keyword = task.data?.keyword || '';
-        const items = task.result?.[0]?.items || [];
+      for (const term of terms) {
+        try {
+          const res = await fetch(`${baseUrl}/serp/google/organic/live/advanced`, {
+            method: 'POST',
+            headers: {
+              'Authorization': authHeader,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify([{
+              keyword: term,
+              location_code: locationCode,
+              language_code: languageCode,
+              device: 'desktop',
+              os: 'windows',
+              depth: 30,
+            }]),
+            signal: AbortSignal.timeout(15_000),
+          });
 
-        for (const item of items) {
-          if (item.type !== 'organic') continue;
-          const itemDomain = (item.domain || '').replace('www.', '');
-          if (itemDomain === domain) {
-            rankedTerms.push({
-              term: keyword,
-              position: item.rank_group || item.rank_absolute,
-              url: item.url || '',
-            });
-            break; // pega só a primeira aparição do domínio por termo
+          if (!res.ok) {
+            console.warn(`[OrganicChecker] SERP falhou para "${term}": HTTP ${res.status}`);
+            continue;
           }
+
+          const data = await res.json();
+          const task = data.tasks?.[0];
+          if (!task || task.status_code !== 20000) {
+            console.warn(`[OrganicChecker] Task error para "${term}": ${task?.status_code} ${task?.status_message}`);
+            continue;
+          }
+
+          const items = task.result?.[0]?.items || [];
+          for (const item of items) {
+            if (item.type !== 'organic') continue;
+            const itemDomain = (item.domain || '').replace('www.', '');
+            if (itemDomain === domain) {
+              rankedTerms.push({
+                term,
+                position: item.rank_group || item.rank_absolute,
+                url: item.url || '',
+              });
+              break;
+            }
+          }
+          console.log(`[OrganicChecker] "${term}": ${rankedTerms.find(r => r.term === term) ? `pos ${rankedTerms.find(r => r.term === term)!.position}` : 'not found'}`);
+        } catch (termErr) {
+          console.warn(`[OrganicChecker] Erro para "${term}":`, (termErr as Error).message);
         }
       }
 
