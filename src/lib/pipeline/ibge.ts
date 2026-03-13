@@ -60,27 +60,38 @@ export async function getIBGEMunicipalData(cityOrRegion: string, originalRegion?
   if (!cidade || cidade.length < 2) return null;
 
   try {
-    // 1. Busca município pelo nome
-    const searchRes = await fetch(
-      `https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodeURIComponent(cidade)}`,
-    );
+    // 1. Busca município — extrai UF da região original e usa endpoint filtrado
+    const ufMatch = (originalRegion || cityOrRegion).match(/\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/);
+    const uf = ufMatch ? ufMatch[1] : '';
+    const apiUrl = uf
+      ? `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`
+      : `https://servicodados.ibge.gov.br/api/v1/localidades/municipios`;
+    const searchRes = await fetch(apiUrl);
 
     if (!searchRes.ok) {
       console.warn('[IBGE] Busca de município falhou:', searchRes.status);
       return null;
     }
 
-    const municipios = await searchRes.json();
-    if (!Array.isArray(municipios) || municipios.length === 0) {
-      console.warn(`[IBGE] Município não encontrado: "${cidade}"`);
+    const allMunicipios = await searchRes.json();
+    if (!Array.isArray(allMunicipios) || allMunicipios.length === 0) {
+      console.warn(`[IBGE] Nenhum município retornado`);
       return null;
     }
 
-    // Pega o primeiro resultado
-    const municipio = municipios[0];
+    // Filtra por nome (a API não filtra por ?nome=)
+    const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const cidadeNorm = normalize(cidade);
+    const municipio = allMunicipios.find((m: any) => normalize(m.nome) === cidadeNorm);
+    if (!municipio) {
+      console.warn(`[IBGE] Município "${cidade}" não encontrado em ${allMunicipios.length} candidatos (UF=${uf || 'todos'})`);
+      return null;
+    }
+
     const id = String(municipio.id);
     const nomeMunicipio = municipio.nome;
     const estado = municipio.microrregiao?.mesorregiao?.UF?.nome || municipio.microrregiao?.mesorregiao?.UF?.sigla || '';
+    console.log(`[IBGE] Município encontrado: ${nomeMunicipio} (id=${id}, UF=${uf || estado})`);
 
     // 2. Busca população estimada (agregado 6579, variável 9324)
     // Tenta 2024 → 2023 → 2022 (fallback)
@@ -145,8 +156,19 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function detectarDensidade(densidadeHabKm2: number): 'alta' | 'baixa' {
-  return densidadeHabKm2 > 1000 ? 'alta' : 'baixa';
+/**
+ * Detecta densidade usando população como proxy principal.
+ * No Brasil, municípios com >100k habitantes são praticamente todos urbanos.
+ * A API IBGE de área territorial retorna valores inconsistentes,
+ * então usamos população como indicador mais confiável.
+ */
+function detectarDensidade(populacao: number, densidadeHabKm2?: number): 'alta' | 'baixa' {
+  // Primeiro: população é proxy confiável
+  if (populacao >= 100_000) return 'alta';
+  if (populacao < 30_000) return 'baixa';
+  // Faixa intermediária: usa densidade se disponível
+  if (densidadeHabKm2 && densidadeHabKm2 > 500) return 'alta';
+  return 'baixa';
 }
 
 function getRaioKm(densidade: 'alta' | 'baixa'): number {
@@ -213,16 +235,20 @@ async function getMunicipioInfo(city: string, state: string): Promise<MunicipioI
 
   console.log(`[IBGE getMunicipioInfo] city="${city}", expanded="${expandedCity}", state="${state}"`);
 
-  // 1. Busca município por nome (endpoint filtrado — evita baixar todos os 5570)
-  const res = await fetch(
-    `https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodeURIComponent(expandedCity)}`,
-  );
+  // 1. Busca municípios — usa endpoint por UF se disponível (644 results vs 5571)
+  // NOTA: ?nome= na API IBGE NÃO filtra, retorna todos. Por isso filtramos em memória.
+  const isUF = /^[A-Z]{2}$/.test(state);
+  const apiUrl = isUF
+    ? `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${state}/municipios`
+    : `https://servicodados.ibge.gov.br/api/v1/localidades/municipios`;
+  console.log(`[IBGE getMunicipioInfo] Endpoint: ${isUF ? `estados/${state}` : 'todos'}`);
+  const res = await fetch(apiUrl);
   if (!res.ok) {
     console.warn(`[IBGE getMunicipioInfo] Busca falhou: HTTP ${res.status}`);
     return null;
   }
   const candidates = await res.json();
-  console.log(`[IBGE getMunicipioInfo] ${candidates.length} candidatos para "${expandedCity}"`);
+  console.log(`[IBGE getMunicipioInfo] ${candidates.length} candidatos (${isUF ? `UF=${state}` : 'todos'})`);
 
   if (!Array.isArray(candidates) || candidates.length === 0) {
     console.warn(`[IBGE getMunicipioInfo] Nenhum município encontrado para "${expandedCity}"`);
@@ -242,7 +268,7 @@ async function getMunicipioInfo(city: string, state: string): Promise<MunicipioI
   }) || candidates.find((m: any) => {
     const nomeNorm = normalize(m.nome);
     return nomeNorm === expandedCityNorm || nomeNorm === cityNorm;
-  }) || candidates[0]; // Fallback: primeiro resultado se busca por nome retornou resultados
+  });
 
   if (!match) return null;
   const uf = match.microrregiao?.mesorregiao?.UF;
@@ -442,9 +468,7 @@ export async function fetchAudienciaEstimada(
     const useLng = lng || info.lng;
 
     // 2. Detecta densidade → define raio
-    const densidade = info.densidadeHabKm2 > 0
-      ? detectarDensidade(info.densidadeHabKm2)
-      : 'baixa';
+    const densidade = detectarDensidade(info.populacao, info.densidadeHabKm2 > 0 ? info.densidadeHabKm2 : undefined);
     const raioKm = getRaioKm(densidade);
 
     // 3. População do raio

@@ -159,15 +159,20 @@ export async function POST(req: NextRequest) {
       console.error("[Diagnose] update lead display failed:", err);
     }
 
-    // 7. Notifica por WhatsApp + email (non-blocking — erros não quebram a resposta)
-    notifyDiagnosisReady({
-      email: formData.email,
-      whatsapp: formData.whatsapp,
-      leadId: lead.id,
-      product: formData.product,
-      region: formData.region,
-      influencePercent: Math.round(pipelineResult.influence.influence.totalInfluence),
-    }).catch((err) => console.error("[Diagnose] notify failed:", err));
+    // 7. Notifica por WhatsApp + email (await para garantir que Vercel não mata antes de completar)
+    try {
+      await notifyDiagnosisReady({
+        email: formData.email,
+        whatsapp: formData.whatsapp,
+        leadId: lead.id,
+        product: formData.product,
+        region: formData.region,
+        influencePercent: Math.round(pipelineResult.influence.influence.totalInfluence),
+      });
+      console.log("[Diagnose] notify completed");
+    } catch (err) {
+      console.error("[Diagnose] notify failed:", err);
+    }
 
     // 8. Responde com resultado completo (frontend exibe imediatamente)
     return NextResponse.json({

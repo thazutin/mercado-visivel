@@ -567,8 +567,10 @@ Responda APENAS em JSON, sem markdown:
   // Extract city + resolve lat/lng (reused by IBGE, Perplexity, etc.)
   // =========================================================================
   const extractedCity = await extractCity(input.region);
-  const extractedState = input.region.split(/[,\-–]/)?.[1]?.trim() || '';
-  console.log(`[Pipeline] Cidade extraída: "${extractedCity}", estado: "${extractedState}"`);
+  // Extrai sigla UF do endereço completo (ex: "R. Jundiaí, 604 - Matriz, Mauá - SP, 09370-180" → "SP")
+  const ufMatch = input.region.match(/\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/);
+  const extractedState = ufMatch ? ufMatch[1] : '';
+  console.log(`[Pipeline] Cidade extraída: "${extractedCity}", estado: "${extractedState}" (de region="${input.region.slice(0, 80)}")`);
 
   // Resolve lat/lng: form (Google Places) → Nominatim fallback
   let pipelineLat = formData.lat || 0;
