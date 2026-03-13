@@ -48,10 +48,10 @@ function PlacesAutocomplete({ value, onChange, onPlaceSelected, placeholder }: {
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const elementRef = useRef<any>(null);
-  const [inputValue, setInputValue] = useState(value);
-
-  // Sync external value changes
-  useEffect(() => { setInputValue(value); }, [value]);
+  const onChangeRef = useRef(onChange);
+  const onPlaceSelectedRef = useRef(onPlaceSelected);
+  onChangeRef.current = onChange;
+  onPlaceSelectedRef.current = onPlaceSelected;
 
   useEffect(() => {
     if (!containerRef.current || !window.google?.maps?.places) return;
@@ -62,10 +62,17 @@ function PlacesAutocomplete({ value, onChange, onPlaceSelected, placeholder }: {
       types: ["address"],
     });
 
-    // Style the shadow DOM input to match our design
-    placeAC.style.width = "100%";
     placeAC.setAttribute("placeholder", placeholder);
 
+    // Capture typing via standard input events (bubble through shadow DOM)
+    placeAC.addEventListener("input", (e: any) => {
+      const source = e.composedPath?.()?.[0] as HTMLInputElement | undefined;
+      if (source?.value !== undefined) {
+        onChangeRef.current(source.value);
+      }
+    });
+
+    // Capture place selection
     placeAC.addEventListener("gmp-placeselect", async (event: any) => {
       const place = event.place;
       try {
@@ -74,9 +81,8 @@ function PlacesAutocomplete({ value, onChange, onPlaceSelected, placeholder }: {
         const lat = place.location?.lat() || 0;
         const lng = place.location?.lng() || 0;
         const placeId = place.id || "";
-        setInputValue(address);
-        onChange(address);
-        onPlaceSelected({ address, placeId, lat, lng });
+        onChangeRef.current(address);
+        onPlaceSelectedRef.current({ address, placeId, lat, lng });
       } catch (err) {
         console.error("[PlacesAutocomplete] fetchFields failed:", err);
       }
@@ -84,7 +90,7 @@ function PlacesAutocomplete({ value, onChange, onPlaceSelected, placeholder }: {
 
     containerRef.current.appendChild(placeAC);
     elementRef.current = placeAC;
-  }, [onChange, onPlaceSelected, placeholder]);
+  }, [placeholder]);
 
   return (
     <div ref={containerRef} style={{ width: "100%" }}>
@@ -93,15 +99,14 @@ function PlacesAutocomplete({ value, onChange, onPlaceSelected, placeholder }: {
           width: 100%;
           --gmpac-color-surface: ${V.cloud};
           --gmpac-color-on-surface: ${V.night};
+          --gmpac-color-on-surface-variant: ${V.zinc};
           --gmpac-color-outline: ${V.fog};
+          --gmpac-color-primary: ${V.amber};
           --gmpac-font-family-base: ${V.body};
           --gmpac-font-size-body: 15px;
           --gmpac-size-border-radius: 10px;
-        }
-        gmp-place-autocomplete input {
-          padding: 14px 16px !important;
-          font-size: 15px !important;
-          font-family: ${V.body} !important;
+          --gmpac-size-icon: 0px;
+          --gmpac-padding-inline-start: 16px;
         }
       `}</style>
     </div>
