@@ -130,7 +130,14 @@ REGRAS:
 - Use números reais, não genéricos. "7%" é melhor que "baixo". "2.400 buscas" é melhor que "volume alto"
 - O tom é Vero: preciso, fundamentado, sem floreio. Sem adjetivos de marketing
 - As rotas podem ser específicas e acionáveis — diferente dos gaps, aqui queremos MOSTRAR o caminho
-- NUNCA mencione pesos percentuais internos da metodologia (ex: "60% Google + 40% Instagram", "peso de X%"). Apresente apenas os scores por canal, sem revelar como são ponderados
+- NUNCA mencione pesos percentuais internos da metodologia. Não revele como os scores são ponderados.
+  ERRADO: "Google representa 49% da influência digital"
+  ERRADO: "Instagram vale 20% do score"
+  ERRADO: "O Google tem peso de 60% no cálculo"
+  CERTO: "Você não aparece no Google, que é onde a maioria dos clientes começa a busca"
+  CERTO: "Seu Instagram tem engajamento baixo comparado aos concorrentes da região"
+- Revise o português antes de retornar. Nunca use palavras cortadas, incompletas ou inventadas. Todas as frases devem estar gramaticalmente corretas em português brasileiro
+- Escreva todas as frases por extenso — sem abreviações obscuras ou palavras truncadas
 
 FORMATO DE RESPOSTA (JSON estrito, sem markdown):
 {

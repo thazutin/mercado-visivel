@@ -6,7 +6,7 @@ import ProcessingScreen from "@/components/ProcessingScreen";
 import InstantValueScreen from "@/components/InstantValueScreen";
 import { initialFormData, type LeadFormData, stepValidation } from "@/lib/schema";
 import { dictionaries, type Locale } from "@/lib/i18n";
-import Script from "next/script";
+
 
 // ─── Design Tokens ─────────────────────────────────────────────────
 const V = {
@@ -38,133 +38,103 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   );
 }
 
-// ─── Google Places Autocomplete (PlaceAutocompleteElement — new API) ─
-declare global { interface Window { google: any } }
-
+// ─── Places Autocomplete — input simples + proxy API REST ─────────────
 function PlacesAutocomplete({ value, onChange, onPlaceSelected, placeholder }: {
   value: string; onChange: (val: string) => void;
   onPlaceSelected: (place: { address: string; placeId: string; lat: number; lng: number }) => void;
   placeholder: string;
 }) {
+  const [suggestions, setSuggestions] = useState<{ description: string; place_id: string }[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [sessionToken] = useState(() => Math.random().toString(36).slice(2));
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const elementRef = useRef<any>(null);
-  const onChangeRef = useRef(onChange);
-  const onPlaceSelectedRef = useRef(onPlaceSelected);
-  const [useFallback, setUseFallback] = useState(false);
-  onChangeRef.current = onChange;
-  onPlaceSelectedRef.current = onPlaceSelected;
 
-  // Try to initialize PlaceAutocompleteElement, fallback to plain input after 2s
+  // Close dropdown on click outside
   useEffect(() => {
-    if (elementRef.current) return;
-
-    function tryInit() {
-      if (!containerRef.current || !window.google?.maps?.places?.PlaceAutocompleteElement) return false;
-      try {
-        const placeAC = new window.google.maps.places.PlaceAutocompleteElement({
-          componentRestrictions: { country: "br" },
-          types: ["address"],
-        });
-
-        placeAC.setAttribute("placeholder", placeholder);
-
-        placeAC.addEventListener("input", (e: any) => {
-          const source = e.composedPath?.()?.[0] as HTMLInputElement | undefined;
-          if (source?.value !== undefined) {
-            onChangeRef.current(source.value);
-          }
-        });
-
-        placeAC.addEventListener("gmp-placeselect", async (event: any) => {
-          const place = event.place;
-          try {
-            await place.fetchFields({ fields: ["formattedAddress", "location", "id"] });
-            const address = place.formattedAddress || "";
-            const lat = place.location?.lat() || 0;
-            const lng = place.location?.lng() || 0;
-            const placeId = place.id || "";
-            onChangeRef.current(address);
-            onPlaceSelectedRef.current({ address, placeId, lat, lng });
-          } catch (err) {
-            console.error("[PlacesAutocomplete] fetchFields failed:", err);
-          }
-        });
-
-        // Hide the fallback input, show the Google element
-        if (inputRef.current) inputRef.current.style.display = "none";
-        containerRef.current!.appendChild(placeAC);
-        elementRef.current = placeAC;
-        return true;
-      } catch (err) {
-        console.warn("[PlacesAutocomplete] Init failed, using fallback input:", err);
-        return false;
+    function handleClick(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
       }
     }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
-    // Try immediately
-    if (tryInit()) return;
-
-    // Retry after Google Maps script loads (up to 2s)
-    const t = setTimeout(() => {
-      if (!tryInit()) {
-        setUseFallback(true);
-        console.log("[PlacesAutocomplete] Google Maps unavailable after 2s, using plain input");
+  function handleInput(text: string) {
+    onChange(text);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (text.length < 3) {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/places-autocomplete?input=${encodeURIComponent(text)}&sessiontoken=${sessionToken}`);
+        const data = await res.json();
+        setSuggestions(data.predictions || []);
+        setShowDropdown((data.predictions || []).length > 0);
+      } catch {
+        setSuggestions([]);
       }
-    }, 2000);
+    }, 300);
+  }
 
-    return () => clearTimeout(t);
-  }, [placeholder]);
+  async function handleSelect(prediction: { description: string; place_id: string }) {
+    onChange(prediction.description);
+    setShowDropdown(false);
+    setSuggestions([]);
+    try {
+      const res = await fetch(`/api/places-details?place_id=${encodeURIComponent(prediction.place_id)}&sessiontoken=${sessionToken}`);
+      const data = await res.json();
+      if (data.lat && data.lng) {
+        onPlaceSelected({
+          address: data.address || prediction.description,
+          placeId: data.placeId || prediction.place_id,
+          lat: data.lat,
+          lng: data.lng,
+        });
+      }
+    } catch (err) {
+      console.error("[PlacesAutocomplete] Details fetch failed:", err);
+    }
+  }
 
   return (
-    <div ref={containerRef} style={{ width: "100%" }}>
-      {/* Fallback plain input — always rendered, hidden when Google element mounts */}
+    <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
       <input
-        ref={inputRef}
         type="text"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => handleInput(e.target.value)}
+        onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
         placeholder={placeholder}
         style={inputStyle}
+        autoComplete="off"
       />
-      {useFallback && (
-        <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0" }}>
-          Geocoding automático pelo servidor (Nominatim)
-        </p>
+      {showDropdown && suggestions.length > 0 && (
+        <div style={{
+          position: "absolute", top: "100%", left: 0, right: 0, zIndex: 50,
+          background: V.white, border: `1px solid ${V.fog}`, borderRadius: 10,
+          marginTop: 4, boxShadow: "0 4px 16px rgba(0,0,0,0.08)", overflow: "hidden",
+        }}>
+          {suggestions.map((s, i) => (
+            <div
+              key={s.place_id}
+              onClick={() => handleSelect(s)}
+              style={{
+                padding: "12px 16px", fontSize: 13, color: V.night, cursor: "pointer",
+                borderBottom: i < suggestions.length - 1 ? `1px solid ${V.fog}` : "none",
+                transition: "background 0.1s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = V.cloud)}
+              onMouseLeave={(e) => (e.currentTarget.style.background = V.white)}
+            >
+              {s.description}
+            </div>
+          ))}
+        </div>
       )}
-      <style>{`
-        gmp-place-autocomplete {
-          width: 100%;
-          --gmpac-color-surface: ${V.cloud};
-          --gmpac-color-on-surface: ${V.night};
-          --gmpac-color-on-surface-variant: ${V.zinc};
-          --gmpac-color-outline: ${V.fog};
-          --gmpac-color-primary: ${V.amber};
-          --gmpac-font-family-base: ${V.body};
-          --gmpac-font-size-body: 15px;
-          --gmpac-size-border-radius: 10px;
-          --gmpac-size-icon: 0px;
-          --gmpac-padding-inline-start: 16px;
-          --gmpac-height: 47px;
-          --gmpac-color-on-primary-container: ${V.night};
-          --gmpac-color-outline-variant: ${V.fog};
-        }
-        gmp-place-autocomplete::part(input) {
-          font-family: ${V.body};
-          font-size: 15px;
-          color: ${V.night};
-          background: ${V.cloud};
-          border: 1px solid ${V.fog};
-          border-radius: 10px;
-          padding: 14px 16px;
-          outline: none;
-          height: 47px;
-          box-sizing: border-box;
-        }
-        gmp-place-autocomplete::part(input):focus {
-          border-color: ${V.amber};
-        }
-      `}</style>
     </div>
   );
 }
@@ -180,7 +150,6 @@ export default function Home() {
   const [leadId, setLeadId] = useState("");
   const [heroVisible, setHeroVisible] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [placesReady, setPlacesReady] = useState(false);
   const [noInstagram, setNoInstagram] = useState(false);
   const [isNational, setIsNational] = useState(false);
   const [honeypot, setHoneypot] = useState("");
@@ -326,16 +295,13 @@ export default function Home() {
               <div style={{ padding: "14px 16px", borderRadius: 10, background: V.cloud, fontSize: 13, color: V.zinc }}>
                 {t.formNationalMsg}
               </div>
-            ) : placesReady ? (
+            ) : (
               <PlacesAutocomplete
                 value={formData.region}
                 onChange={(val) => updateField("region", val)}
                 onPlaceSelected={handlePlaceSelected}
                 placeholder={t.formRegionPlaceholder}
               />
-            ) : (
-              <input style={inputStyle} type="text" placeholder={t.formRegionPlaceholder} value={formData.region}
-                onChange={(e: any) => updateField("region", e.target.value)} />
             )}
             <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 13, color: V.ash, cursor: "pointer" }}>
               <input type="checkbox" checked={isNational} onChange={(e: any) => {
@@ -377,12 +343,7 @@ export default function Home() {
 
   return (
     <div style={{ minHeight: "100vh", background: V.white }}>
-      {/* Google Places Script */}
-      <Script
-        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY || ""}&libraries=places&loading=async`}
-        onReady={() => setPlacesReady(true)}
-        strategy="lazyOnload"
-      />
+      {/* Google Places: API REST via proxy server-side (não precisa de JS client) */}
 
       {/* ═══ HERO ═══ */}
       <div style={{

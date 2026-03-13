@@ -976,7 +976,21 @@ export function createDataForSEOClient(config: DataForSEOConfig) {
         continue;
       }
 
-      const items = task.result?.[0]?.items ?? [];
+      // Log raw task structure when items are missing (debug)
+      const result0 = task.result?.[0];
+      const items = result0?.items ?? [];
+      if (items.length === 0) {
+        console.log(`[DataForSEO RAW] task.result length: ${task.result?.length ?? 'null'}`);
+        if (result0) {
+          console.log(`[DataForSEO RAW] result[0] keys: ${Object.keys(result0).join(', ')}`);
+          console.log(`[DataForSEO RAW] result[0] snippet: ${JSON.stringify(result0).slice(0, 500)}`);
+        } else if (task.result && task.result.length > 0) {
+          console.log(`[DataForSEO RAW] result[0] raw: ${JSON.stringify(task.result[0]).slice(0, 500)}`);
+        } else {
+          console.log(`[DataForSEO RAW] task keys: ${Object.keys(task).join(', ')}`);
+          console.log(`[DataForSEO RAW] task snippet: ${JSON.stringify(task).slice(0, 500)}`);
+        }
+      }
       const withVolume = items.filter(i => (i.search_volume ?? 0) > 0).length;
       console.log(`[DataForSEO] ${items.length} items returned, ${withVolume} with volume > 0`);
       if (items.length > 0) {
