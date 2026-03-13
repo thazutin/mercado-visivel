@@ -38,7 +38,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   );
 }
 
-// ─── Google Places Autocomplete ────────────────────────────────────
+// ─── Google Places Autocomplete (PlaceAutocompleteElement — new API) ─
 declare global { interface Window { google: any } }
 
 function PlacesAutocomplete({ value, onChange, onPlaceSelected, placeholder }: {
@@ -46,38 +46,65 @@ function PlacesAutocomplete({ value, onChange, onPlaceSelected, placeholder }: {
   onPlaceSelected: (place: { address: string; placeId: string; lat: number; lng: number }) => void;
   placeholder: string;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const elementRef = useRef<any>(null);
+  const [inputValue, setInputValue] = useState(value);
+
+  // Sync external value changes
+  useEffect(() => { setInputValue(value); }, [value]);
 
   useEffect(() => {
-    if (!inputRef.current || !window.google?.maps?.places) return;
-    if (autocompleteRef.current) return;
+    if (!containerRef.current || !window.google?.maps?.places) return;
+    if (elementRef.current) return;
 
-    const ac = new window.google.maps.places.Autocomplete(inputRef.current, {
-      types: ["address"],
-      fields: ["formatted_address", "place_id", "geometry"],
+    const placeAC = new window.google.maps.places.PlaceAutocompleteElement({
       componentRestrictions: { country: "br" },
+      types: ["address"],
     });
 
-    ac.addListener("place_changed", () => {
-      const place = ac.getPlace();
-      if (place?.formatted_address) {
-        onChange(place.formatted_address);
-        onPlaceSelected({
-          address: place.formatted_address,
-          placeId: place.place_id || "",
-          lat: place.geometry?.location?.lat() || 0,
-          lng: place.geometry?.location?.lng() || 0,
-        });
+    // Style the shadow DOM input to match our design
+    placeAC.style.width = "100%";
+    placeAC.setAttribute("placeholder", placeholder);
+
+    placeAC.addEventListener("gmp-placeselect", async (event: any) => {
+      const place = event.place;
+      try {
+        await place.fetchFields({ fields: ["formattedAddress", "location", "id"] });
+        const address = place.formattedAddress || "";
+        const lat = place.location?.lat() || 0;
+        const lng = place.location?.lng() || 0;
+        const placeId = place.id || "";
+        setInputValue(address);
+        onChange(address);
+        onPlaceSelected({ address, placeId, lat, lng });
+      } catch (err) {
+        console.error("[PlacesAutocomplete] fetchFields failed:", err);
       }
     });
 
-    autocompleteRef.current = ac;
-  }, [onChange, onPlaceSelected]);
+    containerRef.current.appendChild(placeAC);
+    elementRef.current = placeAC;
+  }, [onChange, onPlaceSelected, placeholder]);
 
   return (
-    <input ref={inputRef} type="text" value={value} onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder} style={inputStyle} />
+    <div ref={containerRef} style={{ width: "100%" }}>
+      <style>{`
+        gmp-place-autocomplete {
+          width: 100%;
+          --gmpac-color-surface: ${V.cloud};
+          --gmpac-color-on-surface: ${V.night};
+          --gmpac-color-outline: ${V.fog};
+          --gmpac-font-family-base: ${V.body};
+          --gmpac-font-size-body: 15px;
+          --gmpac-size-border-radius: 10px;
+        }
+        gmp-place-autocomplete input {
+          padding: 14px 16px !important;
+          font-size: 15px !important;
+          font-family: ${V.body} !important;
+        }
+      `}</style>
+    </div>
   );
 }
 
@@ -291,7 +318,7 @@ export default function Home() {
     <div style={{ minHeight: "100vh", background: V.white }}>
       {/* Google Places Script */}
       <Script
-        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY || ""}&libraries=places`}
+        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY || ""}&libraries=places&loading=async`}
         onReady={() => setPlacesReady(true)}
         strategy="lazyOnload"
       />
