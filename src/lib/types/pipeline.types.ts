@@ -398,6 +398,7 @@ export interface AudienciaEstimada {
   densidade: 'alta' | 'baixa' | 'nacional';
   municipioNome: string;
   municipioId: number;
+  ibgeAno?: number;
 }
 
 export interface AudienciaTarget {
@@ -416,6 +417,7 @@ export interface AudienciaDisplay {
   estimatedPercentage: number;
   audienciaTarget: number;
   rationale: string;
+  ibgeAno?: number;
 }
 
 // --- ERROR HANDLING ---

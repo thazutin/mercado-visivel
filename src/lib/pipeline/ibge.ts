@@ -116,9 +116,6 @@ export async function getIBGEMunicipalData(cityOrRegion: string, originalRegion?
       }
       console.log(`[IBGE] População período ${ano} não disponível para ${nomeMunicipio}, tentando anterior...`);
     }
-    if (populacao === 0) {
-      console.warn('[IBGE] Nenhum período de população disponível para', nomeMunicipio);
-    }
 
     if (populacao === 0) {
       console.warn(`[IBGE] População não disponível para ${nomeMunicipio}`);
@@ -181,6 +178,7 @@ interface MunicipioInfo {
   uf: string;
   estado: string;
   populacao: number;
+  ibgeAno: number;
   areaKm2: number;
   densidadeHabKm2: number;
   lat: number;
@@ -283,6 +281,7 @@ async function getMunicipioInfo(city: string, state: string): Promise<MunicipioI
   // 2. Busca população estimada (agregado 6579, variável 9324)
   // Tenta 2024 → 2023 → 2022 (fallback)
   let populacao = 0;
+  let ibgeAno = 0;
   for (const ano of ['2024', '2023', '2022']) {
     const popRes = await fetch(
       `https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/${ano}/variaveis/9324?localidades=N6[${id}]`,
@@ -295,6 +294,7 @@ async function getMunicipioInfo(city: string, state: string): Promise<MunicipioI
         const parsed = parseInt(valores[valores.length - 1], 10);
         if (parsed > 0) {
           populacao = parsed;
+          ibgeAno = parseInt(ano, 10);
           console.log(`[IBGE getMunicipioInfo] População ${nome}: ${populacao} (período ${ano})`);
           break;
         }
@@ -332,7 +332,7 @@ async function getMunicipioInfo(city: string, state: string): Promise<MunicipioI
   }
 
   const densidadeHabKm2 = areaKm2 > 0 ? populacao / areaKm2 : 0;
-  console.log(`[IBGE getMunicipioInfo] ${nome}/${ufSigla}: pop=${populacao}, area=${areaKm2}km², densidade=${densidadeHabKm2.toFixed(0)}, lat=${lat}, lng=${lng}`);
+  console.log(`[IBGE getMunicipioInfo] ${nome}/${ufSigla}: pop=${populacao} (IBGE ${ibgeAno}), area=${areaKm2}km², densidade=${densidadeHabKm2.toFixed(0)}, lat=${lat}, lng=${lng}`);
 
   return {
     id,
@@ -340,6 +340,7 @@ async function getMunicipioInfo(city: string, state: string): Promise<MunicipioI
     uf: ufSigla,
     estado,
     populacao,
+    ibgeAno,
     areaKm2,
     densidadeHabKm2,
     lat,
@@ -477,7 +478,7 @@ export async function fetchAudienciaEstimada(
     // Usamos a população do município principal como base.
     const populacaoRaio = info.populacao;
 
-    console.log(`[IBGE Audiência] ${info.nome}: pop=${info.populacao}, densidade=${densidade}, raio=${raioKm}km, popRaio=${populacaoRaio}`);
+    console.log(`[IBGE Audiência] ${info.nome}: pop=${info.populacao} (IBGE ${info.ibgeAno}), densidade=${densidade}, raio=${raioKm}km, popRaio=${populacaoRaio}`);
 
     return {
       populacaoRaio,
@@ -485,6 +486,7 @@ export async function fetchAudienciaEstimada(
       densidade,
       municipioNome: info.nome,
       municipioId: info.id,
+      ibgeAno: info.ibgeAno,
     };
   } catch (err) {
     if ((err as Error).name === 'AbortError') {

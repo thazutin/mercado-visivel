@@ -106,7 +106,7 @@ function calculateScoreFromSerp(
 ): { score: number; factors: AIVisibilityResult['factors'] } {
   const factors: AIVisibilityResult['factors'] = [];
 
-  // Base: aparições nos resultados
+  // Base: aparições nos resultados de descoberta
   const appearanceRate = totalQueries > 0 ? appearances / totalQueries : 0;
   let score = Math.round(appearanceRate * 60); // máx 60 pts por aparições
 
@@ -124,16 +124,15 @@ function calculateScoreFromSerp(
     });
   }
 
-  // Google Maps: +20 pts se tem perfil com avaliações
+  // Google Maps, Website, Rating: fatores informativos (não pontuam no AI Visibility)
+  // Estes sinais já são contabilizados no Influence Score — aqui só reportamos como contexto
   if (hasMapsProfile && (mapsReviews || 0) >= 10) {
-    score += 20;
     factors.push({
       factor: 'Presença no Google Maps',
-      status: 'positive',
-      detail: `★ ${mapsRating || '—'} com ${mapsReviews} avaliações — aumenta visibilidade em buscas locais`,
+      status: 'neutral',
+      detail: `★ ${mapsRating || '—'} com ${mapsReviews} avaliações — favorece recomendação por AI`,
     });
   } else if (hasMapsProfile) {
-    score += 8;
     factors.push({
       factor: 'Google Maps com poucas avaliações',
       status: 'neutral',
@@ -143,11 +142,10 @@ function calculateScoreFromSerp(
     factors.push({
       factor: 'Sem perfil no Google Maps',
       status: 'negative',
-      detail: 'Ausência no Maps reduz significativamente visibilidade em buscas locais',
+      detail: 'Ausência no Maps reduz significativamente visibilidade em buscas locais e em AI',
     });
   }
 
-  // Website: fator informativo (não pontua — AI visibility mede menções reais)
   if (hasWebsite) {
     factors.push({
       factor: 'Tem website',
@@ -162,13 +160,11 @@ function calculateScoreFromSerp(
     });
   }
 
-  // Rating bonus: +5 pts
   if (mapsRating && mapsRating >= 4.5) {
-    score += 5;
     factors.push({
       factor: 'Avaliação excelente',
-      status: 'positive',
-      detail: `★ ${mapsRating} — negócios com alta avaliação têm mais chance de ser recomendados`,
+      status: 'neutral',
+      detail: `★ ${mapsRating} — negócios com alta avaliação têm mais chance de ser recomendados por AI`,
     });
   }
 

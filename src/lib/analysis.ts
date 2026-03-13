@@ -813,6 +813,7 @@ Responda APENAS em JSON, sem markdown:
       estimatedPercentage: audienciaResult.target.estimatedPercentage,
       audienciaTarget: audienciaResult.target.audienciaTarget,
       rationale: audienciaResult.target.rationale,
+      ibgeAno: audienciaResult.estimada.ibgeAno,
     };
     sourcesUsed.push('ibge_audiencia');
     console.log(`[Pipeline] Audiência OK: ${audienciaDisplay.populacaoRaio.toLocaleString('pt-BR')} pop raio, ${audienciaDisplay.audienciaTarget.toLocaleString('pt-BR')} target`);
@@ -827,6 +828,7 @@ Responda APENAS em JSON, sem markdown:
       estimatedPercentage: 0,
       audienciaTarget: 0,
       rationale: '',
+      ibgeAno: audienciaResult.estimada.ibgeAno,
     };
     sourcesUsed.push('ibge_audiencia');
     console.log(`[Pipeline] Audiência parcial: ${audienciaDisplay.populacaoRaio.toLocaleString('pt-BR')} pop raio (sem target)`);

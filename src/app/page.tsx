@@ -107,6 +107,24 @@ function PlacesAutocomplete({ value, onChange, onPlaceSelected, placeholder }: {
           --gmpac-size-border-radius: 10px;
           --gmpac-size-icon: 0px;
           --gmpac-padding-inline-start: 16px;
+          --gmpac-height: 47px;
+          --gmpac-color-on-primary-container: ${V.night};
+          --gmpac-color-outline-variant: ${V.fog};
+        }
+        gmp-place-autocomplete::part(input) {
+          font-family: ${V.body};
+          font-size: 15px;
+          color: ${V.night};
+          background: ${V.cloud};
+          border: 1px solid ${V.fog};
+          border-radius: 10px;
+          padding: 14px 16px;
+          outline: none;
+          height: 47px;
+          box-sizing: border-box;
+        }
+        gmp-place-autocomplete::part(input):focus {
+          border-color: ${V.amber};
         }
       `}</style>
     </div>
