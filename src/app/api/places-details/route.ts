@@ -13,8 +13,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "place_id required" }, { status: 400 });
   }
 
-  const key = process.env.GOOGLE_PLACES_API_KEY;
+  const key = process.env.GOOGLE_PLACES_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY;
   if (!key) {
+    console.error("[Places Details] Nenhuma key configurada: GOOGLE_PLACES_API_KEY e NEXT_PUBLIC_GOOGLE_PLACES_KEY ausentes");
     return NextResponse.json({ error: "API key not configured" }, { status: 500 });
   }
 

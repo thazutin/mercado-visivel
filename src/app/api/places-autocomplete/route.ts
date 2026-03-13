@@ -13,8 +13,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ predictions: [] });
   }
 
-  const key = process.env.GOOGLE_PLACES_API_KEY;
+  const key = process.env.GOOGLE_PLACES_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY;
   if (!key) {
+    console.error("[Places Proxy] Nenhuma key configurada: GOOGLE_PLACES_API_KEY e NEXT_PUBLIC_GOOGLE_PLACES_KEY ausentes");
     return NextResponse.json({ predictions: [], error: "API key not configured" });
   }
 
@@ -23,7 +24,6 @@ export async function GET(req: NextRequest) {
       input,
       key,
       components: "country:br",
-      types: "address",
       language: "pt-BR",
       ...(sessiontoken ? { sessiontoken } : {}),
     });
@@ -39,6 +39,11 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await res.json();
+    console.log(`[Places Proxy] Google status="${data.status}", predictions=${data.predictions?.length ?? 0}, input="${input}"`);
+
+    if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
+      console.error(`[Places Proxy] Google error: status="${data.status}", error_message="${data.error_message || 'none'}"`);
+    }
 
     // Retorna apenas o necessário (description + place_id)
     const predictions = (data.predictions || []).slice(0, 5).map((p: any) => ({

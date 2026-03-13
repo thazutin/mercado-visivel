@@ -71,11 +71,14 @@ function PlacesAutocomplete({ value, onChange, onPlaceSelected, placeholder }: {
     }
     debounceRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/places-autocomplete?input=${encodeURIComponent(text)}&sessiontoken=${sessionToken}`);
+        const url = `/api/places-autocomplete?input=${encodeURIComponent(text)}&sessiontoken=${sessionToken}`;
+        const res = await fetch(url);
         const data = await res.json();
+        console.log(`[Places] input="${text}", status=${res.status}, predictions=${data.predictions?.length ?? 0}`, data.error || "");
         setSuggestions(data.predictions || []);
         setShowDropdown((data.predictions || []).length > 0);
-      } catch {
+      } catch (err) {
+        console.error("[Places] fetch failed:", err);
         setSuggestions([]);
       }
     }, 300);
