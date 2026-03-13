@@ -918,6 +918,7 @@ export function createDataForSEOClient(config: DataForSEOConfig) {
 
       let raw: DataForSEOResponse;
       try {
+        // Tenta Google Ads endpoint primeiro (mais preciso)
         const res = await fetch(`${baseUrl}/keywords_data/google_ads/search_volume/live`, {
           method: 'POST',
           headers: {
@@ -928,12 +929,37 @@ export function createDataForSEOClient(config: DataForSEOConfig) {
           signal: AbortSignal.timeout(30_000),
         });
 
-        if (!res.ok) {
-          const errText = await res.text().catch(() => 'no body');
-          throw new Error(`DataForSEO HTTP ${res.status}: ${errText.slice(0, 200)}`);
-        }
+        if (res.status === 402) {
+          // Sem créditos no Keywords Data API — tenta DataForSEO Labs (mais barato)
+          console.warn('[DataForSEO] Keywords Data API 402 (sem créditos), tentando Labs fallback...');
+          const labsBody = [{
+            keywords: chunk,
+            location_code: locationCode,
+            language_code: languageCode,
+          }];
+          const labsRes = await fetch(`${baseUrl}/dataforseo_labs/google/search_volume/live`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: authHeader,
+            },
+            body: JSON.stringify(labsBody),
+            signal: AbortSignal.timeout(30_000),
+          });
 
-        raw = (await res.json()) as DataForSEOResponse;
+          if (!labsRes.ok) {
+            const errText = await labsRes.text().catch(() => 'no body');
+            throw new Error(`DataForSEO Labs HTTP ${labsRes.status}: ${errText.slice(0, 300)}`);
+          }
+
+          raw = (await labsRes.json()) as DataForSEOResponse;
+          console.log('[DataForSEO] Using Labs endpoint (fallback)');
+        } else if (!res.ok) {
+          const errText = await res.text().catch(() => 'no body');
+          throw new Error(`DataForSEO HTTP ${res.status}: ${errText.slice(0, 300)}`);
+        } else {
+          raw = (await res.json()) as DataForSEOResponse;
+        }
       } catch (err) {
         console.error(`[DataForSEO] Request failed for chunk ${i / CHUNK_SIZE + 1}:`, err);
         // Graceful degradation: retorna zeros para esse chunk
