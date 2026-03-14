@@ -153,7 +153,6 @@ export default function Home() {
   const [leadId, setLeadId] = useState("");
   const [heroVisible, setHeroVisible] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [noInstagram, setNoInstagram] = useState(false);
   const [isNational, setIsNational] = useState(false);
   const [honeypot, setHoneypot] = useState("");
 
@@ -269,49 +268,6 @@ export default function Home() {
               onChange={(e: any) => updateField("product", e.target.value)} />
           </Field>
 
-          <Field label="Seus clientes são:" hint="Isso adapta a análise para o seu mercado">
-            <div style={{ display: "flex", gap: 8 }}>
-              {[
-                { value: "b2c" as const, label: "Pessoas físicas" },
-                { value: "b2b" as const, label: "Outras empresas" },
-              ].map((opt) => (
-                <button key={opt.value} type="button" onClick={() => updateField("clientType" as any, opt.value)} style={{
-                  flex: 1, padding: "12px 16px", borderRadius: 10, fontSize: 13, fontWeight: 500,
-                  cursor: "pointer", transition: "all 0.15s",
-                  border: `1.5px solid ${(formData as any).clientType === opt.value || (!((formData as any).clientType) && opt.value === "b2c") ? V.amber : V.fog}`,
-                  background: (formData as any).clientType === opt.value || (!((formData as any).clientType) && opt.value === "b2c") ? V.amberWash : V.white,
-                  color: (formData as any).clientType === opt.value || (!((formData as any).clientType) && opt.value === "b2c") ? V.amber : V.zinc,
-                }}>
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          <Field label={t.formDiffLabel} hint={t.formDiffHint}>
-            <input style={inputStyle} type="text" placeholder={t.formDiffPlaceholder} value={formData.differentiator}
-              onChange={(e: any) => updateField("differentiator", e.target.value)} />
-          </Field>
-
-          <Field label={t.formInstagramLabel} hint={t.formInstagramHint}>
-            {noInstagram ? (
-              <div style={{ padding: "14px 16px", borderRadius: 10, background: V.cloud, fontSize: 13, color: V.zinc }}>
-                {t.formNoInstagramMsg}
-              </div>
-            ) : (
-              <input style={inputStyle} type="text" placeholder={t.formInstagramPlaceholder} value={formData.instagram}
-                onChange={(e: any) => updateField("instagram", e.target.value)} />
-            )}
-            <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 13, color: V.ash, cursor: "pointer" }}>
-              <input type="checkbox" checked={noInstagram} onChange={(e: any) => {
-                setNoInstagram(e.target.checked);
-                updateField("noInstagram", e.target.checked);
-                if (e.target.checked) updateField("instagram", "");
-              }} style={{ width: 16, height: 16, accentColor: V.amber }} />
-              {t.formNoInstagram}
-            </label>
-          </Field>
-
           <Field label={t.formRegionLabel} hint={isNational ? t.formRegionNationalHint : t.formRegionHint}>
             {isNational ? (
               <div style={{ padding: "14px 16px", borderRadius: 10, background: V.cloud, fontSize: 13, color: V.zinc }}>
@@ -334,11 +290,6 @@ export default function Home() {
               {t.formNationalCheckbox}
             </label>
           </Field>
-
-          <Field label={t.formSiteLabel} hint={t.formSiteHint}>
-            <input style={inputStyle} type="url" placeholder={t.formSitePlaceholder} value={formData.site}
-              onChange={(e: any) => updateField("site", e.target.value)} />
-          </Field>
         </>
       ),
     },
@@ -347,13 +298,25 @@ export default function Home() {
       content: (
         <>
           <p style={{ fontSize: 13, color: V.ash, margin: "0 0 16px", lineHeight: 1.5 }}>{t.formStep2Subtitle}</p>
-          <Field label={t.formEmailLabel}>
-            <input style={inputStyle} type="email" placeholder={t.formEmailPlaceholder} value={formData.email}
-              onChange={(e: any) => updateField("email", e.target.value)} />
+          <Field label="Seu nome">
+            <input style={inputStyle} type="text" placeholder="Como prefere ser chamado" value={(formData as any).name || ""}
+              onChange={(e: any) => updateField("name" as any, e.target.value)} />
           </Field>
           <Field label={t.formWhatsappLabel}>
             <input style={inputStyle} type="tel" placeholder={t.formWhatsappPlaceholder} value={formData.whatsapp}
               onChange={(e: any) => updateField("whatsapp", e.target.value)} />
+          </Field>
+          <Field label={t.formEmailLabel}>
+            <input style={inputStyle} type="email" placeholder={t.formEmailPlaceholder} value={formData.email}
+              onChange={(e: any) => updateField("email", e.target.value)} />
+          </Field>
+          <Field label="Instagram" hint="Opcional — usamos para analisar sua presença">
+            <input style={inputStyle} type="text" placeholder="@seuperfil" value={formData.instagram}
+              onChange={(e: any) => updateField("instagram", e.target.value)} />
+          </Field>
+          <Field label="LinkedIn" hint="Opcional — se atende outras empresas">
+            <input style={inputStyle} type="text" placeholder="linkedin.com/company/sua-empresa" value={(formData as any).linkedin || ""}
+              onChange={(e: any) => updateField("linkedin" as any, e.target.value)} />
           </Field>
         </>
       ),

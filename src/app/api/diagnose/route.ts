@@ -48,10 +48,12 @@ export async function POST(req: NextRequest) {
     let lead: { id: string };
     try {
       lead = await insertLead({
-        email: formData.email,
+        name: (formData as any).name || "",
+        email: formData.email || "",
         whatsapp: formData.whatsapp || "",
         site: formData.site || "",
         instagram: formData.instagram || "",
+        linkedin: (formData as any).linkedin || "",
         other_social: "",
         google_maps: "",
         product: formData.product,
@@ -149,7 +151,7 @@ export async function POST(req: NextRequest) {
       const supabase = getSupabaseAdmin();
       const { error: updateError } = await supabase
         .from("leads")
-        .update({ status: "done", diagnosis_display: display })
+        .update({ status: "done", diagnosis_display: display, client_type: pipelineResult.clientType || "b2c" })
         .eq("id", lead.id);
       if (updateError) {
         console.error("[Diagnose] update lead display SUPABASE ERROR:", updateError.message, updateError.details, updateError.hint);

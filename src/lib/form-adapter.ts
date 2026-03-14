@@ -86,7 +86,7 @@ export function adaptFormToInput(form: LeadFormData, locale: string): FormInput 
   };
 
   return {
-    businessName: "",
+    businessName: (form as any).name || "",
     product: form.product,
     customerDescription: form.customerDescription || "",
     region: form.region,

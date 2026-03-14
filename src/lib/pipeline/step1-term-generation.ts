@@ -1,10 +1,10 @@
 // ============================================================================
-// Step 1 — Term Generation (simplified input compatible)
+// Step 1 — Term Generation + clientType Inference
 // ============================================================================
 
 import type { FormInput, GeneratedTerm, Step1Output, TermIntent } from '../types/pipeline.types';
 
-export const TERM_GEN_PROMPT_VERSION = 'term-gen-v2.0-simplified';
+export const TERM_GEN_PROMPT_VERSION = 'term-gen-v2.1-clienttype';
 
 export const INTENT_WEIGHTS: Record<TermIntent, number> = {
   transactional: 1.0,
@@ -14,8 +14,6 @@ export const INTENT_WEIGHTS: Record<TermIntent, number> = {
 };
 
 export function buildTermGenerationPrompt(input: FormInput): string {
-  // Build context from whatever is available
-  const isB2B = input.clientType === 'b2b';
   const context = [
     `NEGÓCIO: ${input.product}`,
     input.differentiator ? `DIFERENCIAL: ${input.differentiator}` : null,
@@ -23,7 +21,6 @@ export function buildTermGenerationPrompt(input: FormInput): string {
     input.address ? `ENDEREÇO: ${input.address}` : null,
     input.customerDescription ? `COMO O CLIENTE DESCREVE: ${input.customerDescription}` : null,
     input.ticket ? `TICKET MÉDIO: R$${input.ticket}` : null,
-    isB2B ? `TIPO DE CLIENTE: B2B (vende para outras empresas)` : null,
   ].filter(Boolean).join('\n');
 
   return `Você é um especialista em marketing local e comportamento de busca do consumidor brasileiro.
@@ -32,45 +29,50 @@ CONTEXTO:
 ${context}
 
 TAREFA:
-Gere 25-30 termos de busca que pessoas reais usariam no Google quando procuram este tipo de negócio nesta região.
+1. Classifique o tipo de cliente deste negócio: "b2b" ou "b2c"
+2. Gere 25-30 termos de busca que pessoas reais usariam no Google
 
-REGRAS:
+CLASSIFICAÇÃO clientType:
+- "b2b" se o negócio vende predominantemente para OUTRAS EMPRESAS (ex: contabilidade, assessoria jurídica empresarial, software para empresas, distribuidora, consultoria, RH, TI empresarial, fornecedores)
+- "b2c" se vende para pessoas físicas/consumidores (ex: clínica, salão, restaurante, academia, arquiteto residencial, loja)
+
+REGRAS para termos:
 1. Linguagem natural — como uma pessoa digitaria no Google
 2. Inclua variações com cidade, bairro e "perto de mim"
 3. HEAD TERMS obrigatórios: a categoria genérica + região (ex: "dentista mauá") deve vir primeiro
 4. Considere a tensão: o dono diz "clínica de estética avançada", o cliente busca "botox preço campinas"
+5. Se b2b: gere termos que empresários e decisores buscam ao contratar (ex: "contabilidade para empresas", "fornecedor [produto] atacado"). Evite termos de consumidor final.
 
 DISTRIBUIÇÃO:
-- TRANSACIONAIS (8-12): prontos para comprar. "[serviço] [cidade]", "agendar [serviço]", "preço [serviço]"
-- NAVEGACIONAIS (4-6): comparando. "melhor [categoria] [cidade]", "[categoria] recomendado"
-- CONSIDERAÇÃO (4-6): pesquisando. "quanto custa [serviço]", "[serviço] vale a pena"
-- INFORMACIONAIS (2-3): aprendendo. "o que é [procedimento]"
-- TENSÃO (2-3): insatisfação. "[serviço] ruim [cidade]", "reclamação [categoria]"
+- TRANSACIONAIS (8-12): prontos para comprar/contratar
+- NAVEGACIONAIS (4-6): comparando opções
+- CONSIDERAÇÃO (4-6): pesquisando
+- INFORMACIONAIS (2-3): aprendendo
+- TENSÃO (2-3): insatisfação/reclamação
 
-FORMATO (JSON, sem markdown):
+FORMATO (JSON estrito, sem markdown):
 {
+  "clientType": "b2c",
   "terms": [
     { "term": "botox preço campinas", "intent": "transactional", "category": "core", "rationale": "Alta intenção + preço + cidade" }
   ]
 }
 
 Categories: "core", "branded", "comparative", "tension"
-${isB2B ? `
-INSTRUÇÃO B2B: Este negócio vende para OUTRAS EMPRESAS, não consumidores finais.
-Gere termos que empresários e decisores buscam ao contratar esse serviço.
-Exemplos de padrão B2B: "contabilidade para empresas", "escritório contábil CNPJ", "assessoria jurídica empresarial", "fornecedor [produto] atacado".
-Evite termos de consumidor final.` : ''}
 Gere APENAS o JSON.`;
 }
 
-export function parseTermGenerationResponse(rawResponse: string): GeneratedTerm[] {
+export function parseTermGenerationResponse(rawResponse: string): { terms: GeneratedTerm[]; clientType: 'b2c' | 'b2b' } {
   const cleaned = rawResponse.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
 
-  let parsed: { terms: Array<{
-    term: string; intent: TermIntent;
-    category: 'core' | 'branded' | 'comparative' | 'tension';
-    rationale: string;
-  }> };
+  let parsed: {
+    clientType?: 'b2c' | 'b2b';
+    terms: Array<{
+      term: string; intent: TermIntent;
+      category: 'core' | 'branded' | 'comparative' | 'tension';
+      rationale: string;
+    }>;
+  };
 
   try {
     parsed = JSON.parse(cleaned);
@@ -82,13 +84,17 @@ export function parseTermGenerationResponse(rawResponse: string): GeneratedTerm[
     throw new Error('Response missing "terms" array');
   }
 
-  return parsed.terms.map(t => ({
+  const clientType = parsed.clientType === 'b2b' ? 'b2b' : 'b2c';
+
+  const terms = parsed.terms.map(t => ({
     term: t.term.toLowerCase().trim(),
     intent: t.intent,
     intentWeight: INTENT_WEIGHTS[t.intent] ?? 0.1,
     category: t.category,
     rationale: t.rationale,
   }));
+
+  return { terms, clientType };
 }
 
 export function validateTerms(terms: GeneratedTerm[]): { valid: boolean; issues: string[] } {
@@ -106,13 +112,14 @@ export async function executeStep1(
   input: FormInput,
   claudeClient: { createMessage: (params: any) => Promise<any> },
   options?: { model?: string; maxRetries?: number }
-): Promise<Step1Output> {
+): Promise<Step1Output & { inferredClientType: 'b2c' | 'b2b' }> {
   const startTime = Date.now();
   const model = options?.model ?? 'claude-sonnet-4-5-20250929';
   const maxRetries = options?.maxRetries ?? 2;
 
   const prompt = buildTermGenerationPrompt(input);
   let terms: GeneratedTerm[] = [];
+  let inferredClientType: 'b2c' | 'b2b' = 'b2c';
   let attempts = 0;
 
   while (attempts <= maxRetries) {
@@ -127,7 +134,11 @@ export async function executeStep1(
         .map((c: any) => c.text)
         .join('');
 
-      terms = parseTermGenerationResponse(text);
+      const result = parseTermGenerationResponse(text);
+      terms = result.terms;
+      inferredClientType = result.clientType;
+      console.log(`[Step1] Inferred clientType: ${inferredClientType}`);
+
       const validation = validateTerms(terms);
       if (validation.valid) break;
 
@@ -146,5 +157,6 @@ export async function executeStep1(
     generationModel: model,
     promptVersion: TERM_GEN_PROMPT_VERSION,
     processingTimeMs: Date.now() - startTime,
+    inferredClientType,
   };
 }

@@ -514,6 +514,8 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 claude_fallback_terms: "IA · Fallback",
                 claude_volume_estimate: "IA · Volume estimado",
                 google_ads: "Google Ads",
+                maps_competition: "Maps · Concorrência",
+                linkedin_check: "LinkedIn",
               };
               const used = results.pipeline?.sourcesUsed || [];
               const chips: { label: string; active: boolean }[] = [];
@@ -529,7 +531,9 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             })()}
           </div>
           <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 12px", lineHeight: 1.6 }}>
-            O score de influência digital mede quanto do mercado local você captura nos canais onde as decisões de compra acontecem — Google (busca + Maps) e Instagram. O score é normalizado contra benchmarks do segmento — não é absoluto, é relativo ao mercado local. O dimensionamento de mercado cruza volume de busca com dados populacionais para estimar a demanda total disponível. Todos os dados são coletados em tempo real no momento do diagnóstico.
+            {isB2B
+              ? "O score de influência digital mede quanto do mercado local você captura nos canais onde as decisões de contratação B2B acontecem — Google (busca + Maps), LinkedIn e Instagram. O dimensionamento cruza volume de busca com dados de densidade empresarial para estimar a demanda disponível. Todos os dados são coletados em tempo real."
+              : "O score de influência digital mede quanto do mercado local você captura nos canais onde as decisões de compra acontecem — Google (busca + Maps) e Instagram. O score é normalizado contra benchmarks do segmento — não é absoluto, é relativo ao mercado local. O dimensionamento de mercado cruza volume de busca com dados populacionais para estimar a demanda total disponível. Todos os dados são coletados em tempo real no momento do diagnóstico."}
           </p>
           {results.pipeline?.durationMs && (
             <p style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, marginTop: 8 }}>{(results.pipeline.durationMs / 1000).toFixed(1)}s · {results.pipeline.version}</p>

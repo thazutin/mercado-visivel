@@ -177,15 +177,20 @@ export async function runInstantAnalysis(
   const sourcesUnavailable: string[] = [];
 
   // =========================================================================
-  // STEP 1 — Term Generation (Claude)
+  // STEP 1 — Term Generation (Claude) + clientType Inference
   // =========================================================================
   let step1: Step1Output;
+  let inferredClientType: 'b2c' | 'b2b' = (input.clientType as any) || 'b2c';
   try {
-    step1 = await executeStep1(input, claude, {
+    const step1Result = await executeStep1(input, claude, {
       model: "claude-sonnet-4-5-20250929",
       maxRetries: 1,
     });
-    console.log(`[Pipeline] Step 1 OK: ${step1.termCount} terms generated`);
+    step1 = step1Result;
+    inferredClientType = step1Result.inferredClientType || 'b2c';
+    // Propagate inferred clientType to the input for downstream steps
+    input.clientType = inferredClientType;
+    console.log(`[Pipeline] Step 1 OK: ${step1.termCount} terms generated, clientType=${inferredClientType}`);
 
     // Fallback: if too few terms, supplement with a direct Claude query
     if (step1.termCount < 10) {
@@ -682,7 +687,13 @@ Responda APENAS em JSON, sem markdown:
 
   // LinkedIn check for B2B
   let linkedinPresent = false;
-  if (input.clientType === 'b2b' && process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD) {
+  const linkedinFromForm = (formData as any).linkedin;
+  if (linkedinFromForm && linkedinFromForm.length > 5) {
+    // LinkedIn URL provided in form — confirmed presence
+    linkedinPresent = true;
+    console.log(`[Pipeline] LinkedIn from form: "${linkedinFromForm}" → confirmed`);
+  } else if (inferredClientType === 'b2b' && process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD) {
+    // B2B inferred but no LinkedIn in form — search via SERP
     try {
       const organicChecker = createDataForSEOOrganicChecker({
         login: process.env.DATAFORSEO_LOGIN,
@@ -694,7 +705,7 @@ Responda APENAS em JSON, sem markdown:
         "LinkedIn Check",
       );
       linkedinPresent = linkedinResult.totalRanked > 0;
-      console.log(`[Pipeline] LinkedIn B2B check: present=${linkedinPresent}`);
+      console.log(`[Pipeline] LinkedIn B2B SERP check: present=${linkedinPresent}`);
     } catch (err) {
       console.warn('[Pipeline] LinkedIn check failed:', (err as Error).message);
     }
@@ -705,7 +716,7 @@ Responda APENAS em JSON, sem markdown:
     instagramInfluence,
     webInfluence,
     organicPresence,
-    input.clientType,
+    inferredClientType,
     linkedinPresent,
   );
 
@@ -924,7 +935,7 @@ Responda APENAS em JSON, sem markdown:
     ibgeData: ibgeData || null,
     audiencia: audienciaDisplay,
     competitionIndex: competitionIndex || null,
-    clientType: input.clientType || 'b2c',
+    clientType: inferredClientType,
     aiVisibility: aiVisibility ? {
       score: aiVisibility.score,
       summary: aiVisibility.summary,

@@ -22,6 +22,8 @@ export interface Lead {
   competitors?: string[];
   challenge?: string;
   client_type?: string;
+  name?: string;
+  linkedin?: string;
   status: "pending" | "processing" | "done" | "paid";
 }
 
