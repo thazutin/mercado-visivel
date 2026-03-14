@@ -136,8 +136,9 @@ export async function notifyDiagnosisReady(opts: {
   product: string;
   region: string;
   influencePercent: number;
+  searchVolume?: number;
 }): Promise<void> {
-  const { email, whatsapp, leadId, product, region, influencePercent } = opts;
+  const { email, whatsapp, leadId, product, region, influencePercent, searchVolume } = opts;
   console.log(`[NOTIFY] iniciando email/whatsapp para email=${email}, phone=${whatsapp}, leadId=${leadId}`);
   const url = `${BASE_URL}/resultado/${leadId}`;
   const shortRegion = region.split(",")[0].trim();
@@ -152,7 +153,7 @@ export async function notifyDiagnosisReady(opts: {
     sendEmail({
       to: email,
       subject: `Seu diagnóstico de mercado está pronto — ${product} em ${shortRegion}`,
-      html: diagnosisEmailHtml({ product, shortRegion, influencePercent, url }),
+      html: diagnosisEmailHtml({ product, shortRegion, influencePercent, searchVolume, url }),
     }),
   ]);
 
@@ -217,24 +218,36 @@ function diagnosisEmailHtml(opts: {
   product: string;
   shortRegion: string;
   influencePercent: number;
+  searchVolume?: number;
   url: string;
 }): string {
-  const { product, shortRegion, influencePercent, url } = opts;
-  const color = influencePercent === 0 ? "#D9534F" : influencePercent < 20 ? "#CF8523" : "#2D9B83";
+  const { product, shortRegion, influencePercent, searchVolume, url } = opts;
+  const influenceColor = influencePercent === 0 ? "#D9534F" : influencePercent < 20 ? "#CF8523" : "#2D9B83";
+  const formattedVolume = searchVolume ? searchVolume.toLocaleString("pt-BR") : null;
 
   return emailShell(`
     <h1 style="font-size:22px;color:#161618;margin:0 0 16px;line-height:1.3;">
       Seu diagnóstico de mercado está pronto.
     </h1>
     <p style="font-size:15px;color:#6E6E78;line-height:1.7;margin:0 0 24px;">
-      Analisamos <strong>${product}</strong> em <strong>${shortRegion}</strong> 
+      Analisamos <strong>${product}</strong> em <strong>${shortRegion}</strong>
       e calculamos sua influência digital no mercado local.
     </p>
-    <div style="background:#F4F4F7;border-radius:12px;padding:20px 24px;text-align:center;margin:0 0 28px;">
-      <div style="font-size:48px;font-weight:700;color:${color};line-height:1;margin-bottom:6px;">
-        ${influencePercent}%
+    <div style="display:flex;gap:12px;margin:0 0 28px;">
+      <div style="flex:1;background:#F4F4F7;border-radius:12px;padding:20px 16px;text-align:center;">
+        <div style="font-size:36px;font-weight:700;color:${influenceColor};line-height:1;margin-bottom:6px;">
+          ${influencePercent}%
+        </div>
+        <div style="font-size:12px;color:#6E6E78;">Influência Digital</div>
       </div>
-      <div style="font-size:13px;color:#6E6E78;">de influência digital no seu mercado</div>
+      ${formattedVolume ? `
+      <div style="flex:1;background:#F4F4F7;border-radius:12px;padding:20px 16px;text-align:center;">
+        <div style="font-size:36px;font-weight:700;color:#161618;line-height:1;margin-bottom:6px;">
+          ${formattedVolume}
+        </div>
+        <div style="font-size:12px;color:#6E6E78;">Buscas mensais</div>
+      </div>
+      ` : ""}
     </div>
     <div style="text-align:center;margin:0 0 28px;">
       <a href="${url}" style="background:#161618;color:#FEFEFF;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;display:inline-block;">
