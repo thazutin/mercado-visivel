@@ -43,7 +43,13 @@ interface Results {
     labelText: string; color: 'green' | 'yellow' | 'red';
     competitors: { name: string; hasWebsite: boolean; hasInstagram: boolean; mapsPosition?: number; rating?: number; reviewCount?: number }[];
   } | null;
-  clientType?: 'b2c' | 'b2b';
+  clientType?: 'b2c' | 'b2b' | 'b2g';
+  pncp?: {
+    totalEncontradas: number; valorTotalEstimado: number;
+    modalidades: { modalidade: string; count: number }[];
+    orgaosUnicos: number; periodoConsultado: string;
+    contratacoes: { objeto: string; orgaoEntidade: string; valorEstimado: number; modalidade: string }[];
+  } | null;
 }
 interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; leadId?: string; }
 
@@ -121,8 +127,9 @@ export default function InstantValueScreen({ product, region, results, onCheckou
   const ci = results.competitionIndex;
   const hasCi = ci && (ci.totalSearchVolume > 0 || ci.totalCompetitors > 0);
   const isB2B = results.clientType === 'b2b';
-  const audienciaLabel = isB2B ? 'empresas no seu mercado' : 'pessoas no seu mercado';
-  const audienciaUnit = isB2B ? 'empresas' : 'pessoas';
+  const isB2G = results.clientType === 'b2g';
+  const audienciaLabel = isB2G ? 'órgãos públicos potenciais' : isB2B ? 'empresas no seu mercado' : 'pessoas no seu mercado';
+  const audienciaUnit = isB2G ? 'órgãos' : isB2B ? 'empresas' : 'pessoas';
 
   // Audiência sublabel
   const audSublabel = aud
@@ -143,72 +150,52 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           <p style={{ fontSize: 13, color: V.ash, margin: 0 }}>{product} · {shortRegion}</p>
         </div>
 
-        {/* ═══ HERO: 3 BIG NUMBERS ═══ */}
+        {/* ═══ HERO: 4 BIG NUMBERS (reordered) ═══ */}
         <div style={{
           display: "flex",
           flexDirection: "column",
           gap: 12,
           marginBottom: 16,
         }}>
-          {/* (a) Audiência Potencial */}
+          {/* 1. Mercado Endereçável */}
           {hasAudiencia ? (
             <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}` }}>
               <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 ~{fmtPop(aud!.audienciaTarget)}
               </div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>{audienciaLabel}</p>
-              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>{audSublabel}</p>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>{isB2G ? 'órgãos públicos potenciais' : audienciaLabel}</p>
+              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>Mercado endereçável · {audSublabel}</p>
             </div>
           ) : (
             <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, opacity: 0.6 }}>
-              <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Audiência local indisponível para este município</p>
+              <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Mercado endereçável indisponível para este município</p>
             </div>
           )}
 
-          {/* (b) Buscas por mês */}
+          {/* 2. Demanda Ativa */}
           {hasVolume ? (
             <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}` }}>
               <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.night, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 <AnimatedCounter target={results.totalVolume} duration={1500} />
               </div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>buscas/mês nos seus termos</p>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>Demanda ativa · buscas/mês</p>
               {results.pipeline?.sourcesUsed?.includes("claude_volume_estimate") && (
                 <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>volume estimado</p>
               )}
             </div>
           ) : (
             <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, opacity: 0.6 }}>
-              <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Volume de buscas indisponível para este mercado</p>
+              <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Demanda ativa indisponível para este mercado</p>
             </div>
           )}
 
-          {/* (c) Influência Digital */}
-          {hasInfluence ? (
-            <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}` }}>
-              <div style={{
-                fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1,
-                color: results.influencePercent < 20 ? V.amber : V.teal,
-              }}>
-                {results.influencePercent}%
-              </div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>de influência digital</p>
-              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>{isB2B ? 'Google + LinkedIn + Instagram' : 'Google + Instagram + AI'}</p>
-            </div>
-          ) : (
-            <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}` }}>
-              <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.coral, letterSpacing: "-0.03em", lineHeight: 1 }}>0%</div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>de influência digital</p>
-              <p style={{ fontSize: 10, color: V.coral, margin: "4px 0 0" }}>Invisível no mercado</p>
-            </div>
-          )}
-
-          {/* (d) Índice de Saturação */}
+          {/* 3. Nível de Competição */}
           {hasCi && (
             <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}` }}>
               {ci!.activeCompetitors === 0 && ci!.totalCompetitors === 0 ? (
                 <>
                   <div style={{ fontFamily: V.display, fontSize: 18, fontWeight: 600, color: V.teal, lineHeight: 1.3 }}>Sem concorrência digital</div>
-                  <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>identificada no seu raio</p>
+                  <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>Nível de competição · nenhum concorrente no raio</p>
                   <span style={{ display: "inline-block", marginTop: 8, fontFamily: V.mono, fontSize: 10, padding: "3px 10px", borderRadius: 100, background: "rgba(45,155,131,0.12)", color: V.teal, fontWeight: 600 }}>Oportunidade</span>
                 </>
               ) : (
@@ -216,7 +203,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                   <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1, color: ci!.color === 'green' ? V.teal : ci!.color === 'yellow' ? V.amber : V.coral }}>
                     {ci!.indexValue.toLocaleString("pt-BR")}
                   </div>
-                  <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>buscas por concorrente ativo</p>
+                  <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>Nível de competição · buscas por concorrente</p>
                   <span style={{
                     display: "inline-block", marginTop: 8, fontFamily: V.mono, fontSize: 10, padding: "3px 10px", borderRadius: 100, fontWeight: 600,
                     background: ci!.color === 'green' ? "rgba(45,155,131,0.12)" : ci!.color === 'yellow' ? V.amberWash : V.coralWash,
@@ -226,6 +213,26 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                   </span>
                 </>
               )}
+            </div>
+          )}
+
+          {/* 4. Influência Digital */}
+          {hasInfluence ? (
+            <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}` }}>
+              <div style={{
+                fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1,
+                color: results.influencePercent < 20 ? V.amber : V.teal,
+              }}>
+                {results.influencePercent}%
+              </div>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>Influência digital</p>
+              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>{isB2G ? 'Google + Portais Públicos' : isB2B ? 'Google + LinkedIn + Instagram' : 'Google + Instagram + AI'}</p>
+            </div>
+          ) : (
+            <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}` }}>
+              <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.coral, letterSpacing: "-0.03em", lineHeight: 1 }}>0%</div>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>Influência digital</p>
+              <p style={{ fontSize: 10, color: V.coral, margin: "4px 0 0" }}>Invisível no mercado</p>
             </div>
           )}
         </div>
@@ -516,6 +523,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 google_ads: "Google Ads",
                 maps_competition: "Maps · Concorrência",
                 linkedin_check: "LinkedIn",
+                pncp: "PNCP · Licitações",
               };
               const used = results.pipeline?.sourcesUsed || [];
               const chips: { label: string; active: boolean }[] = [];
@@ -531,7 +539,9 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             })()}
           </div>
           <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 12px", lineHeight: 1.6 }}>
-            {isB2B
+            {isB2G
+              ? "O score de influência digital mede quanto do mercado público você captura nos canais onde gestores de compras buscam fornecedores — Google e portais de licitação. O dimensionamento cruza volume de busca com dados do PNCP (Portal Nacional de Contratações Públicas) para estimar o mercado disponível. Todos os dados são coletados em tempo real."
+              : isB2B
               ? "O score de influência digital mede quanto do mercado local você captura nos canais onde as decisões de contratação B2B acontecem — Google (busca + Maps), LinkedIn e Instagram. O dimensionamento cruza volume de busca com dados de densidade empresarial para estimar a demanda disponível. Todos os dados são coletados em tempo real."
               : "O score de influência digital mede quanto do mercado local você captura nos canais onde as decisões de compra acontecem — Google (busca + Maps) e Instagram. O score é normalizado contra benchmarks do segmento — não é absoluto, é relativo ao mercado local. O dimensionamento de mercado cruza volume de busca com dados populacionais para estimar a demanda total disponível. Todos os dados são coletados em tempo real no momento do diagnóstico."}
           </p>
@@ -539,6 +549,52 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             <p style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, marginTop: 8 }}>{(results.pipeline.durationMs / 1000).toFixed(1)}s · {results.pipeline.version}</p>
           )}
         </Expandable>
+
+        {/* ═══ PNCP — Contratações Públicas (B2G only) ═══ */}
+        {isB2G && results.pncp && results.pncp.totalEncontradas > 0 && (
+          <Expandable title="Contratações Públicas (PNCP)" icon="📋" defaultOpen>
+            <div style={{ padding: "12px 16px" }}>
+              <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+                <div style={{ flex: 1, background: V.cloud, borderRadius: 10, padding: "12px", textAlign: "center" }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: V.night }}>{results.pncp.totalEncontradas}</div>
+                  <div style={{ fontSize: 10, color: V.ash }}>contratações</div>
+                </div>
+                <div style={{ flex: 1, background: V.cloud, borderRadius: 10, padding: "12px", textAlign: "center" }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: V.teal }}>R${(results.pncp.valorTotalEstimado / 1000).toFixed(0)}k</div>
+                  <div style={{ fontSize: 10, color: V.ash }}>valor total</div>
+                </div>
+                <div style={{ flex: 1, background: V.cloud, borderRadius: 10, padding: "12px", textAlign: "center" }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: V.night }}>{results.pncp.orgaosUnicos}</div>
+                  <div style={{ fontSize: 10, color: V.ash }}>órgãos</div>
+                </div>
+              </div>
+              {results.pncp.modalidades.length > 0 && (
+                <div style={{ marginBottom: 12 }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: V.zinc, margin: "0 0 6px" }}>Modalidades mais comuns:</p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {results.pncp.modalidades.slice(0, 5).map((m, i) => (
+                      <Chip key={i} color={V.teal}>{m.modalidade} ({m.count})</Chip>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {results.pncp.contratacoes.length > 0 && (
+                <div>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: V.zinc, margin: "0 0 6px" }}>Contratações recentes:</p>
+                  {results.pncp.contratacoes.slice(0, 5).map((c, i) => (
+                    <div key={i} style={{ padding: "8px 0", borderBottom: i < 4 ? `1px solid ${V.fog}` : "none" }}>
+                      <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.4 }}>{c.objeto.slice(0, 120)}{c.objeto.length > 120 ? '...' : ''}</p>
+                      <p style={{ fontSize: 10, color: V.ash, margin: "2px 0 0" }}>{c.orgaoEntidade} · {c.modalidade} · R${c.valorEstimado > 0 ? (c.valorEstimado / 1000).toFixed(0) + 'k' : '—'}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p style={{ fontSize: 10, color: V.ash, margin: "8px 0 0", fontFamily: V.mono }}>
+                Fonte: PNCP · {results.pncp.periodoConsultado}
+              </p>
+            </div>
+          </Expandable>
+        )}
 
         {/* ═══ CTA ═══ */}
         <div style={{ padding: "24px 0 16px" }}>

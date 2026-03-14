@@ -267,7 +267,7 @@ export function calculateCompositeInfluence(
   instagram: InstagramInfluence,
   webData: WebInfluence,
   organicPresence?: OrganicPresence | null,
-  clientType?: 'b2c' | 'b2b',
+  clientType?: 'b2c' | 'b2b' | 'b2g',
   linkedinPresent?: boolean,
 ): Step4Output {
   const startTime = Date.now();
@@ -290,13 +290,23 @@ export function calculateCompositeInfluence(
 
   // Pesos baseados na disponibilidade e tipo de cliente
   const isB2B = clientType === 'b2b';
+  const isB2G = clientType === 'b2g';
   let googleWeight: number;
   let instagramWeight: number;
   let webWeight: number;
   let linkedinWeight: number = 0;
   let linkedinScore: number = 0;
 
-  if (isB2B) {
+  if (isB2G) {
+    // B2G: Google 70%, Instagram 10%, Web 20% (governo busca via Google/portais)
+    googleWeight = 0.70;
+    instagramWeight = instagramAvailable ? 0.10 : 0;
+    webWeight = instagramAvailable ? 0.20 : 0.30;
+    if (!instagramAvailable && !webAvailable) {
+      googleWeight = 1.0;
+      webWeight = 0;
+    }
+  } else if (isB2B) {
     // B2B: Google 50%, Instagram 20%, LinkedIn 30%
     linkedinScore = linkedinPresent ? 0.7 : 0;
     if (instagramAvailable) {

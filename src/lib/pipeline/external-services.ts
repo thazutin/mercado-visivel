@@ -905,6 +905,30 @@ export function createGoogleAdsKPClient(config: GoogleAdsConfig) {
 // Env vars: DATAFORSEO_LOGIN, DATAFORSEO_PASSWORD
 // Custo: ~$0.05 por request (até 700 keywords por request)
 
+// DataForSEO state-level location codes for Brazilian states
+// Source: https://api.dataforseo.com/v3/serp/google/locations
+const DATAFORSEO_UF_CODES: Record<string, number> = {
+  AC: 20015, AL: 20017, AP: 20019, AM: 20021, BA: 20023,
+  CE: 20025, DF: 20027, ES: 20029, GO: 20031, MA: 20033,
+  MT: 20035, MS: 20037, MG: 20039, PA: 20041, PB: 20043,
+  PR: 20045, PE: 20047, PI: 20049, RJ: 20051, RN: 20053,
+  RS: 20055, RO: 20057, RR: 20059, SC: 20061, SP: 20063,
+  SE: 20065, TO: 20067,
+};
+
+function extractLocationCodeFromRegion(region: string): number {
+  const ufMatch = region.match(/\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/);
+  if (ufMatch) {
+    const code = DATAFORSEO_UF_CODES[ufMatch[1]];
+    if (code) {
+      console.log(`[DataForSEO] Location: UF=${ufMatch[1]} → code=${code} (state-level)`);
+      return code;
+    }
+  }
+  console.log(`[DataForSEO] Location: no UF found in "${region}", using 2076 (Brazil)`);
+  return 2076; // fallback: Brazil country-level
+}
+
 interface DataForSEOConfig {
   login: string;
   password: string;
@@ -944,9 +968,11 @@ export function createDataForSEOClient(config: DataForSEOConfig) {
   return async function getKeywordVolumes(
     terms: string[],
     region: string,
-    locationCode: number = 2076,    // 2076 = Brasil
+    locationCode?: number,
     languageCode: string = 'pt',
   ): Promise<TermVolumeData[]> {
+    // Auto-detect state-level location code from region string
+    const resolvedLocationCode = locationCode ?? extractLocationCodeFromRegion(region);
     if (terms.length === 0) return [];
 
     // Check cache
@@ -966,7 +992,7 @@ export function createDataForSEOClient(config: DataForSEOConfig) {
       const body = [
         {
           keywords: chunk,
-          location_code: locationCode,
+          location_code: resolvedLocationCode,
           language_code: languageCode,
         },
       ];
@@ -1184,9 +1210,10 @@ export function createDataForSEOOrganicChecker(config: DataForSEOConfig) {
     domain: string,
     terms: string[],
     region: string,
-    locationCode: number = 2076,
+    locationCode?: number,
     languageCode: string = 'pt',
   ): Promise<OrganicPresence> {
+    const resolvedLocationCode = locationCode ?? extractLocationCodeFromRegion(region);
     if (terms.length === 0) {
       return { available: false, domain, rankedTerms: [], totalRanked: 0, avgPosition: null, topPosition: null };
     }
@@ -1211,7 +1238,7 @@ export function createDataForSEOOrganicChecker(config: DataForSEOConfig) {
             },
             body: JSON.stringify([{
               keyword: term,
-              location_code: locationCode,
+              location_code: resolvedLocationCode,
               language_code: languageCode,
               device: 'desktop',
               os: 'windows',

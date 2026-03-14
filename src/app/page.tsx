@@ -302,7 +302,7 @@ export default function Home() {
             <input style={inputStyle} type="text" placeholder="Como prefere ser chamado" value={(formData as any).name || ""}
               onChange={(e: any) => updateField("name" as any, e.target.value)} />
           </Field>
-          <Field label={t.formWhatsappLabel}>
+          <Field label={`${t.formWhatsappLabel} *`} hint="Obrigatório — enviamos seu resultado por aqui">
             <input style={inputStyle} type="tel" placeholder={t.formWhatsappPlaceholder} value={formData.whatsapp}
               onChange={(e: any) => updateField("whatsapp", e.target.value)} />
           </Field>

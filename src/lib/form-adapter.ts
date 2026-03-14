@@ -92,7 +92,7 @@ export function adaptFormToInput(form: LeadFormData, locale: string): FormInput 
     region: form.region,
     address: form.address || undefined,
     ticket,
-    clientType: (form as any).clientType || 'b2c',
+    clientType: (form as any).clientType || 'b2c' as 'b2c' | 'b2b' | 'b2g',
     customerSources: form.channels,
     digitalAssets,
     differentiator: form.differentiator,

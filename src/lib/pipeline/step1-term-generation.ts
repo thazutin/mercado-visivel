@@ -29,12 +29,13 @@ CONTEXTO:
 ${context}
 
 TAREFA:
-1. Classifique o tipo de cliente deste negócio: "b2b" ou "b2c"
+1. Classifique o tipo de cliente deste negócio: "b2c", "b2b" ou "b2g"
 2. Gere 25-30 termos de busca que pessoas reais usariam no Google
 
 CLASSIFICAÇÃO clientType:
-- "b2b" se o negócio vende predominantemente para OUTRAS EMPRESAS (ex: contabilidade, assessoria jurídica empresarial, software para empresas, distribuidora, consultoria, RH, TI empresarial, fornecedores)
 - "b2c" se vende para pessoas físicas/consumidores (ex: clínica, salão, restaurante, academia, arquiteto residencial, loja)
+- "b2b" se o negócio vende predominantemente para OUTRAS EMPRESAS (ex: contabilidade, assessoria jurídica empresarial, software para empresas, distribuidora, consultoria, RH, TI empresarial, fornecedores)
+- "b2g" se vende predominantemente para GOVERNO / setor público (ex: fornecedor de licitações, empresa de obras públicas, TI para governo, uniformes para prefeituras, serviços de engenharia para órgãos públicos)
 
 REGRAS para termos:
 1. Linguagem natural — como uma pessoa digitaria no Google
@@ -42,6 +43,8 @@ REGRAS para termos:
 3. HEAD TERMS obrigatórios: a categoria genérica + região (ex: "dentista mauá") deve vir primeiro
 4. Considere a tensão: o dono diz "clínica de estética avançada", o cliente busca "botox preço campinas"
 5. Se b2b: gere termos que empresários e decisores buscam ao contratar (ex: "contabilidade para empresas", "fornecedor [produto] atacado"). Evite termos de consumidor final.
+6. Se b2g: gere termos que gestores públicos e equipes de compras buscam (ex: "licitação [produto]", "pregão [serviço]", "fornecedor [produto] governo", "ata de registro de preços [produto]"). Inclua termos de compliance e certificação.
+7. NÃO inclua nomes de cidades nos termos — a localização já é configurada separadamente.
 
 DISTRIBUIÇÃO:
 - TRANSACIONAIS (8-12): prontos para comprar/contratar
@@ -62,11 +65,11 @@ Categories: "core", "branded", "comparative", "tension"
 Gere APENAS o JSON.`;
 }
 
-export function parseTermGenerationResponse(rawResponse: string): { terms: GeneratedTerm[]; clientType: 'b2c' | 'b2b' } {
+export function parseTermGenerationResponse(rawResponse: string): { terms: GeneratedTerm[]; clientType: 'b2c' | 'b2b' | 'b2g' } {
   const cleaned = rawResponse.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
 
   let parsed: {
-    clientType?: 'b2c' | 'b2b';
+    clientType?: 'b2c' | 'b2b' | 'b2g';
     terms: Array<{
       term: string; intent: TermIntent;
       category: 'core' | 'branded' | 'comparative' | 'tension';
@@ -84,7 +87,7 @@ export function parseTermGenerationResponse(rawResponse: string): { terms: Gener
     throw new Error('Response missing "terms" array');
   }
 
-  const clientType = parsed.clientType === 'b2b' ? 'b2b' : 'b2c';
+  const clientType = parsed.clientType === 'b2b' ? 'b2b' : parsed.clientType === 'b2g' ? 'b2g' : 'b2c';
 
   const terms = parsed.terms.map(t => ({
     term: t.term.toLowerCase().trim(),
@@ -112,14 +115,14 @@ export async function executeStep1(
   input: FormInput,
   claudeClient: { createMessage: (params: any) => Promise<any> },
   options?: { model?: string; maxRetries?: number }
-): Promise<Step1Output & { inferredClientType: 'b2c' | 'b2b' }> {
+): Promise<Step1Output & { inferredClientType: 'b2c' | 'b2b' | 'b2g' }> {
   const startTime = Date.now();
   const model = options?.model ?? 'claude-sonnet-4-5-20250929';
   const maxRetries = options?.maxRetries ?? 2;
 
   const prompt = buildTermGenerationPrompt(input);
   let terms: GeneratedTerm[] = [];
-  let inferredClientType: 'b2c' | 'b2b' = 'b2c';
+  let inferredClientType: 'b2c' | 'b2b' | 'b2g' = 'b2c';
   let attempts = 0;
 
   while (attempts <= maxRetries) {

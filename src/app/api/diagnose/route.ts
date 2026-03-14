@@ -314,6 +314,7 @@ function buildDisplayData(result: any) {
     audiencia: result.audiencia || null,
     competitionIndex: result.competitionIndex || null,
     clientType: result.clientType || 'b2c',
+    pncp: result.pncp || null,
     termGeneration: {
       count: result.terms.termCount,
       model: result.terms.generationModel,

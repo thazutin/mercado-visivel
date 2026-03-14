@@ -13,12 +13,12 @@ export const leadSchema = z.object({
   // Step 2: Contato + presença digital
   name: z.string().optional().default(""),
   email: z.string().optional().default(""),
-  whatsapp: z.string().optional().default(""),
+  whatsapp: z.string().min(10, "WhatsApp é obrigatório"),
   instagram: z.string().optional().default(""),
   linkedin: z.string().optional().default(""),
 
   // Inferido pelo step1 (Claude), não declarado no form
-  clientType: z.enum(['b2c', 'b2b']).optional().default('b2c'),
+  clientType: z.enum(['b2c', 'b2b', 'b2g']).optional().default('b2c'),
 
   // Preserved for pipeline compatibility (auto-filled or defaults)
   differentiator: z.string().optional().default(""),
@@ -36,10 +36,7 @@ export const leadSchema = z.object({
   freeText: z.string().optional().default(""),
   locale: z.string().optional().default("pt"),
   coupon: z.string().optional().default(""),
-}).refine(
-  (data) => (data.email && data.email.includes("@")) || (data.whatsapp && data.whatsapp.length >= 10),
-  { message: "Informe pelo menos email ou WhatsApp", path: ["email"] },
-);
+});
 
 export type LeadFormData = z.infer<typeof leadSchema>;
 
@@ -74,5 +71,5 @@ export const stepValidation = {
     data.product.length >= 2 &&
     data.region.length >= 2,
   step2: (data: LeadFormData) =>
-    (data.email && data.email.includes("@")) || (data.whatsapp && data.whatsapp.length >= 10),
+    data.whatsapp.length >= 10,
 };

@@ -26,6 +26,7 @@ export function buildGapAnalysisPrompt(
   influence: Step4Output,
   aiVisibility?: { score: number; summary: string; likelyMentioned: boolean } | null,
   competitionIndex?: { label: string; indexValue: number; activeCompetitors: number; totalCompetitors: number } | null,
+  pncp?: { totalEncontradas: number; valorTotalEstimado: number; modalidades: { modalidade: string; count: number }[]; orgaosUnicos: number } | null,
 ): string {
   const topTermsByVolume = volumes.termVolumes
     .sort((a, b) => b.monthlyVolume - a.monthlyVolume)
@@ -72,6 +73,7 @@ ${competitorIgLines || '  Nenhum concorrente com dados disponíveis'}`;
     : '';
 
   const isB2B = input.clientType === 'b2b';
+  const isB2G = input.clientType === 'b2g';
 
   return `Você é Vero, o agente de inteligência de mercado do Virô. Você analisa dados reais — não opina, não especula. Seu tom é preciso, fundamentado, sem floreio. Direto ao ponto que importa.
 
@@ -151,6 +153,7 @@ REGRAS:
 - Revise o português antes de retornar. Nunca use palavras cortadas, incompletas ou inventadas. Todas as frases devem estar gramaticalmente corretas em português brasileiro
 - Escreva todas as frases por extenso — sem abreviações obscuras ou palavras truncadas
 - Use o índice de saturação para contextualizar as rotas: se subatendido, enfatize captura de demanda existente; se saturado, enfatize diferenciação e nicho. NUNCA mencione o valor numérico do índice nem os pesos percentuais internos no texto gerado
+${isB2G ? `- CONTEXTO B2G: Este negócio vende para GOVERNO / setor público. As rotas devem focar em: cadastro em portais de compras (ComprasNet, BEC, licitações estaduais), registro no SICAF, visibilidade em buscas de licitação, site com documentação técnica/certidões, presença em associações setoriais, e credibilidade institucional.${pncp ? ` Dados PNCP: ${pncp.totalEncontradas} contratações recentes no segmento (R$${(pncp.valorTotalEstimado / 1000).toFixed(0)}k total, ${pncp.orgaosUnicos} órgãos). Modalidades mais comuns: ${pncp.modalidades.slice(0, 3).map(m => m.modalidade).join(', ')}.` : ''}` : ''}
 ${isB2B ? `- CONTEXTO B2B: Este negócio vende para OUTRAS EMPRESAS, não consumidores finais. As rotas devem focar em: autoridade setorial, cases de empresas atendidas, presença em diretórios profissionais (OAB, CRC, CRM etc.), LinkedIn como canal primário, e indicação estruturada. Evite recomendar conteúdo de bastidores pessoal ou estratégias voltadas a consumidor final.` : ''}
 
 FORMATO DE RESPOSTA (JSON estrito, sem markdown):
@@ -246,6 +249,7 @@ export async function executeStep5(
     model?: string;
     aiVisibility?: { score: number; summary: string; likelyMentioned: boolean } | null;
     competitionIndex?: { label: string; indexValue: number; activeCompetitors: number; totalCompetitors: number } | null;
+    pncp?: { totalEncontradas: number; valorTotalEstimado: number; modalidades: { modalidade: string; count: number }[]; orgaosUnicos: number } | null;
   }
 ): Promise<Step5Output> {
   const startTime = Date.now();
@@ -255,6 +259,7 @@ export async function executeStep5(
     input, terms, volumes, sizing, influence,
     options?.aiVisibility,
     options?.competitionIndex,
+    options?.pncp,
   );
 
   const response = await claudeClient.createMessage({

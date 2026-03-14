@@ -13,7 +13,7 @@ export interface FormInput {
   region: string;                     // "Onde atende" (cidade, bairro, região)
   address?: string;                   // Endereço físico (opcional)
   ticket: number;                     // Ticket médio numérico (ajustado de range → valor)
-  clientType?: 'b2c' | 'b2b';        // Tipo de cliente: pessoas físicas ou empresas
+  clientType?: 'b2c' | 'b2b' | 'b2g'; // Tipo de cliente: pessoas, empresas ou governo
 
   // Presença digital
   customerSources: string[];          // "De onde vem seu cliente" (Google, Instagram, indicação, etc.)

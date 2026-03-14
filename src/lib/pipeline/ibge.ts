@@ -140,9 +140,6 @@ export async function getIBGEMunicipalData(cityOrRegion: string, originalRegion?
 
 const POPULACAO_BRASIL = 215_000_000;
 
-// Cache de todos os municípios (carregado uma vez)
-let municipiosCache: { id: number; nome: string; lat: number; lng: number }[] | null = null;
-
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -348,30 +345,43 @@ async function getMunicipioInfo(city: string, state: string): Promise<MunicipioI
   };
 }
 
-async function getAllMunicipiosWithCoords(): Promise<{ id: number; nome: string; lat: number; lng: number }[]> {
-  if (municipiosCache) return municipiosCache;
+/**
+ * Busca municípios vizinhos usando a microrregião do IBGE como proxy de proximidade.
+ * Municípios na mesma microrregião são geograficamente próximos.
+ * Retorna IDs dos vizinhos (excluindo o principal) para buscar população.
+ */
+async function getMunicipiosVizinhosPorMicrorregiao(
+  municipioId: number,
+  uf: string,
+): Promise<number[]> {
+  try {
+    // Busca todos municípios da UF
+    const res = await fetch(
+      `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`,
+    );
+    if (!res.ok) return [];
+    const municipios = await res.json();
 
-  // API IBGE com coordenadas via malha municipal
-  const res = await fetch(
-    'https://servicodados.ibge.gov.br/api/v1/localidades/municipios',
-  );
-  if (!res.ok) return [];
-  const all = await res.json();
+    // Encontra a microrregião do município principal
+    const principal = municipios.find((m: any) => Number(m.id) === municipioId);
+    if (!principal?.microrregiao?.id) {
+      console.warn(`[IBGE Vizinhos] Microrregião não encontrada para id=${municipioId}`);
+      return [];
+    }
+    const microId = principal.microrregiao.id;
+    const microNome = principal.microrregiao.nome;
 
-  // A API de localidades não retorna lat/lng diretamente.
-  // Usamos a API de malhas para centroides, mas isso é pesado.
-  // Alternativa: usar a relação município→microrregião→mesorregião
-  // para estimativa. Para o MVP, buscaremos população em batch
-  // apenas do município principal + vizinhos via nome similar.
-  // A versão completa com Haversine precisa de um dataset de coordenadas.
+    // Filtra municípios na mesma microrregião
+    const vizinhos = municipios
+      .filter((m: any) => m.microrregiao?.id === microId && Number(m.id) !== municipioId)
+      .map((m: any) => Number(m.id));
 
-  municipiosCache = all.map((m: any) => ({
-    id: Number(m.id),
-    nome: m.nome,
-    lat: 0,
-    lng: 0,
-  }));
-  return municipiosCache!;
+    console.log(`[IBGE Vizinhos] Microrregião "${microNome}" (id=${microId}): ${vizinhos.length} vizinhos encontrados`);
+    return vizinhos;
+  } catch (err) {
+    console.warn('[IBGE Vizinhos] Erro:', (err as Error).message);
+    return [];
+  }
 }
 
 async function getPopulacaoTotal(municipioIds: number[]): Promise<number> {
@@ -406,29 +416,6 @@ async function getPopulacaoTotal(municipioIds: number[]): Promise<number> {
   return total;
 }
 
-/**
- * Busca municípios no raio usando lat/lng fornecidos externamente.
- * Requer dataset com coordenadas — usa fallback para apenas o município principal.
- */
-async function getMunicipiosNoRaio(
-  lat: number,
-  lng: number,
-  raioKm: number,
-): Promise<number[]> {
-  // Se não temos coordenadas válidas, retorna vazio
-  if (!lat || !lng) return [];
-
-  const all = await getAllMunicipiosWithCoords();
-
-  // Se o cache não tem coordenadas (MVP), não podemos filtrar por raio
-  // Retornamos vazio — o caller usará só a população do município principal
-  const withCoords = all.filter(m => m.lat !== 0 && m.lng !== 0);
-  if (withCoords.length === 0) return [];
-
-  return withCoords
-    .filter(m => haversineKm(lat, lng, m.lat, m.lng) <= raioKm)
-    .map(m => m.id);
-}
 
 /**
  * Orquestra busca de audiência estimada.
@@ -464,19 +451,24 @@ export async function fetchAudienciaEstimada(
     }
     console.log(`[IBGE Audiência] Município: ${info.nome}, pop=${info.populacao}, area=${info.areaKm2}km², densidade=${info.densidadeHabKm2.toFixed(0)} hab/km²`);
 
-    // Usa lat/lng do Google Places se disponível, senão não faz raio
-    const useLat = lat || info.lat;
-    const useLng = lng || info.lng;
-
     // 2. Detecta densidade → define raio
     const densidade = detectarDensidade(info.populacao, info.densidadeHabKm2 > 0 ? info.densidadeHabKm2 : undefined);
     const raioKm = getRaioKm(densidade);
 
-    // 3. População do raio
-    // A API do IBGE não retorna coordenadas, então o cálculo por raio (Haversine)
-    // não funciona — getAllMunicipiosWithCoords retorna lat/lng=0 para todos.
-    // Usamos a população do município principal como base.
-    const populacaoRaio = info.populacao;
+    // 3. População do raio — soma município principal + vizinhos na mesma microrregião
+    let populacaoRaio = info.populacao;
+    try {
+      const vizinhosIds = await getMunicipiosVizinhosPorMicrorregiao(info.id, info.uf);
+      if (vizinhosIds.length > 0) {
+        const popVizinhos = await getPopulacaoTotal(vizinhosIds);
+        if (popVizinhos > 0) {
+          populacaoRaio += popVizinhos;
+          console.log(`[IBGE Audiência] +${vizinhosIds.length} vizinhos: pop extra=${popVizinhos}, total raio=${populacaoRaio}`);
+        }
+      }
+    } catch (err) {
+      console.warn('[IBGE Audiência] Vizinhos falhou, usando só município principal:', (err as Error).message);
+    }
 
     console.log(`[IBGE Audiência] ${info.nome}: pop=${info.populacao} (IBGE ${info.ibgeAno}), densidade=${densidade}, raio=${raioKm}km, popRaio=${populacaoRaio}`);
 

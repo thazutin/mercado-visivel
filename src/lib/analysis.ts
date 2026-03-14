@@ -28,6 +28,7 @@ import {
   createMapsCompetitionSearch,
 } from "./pipeline/external-services";
 import { calcularIndiceSaturacao, type CompetitionIndex } from "./pipeline/competition-index";
+import { buscarContratacoesPNCP, type PNCPResumo } from "./pipeline/pncp";
 import type {
   FormInput,
   Step1Output,
@@ -180,7 +181,7 @@ export async function runInstantAnalysis(
   // STEP 1 — Term Generation (Claude) + clientType Inference
   // =========================================================================
   let step1: Step1Output;
-  let inferredClientType: 'b2c' | 'b2b' = (input.clientType as any) || 'b2c';
+  let inferredClientType: 'b2c' | 'b2b' | 'b2g' = (input.clientType as any) || 'b2c';
   try {
     const step1Result = await executeStep1(input, claude, {
       model: "claude-sonnet-4-5-20250929",
@@ -831,6 +832,26 @@ Responda APENAS em JSON, sem markdown:
   }
 
   // =========================================================================
+  // STEP 4c — PNCP (Contratações Públicas) — only for B2G
+  // =========================================================================
+  let pncpData: PNCPResumo | null = null;
+  if (inferredClientType === 'b2g') {
+    try {
+      pncpData = await withTimeout(
+        buscarContratacoesPNCP(input.product, extractedState || undefined),
+        12_000,
+        "PNCP",
+      );
+      if (pncpData && pncpData.totalEncontradas > 0) {
+        sourcesUsed.push("pncp");
+        console.log(`[Pipeline] PNCP OK: ${pncpData.totalEncontradas} contratações, R$${(pncpData.valorTotalEstimado / 1000).toFixed(0)}k`);
+      }
+    } catch (err) {
+      console.warn("[Pipeline] PNCP failed/skipped:", (err as Error).message);
+    }
+  }
+
+  // =========================================================================
   // STEP 5 — Gap Analysis + Work Routes (Claude with real data + AI visibility)
   // =========================================================================
   let step5: Step5Output;
@@ -848,6 +869,7 @@ Responda APENAS em JSON, sem markdown:
         activeCompetitors: competitionIndex.activeCompetitors,
         totalCompetitors: competitionIndex.totalCompetitors,
       } : null,
+      pncp: pncpData,
     });
     sourcesUsed.push("claude_gap_analysis");
     console.log(`[Pipeline] Step 5 OK: gap analysis + work routes complete`);
@@ -936,6 +958,7 @@ Responda APENAS em JSON, sem markdown:
     audiencia: audienciaDisplay,
     competitionIndex: competitionIndex || null,
     clientType: inferredClientType,
+    pncp: pncpData,
     aiVisibility: aiVisibility ? {
       score: aiVisibility.score,
       summary: aiVisibility.summary,
