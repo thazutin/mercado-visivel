@@ -269,6 +269,25 @@ export default function Home() {
               onChange={(e: any) => updateField("product", e.target.value)} />
           </Field>
 
+          <Field label="Seus clientes são:" hint="Isso adapta a análise para o seu mercado">
+            <div style={{ display: "flex", gap: 8 }}>
+              {[
+                { value: "b2c" as const, label: "Pessoas físicas" },
+                { value: "b2b" as const, label: "Outras empresas" },
+              ].map((opt) => (
+                <button key={opt.value} type="button" onClick={() => updateField("clientType" as any, opt.value)} style={{
+                  flex: 1, padding: "12px 16px", borderRadius: 10, fontSize: 13, fontWeight: 500,
+                  cursor: "pointer", transition: "all 0.15s",
+                  border: `1.5px solid ${(formData as any).clientType === opt.value || (!((formData as any).clientType) && opt.value === "b2c") ? V.amber : V.fog}`,
+                  background: (formData as any).clientType === opt.value || (!((formData as any).clientType) && opt.value === "b2c") ? V.amberWash : V.white,
+                  color: (formData as any).clientType === opt.value || (!((formData as any).clientType) && opt.value === "b2c") ? V.amber : V.zinc,
+                }}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </Field>
+
           <Field label={t.formDiffLabel} hint={t.formDiffHint}>
             <input style={inputStyle} type="text" placeholder={t.formDiffPlaceholder} value={formData.differentiator}
               onChange={(e: any) => updateField("differentiator", e.target.value)} />

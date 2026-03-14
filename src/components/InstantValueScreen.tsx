@@ -35,8 +35,15 @@ interface Results {
   audiencia?: {
     populacaoRaio: number; raioKm: number | null; densidade: 'alta' | 'baixa' | 'nacional';
     municipioNome: string; targetProfile: string; estimatedPercentage: number;
-    audienciaTarget: number; rationale: string;
+    audienciaTarget: number; rationale: string; ibgeAno?: number;
   } | null;
+  competitionIndex?: {
+    totalCompetitors: number; activeCompetitors: number; totalSearchVolume: number;
+    indexValue: number; label: 'subatendido' | 'equilibrado' | 'saturado';
+    labelText: string; color: 'green' | 'yellow' | 'red';
+    competitors: { name: string; hasWebsite: boolean; hasInstagram: boolean; mapsPosition?: number; rating?: number; reviewCount?: number }[];
+  } | null;
+  clientType?: 'b2c' | 'b2b';
 }
 interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; leadId?: string; }
 
@@ -51,13 +58,13 @@ function fmtPop(n: number): string {
   return n.toLocaleString("pt-BR");
 }
 
-function inferIntent(term: string): { label: string; color: string } {
+function inferIntent(term: string, isB2B?: boolean): { label: string; color: string } {
   const t = term.toLowerCase();
   if (/contrat|preço|preco|quanto custa|orçamento|orcamento|comprar|agendar|marcar|valor/.test(t)) {
     return { label: "Transacional", color: V.teal };
   }
   if (/perto|próximo|proximo|bairro|centro|zona|região|regiao|em\s+\w+$/.test(t)) {
-    return { label: "Local", color: "#3B82F6" };
+    return { label: isB2B ? "Setorial" : "Local", color: "#3B82F6" };
   }
   return { label: "Informacional", color: V.ash };
 }
@@ -111,6 +118,11 @@ export default function InstantValueScreen({ product, region, results, onCheckou
   const aud = results.audiencia;
   const hasAudiencia = aud && aud.audienciaTarget > 0;
   const hasInfluence = results.influencePercent > 0;
+  const ci = results.competitionIndex;
+  const hasCi = ci && (ci.totalSearchVolume > 0 || ci.totalCompetitors > 0);
+  const isB2B = results.clientType === 'b2b';
+  const audienciaLabel = isB2B ? 'empresas no seu mercado' : 'pessoas no seu mercado';
+  const audienciaUnit = isB2B ? 'empresas' : 'pessoas';
 
   // Audiência sublabel
   const audSublabel = aud
@@ -144,7 +156,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 ~{fmtPop(aud!.audienciaTarget)}
               </div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>pessoas no seu mercado</p>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>{audienciaLabel}</p>
               <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>{audSublabel}</p>
             </div>
           ) : (
@@ -180,13 +192,40 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 {results.influencePercent}%
               </div>
               <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>de influência digital</p>
-              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>Google + Instagram + AI</p>
+              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>{isB2B ? 'Google + LinkedIn + Instagram' : 'Google + Instagram + AI'}</p>
             </div>
           ) : (
             <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}` }}>
               <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.coral, letterSpacing: "-0.03em", lineHeight: 1 }}>0%</div>
               <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>de influência digital</p>
               <p style={{ fontSize: 10, color: V.coral, margin: "4px 0 0" }}>Invisível no mercado</p>
+            </div>
+          )}
+
+          {/* (d) Índice de Saturação */}
+          {hasCi && (
+            <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}` }}>
+              {ci!.activeCompetitors === 0 && ci!.totalCompetitors === 0 ? (
+                <>
+                  <div style={{ fontFamily: V.display, fontSize: 18, fontWeight: 600, color: V.teal, lineHeight: 1.3 }}>Sem concorrência digital</div>
+                  <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>identificada no seu raio</p>
+                  <span style={{ display: "inline-block", marginTop: 8, fontFamily: V.mono, fontSize: 10, padding: "3px 10px", borderRadius: 100, background: "rgba(45,155,131,0.12)", color: V.teal, fontWeight: 600 }}>Oportunidade</span>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1, color: ci!.color === 'green' ? V.teal : ci!.color === 'yellow' ? V.amber : V.coral }}>
+                    {ci!.indexValue.toLocaleString("pt-BR")}
+                  </div>
+                  <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>buscas por concorrente ativo</p>
+                  <span style={{
+                    display: "inline-block", marginTop: 8, fontFamily: V.mono, fontSize: 10, padding: "3px 10px", borderRadius: 100, fontWeight: 600,
+                    background: ci!.color === 'green' ? "rgba(45,155,131,0.12)" : ci!.color === 'yellow' ? V.amberWash : V.coralWash,
+                    color: ci!.color === 'green' ? V.teal : ci!.color === 'yellow' ? V.amber : V.coral,
+                  }}>
+                    {ci!.labelText}
+                  </span>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -211,7 +250,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
                 <span style={{ fontSize: 12, color: V.zinc }}>População no raio</span>
                 <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>
-                  {fmtPop(aud.populacaoRaio)} pessoas
+                  {fmtPop(aud.populacaoRaio)} {audienciaUnit}
                   {aud.densidade !== "nacional" && aud.raioKm && (
                     <span style={{ fontSize: 11, fontWeight: 400, color: V.ash }}> em {aud.raioKm}km</span>
                   )}
@@ -226,13 +265,13 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                   {aud.densidade === "nacional" ? (
                     <span style={{ background: V.amberWash, color: V.amber, padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600 }}>Nacional</span>
                   ) : aud.densidade === "alta"
-                    ? "Alta densidade populacional"
-                    : "Baixa densidade populacional"}
+                    ? isB2B ? "Alta densidade empresarial" : "Alta densidade populacional"
+                    : isB2B ? "Baixa densidade empresarial" : "Baixa densidade populacional"}
                 </span>
               </div>
               {aud.targetProfile && (
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
-                  <span style={{ fontSize: 12, color: V.zinc }}>Perfil target</span>
+                  <span style={{ fontSize: 12, color: V.zinc }}>{isB2B ? 'Empresa-alvo' : 'Perfil target'}</span>
                   <span style={{ fontSize: 12, fontWeight: 500, color: V.night, textAlign: "right", maxWidth: "60%" }}>{aud.targetProfile}</span>
                 </div>
               )}
@@ -240,7 +279,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${V.fog}` }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Audiência estimada</span>
                   <span style={{ fontSize: 16, fontWeight: 700, color: V.teal }}>
-                    ~{fmtPop(aud.audienciaTarget)} pessoas
+                    ~{fmtPop(aud.audienciaTarget)} {audienciaUnit}
                     <span style={{ fontSize: 11, fontWeight: 400, color: V.ash, marginLeft: 4 }}>
                       ({Math.round(aud.estimatedPercentage * 100)}%)
                     </span>
@@ -276,7 +315,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           {(() => {
             const maxVol = Math.max(...results.terms.slice(0, 15).map(t => t.volume), 0);
             return results.terms.slice(0, 15).map((t, i) => {
-              const intent = inferIntent(t.term);
+              const intent = inferIntent(t.term, isB2B);
               const isTop = t.volume > 0 && t.volume === maxVol;
               const pos = t.position && t.position !== "—" ? Number(t.position) : null;
               const posLabel = pos ? (pos <= 3 ? "Top 3" : pos <= 10 ? "Top 10" : `#${pos}`) : "—";
@@ -312,6 +351,25 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           })()}
           {results.terms.length > 15 && (
             <p style={{ fontSize: 11, color: V.ash, marginTop: 8, textAlign: "center" }}>+{results.terms.length - 15} termos no diagnóstico completo</p>
+          )}
+          {/* Concorrentes ativos no raio */}
+          {ci && ci.activeCompetitors > 0 && (
+            <div style={{ marginTop: 16, padding: "12px", background: V.cloud, borderRadius: 8 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: V.night, margin: "0 0 8px" }}>
+                {ci.activeCompetitors} concorrente{ci.activeCompetitors !== 1 ? 's' : ''} ativ{ci.activeCompetitors !== 1 ? 'os' : 'o'} no seu raio
+              </p>
+              {ci.competitors.filter(c => c.hasWebsite || c.hasInstagram).slice(0, 8).map((c, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0", fontSize: 12, color: V.zinc, borderBottom: i < Math.min(ci.competitors.filter(cc => cc.hasWebsite || cc.hasInstagram).length, 8) - 1 ? `1px solid ${V.fog}` : "none" }}>
+                  <span style={{ flex: 1 }}>{c.name}</span>
+                  <span style={{ display: "flex", gap: 4, fontSize: 10 }}>
+                    {c.hasWebsite && <span title="Site" style={{ background: V.tealWash, color: V.teal, padding: "1px 5px", borderRadius: 4, fontFamily: V.mono }}>Site</span>}
+                    {c.hasInstagram && <span title="Instagram" style={{ background: "#E1306C18", color: "#E1306C", padding: "1px 5px", borderRadius: 4, fontFamily: V.mono }}>IG</span>}
+                  </span>
+                  {c.rating && <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>★{c.rating}</span>}
+                  {c.mapsPosition && <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>#{c.mapsPosition}</span>}
+                </div>
+              ))}
+            </div>
           )}
           <p style={{ fontSize: 10, color: V.ash, margin: "12px 0 0", fontFamily: V.mono }}>
             Dados: DataForSEO (volume + SERP)

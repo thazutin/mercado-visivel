@@ -21,6 +21,7 @@ export interface Lead {
   differentiator?: string;
   competitors?: string[];
   challenge?: string;
+  client_type?: string;
   status: "pending" | "processing" | "done" | "paid";
 }
 

@@ -264,6 +264,14 @@ export function createApifyMapsScraper(config: ApifyConfig) {
         openNow: details?.regularOpeningHours?.openNow,
       };
 
+      // Adiciona dados brutos dos concorrentes no Maps (para Competition Index)
+      (presence as any)._mapsCompetitors = places.map((p: any) => ({
+        name: p.displayName?.text || '',
+        website: p.websiteUri || details?.websiteUri || '',
+        rating: p.rating,
+        reviewCount: p.userRatingCount,
+      }));
+
       if (config.cache) {
         await setCache(config.cache, cacheKey, 'google_places', presence, 14);
       }
@@ -272,6 +280,53 @@ export function createApifyMapsScraper(config: ApifyConfig) {
     } catch (err) {
       console.error('[Maps] Erro ao consultar Google Places API:', err);
       return { found: false, businessName: null, inLocalPack: false };
+    }
+  };
+}
+
+// --- MAPS COMPETITION SEARCH (para Competition Index) ---
+
+export function createMapsCompetitionSearch(config: ApifyConfig) {
+  return async function searchCompetitors(
+    product: string,
+    region: string,
+  ): Promise<{ name: string; website: string; rating?: number; reviewCount?: number }[]> {
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    if (!apiKey) return [];
+
+    try {
+      const searchRes = await fetch('https://places.googleapis.com/v1/places:searchText', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask': 'places.id,places.displayName,places.rating,places.userRatingCount,places.websiteUri',
+        },
+        body: JSON.stringify({
+          textQuery: `${product} ${region}`,
+          languageCode: 'pt-BR',
+          maxResultCount: 20,
+        }),
+      });
+
+      if (!searchRes.ok) {
+        console.error('[MapsCompetition] Search failed:', searchRes.status);
+        return [];
+      }
+
+      const data = await searchRes.json();
+      const places = data.places || [];
+      console.log(`[MapsCompetition] Found ${places.length} competitors for "${product}" in "${region}"`);
+
+      return places.map((p: any) => ({
+        name: p.displayName?.text || '',
+        website: p.websiteUri || '',
+        rating: p.rating,
+        reviewCount: p.userRatingCount,
+      }));
+    } catch (err) {
+      console.error('[MapsCompetition] Error:', err);
+      return [];
     }
   };
 }

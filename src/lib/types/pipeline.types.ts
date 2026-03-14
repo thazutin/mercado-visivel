@@ -13,6 +13,7 @@ export interface FormInput {
   region: string;                     // "Onde atende" (cidade, bairro, região)
   address?: string;                   // Endereço físico (opcional)
   ticket: number;                     // Ticket médio numérico (ajustado de range → valor)
+  clientType?: 'b2c' | 'b2b';        // Tipo de cliente: pessoas físicas ou empresas
 
   // Presença digital
   customerSources: string[];          // "De onde vem seu cliente" (Google, Instagram, indicação, etc.)
@@ -418,6 +419,26 @@ export interface AudienciaDisplay {
   audienciaTarget: number;
   rationale: string;
   ibgeAno?: number;
+}
+
+// --- COMPETITION INDEX ---
+
+export interface CompetitionIndex {
+  totalCompetitors: number;
+  activeCompetitors: number;
+  totalSearchVolume: number;
+  indexValue: number;
+  label: 'subatendido' | 'equilibrado' | 'saturado';
+  labelText: string;
+  color: 'green' | 'yellow' | 'red';
+  competitors: {
+    name: string;
+    hasWebsite: boolean;
+    hasInstagram: boolean;
+    mapsPosition?: number;
+    rating?: number;
+    reviewCount?: number;
+  }[];
 }
 
 // --- ERROR HANDLING ---

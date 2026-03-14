@@ -13,6 +13,7 @@ export const leadSchema = z.object({
   placeId: z.string().optional().default(""),
   lat: z.number().optional(),
   lng: z.number().optional(),
+  clientType: z.enum(['b2c', 'b2b']).optional().default('b2c'),
 
   // Step 2: Contato
   email: z.string().email("Email é obrigatório"),
@@ -44,6 +45,7 @@ export const initialFormData: LeadFormData = {
   region: "",
   address: "",
   placeId: "",
+  clientType: "b2c" as const,
   channels: [],
   digitalPresence: [],
   customerDescription: "",

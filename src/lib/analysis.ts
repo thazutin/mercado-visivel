@@ -25,7 +25,9 @@ import {
   createDataForSEOClient,
   createPerplexityAIVisibilityChecker,
   createDataForSEOOrganicChecker,
+  createMapsCompetitionSearch,
 } from "./pipeline/external-services";
+import { calcularIndiceSaturacao, type CompetitionIndex } from "./pipeline/competition-index";
 import type {
   FormInput,
   Step1Output,
@@ -678,14 +680,65 @@ Responda APENAS em JSON, sem markdown:
 
   const webInfluence: WebInfluence = { available: false };
 
+  // LinkedIn check for B2B
+  let linkedinPresent = false;
+  if (input.clientType === 'b2b' && process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD) {
+    try {
+      const organicChecker = createDataForSEOOrganicChecker({
+        login: process.env.DATAFORSEO_LOGIN,
+        password: process.env.DATAFORSEO_PASSWORD,
+      });
+      const linkedinResult = await withTimeout(
+        organicChecker('linkedin.com/company', [`"${input.businessName || input.product}" site:linkedin.com/company`], input.region),
+        10_000,
+        "LinkedIn Check",
+      );
+      linkedinPresent = linkedinResult.totalRanked > 0;
+      console.log(`[Pipeline] LinkedIn B2B check: present=${linkedinPresent}`);
+    } catch (err) {
+      console.warn('[Pipeline] LinkedIn check failed:', (err as Error).message);
+    }
+  }
+
   const step4: Step4Output = calculateCompositeInfluence(
     googleInfluence,
     instagramInfluence,
     webInfluence,
     organicPresence,
+    input.clientType,
+    linkedinPresent,
   );
 
   console.log(`[Pipeline] Step 4 OK: influence ${step4.influence.totalInfluence}%`);
+
+  // =========================================================================
+  // COMPETITION INDEX — Índice de Saturação de Mercado
+  // =========================================================================
+  let competitionIndex: CompetitionIndex | null = null;
+  try {
+    if (apifyConfig && process.env.GOOGLE_PLACES_API_KEY) {
+      const competitionSearch = createMapsCompetitionSearch(apifyConfig);
+      const shortRegion = input.region.split(',')[0].trim();
+      const competitorResults = await withTimeout(
+        competitionSearch(input.product, shortRegion),
+        10_000,
+        "MapsCompetition",
+      );
+      if (competitorResults.length > 0) {
+        // Mapeia para o formato esperado por calcularIndiceSaturacao
+        const mapsForIndex = competitorResults.map(c => ({
+          title: c.name,
+          website: c.website,
+          rating: c.rating,
+          reviewCount: c.reviewCount,
+        }));
+        competitionIndex = calcularIndiceSaturacao(mapsForIndex, totalMonthlyVolume);
+        sourcesUsed.push("maps_competition");
+      }
+    }
+  } catch (err) {
+    console.warn("[Pipeline] Competition Index failed:", (err as Error).message);
+  }
 
   // =========================================================================
   // AUDIÊNCIA ESTIMADA (IBGE + Claude Haiku) — roda em paralelo com AI Visibility
@@ -708,6 +761,7 @@ Responda APENAS em JSON, sem markdown:
         input.differentiator || input.product,
         estimada.populacaoRaio,
         claude,
+        input.clientType || 'b2c',
       );
       return { estimada, target };
     } catch (err) {
@@ -776,6 +830,12 @@ Responda APENAS em JSON, sem markdown:
         score: aiVisibility.score,
         summary: aiVisibility.summary,
         likelyMentioned: aiVisibility.likelyMentioned,
+      } : null,
+      competitionIndex: competitionIndex ? {
+        label: competitionIndex.label,
+        indexValue: competitionIndex.indexValue,
+        activeCompetitors: competitionIndex.activeCompetitors,
+        totalCompetitors: competitionIndex.totalCompetitors,
       } : null,
     });
     sourcesUsed.push("claude_gap_analysis");
@@ -863,6 +923,8 @@ Responda APENAS em JSON, sem markdown:
     // @ts-ignore — extending Momento1Result with runtime data
     ibgeData: ibgeData || null,
     audiencia: audienciaDisplay,
+    competitionIndex: competitionIndex || null,
+    clientType: input.clientType || 'b2c',
     aiVisibility: aiVisibility ? {
       score: aiVisibility.score,
       summary: aiVisibility.summary,

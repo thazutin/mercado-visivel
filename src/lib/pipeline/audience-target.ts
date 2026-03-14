@@ -15,19 +15,40 @@ export async function inferirTargetAudiencia(
   descricao: string,
   populacaoRaio: number,
   claudeClient: { createMessage: (params: any) => Promise<any> },
+  clientType: 'b2c' | 'b2b' = 'b2c',
 ): Promise<AudienciaTarget | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
 
   try {
-    console.log(`[Audience Target] START: segmento="${segmento}", pop=${populacaoRaio}`);
+    const isB2B = clientType === 'b2b';
+    const populacaoLabel = isB2B ? 'empresas estimadas' : 'população local';
+    // B2B: estima ~1 empresa para cada 8 habitantes (ratio médio BR)
+    const populacaoBase = isB2B ? Math.round(populacaoRaio / 8) : populacaoRaio;
+
+    console.log(`[Audience Target] START: segmento="${segmento}", pop=${populacaoRaio}, clientType=${clientType}, base=${populacaoBase}`);
     const res = await claudeClient.createMessage({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 500,
       messages: [
         {
           role: "user",
-          content: `Dado o segmento de negócio abaixo, estime o percentual da população local que representa o público-alvo potencial.
+          content: isB2B
+            ? `Dado o segmento de negócio abaixo (B2B — vende para OUTRAS EMPRESAS), estime o percentual das empresas locais que representam clientes potenciais.
+
+Segmento: ${segmento}
+Descrição: ${descricao}
+Empresas estimadas na região: ~${populacaoBase.toLocaleString('pt-BR')}
+
+Responda APENAS com JSON válido, sem markdown:
+{
+  "targetProfile": "tipo de empresa-cliente (máx 60 chars, ex: PMEs do setor de serviços com 2-20 funcionários)",
+  "estimatedPercentage": 0.XX,
+  "rationale": "justificativa em 1 frase"
+}
+
+Considere: porte típico da empresa-cliente, setor de atuação, necessidade do serviço. Seja conservador — percentuais acima de 0.30 são raros.`
+            : `Dado o segmento de negócio abaixo, estime o percentual da população local que representa o público-alvo potencial.
 
 Segmento: ${segmento}
 Descrição: ${descricao}
@@ -59,9 +80,9 @@ Considere fatores como: faixa etária típica do cliente, poder aquisitivo neces
     const parsed = JSON.parse(jsonMatch[0]);
 
     const percentage = Math.min(Math.max(parsed.estimatedPercentage || 0.05, 0.01), 0.50);
-    const audienciaTarget = Math.round(populacaoRaio * percentage);
+    const audienciaTarget = Math.round(populacaoBase * percentage);
 
-    console.log(`[Audience Target] ${parsed.targetProfile}: ${(percentage * 100).toFixed(1)}% → ${audienciaTarget.toLocaleString("pt-BR")} pessoas`);
+    console.log(`[Audience Target] ${parsed.targetProfile}: ${(percentage * 100).toFixed(1)}% → ${audienciaTarget.toLocaleString("pt-BR")} ${isB2B ? 'empresas' : 'pessoas'}`);
 
     return {
       targetProfile: (parsed.targetProfile || "Público geral").slice(0, 60),

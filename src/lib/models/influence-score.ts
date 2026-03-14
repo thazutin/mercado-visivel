@@ -267,6 +267,8 @@ export function calculateCompositeInfluence(
   instagram: InstagramInfluence,
   webData: WebInfluence,
   organicPresence?: OrganicPresence | null,
+  clientType?: 'b2c' | 'b2b',
+  linkedinPresent?: boolean,
 ): Step4Output {
   const startTime = Date.now();
 
@@ -286,12 +288,29 @@ export function calculateCompositeInfluence(
   const webScore = webResult.score;
   const webAvailable = webResult.available;
 
-  // Pesos baseados na disponibilidade
+  // Pesos baseados na disponibilidade e tipo de cliente
+  const isB2B = clientType === 'b2b';
   let googleWeight: number;
   let instagramWeight: number;
   let webWeight: number;
+  let linkedinWeight: number = 0;
+  let linkedinScore: number = 0;
 
-  if (webAvailable && instagramAvailable) {
+  if (isB2B) {
+    // B2B: Google 50%, Instagram 20%, LinkedIn 30%
+    linkedinScore = linkedinPresent ? 0.7 : 0;
+    if (instagramAvailable) {
+      googleWeight = 0.50;
+      instagramWeight = 0.20;
+      linkedinWeight = 0.30;
+      webWeight = 0;
+    } else {
+      googleWeight = 0.60;
+      instagramWeight = 0;
+      linkedinWeight = 0.40;
+      webWeight = 0;
+    }
+  } else if (webAvailable && instagramAvailable) {
     googleWeight = 0.50;
     instagramWeight = 0.30;
     webWeight = 0.20;
@@ -312,7 +331,8 @@ export function calculateCompositeInfluence(
   const totalInfluence = Math.round(
     (googleScore * googleWeight +
      instagramScore * instagramWeight +
-     webScore * webWeight) * 100
+     webScore * webWeight +
+     linkedinScore * linkedinWeight) * 100
   );
 
   const sourcesUsed: string[] = ['google_serp'];

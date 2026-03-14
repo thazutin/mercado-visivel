@@ -15,6 +15,7 @@ export const INTENT_WEIGHTS: Record<TermIntent, number> = {
 
 export function buildTermGenerationPrompt(input: FormInput): string {
   // Build context from whatever is available
+  const isB2B = input.clientType === 'b2b';
   const context = [
     `NEGÓCIO: ${input.product}`,
     input.differentiator ? `DIFERENCIAL: ${input.differentiator}` : null,
@@ -22,6 +23,7 @@ export function buildTermGenerationPrompt(input: FormInput): string {
     input.address ? `ENDEREÇO: ${input.address}` : null,
     input.customerDescription ? `COMO O CLIENTE DESCREVE: ${input.customerDescription}` : null,
     input.ticket ? `TICKET MÉDIO: R$${input.ticket}` : null,
+    isB2B ? `TIPO DE CLIENTE: B2B (vende para outras empresas)` : null,
   ].filter(Boolean).join('\n');
 
   return `Você é um especialista em marketing local e comportamento de busca do consumidor brasileiro.
@@ -53,6 +55,11 @@ FORMATO (JSON, sem markdown):
 }
 
 Categories: "core", "branded", "comparative", "tension"
+${isB2B ? `
+INSTRUÇÃO B2B: Este negócio vende para OUTRAS EMPRESAS, não consumidores finais.
+Gere termos que empresários e decisores buscam ao contratar esse serviço.
+Exemplos de padrão B2B: "contabilidade para empresas", "escritório contábil CNPJ", "assessoria jurídica empresarial", "fornecedor [produto] atacado".
+Evite termos de consumidor final.` : ''}
 Gere APENAS o JSON.`;
 }
 

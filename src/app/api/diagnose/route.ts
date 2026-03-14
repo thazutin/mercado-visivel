@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
         free_text: formData.freeText || "",
         locale,
         coupon: formData.coupon || "",
+        client_type: formData.clientType || "b2c",
         status: "processing",
       });
     } catch (dbError) {
@@ -308,6 +309,8 @@ function buildDisplayData(result: any) {
     },
     aiVisibility: result.aiVisibility || null,
     audiencia: result.audiencia || null,
+    competitionIndex: result.competitionIndex || null,
+    clientType: result.clientType || 'b2c',
     termGeneration: {
       count: result.terms.termCount,
       model: result.terms.generationModel,

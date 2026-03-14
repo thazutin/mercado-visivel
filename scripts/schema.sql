@@ -150,4 +150,13 @@ begin
   if not exists (select 1 from information_schema.columns where table_name='diagnoses' and column_name='audiencia') then
     alter table public.diagnoses add column audiencia jsonb;
   end if;
+  if not exists (select 1 from information_schema.columns where table_name='diagnoses' and column_name='competition_index') then
+    alter table public.diagnoses add column competition_index jsonb;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='diagnoses' and column_name='client_type') then
+    alter table public.diagnoses add column client_type text default 'b2c';
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name='leads' and column_name='client_type') then
+    alter table public.leads add column client_type text default 'b2c';
+  end if;
 end $$;

@@ -25,6 +25,7 @@ export function buildGapAnalysisPrompt(
   sizing: Step3Output,
   influence: Step4Output,
   aiVisibility?: { score: number; summary: string; likelyMentioned: boolean } | null,
+  competitionIndex?: { label: string; indexValue: number; activeCompetitors: number; totalCompetitors: number } | null,
 ): string {
   const topTermsByVolume = volumes.termVolumes
     .sort((a, b) => b.monthlyVolume - a.monthlyVolume)
@@ -63,6 +64,15 @@ ${competitorIgLines || '  Nenhum concorrente com dados disponíveis'}`;
   Provavelmente mencionado: ${aiVisibility.likelyMentioned ? 'Sim' : 'Não'}`
     : 'VISIBILIDADE EM AI: Não avaliada';
 
+  const competitionSection = competitionIndex
+    ? `ÍNDICE DE SATURAÇÃO:
+  Concorrentes no Maps: ${competitionIndex.totalCompetitors}
+  Concorrentes ativos (com site ou Instagram): ${competitionIndex.activeCompetitors}
+  Classificação: ${competitionIndex.label} (${competitionIndex.indexValue} buscas por concorrente ativo)`
+    : '';
+
+  const isB2B = input.clientType === 'b2b';
+
   return `Você é Vero, o agente de inteligência de mercado do Virô. Você analisa dados reais — não opina, não especula. Seu tom é preciso, fundamentado, sem floreio. Direto ao ponto que importa.
 
 Analise os dados abaixo e:
@@ -98,6 +108,8 @@ INFLUÊNCIA POR CANAL:
 ${instagramSection}
 
 ${aiVisibilitySection}
+
+${competitionSection}
 
 TAREFA:
 
@@ -138,6 +150,8 @@ REGRAS:
   CERTO: "Seu Instagram tem engajamento baixo comparado aos concorrentes da região"
 - Revise o português antes de retornar. Nunca use palavras cortadas, incompletas ou inventadas. Todas as frases devem estar gramaticalmente corretas em português brasileiro
 - Escreva todas as frases por extenso — sem abreviações obscuras ou palavras truncadas
+- Use o índice de saturação para contextualizar as rotas: se subatendido, enfatize captura de demanda existente; se saturado, enfatize diferenciação e nicho. NUNCA mencione o valor numérico do índice nem os pesos percentuais internos no texto gerado
+${isB2B ? `- CONTEXTO B2B: Este negócio vende para OUTRAS EMPRESAS, não consumidores finais. As rotas devem focar em: autoridade setorial, cases de empresas atendidas, presença em diretórios profissionais (OAB, CRC, CRM etc.), LinkedIn como canal primário, e indicação estruturada. Evite recomendar conteúdo de bastidores pessoal ou estratégias voltadas a consumidor final.` : ''}
 
 FORMATO DE RESPOSTA (JSON estrito, sem markdown):
 {
@@ -231,6 +245,7 @@ export async function executeStep5(
   options?: {
     model?: string;
     aiVisibility?: { score: number; summary: string; likelyMentioned: boolean } | null;
+    competitionIndex?: { label: string; indexValue: number; activeCompetitors: number; totalCompetitors: number } | null;
   }
 ): Promise<Step5Output> {
   const startTime = Date.now();
@@ -239,6 +254,7 @@ export async function executeStep5(
   const prompt = buildGapAnalysisPrompt(
     input, terms, volumes, sizing, influence,
     options?.aiVisibility,
+    options?.competitionIndex,
   );
 
   const response = await claudeClient.createMessage({
