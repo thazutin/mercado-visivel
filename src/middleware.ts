@@ -20,6 +20,8 @@ const isPublicRoute = createRouteMatcher([
   "/api/events(.*)",
   "/api/feedback(.*)",
   "/api/cron(.*)",
+  "/api/places-autocomplete(.*)",
+  "/api/places-details(.*)",
   "/privacidade",
   "/termos",
 ]);
