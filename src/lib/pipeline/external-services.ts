@@ -916,7 +916,9 @@ export function createDataForSEOClient(config: DataForSEOConfig) {
         },
       ];
 
-      let raw: DataForSEOResponse;
+      let raw: any;
+      let isLabsEndpoint = false;
+      console.log(`[DataForSEO] Sending ${chunk.length} keywords, first 3: ${chunk.slice(0, 3).join(', ')}`);
       try {
         // Tenta Google Ads endpoint primeiro (mais preciso)
         const res = await fetch(`${baseUrl}/keywords_data/google_ads/search_volume/live`, {
@@ -932,18 +934,14 @@ export function createDataForSEOClient(config: DataForSEOConfig) {
         if (res.status === 402) {
           // Sem créditos no Keywords Data API — tenta DataForSEO Labs (mais barato)
           console.warn('[DataForSEO] Keywords Data API 402 (sem créditos), tentando Labs fallback...');
-          const labsBody = [{
-            keywords: chunk,
-            location_code: locationCode,
-            language_code: languageCode,
-          }];
+          isLabsEndpoint = true;
           const labsRes = await fetch(`${baseUrl}/dataforseo_labs/google/search_volume/live`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               Authorization: authHeader,
             },
-            body: JSON.stringify(labsBody),
+            body: JSON.stringify(body),
             signal: AbortSignal.timeout(30_000),
           });
 
@@ -952,57 +950,80 @@ export function createDataForSEOClient(config: DataForSEOConfig) {
             throw new Error(`DataForSEO Labs HTTP ${labsRes.status}: ${errText.slice(0, 300)}`);
           }
 
-          raw = (await labsRes.json()) as DataForSEOResponse;
+          raw = await labsRes.json();
           console.log('[DataForSEO] Using Labs endpoint (fallback)');
         } else if (!res.ok) {
           const errText = await res.text().catch(() => 'no body');
           throw new Error(`DataForSEO HTTP ${res.status}: ${errText.slice(0, 300)}`);
         } else {
-          raw = (await res.json()) as DataForSEOResponse;
+          raw = await res.json();
         }
       } catch (err) {
         console.error(`[DataForSEO] Request failed for chunk ${i / CHUNK_SIZE + 1}:`, err);
-        // Graceful degradation: retorna zeros para esse chunk
         allResults.push(...chunk.map(term => buildZeroVolume(term)));
         continue;
       }
 
       // Validar resposta
       const task = raw.tasks?.[0];
-      console.log(`[DataForSEO] Response: status=${raw.status_code}, task_status=${task?.status_code}, task_msg="${task?.status_message}"`);
+      console.log(`[DataForSEO] Response: status=${raw.status_code}, task_status=${task?.status_code}, task_msg="${task?.status_message}", isLabs=${isLabsEndpoint}`);
       if (!task || task.status_code !== 20000) {
         console.error('[DataForSEO] Task error:', task?.status_message || 'no task returned');
         allResults.push(...chunk.map(term => buildZeroVolume(term)));
         continue;
       }
 
-      // Log raw task structure when items are missing (debug)
+      // Extrair items — Labs e Keywords Data têm estruturas diferentes
       const result0 = task.result?.[0];
-      const items = result0?.items ?? [];
-      if (items.length === 0) {
-        console.log(`[DataForSEO RAW] task.result length: ${task.result?.length ?? 'null'}`);
-        if (result0) {
-          console.log(`[DataForSEO RAW] result[0] keys: ${Object.keys(result0).join(', ')}`);
-          console.log(`[DataForSEO RAW] result[0] snippet: ${JSON.stringify(result0).slice(0, 500)}`);
-        } else if (task.result && task.result.length > 0) {
-          console.log(`[DataForSEO RAW] result[0] raw: ${JSON.stringify(task.result[0]).slice(0, 500)}`);
+      let items: DataForSEOKeywordResult[] = [];
+
+      if (result0) {
+        // Log raw structure para debug
+        console.log(`[DataForSEO RAW] result[0] keys: ${Object.keys(result0).join(', ')}, items_count=${result0.items_count ?? 'undefined'}`);
+
+        const rawItems = result0.items ?? [];
+        if (rawItems.length > 0) {
+          const sample = rawItems[0];
+          console.log(`[DataForSEO RAW] item[0] keys: ${Object.keys(sample).join(', ')}`);
+
+          // Labs endpoint: items têm keyword_data.keyword_info wrapper
+          if (sample.keyword_data && sample.keyword_data.keyword_info) {
+            console.log('[DataForSEO] Detectado formato Labs (keyword_data.keyword_info)');
+            items = rawItems.map((ri: any) => ({
+              keyword: ri.keyword_data?.keyword || ri.keyword || '',
+              search_volume: ri.keyword_data?.keyword_info?.search_volume ?? null,
+              competition: ri.keyword_data?.keyword_info?.competition ?? null,
+              competition_level: ri.keyword_data?.keyword_info?.competition_level ?? null,
+              cpc: ri.keyword_data?.keyword_info?.cpc ?? null,
+              monthly_searches: ri.keyword_data?.keyword_info?.monthly_searches ?? null,
+            }));
+          }
+          // Keywords Data endpoint: items diretos
+          else if (sample.keyword !== undefined || sample.search_volume !== undefined) {
+            items = rawItems;
+          }
+          // Formato desconhecido — logar para debug
+          else {
+            console.log(`[DataForSEO RAW] item[0] snippet: ${JSON.stringify(sample).slice(0, 500)}`);
+          }
         } else {
-          console.log(`[DataForSEO RAW] task keys: ${Object.keys(task).join(', ')}`);
-          console.log(`[DataForSEO RAW] task snippet: ${JSON.stringify(task).slice(0, 500)}`);
+          console.log(`[DataForSEO RAW] result[0] snippet: ${JSON.stringify(result0).slice(0, 500)}`);
         }
+      } else {
+        console.log(`[DataForSEO RAW] task.result: ${JSON.stringify(task.result).slice(0, 500)}`);
       }
-      const withVolume = items.filter(i => (i.search_volume ?? 0) > 0).length;
-      console.log(`[DataForSEO] ${items.length} items returned, ${withVolume} with volume > 0`);
+
+      const withVolume = items.filter(it => (it.search_volume ?? 0) > 0).length;
+      console.log(`[DataForSEO] ${items.length} items parsed, ${withVolume} with volume > 0`);
       if (items.length > 0) {
-        const sample = items[0];
-        console.log(`[DataForSEO RAW] item[0] keys: ${Object.keys(sample).join(', ')}`);
-        console.log(`[DataForSEO RAW] item[0]: keyword="${sample.keyword}", search_volume=${sample.search_volume}, cpc=${sample.cpc}, competition=${sample.competition}, competition_level=${sample.competition_level}`);
+        const s = items[0];
+        console.log(`[DataForSEO] item[0]: keyword="${s.keyword}", search_volume=${s.search_volume}, cpc=${s.cpc}`);
       }
 
       // Indexar por keyword (lowercase) para lookup rápido
       const itemMap = new Map<string, DataForSEOKeywordResult>();
       for (const item of items) {
-        itemMap.set(item.keyword.toLowerCase(), item);
+        if (item.keyword) itemMap.set(item.keyword.toLowerCase(), item);
       }
 
       // Mapear cada termo do chunk
