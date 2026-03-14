@@ -973,44 +973,48 @@ export function createDataForSEOClient(config: DataForSEOConfig) {
         continue;
       }
 
-      // Extrair items — Labs e Keywords Data têm estruturas diferentes
-      const result0 = task.result?.[0];
+      // Extrair items — Keywords Data API retorna result[] diretamente (sem wrapper items)
       let items: DataForSEOKeywordResult[] = [];
+      const taskResult = task.result;
 
-      if (result0) {
-        // Log raw structure para debug
-        console.log(`[DataForSEO RAW] result[0] keys: ${Object.keys(result0).join(', ')}, items_count=${result0.items_count ?? 'undefined'}`);
+      if (Array.isArray(taskResult) && taskResult.length > 0) {
+        const first = taskResult[0];
+        console.log(`[DataForSEO] result.length=${taskResult.length}, result[0] keys: ${Object.keys(first).join(', ')}`);
 
-        const rawItems = result0.items ?? [];
-        if (rawItems.length > 0) {
+        // Formato 1: result[] diretamente contém keyword data (Keywords Data API)
+        // Cada elemento tem { keyword, search_volume, cpc, ... }
+        if (first.keyword !== undefined && !first.items) {
+          items = taskResult as DataForSEOKeywordResult[];
+          console.log('[DataForSEO] Formato: result[] direto (sem items wrapper)');
+        }
+        // Formato 2: result[0].items contém keyword data (possível em outros endpoints)
+        else if (first.items && Array.isArray(first.items)) {
+          const rawItems = first.items;
           const sample = rawItems[0];
-          console.log(`[DataForSEO RAW] item[0] keys: ${Object.keys(sample).join(', ')}`);
-
-          // Labs endpoint: items têm keyword_data.keyword_info wrapper
-          if (sample.keyword_data && sample.keyword_data.keyword_info) {
-            console.log('[DataForSEO] Detectado formato Labs (keyword_data.keyword_info)');
-            items = rawItems.map((ri: any) => ({
-              keyword: ri.keyword_data?.keyword || ri.keyword || '',
-              search_volume: ri.keyword_data?.keyword_info?.search_volume ?? null,
-              competition: ri.keyword_data?.keyword_info?.competition ?? null,
-              competition_level: ri.keyword_data?.keyword_info?.competition_level ?? null,
-              cpc: ri.keyword_data?.keyword_info?.cpc ?? null,
-              monthly_searches: ri.keyword_data?.keyword_info?.monthly_searches ?? null,
-            }));
+          if (sample) {
+            // Labs: keyword_data.keyword_info wrapper
+            if (sample.keyword_data?.keyword_info) {
+              console.log('[DataForSEO] Formato: Labs (keyword_data.keyword_info)');
+              items = rawItems.map((ri: any) => ({
+                keyword: ri.keyword_data?.keyword || ri.keyword || '',
+                search_volume: ri.keyword_data?.keyword_info?.search_volume ?? null,
+                competition: ri.keyword_data?.keyword_info?.competition ?? null,
+                competition_level: ri.keyword_data?.keyword_info?.competition_level ?? null,
+                cpc: ri.keyword_data?.keyword_info?.cpc ?? null,
+                monthly_searches: ri.keyword_data?.keyword_info?.monthly_searches ?? null,
+              }));
+            } else {
+              items = rawItems;
+              console.log('[DataForSEO] Formato: items[] direto');
+            }
           }
-          // Keywords Data endpoint: items diretos
-          else if (sample.keyword !== undefined || sample.search_volume !== undefined) {
-            items = rawItems;
-          }
-          // Formato desconhecido — logar para debug
-          else {
-            console.log(`[DataForSEO RAW] item[0] snippet: ${JSON.stringify(sample).slice(0, 500)}`);
-          }
-        } else {
-          console.log(`[DataForSEO RAW] result[0] snippet: ${JSON.stringify(result0).slice(0, 500)}`);
+        }
+        // Formato desconhecido
+        else {
+          console.log(`[DataForSEO] Formato desconhecido, result[0]: ${JSON.stringify(first).slice(0, 300)}`);
         }
       } else {
-        console.log(`[DataForSEO RAW] task.result: ${JSON.stringify(task.result).slice(0, 500)}`);
+        console.log(`[DataForSEO] task.result vazio ou null: ${JSON.stringify(taskResult).slice(0, 200)}`);
       }
 
       const withVolume = items.filter(it => (it.search_volume ?? 0) > 0).length;
