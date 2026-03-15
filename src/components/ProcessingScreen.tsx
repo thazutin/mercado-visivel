@@ -35,55 +35,70 @@ const facts = [
   { text: "Um aumento de 1 estrela no Google pode aumentar a receita em até 9%.", source: "Harvard Business Review" },
   { text: "25% das pesquisas feitas com IA têm intenção de compra local.", source: "SparkToro" },
   { text: "Negócios com website têm 2x mais chance de ser citados por ferramentas de IA.", source: "BrightLocal" },
-  { text: "A maioria das decisões de compra local começa com uma busca online, mesmo para visitas presenciais.", source: "Think with Google" },
   { text: "Consumidores que pesquisam antes de visitar gastam em média 30% mais.", source: "Deloitte" },
   { text: "Negócios sem presença digital perdem em média 70% das oportunidades de novos clientes.", source: "SEBRAE" },
   { text: "93% dos brasileiros com smartphone usam WhatsApp diariamente.", source: "DataReportal" },
-  { text: "Brasil é o 2º país que mais usa WhatsApp no mundo.", source: "Meta" },
   { text: "72% dos pequenos negócios brasileiros usam WhatsApp como principal canal de vendas.", source: "SEBRAE" },
   { text: "Pequenos negócios que respondem clientes em até 5 minutos convertem 9x mais.", source: "Harvard Business Review" },
+];
+
+const processingMessages = [
+  "Mapeando termos de busca...",
+  "Consultando Google Search...",
+  "Analisando Instagram...",
+  "Calculando audiência IBGE...",
+  "Medindo influência digital...",
+  "Cruzando dados de concorrência...",
+  "Preparando seu diagnóstico...",
 ];
 
 interface Props {
   product: string;
   region?: string;
+  businessName?: string;
   onComplete: () => void;
   steps?: string[];
 }
 
-export default function ProcessingScreen({ product, region, onComplete, steps: customSteps }: Props) {
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [done, setDone] = useState(false);
+export default function ProcessingScreen({ product, region, businessName, onComplete, steps: _customSteps }: Props) {
+  const [progress, setProgress] = useState(0);
+  const [msgIdx, setMsgIdx] = useState(0);
+  const [msgVisible, setMsgVisible] = useState(true);
   const [factIdx, setFactIdx] = useState(() => Math.floor(Math.random() * facts.length));
   const [factVisible, setFactVisible] = useState(true);
 
-  const steps = customSteps || [
-    "Mapeando termos de busca na sua região...",
-    "Analisando volume de demanda...",
-    "Calculando mercado disponível...",
-    "Medindo sua influência digital...",
-    "Preparando seu resultado...",
-  ];
-
+  // Progress ring animation: 0→100 over 60s
   useEffect(() => {
-    const stepDuration = 3000;
-    const timers: NodeJS.Timeout[] = [];
-
-    steps.forEach((_, i) => {
-      if (i > 0) {
-        timers.push(setTimeout(() => setActiveIdx(i), i * stepDuration));
-      }
-    });
-
-    timers.push(setTimeout(() => {
-      setDone(true);
-      onComplete();
-    }, steps.length * stepDuration + 500));
-
-    return () => timers.forEach(clearTimeout);
+    const duration = 60_000;
+    const interval = 100;
+    const step = 100 / (duration / interval);
+    const timer = setInterval(() => {
+      setProgress(prev => {
+        const next = prev + step;
+        if (next >= 100) {
+          clearInterval(timer);
+          onComplete();
+          return 100;
+        }
+        return next;
+      });
+    }, interval);
+    return () => clearInterval(timer);
   }, []);
 
-  // Fact carousel: rotate every 4s with fade
+  // Rotating processing message every 4s
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMsgVisible(false);
+      setTimeout(() => {
+        setMsgIdx(prev => (prev + 1) % processingMessages.length);
+        setMsgVisible(true);
+      }, 300);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fact carousel every 8s
   useEffect(() => {
     const interval = setInterval(() => {
       setFactVisible(false);
@@ -91,118 +106,85 @@ export default function ProcessingScreen({ product, region, onComplete, steps: c
         setFactIdx(prev => (prev + 1) % facts.length);
         setFactVisible(true);
       }, 400);
-    }, 4000);
+    }, 8000);
     return () => clearInterval(interval);
   }, []);
 
-  const shortRegion = region ? region.split(",")[0].trim() : "";
+  const displayName = businessName || product;
   const currentFact = facts[factIdx];
 
+  // SVG ring
+  const size = 160;
+  const strokeWidth = 6;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
   return (
-    <div id="viro-processing-screen" style={{
+    <div style={{
       minHeight: "100vh",
       background: V.night,
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      justifyContent: "space-between",
-      padding: "32px 20px 24px",
+      justifyContent: "center",
+      padding: "32px 20px",
     }}>
-      <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
-        {/* Brand */}
-        <div style={{
-          width: 36, height: 36, borderRadius: 10,
-          background: V.graphite, display: "flex", alignItems: "center", justifyContent: "center",
-          margin: "0 auto 16px",
-        }}>
-          <span style={{ fontFamily: V.display, fontWeight: 700, fontSize: 17, color: V.white, letterSpacing: "-0.03em" }}>V</span>
-        </div>
-
+      <div style={{ maxWidth: 420, width: "100%", textAlign: "center" }}>
+        {/* Title */}
         <h2 style={{
-          fontFamily: V.display, fontSize: 20, fontWeight: 700,
-          color: V.white, letterSpacing: "-0.03em", marginBottom: 4,
+          fontFamily: V.display, fontSize: 22, fontWeight: 700,
+          color: V.white, letterSpacing: "-0.03em", marginBottom: 6,
         }}>
-          Analisando {product}
+          Analisando {displayName}
         </h2>
-        {shortRegion ? (
-          <p style={{ color: V.ash, fontSize: 13, fontFamily: V.body, marginBottom: 8 }}>
-            em {shortRegion}
-          </p>
-        ) : (
-          <p style={{ color: V.ash, fontSize: 13, fontFamily: V.body, marginBottom: 8 }}>
-            {product}
-          </p>
-        )}
-
-        <p style={{ color: V.zinc, fontSize: 11, fontFamily: V.mono, marginBottom: 4 }}>
-          Isso pode levar até 60 segundos · fique aqui
-        </p>
-        <p style={{ color: V.ash, fontSize: 11, fontFamily: V.body, marginBottom: 20 }}>
-          Você também receberá o resultado por email e WhatsApp.
+        <p style={{ color: V.zinc, fontSize: 12, fontFamily: V.mono, marginBottom: 32 }}>
+          Isso pode levar até 60 segundos
         </p>
 
-        {/* Steps */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, textAlign: "left" }}>
-          {steps.map((step, i) => {
-            const isActive = i === activeIdx;
-            const isDone = i < activeIdx || done;
-            return (
-              <div key={i} style={{
-                display: "flex", alignItems: "center", gap: 10,
-                padding: "10px 14px", borderRadius: 8,
-                background: isDone ? V.tealWash : isActive ? V.graphite : "transparent",
-                border: isActive ? `1px solid rgba(207,133,35,0.2)` : "1px solid transparent",
-                transition: "all 0.4s ease",
-                opacity: i <= activeIdx || done ? 1 : 0.3,
-              }}>
-                {/* Icon */}
-                <div style={{
-                  width: 20, height: 20, borderRadius: "50%", display: "flex",
-                  alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  fontSize: 10, fontWeight: 600,
-                  background: isDone ? V.teal : isActive ? V.graphite : V.slate,
-                  color: isDone ? V.white : "transparent",
-                  border: isActive && !isDone ? `2px solid ${V.amber}` : "none",
-                  transition: "all 0.3s",
-                }}>
-                  {isDone && "✓"}
-                  {isActive && !isDone && (
-                    <div style={{
-                      width: 8, height: 8, borderRadius: "50%",
-                      border: "2px solid transparent", borderTopColor: V.amber,
-                      animation: "spin 0.8s linear infinite",
-                    }} />
-                  )}
-                </div>
-
-                {/* Text */}
-                <span style={{
-                  fontSize: 13, fontFamily: V.body,
-                  color: isDone ? V.mist : isActive ? V.white : V.zinc,
-                  transition: "color 0.3s",
-                }}>
-                  {step}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Progress bar */}
-        <div style={{
-          marginTop: 20, height: 3, borderRadius: 2,
-          background: V.graphite, overflow: "hidden",
-        }}>
+        {/* Progress Ring */}
+        <div style={{ position: "relative", width: size, height: size, margin: "0 auto 24px" }}>
+          <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+            {/* Background ring */}
+            <circle
+              cx={size / 2} cy={size / 2} r={radius}
+              fill="none" stroke={V.graphite} strokeWidth={strokeWidth}
+            />
+            {/* Progress ring */}
+            <circle
+              cx={size / 2} cy={size / 2} r={radius}
+              fill="none" stroke={V.amber} strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              style={{ transition: "stroke-dashoffset 0.1s linear" }}
+            />
+          </svg>
+          {/* Center icon */}
           <div style={{
-            height: "100%", borderRadius: 2, background: V.amber,
-            width: done ? "100%" : `${((activeIdx + 1) / steps.length) * 100}%`,
-            transition: "width 0.8s ease",
-          }} />
+            position: "absolute", top: "50%", left: "50%",
+            transform: "translate(-50%, -50%)",
+            fontSize: 36,
+            animation: "spin 3s linear infinite",
+          }}>
+            🔍
+          </div>
         </div>
 
-        {/* Educational facts carousel */}
+        {/* Rotating message */}
+        <div style={{ minHeight: 24, marginBottom: 32 }}>
+          <p style={{
+            fontSize: 14, color: V.mist, fontFamily: V.body,
+            opacity: msgVisible ? 1 : 0,
+            transition: "opacity 0.3s ease",
+            margin: 0,
+          }}>
+            {processingMessages[msgIdx]}
+          </p>
+        </div>
+
+        {/* Fact card */}
         <div style={{
-          marginTop: 20,
           padding: "16px 20px",
           background: V.graphite,
           borderRadius: 10,
@@ -217,29 +199,26 @@ export default function ProcessingScreen({ product, region, onComplete, steps: c
             transition: "opacity 0.4s ease",
           }}>
             <p style={{
-              fontSize: 13,
-              color: V.white,
-              margin: "0 0 6px",
-              lineHeight: 1.5,
-              fontFamily: V.body,
+              fontSize: 13, color: V.white, margin: "0 0 6px",
+              lineHeight: 1.5, fontFamily: V.body,
             }}>
               {currentFact.text}
             </p>
             <p style={{
-              fontSize: 10,
-              color: V.ash,
-              margin: 0,
-              fontFamily: V.mono,
-              letterSpacing: "0.02em",
-              opacity: 0.7,
+              fontSize: 10, color: V.ash, margin: 0,
+              fontFamily: V.mono, letterSpacing: "0.02em", opacity: 0.7,
             }}>
               Fonte: {currentFact.source}
             </p>
           </div>
         </div>
+
+        {/* Notification */}
+        <p style={{ color: V.ash, fontSize: 11, fontFamily: V.body, marginTop: 20 }}>
+          Você também receberá o resultado por WhatsApp.
+        </p>
       </div>
 
-      {/* Spinner keyframe */}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );

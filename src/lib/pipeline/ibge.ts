@@ -471,6 +471,7 @@ export async function fetchAudienciaEstimada(
     }
 
     console.log(`[IBGE Audiência] ${info.nome}: pop=${info.populacao} (IBGE ${info.ibgeAno}), densidade=${densidade}, raio=${raioKm}km, popRaio=${populacaoRaio}`);
+    console.log(`[IBGE VERIFICAÇÃO] Resumo: município=${info.nome}/${info.uf}, id=${info.id}, pop=${info.populacao}, area=${info.areaKm2}km², densidade_hab_km2=${info.densidadeHabKm2.toFixed(0)}, lat=${info.lat}, lng=${info.lng}, raio=${raioKm}km, popRaio=${populacaoRaio}, ibgeAno=${info.ibgeAno}`);
 
     return {
       populacaoRaio,

@@ -712,16 +712,10 @@ Responda APENAS em JSON, sem markdown:
     }
   }
 
-  const step4: Step4Output = calculateCompositeInfluence(
-    googleInfluence,
-    instagramInfluence,
-    webInfluence,
-    organicPresence,
-    inferredClientType,
-    linkedinPresent,
-  );
-
-  console.log(`[Pipeline] Step 4 OK: influence ${step4.influence.totalInfluence}%`);
+  // NOTE: step4 (composite influence) is calculated AFTER aiVisibility below,
+  // so that D4 dimension can use real AI visibility data.
+  // Placeholder declared here, assigned after line ~833.
+  let step4: Step4Output;
 
   // =========================================================================
   // COMPETITION INDEX — Índice de Saturação de Mercado
@@ -830,6 +824,20 @@ Responda APENAS em JSON, sem markdown:
   } catch (err) {
     console.warn("[Pipeline] AI Visibility failed/skipped:", (err as Error).message);
   }
+
+  // =========================================================================
+  // STEP 4 — Composite Influence (4D model — needs aiVisibility)
+  // =========================================================================
+  step4 = calculateCompositeInfluence(
+    googleInfluence,
+    instagramInfluence,
+    webInfluence,
+    organicPresence,
+    inferredClientType,
+    linkedinPresent,
+    aiVisibility ? { score: aiVisibility.score, likelyMentioned: aiVisibility.likelyMentioned } : null,
+  );
+  console.log(`[Pipeline] Step 4 OK: influence ${step4.influence.totalInfluence}%`);
 
   // =========================================================================
   // STEP 4c — PNCP (Contratações Públicas) — only for B2G

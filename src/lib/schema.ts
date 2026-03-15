@@ -3,6 +3,7 @@ import { z } from "zod";
 // ─── Lead Form Schema (Simplified — 2 steps) ────────────────────────
 export const leadSchema = z.object({
   // Step 1: Sobre o negócio (mínimo absoluto)
+  businessName: z.string().min(2, "Nome do negócio é obrigatório"),
   product: z.string().min(2),
   region: z.string().min(2),
   address: z.string().optional().default(""),
@@ -41,6 +42,7 @@ export const leadSchema = z.object({
 export type LeadFormData = z.infer<typeof leadSchema>;
 
 export const initialFormData: LeadFormData = {
+  businessName: "",
   product: "",
   region: "",
   address: "",
@@ -68,6 +70,7 @@ export const initialFormData: LeadFormData = {
 // ─── Per-step validation ────────────────────────────────────────────
 export const stepValidation = {
   step1: (data: LeadFormData) =>
+    data.businessName.length >= 2 &&
     data.product.length >= 2 &&
     data.region.length >= 2,
   step2: (data: LeadFormData) =>

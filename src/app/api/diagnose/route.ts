@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     let lead: { id: string };
     try {
       lead = await insertLead({
-        name: (formData as any).name || "",
+        name: (formData as any).businessName || (formData as any).name || "",
         email: formData.email || "",
         whatsapp: formData.whatsapp || "",
         site: formData.site || "",
@@ -115,6 +115,7 @@ export async function POST(req: NextRequest) {
         raw_data: pipelineResult,
         confidence_level: pipelineResult.confidenceLevel,
         audiencia: pipelineResult.audiencia || null,
+        influence_breakdown: (pipelineResult.influence?.influence as any)?.breakdown || null,
       });
     } catch (err) {
       console.error("[Diagnose] insertDiagnosis failed:", err);
@@ -275,6 +276,7 @@ function buildDisplayData(result: any) {
       instagram: influence.instagram?.score || 0,
       web: influence.web?.available ? influence.web.score : null,
     },
+    influenceBreakdown4D: (influence as any).breakdown || null,
     maps: mapsData ? {
       found: mapsData.found || false,
       rating: mapsData.rating || null,

@@ -237,8 +237,8 @@ export default function Home() {
       <ProcessingScreen
         product={formData.product}
         region={formData.region}
+        businessName={formData.businessName}
         onComplete={() => setAnimDone(true)}
-        steps={t.processingSteps}
       />
     );
   }
@@ -263,6 +263,10 @@ export default function Home() {
       title: t.formStep1Title,
       content: (
         <>
+          <Field label="Nome do seu negócio *">
+            <input style={inputStyle} type="text" placeholder="Ex: Studio Profitteratti, Clínica Dente Feliz" value={formData.businessName}
+              onChange={(e: any) => updateField("businessName", e.target.value)} />
+          </Field>
           <Field label={t.formProductLabel} hint={t.formProductHint}>
             <input style={inputStyle} type="text" placeholder={t.formProductPlaceholder} value={formData.product}
               onChange={(e: any) => updateField("product", e.target.value)} />
@@ -306,7 +310,7 @@ export default function Home() {
             <input style={inputStyle} type="tel" placeholder={t.formWhatsappPlaceholder} value={formData.whatsapp}
               onChange={(e: any) => updateField("whatsapp", e.target.value)} />
           </Field>
-          <Field label={t.formEmailLabel}>
+          <Field label={t.formEmailLabel} hint="Opcional — enviamos uma cópia do diagnóstico">
             <input style={inputStyle} type="email" placeholder={t.formEmailPlaceholder} value={formData.email}
               onChange={(e: any) => updateField("email", e.target.value)} />
           </Field>
@@ -438,9 +442,9 @@ export default function Home() {
             Como obtemos os dados
           </h2>
           <p style={{ fontSize: 14, lineHeight: 1.7, color: V.zinc }}>
-            O Virô cruza 8 fontes em tempo real para montar o diagnóstico do seu mercado local:
-            Google Search, Google Maps, Instagram (dados públicos), Perplexity AI, DataForSEO, IBGE
-            e modelos proprietários de scoring e análise.
+            O Virô cruza 9 fontes em tempo real para montar o diagnóstico do seu mercado local:
+            Google Search, Google Maps, Google Ads, Instagram (dados públicos), Perplexity AI,
+            DataForSEO, IBGE, PNCP e modelos proprietários de inteligência artificial.
           </p>
         </div>
       </div>

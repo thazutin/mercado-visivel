@@ -1,6 +1,6 @@
 // ============================================================================
-// Step 4e — Influence Score Composto (Modelo Proprietário)
-// Combina Google + Instagram + Web num score único de influência local
+// Step 4e — Influence Score — Modelo de 4 Dimensões
+// D1 Descoberta · D2 Credibilidade · D3 Alcance Social · D4 Visibilidade IA
 // ============================================================================
 
 import type {
@@ -17,15 +17,120 @@ import type {
 } from '../types/pipeline.types';
 import { CTR_BENCHMARKS } from './market-sizing';
 
-// --- GOOGLE INFLUENCE CALCULATOR ---
+// ─── D1: Descoberta ──────────────────────────────────────────────────────────
+function scoreD1(
+  serpPositions: SerpPosition[],
+  mapsPresence: MapsPresence | null,
+): number {
+  // SERP position score (avg across terms)
+  let serpTotal = 0;
+  const scoredTerms = serpPositions.filter(sp => sp.position !== null);
+  for (const sp of serpPositions) {
+    if (sp.position && sp.position <= 3) serpTotal += 100;
+    else if (sp.position && sp.position <= 10) serpTotal += 70;
+    else if (sp.position && sp.position <= 20) serpTotal += 40;
+    // else 0
+  }
+  const serpScore = serpPositions.length > 0 ? serpTotal / serpPositions.length : 0;
 
-/**
- * Calcula a influência do negócio no Google baseado em posição real no SERP.
- * 
- * Quando volumes reais não estão disponíveis (Google Ads KP não configurado),
- * usa proxy volume=1 pra cada termo — o score vira puramente posicional
- * (quanto CTR a posição real captura vs CTR da posição 1).
- */
+  // GMB presence
+  const gmbScore = mapsPresence?.found ? 60 : 0;
+
+  // Rating bonus
+  let ratingBonus = 0;
+  if (mapsPresence?.found && mapsPresence.rating) {
+    if (mapsPresence.rating >= 4.5) ratingBonus = 20;
+    else if (mapsPresence.rating >= 4.0) ratingBonus = 10;
+  }
+
+  // Weighted: SERP 50% + GMB 30% + Rating 20%
+  return serpScore * 0.5 + gmbScore * 0.3 + ratingBonus * 0.2;
+}
+
+// ─── D2: Credibilidade ───────────────────────────────────────────────────────
+function scoreD2(
+  mapsPresence: MapsPresence | null,
+  hasWebsite: boolean,
+): number {
+  // Review count score
+  let reviewScore = 0;
+  const reviews = mapsPresence?.reviewCount || 0;
+  if (reviews >= 50) reviewScore = 100;
+  else if (reviews >= 20) reviewScore = 70;
+  else if (reviews >= 5) reviewScore = 40;
+  else if (reviews > 0) reviewScore = 10;
+
+  // Website presence
+  const websiteScore = hasWebsite ? 30 : 0;
+
+  // Weighted: reviews 70% + website 30%
+  return reviewScore * 0.7 + websiteScore * 0.3;
+}
+
+// ─── D3: Alcance Social ──────────────────────────────────────────────────────
+function scoreD3(
+  igProfile: InstagramProfile | null,
+  linkedinPresent: boolean,
+  clientType: string,
+): number {
+  const scores: number[] = [];
+
+  // Instagram
+  if (igProfile?.dataAvailable) {
+    let igScore = 0;
+    const followers = igProfile.followers || 0;
+    if (followers >= 5000) igScore = 100;
+    else if (followers >= 1000) igScore = 75;
+    else if (followers >= 500) igScore = 50;
+    else if (followers >= 100) igScore = 30;
+    else igScore = 10;
+
+    // Recency adjustment
+    const hasRecentPosts = (igProfile.recentPostsCount ?? 0) > 0;
+    if (hasRecentPosts) igScore += 20;
+    else igScore -= 30;
+    igScore = Math.max(0, Math.min(100, igScore));
+
+    scores.push(igScore);
+  }
+
+  // LinkedIn (b2b/b2g only — simplified)
+  if ((clientType === 'b2b' || clientType === 'b2g') && linkedinPresent) {
+    scores.push(60); // has LinkedIn profile
+  } else if (clientType === 'b2b' || clientType === 'b2g') {
+    scores.push(0); // should have but doesn't
+  }
+
+  if (scores.length === 0) return 0;
+  return scores.reduce((a, b) => a + b, 0) / scores.length;
+}
+
+// ─── D4: Visibilidade em IA ──────────────────────────────────────────────────
+function scoreD4(
+  aiVisibility: { score: number; likelyMentioned: boolean } | null,
+): number {
+  if (!aiVisibility) return 0;
+  return aiVisibility.likelyMentioned ? aiVisibility.score : 0;
+}
+
+// ─── Pesos por clientType ────────────────────────────────────────────────────
+const WEIGHTS: Record<string, { d1: number; d2: number; d3: number; d4: number }> = {
+  b2c: { d1: 0.35, d2: 0.20, d3: 0.35, d4: 0.10 },
+  b2b: { d1: 0.35, d2: 0.35, d3: 0.15, d4: 0.15 },
+  b2g: { d1: 0.40, d2: 0.30, d3: 0.10, d4: 0.20 },
+};
+
+// ─── Interface de breakdown ──────────────────────────────────────────────────
+export interface InfluenceBreakdown {
+  total: number;
+  d1_discovery: number;
+  d2_credibility: number;
+  d3_reach: number;
+  d4_ai_visibility: number;
+}
+
+// ─── Google Influence Calculator (preservado para compatibilidade) ────────────
+
 export function calculateGoogleInfluence(
   serpPositions: SerpPosition[],
   mapsPresence: MapsPresence | null,
@@ -33,29 +138,17 @@ export function calculateGoogleInfluence(
 ): GoogleInfluence {
   let totalWeightedTraffic = 0;
   let businessTraffic = 0;
-
-  // Se nenhum termo tem volume real, usa proxy=1 pra calcular score posicional
   const hasRealVolumes = termVolumes.some(tv => tv.monthlyVolume > 0);
 
   for (const sp of serpPositions) {
     const volumeData = termVolumes.find(tv => tv.term.toLowerCase() === sp.term.toLowerCase());
-    
-    // Volume: real se disponível, proxy=1 se não
-    const volume = hasRealVolumes
-      ? (volumeData?.monthlyVolume || 0)
-      : 1;
-
+    const volume = hasRealVolumes ? (volumeData?.monthlyVolume || 0) : 1;
     if (volume === 0) continue;
 
     const hasLocalPack = sp.serpFeatures?.includes('local_pack');
-    const ctrTable = hasLocalPack 
-      ? CTR_BENCHMARKS.withLocalPack 
-      : CTR_BENCHMARKS.organic;
-
-    // Total traffic available (posição 1 como teto teórico)
+    const ctrTable = hasLocalPack ? CTR_BENCHMARKS.withLocalPack : CTR_BENCHMARKS.organic;
     totalWeightedTraffic += volume * (ctrTable[1] || 0.30);
 
-    // Business traffic (posição real)
     if (sp.position && sp.position <= 10) {
       businessTraffic += volume * (ctrTable[sp.position] || CTR_BENCHMARKS.notFound || 0.005);
     } else {
@@ -63,33 +156,15 @@ export function calculateGoogleInfluence(
     }
   }
 
-  // Maps presence bonus
   if (mapsPresence?.found && mapsPresence.inLocalPack && mapsPresence.localPackPosition) {
     const localPackCtr = CTR_BENCHMARKS.localPack;
-    const mapsBonus = localPackCtr
-      ? (localPackCtr[mapsPresence.localPackPosition] || 0)
-      : 0.05;
-    
-    // Average volume proxy (1 if no real volumes)
+    const mapsBonus = localPackCtr ? (localPackCtr[mapsPresence.localPackPosition] || 0) : 0.05;
     const avgVolume = hasRealVolumes
-      ? termVolumes.reduce((s, t) => s + t.monthlyVolume, 0) / Math.max(termVolumes.length, 1)
-      : 1;
-    
+      ? termVolumes.reduce((s, t) => s + t.monthlyVolume, 0) / Math.max(termVolumes.length, 1) : 1;
     businessTraffic += avgVolume * mapsBonus * 0.5;
   }
 
-  // Rating bonus
-  let ratingMultiplier = 1.0;
-  if (mapsPresence?.found && mapsPresence.rating) {
-    if (mapsPresence.rating >= 4.5) ratingMultiplier = 1.06;
-    else if (mapsPresence.rating >= 4.0) ratingMultiplier = 1.03;
-    else if (mapsPresence.rating >= 3.5) ratingMultiplier = 1.0;
-    else ratingMultiplier = 0.95;
-  }
-
-  const ctrShare = totalWeightedTraffic > 0
-    ? (businessTraffic * ratingMultiplier) / totalWeightedTraffic
-    : 0;
+  const ctrShare = totalWeightedTraffic > 0 ? businessTraffic / totalWeightedTraffic : 0;
 
   return {
     serpPositions,
@@ -99,169 +174,75 @@ export function calculateGoogleInfluence(
   };
 }
 
-// --- INSTAGRAM INFLUENCE CALCULATOR ---
+// ─── Instagram Influence Calculator (preservado) ─────────────────────────────
 
-/**
- * Calcula a influência do negócio no Instagram.
- * 
- * Quando não há concorrentes disponíveis, calcula um score absoluto
- * baseado em benchmarks de mercado local em vez de retornar 0.
- */
 export function calculateInstagramInfluence(
   businessProfile: InstagramProfile,
   competitorProfiles: InstagramProfile[],
 ): InstagramInfluence {
+  if (!businessProfile.dataAvailable) {
+    return { profile: businessProfile, competitors: competitorProfiles, relativeShare: 0 };
+  }
+
   const allAvailable = [businessProfile, ...competitorProfiles].filter(p => p.dataAvailable);
 
-  // Se o business profile não tem dados, retorna 0
-  if (!businessProfile.dataAvailable) {
-    return {
-      profile: businessProfile,
-      competitors: competitorProfiles,
-      relativeShare: 0,
-    };
-  }
-
-  // Se não há concorrentes com dados, calcula score absoluto
   if (allAvailable.length <= 1) {
-    // Score absoluto baseado em métricas brutas
-    // Benchmarks para negócios locais: ~500 followers = 0.2, ~2000 = 0.5, ~10000 = 0.8
     const followerScore = Math.min(businessProfile.followers / 5000, 1.0);
-
-    // Engagement rate: >3% = excelente, 1-3% = bom, <1% = baixo
     const engScore = Math.min(businessProfile.engagementRate / 0.03, 1.0);
-
-    // Posts frequency: >8/month = ativo, 4-8 = médio, <4 = baixo
     const freqScore = Math.min(businessProfile.postsLast30d / 8, 1.0);
-
-    // Score absoluto (não relativo a concorrentes)
     const absoluteScore = followerScore * 0.4 + engScore * 0.35 + freqScore * 0.25;
-
-    // Aplica fator de recência
     const recencyAdjusted = applyRecencyFactor(absoluteScore, businessProfile);
-
-    return {
-      profile: businessProfile,
-      competitors: competitorProfiles,
-      relativeShare: Math.min(recencyAdjusted, 1.0),
-    };
+    return { profile: businessProfile, competitors: competitorProfiles, relativeShare: Math.min(recencyAdjusted, 1.0) };
   }
 
-  // Com concorrentes: score relativo
   const scores = allAvailable.map(profile => ({
     handle: profile.handle,
     score: calculateSingleInstagramScore(profile, allAvailable),
   }));
-
   const totalScore = scores.reduce((sum, s) => sum + s.score, 0);
   const businessScore = scores.find(s => s.handle === businessProfile.handle)?.score || 0;
   const relativeShare = totalScore > 0 ? businessScore / totalScore : 0;
-
-  // Aplica fator de recência ao share do negócio
   const recencyAdjusted = applyRecencyFactor(relativeShare, businessProfile);
 
-  return {
-    profile: businessProfile,
-    competitors: competitorProfiles,
-    relativeShare: recencyAdjusted,
-  };
+  return { profile: businessProfile, competitors: competitorProfiles, relativeShare: recencyAdjusted };
 }
 
-/**
- * Aplica fator de recência ao score do Instagram.
- * - Com posts nos últimos 15d: 60% score recente + 40% score histórico
- * - Sem posts nos últimos 15d: penaliza em 50% (perfil inativo)
- */
 function applyRecencyFactor(historicalScore: number, profile: InstagramProfile): number {
   const hasRecentPosts = (profile.recentPostsCount ?? 0) > 0;
-
-  if (!hasRecentPosts) {
-    // Perfil inativo: penalização de 50%
-    console.log(`[Influence] Instagram @${profile.handle}: inativo (0 posts em 15d), penalização 0.5x`);
-    return historicalScore * 0.5;
-  }
-
-  // Score recente baseado no alcance e engajamento dos últimos 15 dias
+  if (!hasRecentPosts) return historicalScore * 0.5;
   const recentReach = profile.recentAvgReach ?? 0;
   const recentEng = profile.recentEngagementRate ?? 0;
-
-  // Normaliza score recente com mesmos benchmarks
-  const recentReachScore = profile.followers > 0
-    ? Math.min(recentReach / profile.followers, 1.0)
-    : 0;
+  const recentReachScore = profile.followers > 0 ? Math.min(recentReach / profile.followers, 1.0) : 0;
   const recentEngScore = Math.min(recentEng / 0.03, 1.0);
   const recentScore = recentReachScore * 0.6 + recentEngScore * 0.4;
-
-  // Blend: 60% recente + 40% histórico
-  const blended = recentScore * 0.6 + historicalScore * 0.4;
-  console.log(`[Influence] Instagram @${profile.handle}: ${profile.recentPostsCount} posts em 15d, blend=0.6×recent(${recentScore.toFixed(3)})+0.4×hist(${historicalScore.toFixed(3)})=${blended.toFixed(3)}`);
-  return blended;
+  return recentScore * 0.6 + historicalScore * 0.4;
 }
 
-/**
- * Score individual de um perfil no Instagram.
- */
-function calculateSingleInstagramScore(
-  profile: InstagramProfile,
-  allProfiles: InstagramProfile[],
-): number {
+function calculateSingleInstagramScore(profile: InstagramProfile, allProfiles: InstagramProfile[]): number {
   if (!profile.dataAvailable) return 0;
-
   const maxReachAbsolute = Math.max(...allProfiles.map(p => p.reachAbsolute), 1);
   const reachAbsoluteNormalized = profile.reachAbsolute / maxReachAbsolute;
-
-  const reachRelative = profile.followers > 0
-    ? Math.min(profile.reachAbsolute / profile.followers, 1.0)
-    : 0;
-
-  const engagementRate = profile.reachAbsolute > 0
-    ? Math.min(profile.avgLikesLast30d / profile.reachAbsolute, 0.3)
-    : 0;
-  const maxEngagement = Math.max(...allProfiles.map(p => 
+  const reachRelative = profile.followers > 0 ? Math.min(profile.reachAbsolute / profile.followers, 1.0) : 0;
+  const engagementRate = profile.reachAbsolute > 0 ? Math.min(profile.avgLikesLast30d / profile.reachAbsolute, 0.3) : 0;
+  const maxEngagement = Math.max(...allProfiles.map(p =>
     p.reachAbsolute > 0 ? Math.min(p.avgLikesLast30d / p.reachAbsolute, 0.3) : 0
   ), 0.01);
-  const engagementNormalized = engagementRate / maxEngagement;
-
-  return (
-    reachAbsoluteNormalized * 0.55 +
-    reachRelative * 0.25 +
-    engagementNormalized * 0.20
-  );
+  return reachAbsoluteNormalized * 0.55 + reachRelative * 0.25 + (engagementRate / maxEngagement) * 0.20;
 }
-
-// --- WEB INFLUENCE CALCULATOR ---
 
 export function calculateWebInfluence(
   webData: WebInfluence,
   competitorWebData: WebInfluence[],
 ): { score: number; available: boolean } {
-  if (!webData.available || !webData.monthlyVisits) {
-    return { score: 0, available: false };
-  }
-
-  const allVisits = [
-    webData.monthlyVisits,
-    ...competitorWebData
-      .filter(c => c.available && c.monthlyVisits)
-      .map(c => c.monthlyVisits!),
-  ];
-
+  if (!webData.available || !webData.monthlyVisits) return { score: 0, available: false };
+  const allVisits = [webData.monthlyVisits, ...competitorWebData.filter(c => c.available && c.monthlyVisits).map(c => c.monthlyVisits!)];
   const maxVisits = Math.max(...allVisits, 1);
-  const visitShare = webData.monthlyVisits / maxVisits;
-  const authorityNormalized = (webData.authorityScore || 0) / 100;
-  const score = visitShare * 0.60 + authorityNormalized * 0.40;
-
+  const score = (webData.monthlyVisits / maxVisits) * 0.60 + ((webData.authorityScore || 0) / 100) * 0.40;
   return { score: Math.min(score, 1.0), available: true };
 }
 
-// --- COMPOSITE INFLUENCE SCORE ---
+// ─── Composite Influence (4D model) ──────────────────────────────────────────
 
-/**
- * Combina Google + Instagram + Web.
- * 
- * Aceita serpPositions como fallback para competitorWebData
- * (backward compat com analysis.ts que passa serpPositions aqui).
- */
 export function calculateCompositeInfluence(
   google: GoogleInfluence,
   instagram: InstagramInfluence,
@@ -269,120 +250,83 @@ export function calculateCompositeInfluence(
   organicPresence?: OrganicPresence | null,
   clientType?: 'b2c' | 'b2b' | 'b2g',
   linkedinPresent?: boolean,
+  aiVisibility?: { score: number; likelyMentioned: boolean } | null,
 ): Step4Output {
   const startTime = Date.now();
+  const ct = clientType || 'b2c';
+  const weights = WEIGHTS[ct] || WEIGHTS.b2c;
 
-  let googleScore = google.ctrShare;
+  // Has website? Check via SERP or Maps
+  const hasWebsite = !!(
+    (organicPresence?.available && organicPresence.totalRanked > 0) ||
+    google.mapsPresence?.website ||
+    (webData.available && webData.monthlyVisits)
+  );
 
-  // Organic presence bonus: até +15pts (cada termo rankeado = +3pts, cap 15)
-  let organicBonus = 0;
-  if (organicPresence?.available && organicPresence.totalRanked > 0) {
-    organicBonus = Math.min(15, organicPresence.totalRanked * 3);
-    googleScore = Math.min(1.0, googleScore + organicBonus / 100);
-    console.log(`[Influence] Organic bonus: +${organicBonus}pts (${organicPresence.totalRanked} terms ranked, top=${organicPresence.topPosition})`);
-  }
+  // Calculate 4 dimensions
+  const d1 = scoreD1(google.serpPositions, google.mapsPresence);
+  const d2 = scoreD2(google.mapsPresence, hasWebsite);
+  const d3 = scoreD3(
+    instagram.profile.dataAvailable ? instagram.profile : null,
+    linkedinPresent || false,
+    ct,
+  );
+  const d4 = scoreD4(aiVisibility || null);
+
+  const totalInfluence = Math.round(
+    d1 * weights.d1 + d2 * weights.d2 + d3 * weights.d3 + d4 * weights.d4
+  );
+
+  const breakdown: InfluenceBreakdown = {
+    total: totalInfluence,
+    d1_discovery: Math.round(d1),
+    d2_credibility: Math.round(d2),
+    d3_reach: Math.round(d3),
+    d4_ai_visibility: Math.round(d4),
+  };
+
+  console.log(`[Influence 4D] D1=${breakdown.d1_discovery} D2=${breakdown.d2_credibility} D3=${breakdown.d3_reach} D4=${breakdown.d4_ai_visibility} → Total=${totalInfluence}% (${ct} weights)`);
+
+  // Backward-compat: also compute old-style scores
+  const googleScore = google.ctrShare;
   const instagramScore = instagram.relativeShare;
   const instagramAvailable = instagram.profile.dataAvailable;
 
-  const webResult = calculateWebInfluence(webData, []);
-  const webScore = webResult.score;
-  const webAvailable = webResult.available;
-
-  // Pesos baseados na disponibilidade e tipo de cliente
-  const isB2B = clientType === 'b2b';
-  const isB2G = clientType === 'b2g';
-  let googleWeight: number;
-  let instagramWeight: number;
-  let webWeight: number;
-  let linkedinWeight: number = 0;
-  let linkedinScore: number = 0;
-
-  if (isB2G) {
-    // B2G: Google 70%, Instagram 10%, Web 20% (governo busca via Google/portais)
-    googleWeight = 0.70;
-    instagramWeight = instagramAvailable ? 0.10 : 0;
-    webWeight = instagramAvailable ? 0.20 : 0.30;
-    if (!instagramAvailable && !webAvailable) {
-      googleWeight = 1.0;
-      webWeight = 0;
-    }
-  } else if (isB2B) {
-    // B2B: Google 50%, Instagram 20%, LinkedIn 30%
-    linkedinScore = linkedinPresent ? 0.7 : 0;
-    if (instagramAvailable) {
-      googleWeight = 0.50;
-      instagramWeight = 0.20;
-      linkedinWeight = 0.30;
-      webWeight = 0;
-    } else {
-      googleWeight = 0.60;
-      instagramWeight = 0;
-      linkedinWeight = 0.40;
-      webWeight = 0;
-    }
-  } else if (webAvailable && instagramAvailable) {
-    googleWeight = 0.50;
-    instagramWeight = 0.30;
-    webWeight = 0.20;
-  } else if (!webAvailable && instagramAvailable) {
-    googleWeight = 0.60;
-    instagramWeight = 0.40;
-    webWeight = 0;
-  } else if (webAvailable && !instagramAvailable) {
-    googleWeight = 0.70;
-    instagramWeight = 0;
-    webWeight = 0.30;
-  } else {
-    googleWeight = 1.0;
-    instagramWeight = 0;
-    webWeight = 0;
-  }
-
-  const totalInfluence = Math.round(
-    (googleScore * googleWeight +
-     instagramScore * instagramWeight +
-     webScore * webWeight +
-     linkedinScore * linkedinWeight) * 100
-  );
-
   const sourcesUsed: string[] = ['google_serp'];
   const sourcesUnavailable: string[] = [];
-
   if (google.mapsPresence?.found) sourcesUsed.push('google_maps');
   if (instagramAvailable) sourcesUsed.push('instagram');
   else sourcesUnavailable.push('instagram');
-  if (webAvailable) sourcesUsed.push('similarweb');
-  else sourcesUnavailable.push('similarweb');
-
-  console.log(`[Influence] Google: ${Math.round(googleScore * 100)}% (ctrShare=${google.ctrShare.toFixed(3)}) | Instagram: ${Math.round(instagramScore * 100)}% (share=${instagram.relativeShare.toFixed(3)}) | Composite: ${totalInfluence}%`);
 
   const influence: InfluenceScore = {
     totalInfluence,
     google: {
       score: Math.round(googleScore * 100),
-      weight: googleWeight,
+      weight: weights.d1,
       available: true,
       organic: organicPresence?.available ? {
         totalRanked: organicPresence.totalRanked,
         avgPosition: organicPresence.avgPosition,
         topPosition: organicPresence.topPosition,
-        bonus: organicBonus,
+        bonus: 0,
       } : undefined,
     },
     instagram: {
       score: Math.round(instagramScore * 100),
-      weight: instagramWeight,
+      weight: weights.d3,
       available: instagramAvailable,
     },
     web: {
-      score: Math.round(webScore * 100),
-      weight: webWeight,
-      available: webAvailable,
+      score: 0,
+      weight: 0,
+      available: false,
     },
     competitorScores: [],
     rawGoogle: google,
     rawInstagram: instagram,
     rawWeb: webData,
+    // @ts-ignore — extending with breakdown
+    breakdown,
   };
 
   return {

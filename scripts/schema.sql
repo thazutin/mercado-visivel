@@ -165,4 +165,7 @@ begin
   if not exists (select 1 from information_schema.columns where table_name='leads' and column_name='linkedin') then
     alter table public.leads add column linkedin text default '';
   end if;
+  if not exists (select 1 from information_schema.columns where table_name='diagnoses' and column_name='influence_breakdown') then
+    alter table public.diagnoses add column influence_breakdown jsonb;
+  end if;
 end $$;

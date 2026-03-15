@@ -225,15 +225,28 @@ function diagnosisEmailHtml(opts: {
   const influenceColor = influencePercent === 0 ? "#D9534F" : influencePercent < 20 ? "#CF8523" : "#2D9B83";
   const formattedVolume = searchVolume ? searchVolume.toLocaleString("pt-BR") : null;
 
+  // Dynamic headline based on influence
+  const headline = influencePercent === 0
+    ? `Seu negócio está invisível em ${shortRegion}.`
+    : influencePercent < 20
+    ? `Você captura apenas ${influencePercent}% do mercado digital em ${shortRegion}.`
+    : `Você já captura ${influencePercent}% do mercado — mas pode mais.`;
+
+  // Dynamic insight
+  const insight = influencePercent === 0
+    ? `Quando alguém busca "${product}" em ${shortRegion}, seu negócio não aparece. Enquanto isso, seus concorrentes capturam esses clientes sem que você saiba.`
+    : influencePercent < 20
+    ? `A cada 100 pessoas que buscam "${product}" em ${shortRegion}, ${100 - influencePercent} vão para concorrentes. Não porque são melhores — porque são mais visíveis.`
+    : `Boa posição, mas ${100 - influencePercent}% do mercado ainda vai para concorrentes. O diagnóstico mostra onde proteger e onde atacar.`;
+
   return emailShell(`
-    <h1 style="font-size:22px;color:#161618;margin:0 0 16px;line-height:1.3;">
-      Seu diagnóstico de mercado está pronto.
+    <h1 style="font-size:22px;color:#161618;margin:0 0 12px;line-height:1.3;">
+      ${headline}
     </h1>
     <p style="font-size:15px;color:#6E6E78;line-height:1.7;margin:0 0 24px;">
-      Analisamos <strong>${product}</strong> em <strong>${shortRegion}</strong>
-      e calculamos sua influência digital no mercado local.
+      ${insight}
     </p>
-    <div style="display:flex;gap:12px;margin:0 0 28px;">
+    <div style="display:flex;gap:12px;margin:0 0 24px;">
       <div style="flex:1;background:#F4F4F7;border-radius:12px;padding:20px 16px;text-align:center;">
         <div style="font-size:36px;font-weight:700;color:${influenceColor};line-height:1;margin-bottom:6px;">
           ${influencePercent}%
@@ -245,20 +258,22 @@ function diagnosisEmailHtml(opts: {
         <div style="font-size:36px;font-weight:700;color:#161618;line-height:1;margin-bottom:6px;">
           ${formattedVolume}
         </div>
-        <div style="font-size:12px;color:#6E6E78;">Buscas mensais</div>
+        <div style="font-size:12px;color:#6E6E78;">Buscas/mês</div>
       </div>
       ` : ""}
     </div>
+    <div style="background:#FEFAF3;border-left:3px solid #CF8523;padding:14px 16px;border-radius:0 8px 8px 0;margin:0 0 24px;">
+      <p style="font-size:13px;color:#3A3A40;margin:0;line-height:1.6;">
+        O diagnóstico mostra <strong>exatamente onde você está perdendo clientes</strong> — e as 3 ações prioritárias para virar esse jogo.
+      </p>
+    </div>
     <div style="text-align:center;margin:0 0 28px;">
       <a href="${url}" style="background:#161618;color:#FEFEFF;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;display:inline-block;">
-        Ver minha inteligência de mercado
+        Ver meu diagnóstico completo
       </a>
     </div>
-    <p style="font-size:14px;color:#3A3A40;line-height:1.6;margin:0 0 12px;">
-      Veja onde estão suas oportunidades de mercado e como aumentar sua visibilidade local.
-    </p>
-    <p style="font-size:13px;color:#9E9EA8;line-height:1.6;margin:0;">
-      Você vai descobrir exatamente onde está perdendo clientes para concorrentes — e o que fazer primeiro para virar esse jogo.
+    <p style="font-size:12px;color:#9E9EA8;line-height:1.6;margin:0;">
+      Dados coletados em tempo real: Google Search, Google Maps, Instagram, IA e IBGE.
     </p>
   `);
 }

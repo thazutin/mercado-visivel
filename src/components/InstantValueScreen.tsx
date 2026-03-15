@@ -150,7 +150,11 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           <p style={{ fontSize: 13, color: V.ash, margin: 0 }}>{product} · {shortRegion}</p>
         </div>
 
-        {/* ═══ HERO: 4 BIG NUMBERS (reordered) ═══ */}
+        {/* ═══ SECTION 1: "Seu mercado em números" ═══ */}
+        <p style={{ fontSize: 11, fontFamily: V.mono, color: V.ash, letterSpacing: "0.06em", textTransform: "uppercase" as const, margin: "0 0 12px" }}>
+          Seu mercado em números
+        </p>
+
         <div style={{
           display: "flex",
           flexDirection: "column",
@@ -216,26 +220,52 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             </div>
           )}
 
-          {/* 4. Influência Digital */}
-          {hasInfluence ? (
-            <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}` }}>
-              <div style={{
-                fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1,
-                color: results.influencePercent < 20 ? V.amber : V.teal,
-              }}>
-                {results.influencePercent}%
-              </div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>Influência digital</p>
-              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>{isB2G ? 'Google + Portais Públicos' : isB2B ? 'Google + LinkedIn + Instagram' : 'Google + Instagram + AI'}</p>
-            </div>
-          ) : (
-            <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}` }}>
-              <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.coral, letterSpacing: "-0.03em", lineHeight: 1 }}>0%</div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>Influência digital</p>
-              <p style={{ fontSize: 10, color: V.coral, margin: "4px 0 0" }}>Invisível no mercado</p>
-            </div>
-          )}
         </div>
+
+        {/* ═══ SEPARATOR: "A variável que você controla" ═══ */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0 16px" }}>
+          <div style={{ flex: 1, height: 1, background: V.fog }} />
+          <span style={{ fontSize: 11, fontFamily: V.mono, color: V.ash, letterSpacing: "0.04em", textTransform: "uppercase" as const, whiteSpace: "nowrap" as const }}>
+            A variável que você controla
+          </span>
+          <div style={{ flex: 1, height: 1, background: V.fog }} />
+        </div>
+
+        {/* 4. Influência Digital — HIGHLIGHTED */}
+        {hasInfluence ? (
+          <div style={{ background: V.night, borderRadius: 14, padding: "28px 18px", textAlign: "center", border: `1px solid ${V.slate}`, marginBottom: 12 }}>
+            <div style={{
+              fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1,
+              color: results.influencePercent < 20 ? V.amberSoft : V.teal,
+            }}>
+              {results.influencePercent}%
+            </div>
+            <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>Influência digital</p>
+            <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>{isB2G ? 'Google + Portais Públicos' : isB2B ? 'Google + LinkedIn + Instagram' : 'Google + Instagram + AI'}</p>
+            {/* D1-D4 sub-scores */}
+            {(results as any).influenceBreakdown4D && (
+              <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 16, paddingTop: 12, borderTop: `1px solid ${V.slate}` }}>
+                {[
+                  { label: "Descoberta", value: (results as any).influenceBreakdown4D.d1_discovery },
+                  { label: "Credibilidade", value: (results as any).influenceBreakdown4D.d2_credibility },
+                  { label: "Alcance", value: (results as any).influenceBreakdown4D.d3_reach },
+                  { label: "IA", value: (results as any).influenceBreakdown4D.d4_ai_visibility },
+                ].map((dim, i) => (
+                  <div key={i} style={{ textAlign: "center" }}>
+                    <div style={{ fontFamily: V.mono, fontSize: 14, fontWeight: 700, color: dim.value > 50 ? V.teal : dim.value > 20 ? V.amberSoft : V.ash }}>{dim.value}</div>
+                    <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono, letterSpacing: "0.02em", marginTop: 2 }}>{dim.label}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div style={{ background: V.night, borderRadius: 14, padding: "28px 18px", textAlign: "center", border: `1px solid ${V.slate}`, marginBottom: 12 }}>
+            <div style={{ fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, color: V.coral, letterSpacing: "-0.03em", lineHeight: 1 }}>0%</div>
+            <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>Influência digital</p>
+            <p style={{ fontSize: 11, color: V.coral, margin: "4px 0 0" }}>Invisível no mercado</p>
+          </div>
+        )}
 
         {/* Contexto */}
         <div style={{ background: results.influencePercent === 0 ? V.coralWash : V.amberWash, borderRadius: 12, padding: "14px 18px", marginBottom: 20 }}>
@@ -540,10 +570,10 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           </div>
           <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 12px", lineHeight: 1.6 }}>
             {isB2G
-              ? "O score de influência digital mede quanto do mercado público você captura nos canais onde gestores de compras buscam fornecedores — Google e portais de licitação. O dimensionamento cruza volume de busca com dados do PNCP (Portal Nacional de Contratações Públicas) para estimar o mercado disponível. Todos os dados são coletados em tempo real."
+              ? "O score de influência digital usa 4 dimensões — Descoberta (SERP + Maps), Credibilidade (avaliações + site), Alcance Social e Visibilidade em IA — para medir quanto do mercado público você captura. O dimensionamento cruza volume de busca (Google Ads/DataForSEO), IBGE e PNCP para estimar o mercado disponível. Dados coletados em tempo real."
               : isB2B
-              ? "O score de influência digital mede quanto do mercado local você captura nos canais onde as decisões de contratação B2B acontecem — Google (busca + Maps), LinkedIn e Instagram. O dimensionamento cruza volume de busca com dados de densidade empresarial para estimar a demanda disponível. Todos os dados são coletados em tempo real."
-              : "O score de influência digital mede quanto do mercado local você captura nos canais onde as decisões de compra acontecem — Google (busca + Maps) e Instagram. O score é normalizado contra benchmarks do segmento — não é absoluto, é relativo ao mercado local. O dimensionamento de mercado cruza volume de busca com dados populacionais para estimar a demanda total disponível. Todos os dados são coletados em tempo real no momento do diagnóstico."}
+              ? "O score de influência digital usa 4 dimensões — Descoberta (SERP + Maps), Credibilidade (avaliações + site), Alcance Social (Instagram + LinkedIn) e Visibilidade em IA — para medir quanto do mercado local você captura. O dimensionamento cruza volume de busca (Google Ads/DataForSEO) com dados IBGE para estimar a demanda. Dados coletados em tempo real."
+              : "O score de influência digital usa 4 dimensões — Descoberta (SERP + Maps), Credibilidade (avaliações + site), Alcance Social (Instagram) e Visibilidade em IA — para medir quanto do mercado local você captura. O dimensionamento cruza volume de busca (Google Ads/DataForSEO) com dados IBGE para estimar a demanda total. Todos os dados são coletados em tempo real no momento do diagnóstico."}
           </p>
           {results.pipeline?.durationMs && (
             <p style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, marginTop: 8 }}>{(results.pipeline.durationMs / 1000).toFixed(1)}s · {results.pipeline.version}</p>
