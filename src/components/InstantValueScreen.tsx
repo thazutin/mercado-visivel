@@ -78,6 +78,17 @@ function inferIntent(term: string, isB2B?: boolean): { label: string; color: str
   return { label: "Informacional", color: V.ash };
 }
 
+function generateCirclePath(lat: number, lng: number, radiusKm: number, points: number = 36): string {
+  const coords: string[] = [];
+  for (let i = 0; i <= points; i++) {
+    const angle = (i / points) * 2 * Math.PI;
+    const dLat = (radiusKm / 111.32) * Math.cos(angle);
+    const dLng = (radiusKm / (111.32 * Math.cos(lat * Math.PI / 180))) * Math.sin(angle);
+    coords.push(`${(lat + dLat).toFixed(6)},${(lng + dLng).toFixed(6)}`);
+  }
+  return coords.join('|');
+}
+
 function Expandable({ title, icon, children, defaultOpen = false, badge }: {
   title: string; icon?: string; children: React.ReactNode; defaultOpen?: boolean; badge?: React.ReactNode;
 }) {
@@ -165,7 +176,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 ~{fmtPop(aud!.audienciaTarget)}
               </div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>{isB2G ? 'órgãos públicos potenciais' : audienciaLabel}</p>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>{isB2G ? 'órgãos públicos potenciais' : isB2B ? 'empresas que poderiam comprar com você' : 'pessoas que poderiam comprar com você'}</p>
               <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>Mercado endereçável · {audSublabel}</p>
             </div>
           ) : (
@@ -173,7 +184,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Mercado endereçável indisponível para este município</p>
             </div>
           )}
-          <Expandable title="Tamanho da audiência" icon="👥" defaultOpen={!!hasAudiencia}>
+          <Expandable title="Tamanho da audiência" icon="👥">
           {aud && aud.populacaoRaio > 0 ? (
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
@@ -221,7 +232,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               {results.lat && results.lng && aud.raioKm && aud.densidade !== "nacional" && (
                 <div style={{ marginTop: 12, borderRadius: 10, overflow: "hidden", border: `1px solid ${V.fog}` }}>
                   <img
-                    src={`https://maps.googleapis.com/maps/api/staticmap?center=${results.lat},${results.lng}&zoom=${aud.raioKm <= 5 ? 13 : 10}&size=560x200&scale=2&maptype=roadmap&style=feature:all|saturation:-50&markers=size:small|color:0x2D9B83|${results.lat},${results.lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY}`}
+                    src={`https://maps.googleapis.com/maps/api/staticmap?center=${results.lat},${results.lng}&zoom=${aud.raioKm <= 5 ? 13 : 10}&size=560x200&scale=2&maptype=roadmap&style=feature:all|saturation:-50&markers=size:small|color:0x2D9B83|${results.lat},${results.lng}&path=color:0x2D9B8380|weight:2|fillcolor:0x2D9B8318|${generateCirclePath(results.lat!, results.lng!, aud.raioKm!)}&key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY}`}
                     alt={`Mapa do raio de ${aud.raioKm}km`}
                     style={{ width: "100%", height: "auto", display: "block" }}
                   />
@@ -245,7 +256,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.night, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 <AnimatedCounter target={results.totalVolume} duration={1500} />
               </div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>Demanda ativa · buscas/mês</p>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>buscas no Google e AI por mês que poderiam encontrar você</p>
               {results.volumeGeo && results.volumeGeo.level !== 'city' && (
                 <p style={{ fontSize: 10, color: V.amber, margin: "4px 0 0", fontFamily: V.mono }}>
                   Dados de {results.volumeGeo.level === 'regional' ? results.volumeGeo.label : results.volumeGeo.level === 'state' ? `estado ${results.volumeGeo.label}` : 'Brasil'}
@@ -315,30 +326,44 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           {results.terms.length > 15 && (
             <p style={{ fontSize: 11, color: V.ash, marginTop: 8, textAlign: "center" }}>+{results.terms.length - 15} termos no diagnóstico completo</p>
           )}
-          {/* Concorrentes ativos no raio */}
-          {ci && ci.activeCompetitors > 0 && (
-            <div style={{ marginTop: 16, padding: "12px", background: V.cloud, borderRadius: 8 }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: V.night, margin: "0 0 8px" }}>
-                {ci.activeCompetitors} concorrente{ci.activeCompetitors !== 1 ? 's' : ''} ativ{ci.activeCompetitors !== 1 ? 'os' : 'o'} no seu raio
-              </p>
-              {ci.competitors.filter(c => c.hasWebsite || c.hasInstagram).slice(0, 8).map((c, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0", fontSize: 12, color: V.zinc, borderBottom: i < Math.min(ci.competitors.filter(cc => cc.hasWebsite || cc.hasInstagram).length, 8) - 1 ? `1px solid ${V.fog}` : "none" }}>
-                  <span style={{ flex: 1 }}>{c.name}</span>
-                  <span style={{ display: "flex", gap: 4, fontSize: 10 }}>
-                    {c.hasWebsite && <span title="Site" style={{ background: V.tealWash, color: V.teal, padding: "1px 5px", borderRadius: 4, fontFamily: V.mono }}>Site</span>}
-                    {c.hasInstagram && <span title="Instagram" style={{ background: "#E1306C18", color: "#E1306C", padding: "1px 5px", borderRadius: 4, fontFamily: V.mono }}>IG</span>}
-                  </span>
-                  {c.rating && <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>★{c.rating}</span>}
-                  {c.mapsPosition && <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>#{c.mapsPosition}</span>}
-                </div>
-              ))}
-            </div>
-          )}
           <p style={{ fontSize: 10, color: V.ash, margin: "12px 0 0", fontFamily: V.mono }}>
             Dados: DataForSEO (volume + SERP){results.volumeGeo ? ` · ${results.volumeGeo.level === 'city' ? results.volumeGeo.label : results.volumeGeo.level === 'regional' ? `região ${results.volumeGeo.label}` : results.volumeGeo.level === 'state' ? `estado ${results.volumeGeo.label}` : 'Brasil'}` : ''}
           </p>
         </Expandable>
         </div>
+
+        {/* ── Concorrência ── */}
+        {hasCi && (
+          <div style={{ marginBottom: 12 }}>
+            <Expandable title="Concorrência no seu raio" icon="🏪">
+              {ci!.activeCompetitors === 0 && ci!.totalCompetitors === 0 ? (
+                <p style={{ fontSize: 12, color: V.teal, margin: 0 }}>Nenhum concorrente digital encontrado no seu raio — oportunidade.</p>
+              ) : (
+                <div>
+                  <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 12px", lineHeight: 1.5 }}>
+                    {ci!.activeCompetitors} negócio{ci!.activeCompetitors !== 1 ? 's' : ''} disputa{ci!.activeCompetitors === 1 ? '' : 'm'} atenção com você nesta região.
+                  </p>
+                  {ci!.competitors.filter(c => c.hasWebsite || c.hasInstagram).slice(0, 8).map((c, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0", fontSize: 12, color: V.zinc, borderBottom: i < Math.min(ci!.competitors.filter(cc => cc.hasWebsite || cc.hasInstagram).length, 8) - 1 ? `1px solid ${V.fog}` : "none" }}>
+                      <span style={{ flex: 1 }}>{c.name}</span>
+                      <span style={{ display: "flex", gap: 4, fontSize: 10 }}>
+                        {c.hasWebsite && <span title="Site" style={{ background: V.tealWash, color: V.teal, padding: "1px 5px", borderRadius: 4, fontFamily: V.mono }}>Site</span>}
+                        {c.hasInstagram && <span title="Instagram" style={{ background: "#E1306C18", color: "#E1306C", padding: "1px 5px", borderRadius: 4, fontFamily: V.mono }}>IG</span>}
+                      </span>
+                      {c.rating && <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>★{c.rating}</span>}
+                      {c.mapsPosition && <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>#{c.mapsPosition}</span>}
+                    </div>
+                  ))}
+                  <div style={{ marginTop: 12, padding: "10px 14px", background: ci!.color === 'green' ? "rgba(45,155,131,0.08)" : ci!.color === 'yellow' ? V.amberWash : V.coralWash, borderRadius: 8, textAlign: "center" }}>
+                    <span style={{ fontFamily: V.mono, fontSize: 11, fontWeight: 600, color: ci!.color === 'green' ? V.teal : ci!.color === 'yellow' ? V.amber : V.coral }}>
+                      {ci!.labelText} · {ci!.indexValue.toLocaleString("pt-BR")} buscas por concorrente
+                    </span>
+                  </div>
+                </div>
+              )}
+            </Expandable>
+          </div>
+        )}
 
         {/* ── 3. Influência Digital (indicador principal) ── */}
         <div style={{ marginBottom: 4 }}>
@@ -360,15 +385,14 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               }}>
                 {results.influencePercent}%
               </div>
-              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>Influência digital</p>
-              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>{isB2G ? 'Google + Portais Públicos' : isB2B ? 'Google + LinkedIn + Instagram' : 'Google + Instagram + AI'}</p>
+              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>chance de capturar nova demanda digital</p>
+              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>Alcance · Descoberta · Credibilidade</p>
               {(results as any).influenceBreakdown4D && (
                 <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 16, paddingTop: 12, borderTop: `1px solid ${V.slate}` }}>
                   {[
-                    { label: "Descoberta", value: (results as any).influenceBreakdown4D.d1_discovery },
-                    { label: "Credibilidade", value: (results as any).influenceBreakdown4D.d2_credibility },
                     { label: "Alcance", value: (results as any).influenceBreakdown4D.d3_reach },
-                    { label: "IA", value: (results as any).influenceBreakdown4D.d4_ai_visibility },
+                    { label: "Descoberta", value: Math.round(((results as any).influenceBreakdown4D.d1_discovery + (results as any).influenceBreakdown4D.d4_ai_visibility) / 2) },
+                    { label: "Credibilidade", value: (results as any).influenceBreakdown4D.d2_credibility },
                   ].map((dim, i) => (
                     <div key={i} style={{ textAlign: "center" }}>
                       <div style={{ fontFamily: V.mono, fontSize: 14, fontWeight: 700, color: dim.value > 50 ? V.teal : dim.value > 20 ? V.amberSoft : V.ash }}>{dim.value}</div>
@@ -381,7 +405,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           ) : (
             <div style={{ background: V.night, borderRadius: "14px 14px 0 0", padding: "28px 18px", textAlign: "center", border: `1px solid ${V.slate}`, borderBottom: "none" }}>
               <div style={{ fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, color: V.coral, letterSpacing: "-0.03em", lineHeight: 1 }}>0%</div>
-              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>Influência digital</p>
+              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>chance de capturar nova demanda digital</p>
               <p style={{ fontSize: 11, color: V.coral, margin: "4px 0 0" }}>Invisível no mercado</p>
             </div>
           )}
@@ -402,24 +426,10 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             Cruzamos dados de Google, Instagram e AI para calcular quanto do mercado digital local você captura.
           </p>
 
-          {/* Google */}
+          {/* Alcance — Instagram/LinkedIn reach */}
           <div style={{ padding: "10px 0", borderBottom: `1px solid ${V.fog}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Google</span>
-              <span style={{ fontFamily: V.mono, fontSize: 12, color: V.night }}>{breakdown?.google || 0}%</span>
-            </div>
-            <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
-              {serpData?.termsRanked === 0
-                ? `Não aparece no top 10 para nenhum dos ${serpData?.termsScraped || 0} termos.`
-                : serpData ? `Aparece para ${serpData.termsRanked} de ${serpData.termsScraped} termos.` : "SERP não disponível."}
-              {results.maps?.found ? ` Maps: ★ ${results.maps.rating || "—"} (${results.maps.reviewCount || 0} avaliações).` : " Maps: não encontrado."}
-            </p>
-          </div>
-
-          {/* Instagram */}
-          <div style={{ padding: "10px 0", borderBottom: `1px solid ${V.fog}` }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Instagram</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Alcance</span>
               <span style={{ fontFamily: V.mono, fontSize: 12, color: V.night }}>{breakdown?.instagram || 0}%</span>
             </div>
             {igData?.dataAvailable ? (
@@ -475,31 +485,53 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             )}
           </div>
 
-          {/* AI */}
-          {results.aiVisibility && (
-            <div style={{ padding: "10px 0" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>AI (ChatGPT, Perplexity)</span>
-                <span style={{ fontFamily: V.mono, fontSize: 12, color: V.night }}>{results.aiVisibility.score}/100</span>
-              </div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
+          {/* Descoberta — Google + AI presence */}
+          <div style={{ padding: "10px 0", borderBottom: `1px solid ${V.fog}` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Descoberta</span>
+              <span style={{ fontFamily: V.mono, fontSize: 12, color: V.night }}>{breakdown?.google || 0}%</span>
+            </div>
+            <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
+              {serpData?.termsRanked === 0
+                ? `Não aparece no top 10 para nenhum dos ${serpData?.termsScraped || 0} termos.`
+                : serpData ? `Aparece para ${serpData.termsRanked} de ${serpData.termsScraped} termos.` : "SERP não disponível."}
+              {results.maps?.found ? ` Maps: ★ ${results.maps.rating || "—"} (${results.maps.reviewCount || 0} avaliações).` : " Maps: não encontrado."}
+            </p>
+            {results.aiVisibility && (
+              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.5 }}>
                 {(() => {
                   const aiDimFactor = results.aiVisibility!.factors?.find(
                     (f: any) => f.status === 'positive' && f.factor.startsWith('Aparece em buscas de IA')
                   );
-                  if (aiDimFactor) return aiDimFactor.factor + `. Score ${results.aiVisibility!.score}/100.`;
-                  if (results.aiVisibility!.likelyMentioned) return `Seu negócio provavelmente é mencionado em respostas de AI. Score ${results.aiVisibility!.score}/100.`;
-                  return `Não aparece em nenhuma busca de IA local. ${results.aiVisibility!.summary}`;
+                  if (aiDimFactor) return `AI: ${aiDimFactor.factor}. Score ${results.aiVisibility!.score}/100.`;
+                  if (results.aiVisibility!.likelyMentioned) return `AI: Seu negócio provavelmente é mencionado em respostas de AI. Score ${results.aiVisibility!.score}/100.`;
+                  return `AI: Não aparece em nenhuma busca de IA local. ${results.aiVisibility!.summary}`;
                 })()}
               </p>
+            )}
+          </div>
+
+          {/* Credibilidade — Engagement and reviews */}
+          <div style={{ padding: "10px 0" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Credibilidade</span>
+              {(results as any).influenceBreakdown4D && (
+                <span style={{ fontFamily: V.mono, fontSize: 12, color: V.night }}>{(results as any).influenceBreakdown4D.d2_credibility}%</span>
+              )}
             </div>
-          )}
+            <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
+              {results.maps?.found
+                ? `Google Maps: ★ ${results.maps.rating || "—"} (${results.maps.reviewCount || 0} avaliações) · ${results.maps.photos || 0} fotos.`
+                : "Google Maps: perfil não encontrado."}
+              {igData?.dataAvailable ? ` Engajamento Instagram: ${(igData.engagementRate * 100).toFixed(1)}%.` : ""}
+            </p>
+          </div>
         </Expandable>
         </div>
 
         {/* ── 4. Rotas de trabalho priorizadas ── */}
         {results.workRoutes && results.workRoutes.length > 0 && (
-          <Expandable title="Rotas de trabalho priorizadas" icon="🎯" defaultOpen={true}>
+          <Expandable title="Rotas de trabalho priorizadas" icon="🎯">
             {results.gapHeadline && (
               <p style={{ fontSize: 13, color: V.night, margin: "0 0 12px", fontWeight: 500, lineHeight: 1.5 }}>{results.gapHeadline}</p>
             )}
@@ -566,7 +598,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
 
         {/* ═══ PNCP — Contratações Públicas (B2G only) ═══ */}
         {isB2G && results.pncp && results.pncp.totalEncontradas > 0 && (
-          <Expandable title="Contratações Públicas (PNCP)" icon="📋" defaultOpen>
+          <Expandable title="Contratações Públicas (PNCP)" icon="📋">
             <div style={{ padding: "12px 16px" }}>
               <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
                 <div style={{ flex: 1, background: V.cloud, borderRadius: 10, padding: "12px", textAlign: "center" }}>

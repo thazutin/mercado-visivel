@@ -8,8 +8,8 @@ export const dictionaries: Record<Locale, any> = {
   pt: {
     // ─── Hero ───
     badge: "marketing para negócios locais",
-    heroTitle1: "Quanto do seu mercado local",
-    heroTitle2: "te conhece?",
+    heroTitle1: "Descubra como seu negócio aparece",
+    heroTitle2: "no seu mercado local",
     heroSub: "Análise real de demanda, concorrência e posicionamento. Grátis. 30 segundos.",
     heroWho: "Para donos de negócio que atendem clientes na região e querem enxergar o mercado ao redor com clareza.",
     heroCta: "Ver meu mercado",
@@ -167,10 +167,10 @@ export const dictionaries: Record<Locale, any> = {
     formStepOf: (s: number, t: number) => `Passo ${s} de ${t}`,
     formBack: "Voltar",
     formNext: "Continuar →",
-    formSubmit: "Ver meu mercado →",
+    formSubmit: "Ver meu diagnóstico grátis",
     // ─── Hero (current simplified) ───
-    heroSubShort: "Análise real de demanda, concorrência e posicionamento.",
-    heroFree: "Grátis. 60 segundos.",
+    heroSubShort: "Receba uma leitura clara da sua visibilidade, da concorrência e das oportunidades de atrair mais clientes na sua região.",
+    heroFree: "Leva 60 segundos · Resultado personalizado · Sem custo",
 
     // ─── Processing ───
     processingSteps: [

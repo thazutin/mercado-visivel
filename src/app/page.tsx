@@ -460,10 +460,10 @@ export default function Home() {
       <Section bg={V.white}>
         <div style={{ textAlign: "center", marginBottom: 36 }}>
           <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 10px", lineHeight: 1.25 }}>
-            É isso que você recebe em 60 segundos
+            O que você vai ver no seu diagnóstico
           </h2>
           <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.6, margin: 0 }}>
-            Um raio-x completo do seu mercado local — sem precisar de conta ou cartão.
+            Sua visibilidade, sua concorrência e onde está a oportunidade.
           </p>
         </div>
 
@@ -495,7 +495,7 @@ export default function Home() {
               <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 ~18 mil
               </div>
-              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>pessoas no seu mercado · Raio 3km</p>
+              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>pessoas que poderiam comprar com você</p>
               <p style={{ fontSize: 9, color: V.ash, margin: "2px 0 0", fontFamily: V.mono }}>População total no raio: 142 mil</p>
             </div>
 
@@ -504,7 +504,7 @@ export default function Home() {
               <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.night, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 3.200
               </div>
-              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>buscas/mês por estética na sua região</p>
+              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>buscas no Google e AI por mês</p>
             </div>
 
             {/* Card 3 — Nível de Competição */}
@@ -532,7 +532,7 @@ export default function Home() {
               <div style={{ fontFamily: V.display, fontSize: 32, fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 23%
               </div>
-              <p style={{ fontSize: 11, color: V.mist, margin: "6px 0 0" }}>potencial de influência sobre a demanda</p>
+              <p style={{ fontSize: 11, color: V.mist, margin: "6px 0 0" }}>chance de capturar nova demanda digital</p>
               <p style={{ fontSize: 10, color: V.amber, margin: "8px 0 0" }}>↑ Esta é a métrica que o Virô gerencia.</p>
               {/* Sub-scores */}
               <div style={{ display: "flex", justifyContent: "center", gap: 14, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${V.slate}` }}>
@@ -557,9 +557,9 @@ export default function Home() {
               Rotas de trabalho priorizadas
             </p>
             {[
-              { n: 1, title: "Criar perfil no Google Meu Negócio", horizon: "curto prazo" },
-              { n: 2, title: "Publicar 3 Reels/semana com roteiro", horizon: "curto prazo" },
-              { n: 3, title: "Coletar avaliações de clientes atuais", horizon: "médio prazo" },
+              { n: 1, title: "Aparecer no Google quando buscam você", horizon: "curto prazo" },
+              { n: 2, title: "Mostrar seu trabalho no Instagram", horizon: "curto prazo" },
+              { n: 3, title: "Ganhar confiança com avaliações reais", horizon: "médio prazo" },
             ].map((r) => (
               <div key={r.n} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderBottom: r.n < 3 ? `1px solid ${V.fog}` : "none" }}>
                 <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 700, color: V.amber, background: V.amberWash, width: 20, height: 20, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -592,9 +592,9 @@ export default function Home() {
         </h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 20 }}>
           {[
-            { icon: "📋", title: "Descreva seu negócio", text: "Informe o tipo de negócio e seu endereço. Leva menos de 2 minutos." },
-            { icon: "🔍", title: "Análise em tempo real", text: "Cruzamos Google, Instagram, IBGE e IA para montar o raio-x do seu mercado." },
-            { icon: "📊", title: "Resultado instantâneo", text: "Veja demanda, concorrência e sua influência digital — grátis." },
+            { icon: "📋", title: "Você informa seu negócio e sua região", text: "Leva menos de 2 minutos." },
+            { icon: "🔍", title: "A Virô analisa seu mercado local", text: "Cruzamos Google, Instagram, IBGE e IA para montar a leitura do seu mercado." },
+            { icon: "📊", title: "Você recebe um diagnóstico claro", text: "Sua visibilidade, concorrência e oportunidades — grátis." },
           ].map((step, i) => (
             <div key={i} style={{ background: V.white, borderRadius: 14, padding: "24px 20px", border: `1px solid ${V.fog}` }}>
               <div style={{ fontSize: 28, marginBottom: 12 }}>{step.icon}</div>
@@ -610,23 +610,37 @@ export default function Home() {
         </div>
       </Section>
 
+      {/* ═══ SECTION — É PARA MIM? ═══ */}
+      <Section bg={V.white}>
+        <SectionLabel>é para mim?</SectionLabel>
+        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
+          Feito para negócios locais
+        </h2>
+        <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: "0 0 12px" }}>
+          Lojas, clínicas, restaurantes, escritórios, studios e prestadores de serviço. Com ou sem presença digital forte.
+        </p>
+        <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: 0 }}>
+          Se você quer entender como sua empresa aparece hoje, quem disputa atenção com você e onde há oportunidade de crescer — a Virô é para você.
+        </p>
+      </Section>
+
       {/* ═══ SECTION 4 — O QUE VOCÊ VAI RECEBER ═══ */}
       <Section bg={V.white}>
         <SectionLabel>o que você vai receber</SectionLabel>
         <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
-          Diagnóstico gratuito + plano de ação
+          O que você vai ver no seu diagnóstico
         </h2>
         <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.6, margin: "0 0 28px" }}>
-          O resultado grátis já mostra o tamanho do mercado e sua posição. O plano completo mostra como mudar.
+          O resultado grátis já mostra onde seu negócio está hoje. O plano completo mostra o que fazer.
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           {[
-            { label: "GRÁTIS", title: "Raio-x do mercado", desc: "Demanda real, concorrência mapeada, influência digital medida.", color: V.teal },
-            { label: "GRÁTIS", title: "Termos de busca reais", desc: "O que pessoas buscam no Google quando precisam do que você faz.", color: V.teal },
-            { label: "GRÁTIS", title: "Score de influência", desc: "4 dimensões: Descoberta, Credibilidade, Alcance e IA.", color: V.teal },
-            { label: "PLANO", title: "Ações priorizadas", desc: "O que fazer primeiro, em que ordem e por quê.", color: V.amber },
+            { label: "GRÁTIS", title: "Visibilidade no mercado", desc: "Como seu negócio aparece no Google, Instagram e IA.", color: V.teal },
+            { label: "GRÁTIS", title: "Concorrência mapeada", desc: "Quem disputa atenção com você na sua região.", color: V.teal },
+            { label: "GRÁTIS", title: "Oportunidades claras", desc: "Onde há espaço para atrair mais clientes.", color: V.teal },
+            { label: "PLANO", title: "O que fazer primeiro", desc: "Próximos passos concretos, em ordem de prioridade.", color: V.amber },
             { label: "PLANO", title: "90 dias de roteiro", desc: "12 semanas com ações específicas para seu negócio.", color: V.amber },
-            { label: "PLANO", title: "Briefing semanal", desc: "Toda semana: o que mudou + ação da semana. Por email e WhatsApp.", color: V.amber },
+            { label: "PLANO", title: "Acompanhamento semanal", desc: "O que mudou + próxima ação. Por email e WhatsApp.", color: V.amber },
           ].map((item, i) => (
             <div key={i} style={{ padding: "20px", borderRadius: 12, border: `1px solid ${V.fog}`, background: V.white }}>
               <span style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", fontWeight: 600, color: item.color, background: `${item.color}15`, padding: "3px 8px", borderRadius: 4 }}>
@@ -643,11 +657,10 @@ export default function Home() {
       <Section bg={V.white}>
         <SectionLabel>metodologia</SectionLabel>
         <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
-          Dados reais, não achismo
+          Dados reais do seu mercado
         </h2>
         <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: "0 0 28px" }}>
-          O Virô cruza 9 fontes em tempo real para montar o diagnóstico do seu mercado local.
-          Nenhum dado é inventado — tudo vem de APIs oficiais e é coletado no momento da análise.
+          A Virô cruza 9 fontes em tempo real para montar a leitura do seu mercado local. Tudo coletado no momento da análise.
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
           {[
@@ -665,9 +678,8 @@ export default function Home() {
         </div>
         <div style={{ background: V.cloud, borderRadius: 12, padding: "20px", border: `1px solid ${V.fog}` }}>
           <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.7, margin: 0 }}>
-            <strong style={{ color: V.night }}>Influência digital em 4 dimensões:</strong>{" "}
-            Descoberta (SERP + Maps), Credibilidade (avaliações + site), Alcance Social (Instagram + LinkedIn) e Visibilidade em IA.
-            O score é ponderado pelo tipo de negócio (B2C, B2B ou B2G) e normalizado contra benchmarks do segmento.
+            <strong style={{ color: V.night }}>Medimos 3 coisas:</strong>{" "}
+            como as pessoas encontram negócios como o seu (Descoberta), se seu negócio alcança essas pessoas (Alcance), e se passa confiança para quem encontra (Credibilidade).
           </p>
         </div>
       </Section>
@@ -676,15 +688,14 @@ export default function Home() {
       <Section bg={V.cloud}>
         <SectionLabel>perguntas frequentes</SectionLabel>
         <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 24px", lineHeight: 1.25 }}>
-          Dúvidas comuns
+          Perguntas comuns
         </h2>
         {[
-          { q: "Preciso criar conta?", a: "Não. Basta preencher o formulário e o resultado aparece na tela. Sem cadastro, sem cartão." },
-          { q: "Quanto tempo demora?", a: "A análise roda em tempo real e leva cerca de 60 segundos. O resultado aparece direto na tela." },
-          { q: "O resultado gratuito é limitado?", a: "O resultado grátis inclui o raio-x completo: mercado, demanda, concorrência e influência digital. O plano de ação de 90 dias é pago." },
-          { q: "Funciona para qualquer tipo de negócio?", a: "Sim. Funciona para negócios locais (B2C), empresas que vendem para empresas (B2B) e fornecedores do governo (B2G)." },
-          { q: "Meus dados ficam seguros?", a: "Seus dados são usados exclusivamente para gerar o diagnóstico. Não vendemos nem compartilhamos informações com terceiros." },
-          { q: "O que é o score de influência digital?", a: "Mede quanto do mercado digital local você captura, em 4 dimensões: Descoberta, Credibilidade, Alcance Social e Visibilidade em IA. Não é um número absoluto — é relativo ao seu mercado." },
+          { q: "Preciso criar conta?", a: "Não. Preencha o formulário e o resultado aparece na tela. Sem cadastro, sem cartão." },
+          { q: "Quanto tempo demora?", a: "Cerca de 60 segundos. O resultado aparece direto na tela." },
+          { q: "O que vem de graça?", a: "Visibilidade, concorrência e oportunidades do seu mercado local. O plano de ação de 90 dias é pago." },
+          { q: "Funciona para qualquer negócio?", a: "Para negócios que atendem clientes na própria região. Lojas, clínicas, restaurantes, escritórios, studios e prestadores de serviço." },
+          { q: "Meus dados ficam seguros?", a: "Sim. Usados só para gerar o diagnóstico. Não vendemos nem compartilhamos com terceiros." },
         ].map((faq, i) => (
           <FAQItem key={i} question={faq.q} answer={faq.a} />
         ))}
