@@ -129,39 +129,49 @@ async function fetchTermVolumes(
     }
   }
 
-  // --- 2. DataForSEO com fallback progressivo (cidade → região → estado) ---
+  // --- 2. DataForSEO — cidade com fallback rápido para estado (máx 2 chamadas) ---
   if (process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD) {
-    const { resolveLocationHierarchy } = await import('./pipeline/dataforseo-locations');
-    const hierarchy = resolveLocationHierarchy(region);
+    const { getCityLocationCode, UF_LOCATION_CODES, BRAZIL_LOCATION_CODE } = await import('./pipeline/dataforseo-locations');
     const dfsClient = createDataForSEOClient({
       login: process.env.DATAFORSEO_LOGIN,
       password: process.env.DATAFORSEO_PASSWORD,
     });
 
-    const VOLUME_THRESHOLD = 3; // mínimo de termos com volume para aceitar
+    // Resolve cidade e estado
+    const cityMatch = getCityLocationCode(region);
+    const ufMatch = region.match(/\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/);
+    const stateCode = ufMatch ? UF_LOCATION_CODES[ufMatch[1]] : BRAZIL_LOCATION_CODE;
+    const VOLUME_THRESHOLD = 3;
 
-    for (const level of hierarchy.levels) {
-      try {
-        // Para nível regional, usamos o primeiro code (a API não aceita múltiplos)
-        // mas logamos que estamos expandindo
-        const locationCode = level.locationCodes[0];
-        console.log(`[Analysis] DataForSEO: tentando nível ${level.level} (${level.label}), code=${locationCode}`);
+    // Chamada 1: cidade (se disponível) ou estado direto
+    const primaryCode = cityMatch?.code || stateCode;
+    const primaryLevel = cityMatch ? 'city' : (ufMatch ? 'state' : 'country');
+    const primaryLabel = cityMatch?.cityName || (ufMatch?.[1] ?? 'Brasil');
 
-        const volumes = await dfsClient(terms, region, locationCode);
-        const withData = volumes.filter(v => v.monthlyVolume > 0).length;
-        console.log(`[Analysis] DataForSEO ${level.level}: ${withData}/${volumes.length} termos com volume`);
+    try {
+      console.log(`[Analysis] DataForSEO: ${primaryLevel} (${primaryLabel}), code=${primaryCode}`);
+      const volumes = await dfsClient(terms, region, primaryCode);
+      const withData = volumes.filter(v => v.monthlyVolume > 0).length;
+      console.log(`[Analysis] DataForSEO ${primaryLevel}: ${withData}/${volumes.length} termos com volume`);
 
-        if (withData >= VOLUME_THRESHOLD || level.level === 'country') {
-          const geoLevel = level.level;
-          const geoLabel = level.label;
-          console.log(`[Analysis] ✅ Usando dados de nível ${geoLevel} (${geoLabel})`);
-          return { volumes, source: 'dataforseo', geoLevel, geoLabel };
-        }
-
-        console.log(`[Analysis] Poucos dados no nível ${level.level} (${withData} < ${VOLUME_THRESHOLD}), expandindo...`);
-      } catch (err) {
-        console.error(`[Analysis] DataForSEO ${level.level} falhou:`, err);
+      if (withData >= VOLUME_THRESHOLD || !cityMatch) {
+        // Dados suficientes OU já estava no nível estado — aceitar
+        return { volumes, source: 'dataforseo', geoLevel: primaryLevel, geoLabel: primaryLabel };
       }
+
+      // Chamada 2: fallback para estado (só se a chamada cidade teve poucos dados)
+      console.log(`[Analysis] Cidade com poucos dados (${withData}), fallback → estado ${ufMatch?.[1] || 'BR'}`);
+      const stateVolumes = await dfsClient(terms, region, stateCode);
+      const stateWithData = stateVolumes.filter(v => v.monthlyVolume > 0).length;
+      console.log(`[Analysis] DataForSEO estado: ${stateWithData}/${stateVolumes.length} termos com volume`);
+      return {
+        volumes: stateVolumes,
+        source: 'dataforseo',
+        geoLevel: ufMatch ? 'state' : 'country',
+        geoLabel: ufMatch?.[1] ?? 'Brasil',
+      };
+    } catch (err) {
+      console.error('[Analysis] DataForSEO falhou:', err);
     }
   }
 
