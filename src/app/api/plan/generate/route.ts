@@ -63,34 +63,34 @@ export async function POST(req: NextRequest) {
 
     const raw = diagnosis.raw_data || {};
 
-    // 2. Build comprehensive prompt for Claude
-    const prompt = buildPlanPrompt(lead, raw);
+    // 2. Generate in 2 calls: blocks + weekly plan (avoids token truncation)
+    const model = "claude-sonnet-4-5-20250929";
+    const context = buildContext(lead, raw);
 
-    console.log(`[PlanGen] Generating plan for lead ${leadId}...`);
-
-    const response = await claude.messages.create({
-      model: "claude-sonnet-4-5-20250929",
-      max_tokens: 16000,
-      temperature: 0.3,
-      messages: [{ role: "user", content: prompt }],
+    console.log(`[PlanGen] Generating blocks for lead ${leadId}...`);
+    const blocksResponse = await claude.messages.create({
+      model, max_tokens: 10000, temperature: 0.3,
+      messages: [{ role: "user", content: buildBlocksPrompt(context) }],
     });
+    const blocksText = blocksResponse.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join("");
+    const blocks = JSON.parse(blocksText.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim());
+    console.log(`[PlanGen] Blocks OK: ${blocks.length} blocks`);
 
-    const text = response.content
-      .filter((c: any) => c.type === "text")
-      .map((c: any) => c.text)
-      .join("");
+    console.log(`[PlanGen] Generating weekly plan for lead ${leadId}...`);
+    const weeklyResponse = await claude.messages.create({
+      model, max_tokens: 8000, temperature: 0.3,
+      messages: [{ role: "user", content: buildWeeklyPrompt(context) }],
+    });
+    const weeklyText = weeklyResponse.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join("");
+    const weeklyPlan = JSON.parse(weeklyText.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim());
+    console.log(`[PlanGen] Weekly plan OK: ${weeklyPlan.length} weeks`);
 
-    const plan = JSON.parse(
-      text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim()
-    );
-
-    // 3. Save plan to Supabase (tabela usa content JSONB, não colunas separadas)
-    // Deleta plano anterior se existir, depois insere novo
+    // 3. Save plan to Supabase
     await supabase.from("plans").delete().eq("lead_id", leadId);
     const { error: planError } = await supabase.from("plans").insert({
       lead_id: leadId,
-      content: { blocks: plan.blocks, weeklyPlan: plan.weeklyPlan },
-      generation_model: "claude-sonnet-4-5-20250929",
+      content: { blocks, weeklyPlan },
+      generation_model: model,
       status: "ready",
     });
     if (planError) {
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
 
     // 3b. Gerar plan_tasks a partir do weeklyPlan
     try {
-      await generatePlanTasks(supabase, leadId, plan.weeklyPlan || []);
+      await generatePlanTasks(supabase, leadId, weeklyPlan || []);
     } catch (taskErr) {
       // Não-fatal: se falhar, o plano texto continua funcionando
       console.error("[PlanGen] Task generation failed (non-fatal):", taskErr);
@@ -137,10 +137,9 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// ─── PLAN PROMPT ────────────────────────────────────────────────────
+// ─── PLAN PROMPTS (split in 2 calls to avoid truncation) ─────────────
 
-function buildPlanPrompt(lead: any, raw: any): string {
-  const terms = raw.terms?.terms || [];
+function buildContext(lead: any, raw: any): string {
   const volumes = raw.volumes?.termVolumes || [];
   const influence = raw.influence?.influence || {};
   const gaps = raw.gaps?.analysis || {};
@@ -148,106 +147,68 @@ function buildPlanPrompt(lead: any, raw: any): string {
 
   const topTerms = volumes
     .sort((a: any, b: any) => (b.monthlyVolume || 0) - (a.monthlyVolume || 0))
-    .slice(0, 15)
-    .map((t: any) => `"${t.term}" — ${t.monthlyVolume || 0} buscas/mês`)
+    .slice(0, 10)
+    .map((t: any) => `"${t.term}" — ${t.monthlyVolume || 0}/mês`)
     .join("\n  ");
 
   const serpPositions = influence.rawGoogle?.serpPositions || [];
   const serpSummary = serpPositions
-    .slice(0, 10)
-    .map((sp: any) => `"${sp.term}": posição ${sp.position || "não encontrado"}`)
+    .slice(0, 5)
+    .map((sp: any) => `"${sp.term}": posição ${sp.position || "—"}`)
     .join("\n  ");
 
-  return `Você é Vero, o estrategista de mercado da Virô. Gere o PLANO COMPLETO para este negócio local.
+  return `NEGÓCIO: ${lead.product} em ${lead.region}
+Diferencial: "${lead.differentiator || "não informado"}"
+Instagram: ${lead.instagram || "não informado"} · Site: ${lead.site || "não tem"}
+Volume total: ${raw.volumes?.totalMonthlyVolume || 0} buscas/mês · Influência: ${influence.totalInfluence || 0}%
 
-DADOS DO NEGÓCIO:
-  Produto: ${lead.product}
-  Região: ${lead.region}
-  Diferencial: "${lead.differentiator}"
-  Desafio: "${lead.challenge}"
-  Ticket médio: R$${lead.ticket}
-  Canais atuais: ${(lead.channels || []).join(", ")}
-  Instagram: ${lead.instagram || "não informado"}
-  Site: ${lead.site || "não tem"}
-
-DADOS REAIS DO PIPELINE:
-  Total de termos mapeados: ${terms.length}
-  Volume total de buscas: ${raw.volumes?.totalMonthlyVolume || 0}/mês
-  Influência digital: ${influence.totalInfluence || 0}%
-  Mercado potencial: R$${sizing.marketPotential?.low?.toLocaleString() || 0} — R$${sizing.marketPotential?.high?.toLocaleString() || 0}/mês
-
-TERMOS PRINCIPAIS:
-  ${topTerms}
-
-POSIÇÕES SERP:
-  ${serpSummary}
-
-GAPS IDENTIFICADOS:
-  Padrão: ${gaps.primaryPattern?.title || "N/A"}
-  Headline: ${gaps.headlineInsight || "N/A"}
-  ${(gaps.gaps || []).map((g: any) => `- ${g.title}: ${g.evidence}`).join("\n  ")}
-
-GERE EM JSON:
-{
-  "blocks": [
-    {
-      "id": "digital_presence",
-      "title": "Diagnóstico de Presença Digital",
-      "content": "Análise detalhada em markdown..."
-    },
-    {
-      "id": "demand_map",
-      "title": "Mapa de Demanda",
-      "content": "Todos os termos com análise..."
-    },
-    {
-      "id": "competitive_analysis",
-      "title": "Análise Competitiva",
-      "content": "Comparativo detalhado..."
-    },
-    {
-      "id": "action_plan",
-      "title": "Plano de Ação — 90 dias",
-      "content": "Resumo executivo do plano..."
-    },
-    {
-      "id": "metrics",
-      "title": "Métricas e Acompanhamento",
-      "content": "KPIs, baseline e metas..."
-    }
-  ],
-  "weeklyPlan": [
-    {
-      "week": 1,
-      "title": "Título da semana",
-      "mainAction": "Ação principal detalhada com passo a passo",
-      "script": "Roteiro ou template se aplicável",
-      "kpi": "Métrica para saber se executou",
-      "category": "presence|content|authority|engagement"
-    }
-  ]
+TERMOS: ${topTerms}
+SERP: ${serpSummary}
+GAPS: ${gaps.headlineInsight || "N/A"}
+${(gaps.gaps || []).slice(0, 3).map((g: any) => `- ${g.title}`).join("\n")}`;
 }
 
-REGRAS PARA O PLANO SEMANAL:
-- 12 semanas, cada uma com 1 ação PRINCIPAL (não 5 — o dono é ocupado)
-- Cada ação deve ser ESPECÍFICA: não "crie conteúdo", mas "grave Reels de 30s mostrando X com roteiro Y"
-- Inclua SCRIPTS e TEMPLATES quando relevante (script de pedido de review, roteiro de vídeo, template de post)
-- As primeiras 4 semanas devem ser QUICK WINS (GMB, primeiro conteúdo, primeiras avaliações)
-- Semanas 5-8: construção de autoridade (conteúdo regular, parcerias locais)
-- Semanas 9-12: otimização e escala (o que funcionou, dobrar aposta)
-- Cada ação cita pelo menos 1 dado real do diagnóstico como fundamento
-- O tom é direto, sem jargão, acionável por alguém sem equipe de marketing
+function buildBlocksPrompt(context: string): string {
+  return `Você é Vero, estrategista de mercado da Virô. Gere 5 blocos de diagnóstico.
 
-REGRAS PARA OS BLOCOS:
-- Use markdown no content (##, **, listas)
-- Cite dados reais do pipeline (volumes, posições, concorrentes)
-- Bloco 1: onde está vs onde deveria estar, por canal
-- Bloco 2: termos organizados por intenção e volume, com oportunidades
-- Bloco 3: quem aparece onde o negócio não aparece, forças/fraquezas
-- Bloco 4: resumo do plano semanal com lógica de priorização
-- Bloco 5: KPIs claros com baseline (hoje) e meta (90 dias)
+${context}
 
-Gere APENAS o JSON. Sem texto antes ou depois.`;
+Retorne APENAS um array JSON com 5 objetos:
+[
+  {"id": "digital_presence", "title": "Presença Digital", "content": "markdown..."},
+  {"id": "demand_map", "title": "Mapa de Demanda", "content": "markdown..."},
+  {"id": "competitive_analysis", "title": "Análise Competitiva", "content": "markdown..."},
+  {"id": "action_plan", "title": "Plano de Ação", "content": "markdown..."},
+  {"id": "metrics", "title": "Métricas", "content": "markdown..."}
+]
+
+REGRAS:
+- Content em markdown (##, **, listas). Máximo 300 palavras por bloco.
+- Cite dados reais (volumes, posições, concorrentes).
+- Bloco 1: onde está vs onde deveria estar. Bloco 2: termos por intenção. Bloco 3: concorrentes.
+- Bloco 4: resumo das prioridades. Bloco 5: KPIs com baseline e meta 90 dias.
+- Tom direto, sem jargão. Gere APENAS o JSON.`;
+}
+
+function buildWeeklyPrompt(context: string): string {
+  return `Você é Vero, estrategista de mercado da Virô. Gere o plano semanal de 12 semanas.
+
+${context}
+
+Retorne APENAS um array JSON com 12 objetos:
+[
+  {"week": 1, "title": "Título curto", "mainAction": "Ação específica com passo a passo", "script": "Template/roteiro se aplicável", "kpi": "Métrica de execução", "category": "presence"}
+]
+
+REGRAS:
+- category: "presence" | "content" | "authority" | "engagement"
+- Semanas 1-4: quick wins (GMB, primeiras avaliações, primeiro conteúdo)
+- Semanas 5-8: autoridade (conteúdo regular, parcerias locais)
+- Semanas 9-12: otimização e escala
+- Cada ação ESPECÍFICA: não "crie conteúdo", mas "grave Reels de 30s mostrando X"
+- Cite dados reais do diagnóstico como fundamento
+- Tom direto, acionável por alguém sem equipe de marketing
+- Gere APENAS o JSON.`;
 }
 
 // ─── PLAN TASKS GENERATION ─────────────────────────────────────────
