@@ -39,12 +39,12 @@ CLASSIFICAÇÃO clientType:
 
 REGRAS para termos:
 1. Linguagem natural — como uma pessoa digitaria no Google
-2. Inclua variações com cidade, bairro e "perto de mim"
-3. HEAD TERMS obrigatórios: a categoria genérica + região (ex: "dentista mauá") deve vir primeiro
-4. Considere a tensão: o dono diz "clínica de estética avançada", o cliente busca "botox preço campinas"
-5. Se b2b: gere termos que empresários e decisores buscam ao contratar (ex: "contabilidade para empresas", "fornecedor [produto] atacado"). Evite termos de consumidor final.
-6. Se b2g: gere termos que gestores públicos e equipes de compras buscam (ex: "licitação [produto]", "pregão [serviço]", "fornecedor [produto] governo", "ata de registro de preços [produto]"). Inclua termos de compliance e certificação.
-7. NÃO inclua nomes de cidades nos termos — a localização já é configurada separadamente.
+2. NÃO inclua nomes de cidades, bairros ou regiões nos termos — a localização é configurada separadamente via geo-targeting
+3. HEAD TERMS obrigatórios: categoria genérica + "perto de mim" (ex: "arquiteto perto de mim") deve vir primeiro
+4. Use variações genéricas de proximidade: "perto de mim", "na minha região", "próximo" — os termos devem ser o que alguém JÁ NAQUELA LOCALIZAÇÃO digitaria
+5. Considere a tensão: o dono diz "clínica de estética avançada", o cliente busca "botox preço"
+6. Se b2b: gere termos que empresários e decisores buscam ao contratar (ex: "contabilidade para empresas", "fornecedor [produto] atacado"). Evite termos de consumidor final.
+7. Se b2g: gere termos que gestores públicos e equipes de compras buscam (ex: "licitação [produto]", "pregão [serviço]", "fornecedor [produto] governo", "ata de registro de preços [produto]"). Inclua termos de compliance e certificação.
 
 DISTRIBUIÇÃO:
 - TRANSACIONAIS (8-12): prontos para comprar/contratar
@@ -57,7 +57,7 @@ FORMATO (JSON estrito, sem markdown):
 {
   "clientType": "b2c",
   "terms": [
-    { "term": "botox preço campinas", "intent": "transactional", "category": "core", "rationale": "Alta intenção + preço + cidade" }
+    { "term": "botox preço perto de mim", "intent": "transactional", "category": "core", "rationale": "Alta intenção + preço + proximidade" }
   ]
 }
 

@@ -286,11 +286,11 @@ export default function Home() {
           </Field>
           <Field label={t.formProductLabel}>
             <input style={inputStyle} type="text"
-              placeholder="Seu servi\u00e7o principal \u2014 ex: barbearia masculina, cl\u00ednica de est\u00e9tica, pizzaria artesanal"
+              placeholder="Seu serviço principal — ex: barbearia masculina, clínica de estética, pizzaria artesanal"
               value={formData.product}
               onChange={(e: any) => updateField("product", e.target.value)} />
             <p style={{ fontSize: 11, color: V.ash, margin: "6px 0 0", lineHeight: 1.4 }}>
-              Quanto mais espec\u00edfico, mais preciso seu diagn\u00f3stico.
+              Quanto mais específico, mais preciso seu diagnóstico.
             </p>
           </Field>
 
@@ -328,19 +328,19 @@ export default function Home() {
             <input style={inputStyle} type="text" placeholder="Como prefere ser chamado" value={(formData as any).name || ""}
               onChange={(e: any) => updateField("name" as any, e.target.value)} />
           </Field>
-          <Field label={`${t.formWhatsappLabel} *`} hint="Obrigat\u00f3rio \u2014 enviamos seu resultado por aqui">
+          <Field label={`${t.formWhatsappLabel} *`} hint="Obrigatório — enviamos seu resultado por aqui">
             <input style={inputStyle} type="tel" placeholder={t.formWhatsappPlaceholder} value={formData.whatsapp}
               onChange={(e: any) => updateField("whatsapp", e.target.value)} />
           </Field>
-          <Field label={t.formEmailLabel} hint="Opcional \u2014 enviamos uma c\u00f3pia do diagn\u00f3stico">
+          <Field label={t.formEmailLabel} hint="Opcional — enviamos uma cópia do diagnóstico">
             <input style={inputStyle} type="email" placeholder={t.formEmailPlaceholder} value={formData.email}
               onChange={(e: any) => updateField("email", e.target.value)} />
           </Field>
-          <Field label="Instagram" hint="Opcional \u2014 usamos para analisar sua presen\u00e7a">
+          <Field label="Instagram" hint="Opcional — usamos para analisar sua presença">
             <input style={inputStyle} type="text" placeholder="@seuperfil" value={formData.instagram}
               onChange={(e: any) => updateField("instagram", e.target.value)} />
           </Field>
-          <Field label="LinkedIn" hint="Opcional \u2014 se atende outras empresas">
+          <Field label="LinkedIn" hint="Opcional — se atende outras empresas">
             <input style={inputStyle} type="text" placeholder="linkedin.com/company/sua-empresa" value={(formData as any).linkedin || ""}
               onChange={(e: any) => updateField("linkedin" as any, e.target.value)} />
           </Field>
@@ -378,7 +378,7 @@ export default function Home() {
             </div>
           </div>
           <span style={{ fontFamily: V.display, fontSize: 24, fontWeight: 700, color: V.white, letterSpacing: "-0.03em" }}>
-            Vir\u00f4
+            Virô
           </span>
           <h1 style={{
             fontFamily: V.display, fontSize: "clamp(28px, 5vw, 38px)", fontWeight: 700,
@@ -456,14 +456,14 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ═══ SECTION 2 — MOCKUP EST\u00c1TICO DO RESULTADO ═══ */}
+      {/* ═══ SECTION 2 — MOCKUP ESTÁTICO DO RESULTADO ═══ */}
       <Section bg={V.white}>
         <div style={{ textAlign: "center", marginBottom: 36 }}>
           <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 10px", lineHeight: 1.25 }}>
-            \u00c9 isso que voc\u00ea recebe em 60 segundos
+            É isso que você recebe em 60 segundos
           </h2>
           <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.6, margin: 0 }}>
-            Um raio-x completo do seu mercado local \u2014 sem precisar de conta ou cart\u00e3o.
+            Um raio-x completo do seu mercado local — sem precisar de conta ou cartão.
           </p>
         </div>
 
@@ -475,7 +475,7 @@ export default function Home() {
           {/* Mockup label */}
           <div style={{ background: V.cloud, padding: "10px 18px", borderBottom: `1px solid ${V.fog}`, display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.ash }}>
-              PR\u00c9VIA DO RESULTADO
+              PRÉVIA DO RESULTADO
             </span>
           </div>
 
@@ -485,21 +485,21 @@ export default function Home() {
               <div style={{ width: 32, height: 32, borderRadius: 8, background: V.night, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <span style={{ fontWeight: 700, fontSize: 14, color: V.white }}>C</span>
               </div>
-              <span style={{ fontSize: 12, color: V.ash }}>Cl\u00ednica de est\u00e9tica \u00b7 Av. Paulista, S\u00e3o Paulo</span>
+              <span style={{ fontSize: 12, color: V.ash }}>Clínica de estética · Av. Paulista, São Paulo</span>
             </div>
 
             {/* Section label */}
             <p style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.ash, margin: "0 0 10px" }}>
-              Seu mercado em n\u00fameros
+              Seu mercado em números
             </p>
 
-            {/* Card 1 — Mercado Endere\u00e7\u00e1vel */}
+            {/* Card 1 — Mercado Endereçável */}
             <div style={{ background: V.white, borderRadius: 12, padding: "18px 14px", textAlign: "center", border: `1px solid ${V.fog}`, marginBottom: 8 }}>
               <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 ~18 mil
               </div>
-              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>pessoas no seu mercado \u00b7 Raio 3km</p>
-              <p style={{ fontSize: 9, color: V.ash, margin: "2px 0 0", fontFamily: V.mono }}>Popula\u00e7\u00e3o total no raio: 142 mil</p>
+              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>pessoas no seu mercado · Raio 3km</p>
+              <p style={{ fontSize: 9, color: V.ash, margin: "2px 0 0", fontFamily: V.mono }}>População total no raio: 142 mil</p>
             </div>
 
             {/* Card 2 — Demanda Ativa */}
@@ -507,10 +507,10 @@ export default function Home() {
               <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.night, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 3.200
               </div>
-              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>buscas/m\u00eas por est\u00e9tica na sua regi\u00e3o</p>
+              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>buscas/mês por estética na sua região</p>
             </div>
 
-            {/* Card 3 — N\u00edvel de Competi\u00e7\u00e3o */}
+            {/* Card 3 — Nível de Competição */}
             <div style={{ background: V.white, borderRadius: 12, padding: "18px 14px", textAlign: "center", border: `1px solid ${V.fog}`, marginBottom: 8 }}>
               <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 640
@@ -525,18 +525,18 @@ export default function Home() {
             <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "12px 0 10px" }}>
               <div style={{ flex: 1, height: 1, background: V.fog }} />
               <span style={{ fontSize: 9, fontFamily: V.mono, color: V.ash, letterSpacing: "0.04em", textTransform: "uppercase" as const, whiteSpace: "nowrap" as const }}>
-                A vari\u00e1vel que voc\u00ea controla
+                A variável que você controla
               </span>
               <div style={{ flex: 1, height: 1, background: V.fog }} />
             </div>
 
-            {/* Card 4 — Influ\u00eancia Digital (highlighted) */}
+            {/* Card 4 — Influência Digital (highlighted) */}
             <div style={{ background: V.night, borderRadius: 12, padding: "22px 14px", textAlign: "center", marginBottom: 0 }}>
               <div style={{ fontFamily: V.display, fontSize: 32, fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 23%
               </div>
-              <p style={{ fontSize: 11, color: V.mist, margin: "6px 0 0" }}>da demanda ativa voc\u00ea consegue alcan\u00e7ar</p>
-              <p style={{ fontSize: 10, color: V.amber, margin: "8px 0 0" }}>\u2191 Esta \u00e9 a m\u00e9trica que o Vir\u00f4 gerencia.</p>
+              <p style={{ fontSize: 11, color: V.mist, margin: "6px 0 0" }}>da demanda ativa você consegue alcançar</p>
+              <p style={{ fontSize: 10, color: V.amber, margin: "8px 0 0" }}>↑ Esta é a métrica que o Virô gerencia.</p>
               {/* Sub-scores */}
               <div style={{ display: "flex", justifyContent: "center", gap: 14, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${V.slate}` }}>
                 {[
@@ -561,7 +561,7 @@ export default function Home() {
             textAlign: "center", marginTop: -20, position: "relative",
           }}>
             <p style={{ fontSize: 13, fontWeight: 600, color: V.amber, margin: 0 }}>
-              Desbloqueie o diagn\u00f3stico completo \u2192
+              Desbloqueie o diagnóstico completo →
             </p>
           </div>
         </div>
@@ -575,9 +575,9 @@ export default function Home() {
         </h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 20 }}>
           {[
-            { icon: "\ud83d\udccb", title: "Descreva seu neg\u00f3cio", text: "Informe o tipo de neg\u00f3cio e seu endere\u00e7o. Leva menos de 2 minutos." },
-            { icon: "\ud83d\udd0d", title: "An\u00e1lise em tempo real", text: "Cruzamos Google, Instagram, IBGE e IA para montar o raio-x do seu mercado." },
-            { icon: "\ud83d\udcca", title: "Resultado instant\u00e2neo", text: "Veja demanda, concorr\u00eancia e sua influ\u00eancia digital \u2014 gr\u00e1tis." },
+            { icon: "📋", title: "Descreva seu negócio", text: "Informe o tipo de negócio e seu endereço. Leva menos de 2 minutos." },
+            { icon: "🔍", title: "Análise em tempo real", text: "Cruzamos Google, Instagram, IBGE e IA para montar o raio-x do seu mercado." },
+            { icon: "📊", title: "Resultado instantâneo", text: "Veja demanda, concorrência e sua influência digital — grátis." },
           ].map((step, i) => (
             <div key={i} style={{ background: V.white, borderRadius: 14, padding: "24px 20px", border: `1px solid ${V.fog}` }}>
               <div style={{ fontSize: 28, marginBottom: 12 }}>{step.icon}</div>
@@ -593,23 +593,23 @@ export default function Home() {
         </div>
       </Section>
 
-      {/* ═══ SECTION 4 — O QUE VOC\u00ca VAI RECEBER ═══ */}
+      {/* ═══ SECTION 4 — O QUE VOCÊ VAI RECEBER ═══ */}
       <Section bg={V.white}>
-        <SectionLabel>o que voc\u00ea vai receber</SectionLabel>
+        <SectionLabel>o que você vai receber</SectionLabel>
         <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
-          Diagn\u00f3stico gratuito + plano de a\u00e7\u00e3o
+          Diagnóstico gratuito + plano de ação
         </h2>
         <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.6, margin: "0 0 28px" }}>
-          O resultado gr\u00e1tis j\u00e1 mostra o tamanho do mercado e sua posi\u00e7\u00e3o. O plano completo mostra como mudar.
+          O resultado grátis já mostra o tamanho do mercado e sua posição. O plano completo mostra como mudar.
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           {[
-            { label: "GR\u00c1TIS", title: "Raio-x do mercado", desc: "Demanda real, concorr\u00eancia mapeada, influ\u00eancia digital medida.", color: V.teal },
-            { label: "GR\u00c1TIS", title: "Termos de busca reais", desc: "O que pessoas buscam no Google quando precisam do que voc\u00ea faz.", color: V.teal },
-            { label: "GR\u00c1TIS", title: "Score de influ\u00eancia", desc: "4 dimens\u00f5es: Descoberta, Credibilidade, Alcance e IA.", color: V.teal },
-            { label: "PLANO", title: "A\u00e7\u00f5es priorizadas", desc: "O que fazer primeiro, em que ordem e por qu\u00ea.", color: V.amber },
-            { label: "PLANO", title: "90 dias de roteiro", desc: "12 semanas com a\u00e7\u00f5es espec\u00edficas para seu neg\u00f3cio.", color: V.amber },
-            { label: "PLANO", title: "Briefing semanal", desc: "Toda semana: o que mudou + a\u00e7\u00e3o da semana. Por email e WhatsApp.", color: V.amber },
+            { label: "GRÁTIS", title: "Raio-x do mercado", desc: "Demanda real, concorrência mapeada, influência digital medida.", color: V.teal },
+            { label: "GRÁTIS", title: "Termos de busca reais", desc: "O que pessoas buscam no Google quando precisam do que você faz.", color: V.teal },
+            { label: "GRÁTIS", title: "Score de influência", desc: "4 dimensões: Descoberta, Credibilidade, Alcance e IA.", color: V.teal },
+            { label: "PLANO", title: "Ações priorizadas", desc: "O que fazer primeiro, em que ordem e por quê.", color: V.amber },
+            { label: "PLANO", title: "90 dias de roteiro", desc: "12 semanas com ações específicas para seu negócio.", color: V.amber },
+            { label: "PLANO", title: "Briefing semanal", desc: "Toda semana: o que mudou + ação da semana. Por email e WhatsApp.", color: V.amber },
           ].map((item, i) => (
             <div key={i} style={{ padding: "16px", borderRadius: 12, border: `1px solid ${V.fog}`, background: V.white }}>
               <span style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", fontWeight: 600, color: item.color, background: `${item.color}15`, padding: "2px 6px", borderRadius: 4 }}>
@@ -622,40 +622,15 @@ export default function Home() {
         </div>
       </Section>
 
-      {/* ═══ SECTION 5 — DEPOIMENTOS ═══ */}
-      <Section bg={V.cloud}>
-        <SectionLabel>quem j\u00e1 usou</SectionLabel>
-        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 28px", lineHeight: 1.25 }}>
-          O que dizem sobre o Vir\u00f4
-        </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
-          {[
-            { quote: "Eu achava que meu mercado era pequeno. O Vir\u00f4 mostrou que 3.400 pessoas buscam o que eu fa\u00e7o todo m\u00eas \u2014 e eu n\u00e3o aparecia pra nenhuma.", name: "Renata M.", role: "Cl\u00ednica de est\u00e9tica, SP" },
-            { quote: "Em 60 segundos eu descobri que meu concorrente direto tem 4x mais avalia\u00e7\u00f5es no Google. Nunca tinha parado pra olhar isso.", name: "Carlos A.", role: "Barbearia, RJ" },
-            { quote: "O diagn\u00f3stico gratuito j\u00e1 valeu. Mostrou exatamente onde eu estava perdendo clientes. O plano de 90 dias organizou tudo.", name: "Juliana S.", role: "Pizzaria artesanal, MG" },
-          ].map((t, i) => (
-            <div key={i} style={{ background: V.white, borderRadius: 14, padding: "24px 20px", border: `1px solid ${V.fog}` }}>
-              <p style={{ fontSize: 14, color: V.night, lineHeight: 1.65, margin: "0 0 16px", fontStyle: "italic" }}>
-                &ldquo;{t.quote}&rdquo;
-              </p>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: V.night }}>{t.name}</div>
-                <div style={{ fontSize: 11, color: V.ash }}>{t.role}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Section>
-
       {/* ═══ SECTION 6 — METODOLOGIA E FONTES ═══ */}
       <Section bg={V.white}>
         <SectionLabel>metodologia</SectionLabel>
         <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
-          Dados reais, n\u00e3o achismo
+          Dados reais, não achismo
         </h2>
         <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: "0 0 28px" }}>
-          O Vir\u00f4 cruza 9 fontes em tempo real para montar o diagn\u00f3stico do seu mercado local.
-          Nenhum dado \u00e9 inventado \u2014 tudo vem de APIs oficiais e \u00e9 coletado no momento da an\u00e1lise.
+          O Virô cruza 9 fontes em tempo real para montar o diagnóstico do seu mercado local.
+          Nenhum dado é inventado — tudo vem de APIs oficiais e é coletado no momento da análise.
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
           {[
@@ -673,9 +648,9 @@ export default function Home() {
         </div>
         <div style={{ background: V.cloud, borderRadius: 12, padding: "20px", border: `1px solid ${V.fog}` }}>
           <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.7, margin: 0 }}>
-            <strong style={{ color: V.night }}>Influ\u00eancia digital em 4 dimens\u00f5es:</strong>{" "}
-            Descoberta (SERP + Maps), Credibilidade (avalia\u00e7\u00f5es + site), Alcance Social (Instagram + LinkedIn) e Visibilidade em IA.
-            O score \u00e9 ponderado pelo tipo de neg\u00f3cio (B2C, B2B ou B2G) e normalizado contra benchmarks do segmento.
+            <strong style={{ color: V.night }}>Influência digital em 4 dimensões:</strong>{" "}
+            Descoberta (SERP + Maps), Credibilidade (avaliações + site), Alcance Social (Instagram + LinkedIn) e Visibilidade em IA.
+            O score é ponderado pelo tipo de negócio (B2C, B2B ou B2G) e normalizado contra benchmarks do segmento.
           </p>
         </div>
       </Section>
@@ -684,15 +659,15 @@ export default function Home() {
       <Section bg={V.cloud}>
         <SectionLabel>perguntas frequentes</SectionLabel>
         <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 24px", lineHeight: 1.25 }}>
-          D\u00favidas comuns
+          Dúvidas comuns
         </h2>
         {[
-          { q: "Preciso criar conta?", a: "N\u00e3o. Basta preencher o formul\u00e1rio e o resultado aparece na tela. Sem cadastro, sem cart\u00e3o." },
-          { q: "Quanto tempo demora?", a: "A an\u00e1lise roda em tempo real e leva cerca de 60 segundos. O resultado aparece direto na tela." },
-          { q: "O resultado gratuito \u00e9 limitado?", a: "O resultado gr\u00e1tis inclui o raio-x completo: mercado, demanda, concorr\u00eancia e influ\u00eancia digital. O plano de a\u00e7\u00e3o de 90 dias \u00e9 pago." },
-          { q: "Funciona para qualquer tipo de neg\u00f3cio?", a: "Sim. Funciona para neg\u00f3cios locais (B2C), empresas que vendem para empresas (B2B) e fornecedores do governo (B2G)." },
-          { q: "Meus dados ficam seguros?", a: "Seus dados s\u00e3o usados exclusivamente para gerar o diagn\u00f3stico. N\u00e3o vendemos nem compartilhamos informa\u00e7\u00f5es com terceiros." },
-          { q: "O que \u00e9 o score de influ\u00eancia digital?", a: "Mede quanto do mercado digital local voc\u00ea captura, em 4 dimens\u00f5es: Descoberta, Credibilidade, Alcance Social e Visibilidade em IA. N\u00e3o \u00e9 um n\u00famero absoluto \u2014 \u00e9 relativo ao seu mercado." },
+          { q: "Preciso criar conta?", a: "Não. Basta preencher o formulário e o resultado aparece na tela. Sem cadastro, sem cartão." },
+          { q: "Quanto tempo demora?", a: "A análise roda em tempo real e leva cerca de 60 segundos. O resultado aparece direto na tela." },
+          { q: "O resultado gratuito é limitado?", a: "O resultado grátis inclui o raio-x completo: mercado, demanda, concorrência e influência digital. O plano de ação de 90 dias é pago." },
+          { q: "Funciona para qualquer tipo de negócio?", a: "Sim. Funciona para negócios locais (B2C), empresas que vendem para empresas (B2B) e fornecedores do governo (B2G)." },
+          { q: "Meus dados ficam seguros?", a: "Seus dados são usados exclusivamente para gerar o diagnóstico. Não vendemos nem compartilhamos informações com terceiros." },
+          { q: "O que é o score de influência digital?", a: "Mede quanto do mercado digital local você captura, em 4 dimensões: Descoberta, Credibilidade, Alcance Social e Visibilidade em IA. Não é um número absoluto — é relativo ao seu mercado." },
         ].map((faq, i) => (
           <FAQItem key={i} question={faq.q} answer={faq.a} />
         ))}
@@ -702,18 +677,18 @@ export default function Home() {
       <footer style={{ background: V.night, padding: "32px 24px", textAlign: "center" }}>
         <div style={{ maxWidth: 600, margin: "0 auto" }}>
           <span style={{ fontFamily: V.display, fontSize: 16, fontWeight: 700, color: V.white, letterSpacing: "-0.02em" }}>
-            Vir\u00f4
+            Virô
           </span>
           <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 16 }}>
             <a href="/privacidade" style={{ fontSize: 13, color: V.ash, textDecoration: "none" }}>
-              Pol\u00edtica de Privacidade
+              Política de Privacidade
             </a>
             <a href="/termos" style={{ fontSize: 13, color: V.ash, textDecoration: "none" }}>
-              Termos de Servi\u00e7o
+              Termos de Serviço
             </a>
           </div>
           <p style={{ fontSize: 12, color: V.slate, marginTop: 16 }}>
-            \u00a9 {new Date().getFullYear()} Vir\u00f4. Todos os direitos reservados.
+            © {new Date().getFullYear()} Virô. Todos os direitos reservados.
           </p>
         </div>
       </footer>
@@ -735,7 +710,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
       >
         <span style={{ fontSize: 15, fontWeight: 600, color: V.night, flex: 1, paddingRight: 16 }}>{question}</span>
         <span style={{ fontSize: 18, color: V.ash, transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0)", flexShrink: 0 }}>
-          \u25be
+          ▾
         </span>
       </button>
       {open && (

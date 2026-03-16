@@ -144,6 +144,8 @@ export async function POST(req: NextRequest) {
     console.log(`[Diagnose] audiencia object:`, JSON.stringify(pipelineResult.audiencia || null));
     console.log(`[Diagnose] volumes: totalMonthly=${pipelineResult.volumes?.totalMonthlyVolume}, termCount=${pipelineResult.volumes?.termVolumes?.length}`);
     const display = buildDisplayData(pipelineResult);
+    display.lat = formData.lat || null;
+    display.lng = formData.lng || null;
     console.log(`[Diagnose] buildDisplayData keys:`, Object.keys(display));
     console.log(`[Diagnose] display.totalVolume=${display.totalVolume}, display.audiencia=${JSON.stringify(display.audiencia)}, display.influencePercent=${display.influencePercent}, display.marketLow=${display.marketLow}, display.marketHigh=${display.marketHigh}`);
 
@@ -207,7 +209,7 @@ export async function GET(req: NextRequest) {
   try {
     const { data: lead } = await supabase
       .from("leads")
-      .select("status, diagnosis_display")
+      .select("status, diagnosis_display, lat, lng")
       .eq("id", leadId)
       .single();
 
@@ -216,7 +218,10 @@ export async function GET(req: NextRequest) {
     }
 
     if (lead.status === "done" && lead.diagnosis_display) {
-      return NextResponse.json({ status: "done", results: lead.diagnosis_display });
+      const displayData = lead.diagnosis_display;
+      if (!displayData.lat && lead.lat) displayData.lat = lead.lat;
+      if (!displayData.lng && lead.lng) displayData.lng = lead.lng;
+      return NextResponse.json({ status: "done", results: displayData });
     }
 
     return NextResponse.json({ status: lead.status || "processing" });

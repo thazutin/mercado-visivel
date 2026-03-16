@@ -43,6 +43,8 @@ interface Results {
     labelText: string; color: 'green' | 'yellow' | 'red';
     competitors: { name: string; hasWebsite: boolean; hasInstagram: boolean; mapsPosition?: number; rating?: number; reviewCount?: number }[];
   } | null;
+  lat?: number | null;
+  lng?: number | null;
   clientType?: 'b2c' | 'b2b' | 'b2g';
   pncp?: {
     totalEncontradas: number; valorTotalEstimado: number;
@@ -325,6 +327,18 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               )}
               {aud.rationale && (
                 <p style={{ fontSize: 11, color: V.ash, margin: "8px 0 0", fontStyle: "italic", lineHeight: 1.5 }}>{aud.rationale}</p>
+              )}
+              {results.lat && results.lng && aud.raioKm && aud.densidade !== "nacional" && (
+                <div style={{ marginTop: 12, borderRadius: 10, overflow: "hidden", border: `1px solid ${V.fog}` }}>
+                  <img
+                    src={`https://maps.googleapis.com/maps/api/staticmap?center=${results.lat},${results.lng}&zoom=${aud.raioKm <= 5 ? 13 : 10}&size=560x200&scale=2&maptype=roadmap&style=feature:all|saturation:-50&markers=size:small|color:0x2D9B83|${results.lat},${results.lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY}`}
+                    alt={`Mapa do raio de ${aud.raioKm}km`}
+                    style={{ width: "100%", height: "auto", display: "block" }}
+                  />
+                  <div style={{ padding: "8px 12px", background: V.cloud, fontSize: 11, color: V.zinc, textAlign: "center" }}>
+                    Raio de análise: {aud.raioKm}km a partir de {aud.municipioNome}
+                  </div>
+                </div>
               )}
               <p style={{ fontSize: 10, color: V.ash, margin: "10px 0 0", fontFamily: V.mono }}>Fonte: IBGE{aud.ibgeAno ? ` ${aud.ibgeAno}` : ''} · Estimativa Virô</p>
             </div>
