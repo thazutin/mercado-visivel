@@ -177,7 +177,7 @@ export async function notifyPlanReady(opts: {
   region: string;
 }): Promise<void> {
   const { email, whatsapp, leadId, product, region } = opts;
-  const url = `${BASE_URL}/resultado/${leadId}`;
+  const dashboardUrl = `${BASE_URL}/dashboard/${leadId}`;
   const shortRegion = region.split(",")[0].trim();
 
   await Promise.allSettled([
@@ -189,8 +189,8 @@ export async function notifyPlanReady(opts: {
 
     sendEmail({
       to: email,
-      subject: `Seu diagnóstico completo está pronto — ${product} em ${shortRegion}`,
-      html: planEmailHtml({ product, shortRegion, url }),
+      subject: `Seu plano de ação está pronto — ${product} em ${shortRegion}`,
+      html: planEmailHtml({ product, shortRegion, url: dashboardUrl }),
     }),
   ]);
 }

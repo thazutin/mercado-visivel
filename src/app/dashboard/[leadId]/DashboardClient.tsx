@@ -28,8 +28,8 @@ export default function DashboardClient({ lead, plan, briefings, diagnosis, snap
   const [tab, setTab] = useState<"plan" | "weekly" | "briefings">("plan");
   const [expandedBlock, setExpandedBlock] = useState<string | null>(null);
 
-  const blocks = plan?.blocks || [];
-  const weeklyPlan = plan?.weekly_plan || plan?.weeklyPlan || [];
+  const blocks = plan?.content?.blocks || plan?.blocks || [];
+  const weeklyPlan = plan?.content?.weeklyPlan || plan?.content?.weekly_plan || plan?.weekly_plan || plan?.weeklyPlan || [];
   const isGenerating = lead.plan_status === "generating";
   const planReady = plan?.status === "ready";
 
