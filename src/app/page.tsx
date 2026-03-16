@@ -327,13 +327,13 @@ export default function Home() {
             <input style={inputStyle} type="text" placeholder="Como prefere ser chamado" value={(formData as any).name || ""}
               onChange={(e: any) => updateField("name" as any, e.target.value)} />
           </Field>
-          <Field label={`${t.formWhatsappLabel} *`} hint="Para contato sobre seu diagnóstico">
-            <input style={inputStyle} type="tel" placeholder={t.formWhatsappPlaceholder} value={formData.whatsapp}
-              onChange={(e: any) => updateField("whatsapp", e.target.value)} />
-          </Field>
-          <Field label={t.formEmailLabel} hint="Opcional — enviamos uma cópia do diagnóstico">
+          <Field label={`${t.formEmailLabel} *`} hint="Enviamos seu resultado por aqui">
             <input style={inputStyle} type="email" placeholder={t.formEmailPlaceholder} value={formData.email}
               onChange={(e: any) => updateField("email", e.target.value)} />
+          </Field>
+          <Field label={t.formWhatsappLabel} hint="Opcional — para contato sobre seu diagnóstico">
+            <input style={inputStyle} type="tel" placeholder={t.formWhatsappPlaceholder} value={formData.whatsapp}
+              onChange={(e: any) => updateField("whatsapp", e.target.value)} />
           </Field>
           <Field label="Instagram" hint="Opcional — usamos para analisar sua presença">
             <input style={inputStyle} type="text" placeholder="@seuperfil" value={formData.instagram}

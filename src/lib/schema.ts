@@ -13,8 +13,8 @@ export const leadSchema = z.object({
 
   // Step 2: Contato + presença digital
   name: z.string().optional().default(""),
-  email: z.string().optional().default(""),
-  whatsapp: z.string().min(10, "WhatsApp é obrigatório"),
+  email: z.string().email("Email é obrigatório").min(5, "Email é obrigatório"),
+  whatsapp: z.string().optional().default(""),
   instagram: z.string().optional().default(""),
   linkedin: z.string().optional().default(""),
 
@@ -74,5 +74,5 @@ export const stepValidation = {
     data.product.length >= 2 &&
     data.region.length >= 2,
   step2: (data: LeadFormData) =>
-    data.whatsapp.length >= 10,
+    data.email.length >= 5 && data.email.includes("@"),
 };
