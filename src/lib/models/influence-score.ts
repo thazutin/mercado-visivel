@@ -1,6 +1,6 @@
 // ============================================================================
-// Step 4e — Influence Score — Modelo de 4 Dimensões
-// D1 Descoberta · D2 Credibilidade · D3 Alcance Social · D4 Visibilidade IA
+// Step 4e — Influence Score — Modelo de 3 Dimensões
+// D1 Alcance · D2 Descoberta (Google + AI) · D3 Credibilidade
 // ============================================================================
 
 import type {
@@ -17,116 +17,154 @@ import type {
 } from '../types/pipeline.types';
 import { CTR_BENCHMARKS } from './market-sizing';
 
-// ─── D1: Descoberta ──────────────────────────────────────────────────────────
-function scoreD1(
-  serpPositions: SerpPosition[],
-  mapsPresence: MapsPresence | null,
-): number {
-  // SERP position score (avg across terms)
-  let serpTotal = 0;
-  const scoredTerms = serpPositions.filter(sp => sp.position !== null);
-  for (const sp of serpPositions) {
-    if (sp.position && sp.position <= 3) serpTotal += 100;
-    else if (sp.position && sp.position <= 10) serpTotal += 70;
-    else if (sp.position && sp.position <= 20) serpTotal += 40;
-    // else 0
-  }
-  const serpScore = serpPositions.length > 0 ? serpTotal / serpPositions.length : 0;
-
-  // GMB presence
-  const gmbScore = mapsPresence?.found ? 60 : 0;
-
-  // Rating bonus
-  let ratingBonus = 0;
-  if (mapsPresence?.found && mapsPresence.rating) {
-    if (mapsPresence.rating >= 4.5) ratingBonus = 20;
-    else if (mapsPresence.rating >= 4.0) ratingBonus = 10;
-  }
-
-  // Weighted: SERP 50% + GMB 30% + Rating 20%
-  return serpScore * 0.5 + gmbScore * 0.3 + ratingBonus * 0.2;
-}
-
-// ─── D2: Credibilidade ───────────────────────────────────────────────────────
-function scoreD2(
-  mapsPresence: MapsPresence | null,
-  hasWebsite: boolean,
-): number {
-  // Review count score
-  let reviewScore = 0;
-  const reviews = mapsPresence?.reviewCount || 0;
-  if (reviews >= 50) reviewScore = 100;
-  else if (reviews >= 20) reviewScore = 70;
-  else if (reviews >= 5) reviewScore = 40;
-  else if (reviews > 0) reviewScore = 10;
-
-  // Website presence
-  const websiteScore = hasWebsite ? 30 : 0;
-
-  // Weighted: reviews 70% + website 30%
-  return reviewScore * 0.7 + websiteScore * 0.3;
-}
-
-// ─── D3: Alcance Social ──────────────────────────────────────────────────────
-function scoreD3(
+// ─── D1: Alcance (reach real, não followers) ──────────────────────────────────
+// Mede alcance efetivo: views/reach recente > followers bruto.
+// Recência aplicada agressivamente: sem posts recentes = penalização forte.
+function scoreD1_reach(
   igProfile: InstagramProfile | null,
   linkedinPresent: boolean,
   clientType: string,
 ): number {
   const scores: number[] = [];
 
-  // Instagram
   if (igProfile?.dataAvailable) {
-    let igScore = 0;
     const followers = igProfile.followers || 0;
-    if (followers >= 5000) igScore = 100;
-    else if (followers >= 1000) igScore = 75;
-    else if (followers >= 500) igScore = 50;
-    else if (followers >= 100) igScore = 30;
-    else igScore = 10;
-
-    // Recency adjustment
+    const avgReach = igProfile.reachAbsolute || igProfile.avgViewsReelsLast30d || igProfile.avgLikesLast30d || 0;
+    const recentReach = igProfile.recentAvgReach ?? 0;
     const hasRecentPosts = (igProfile.recentPostsCount ?? 0) > 0;
-    if (hasRecentPosts) igScore += 20;
-    else igScore -= 30;
-    igScore = Math.max(0, Math.min(100, igScore));
 
-    scores.push(igScore);
+    // Alcance real (views/reach), não followers
+    // Benchmark: alcance de 10% dos followers é bom para negócio local
+    let reachScore = 0;
+    if (avgReach > 0 && followers > 0) {
+      const reachRate = avgReach / followers;
+      if (reachRate >= 0.15) reachScore = 80;
+      else if (reachRate >= 0.08) reachScore = 55;
+      else if (reachRate >= 0.03) reachScore = 35;
+      else reachScore = 15;
+    } else if (followers >= 1000) {
+      reachScore = 25; // tem seguidores mas sem dados de reach
+    } else if (followers > 0) {
+      reachScore = 10;
+    }
+
+    // Recência: sem posts nos últimos 15 dias = corte de 60%
+    if (!hasRecentPosts) {
+      reachScore = Math.round(reachScore * 0.4);
+    } else if (recentReach > 0 && followers > 0) {
+      // Boost se reach recente é bom
+      const recentRate = recentReach / followers;
+      if (recentRate >= 0.10) reachScore = Math.min(100, reachScore + 15);
+    }
+
+    scores.push(Math.max(0, Math.min(100, reachScore)));
   }
 
-  // LinkedIn (b2b/b2g only — simplified)
-  if ((clientType === 'b2b' || clientType === 'b2g') && linkedinPresent) {
-    scores.push(60); // has LinkedIn profile
-  } else if (clientType === 'b2b' || clientType === 'b2g') {
-    scores.push(0); // should have but doesn't
+  // LinkedIn (B2B/B2G)
+  if (clientType === 'b2b' || clientType === 'b2g') {
+    scores.push(linkedinPresent ? 40 : 0);
   }
 
   if (scores.length === 0) return 0;
   return scores.reduce((a, b) => a + b, 0) / scores.length;
 }
 
-// ─── D4: Visibilidade em IA ──────────────────────────────────────────────────
-function scoreD4(
+// ─── D2: Descoberta (Google SERP + Maps + AI) ────────────────────────────────
+// Mede: conseguem te encontrar quando buscam?
+// Inclui busca orgânica, Maps e visibilidade em AI.
+function scoreD2_discovery(
+  serpPositions: SerpPosition[],
+  mapsPresence: MapsPresence | null,
   aiVisibility: { score: number; likelyMentioned: boolean } | null,
 ): number {
-  if (!aiVisibility) return 0;
-  return aiVisibility.likelyMentioned ? aiVisibility.score : 0;
+  // SERP: posição ponderada
+  let serpTotal = 0;
+  for (const sp of serpPositions) {
+    if (sp.position && sp.position <= 3) serpTotal += 100;
+    else if (sp.position && sp.position <= 10) serpTotal += 50;
+    else if (sp.position && sp.position <= 20) serpTotal += 15;
+    // posição > 20 ou sem posição = 0
+  }
+  const serpScore = serpPositions.length > 0 ? serpTotal / serpPositions.length : 0;
+
+  // Maps: presença + posição no local pack
+  let mapsScore = 0;
+  if (mapsPresence?.found) {
+    mapsScore = 40;
+    if (mapsPresence.inLocalPack) mapsScore = 70;
+    if (mapsPresence.localPackPosition && mapsPresence.localPackPosition <= 3) mapsScore = 85;
+  }
+
+  // AI: visibilidade em ferramentas de IA
+  let aiScore = 0;
+  if (aiVisibility) {
+    aiScore = aiVisibility.likelyMentioned ? Math.min(aiVisibility.score, 100) : 0;
+  }
+
+  // Ponderação: SERP 50% + Maps 30% + AI 20%
+  return serpScore * 0.50 + mapsScore * 0.30 + aiScore * 0.20;
 }
 
-// ─── Pesos por clientType ────────────────────────────────────────────────────
-const WEIGHTS: Record<string, { d1: number; d2: number; d3: number; d4: number }> = {
-  b2c: { d1: 0.35, d2: 0.20, d3: 0.35, d4: 0.10 },
-  b2b: { d1: 0.35, d2: 0.35, d3: 0.15, d4: 0.15 },
-  b2g: { d1: 0.40, d2: 0.30, d3: 0.10, d4: 0.20 },
+// ─── D3: Credibilidade (avaliações + engajamento + website) ──────────────────
+// Mede: quando te encontram, confiam em você?
+// Reviews + engagement rate (IG/LinkedIn) + presença de website.
+function scoreD3_credibility(
+  mapsPresence: MapsPresence | null,
+  hasWebsite: boolean,
+  igProfile: InstagramProfile | null,
+  linkedinPresent: boolean,
+  clientType: string,
+): number {
+  // Reviews (mais exigente: precisa de volume E nota boa)
+  let reviewScore = 0;
+  const reviews = mapsPresence?.reviewCount || 0;
+  const rating = mapsPresence?.rating || 0;
+  if (reviews >= 50 && rating >= 4.5) reviewScore = 100;
+  else if (reviews >= 50) reviewScore = 80;
+  else if (reviews >= 20 && rating >= 4.0) reviewScore = 60;
+  else if (reviews >= 20) reviewScore = 45;
+  else if (reviews >= 5) reviewScore = 25;
+  else if (reviews > 0) reviewScore = 10;
+
+  // Engajamento social (IG ou LinkedIn)
+  let engagementScore = 0;
+  if (igProfile?.dataAvailable) {
+    const engRate = igProfile.engagementRate || 0;
+    // Benchmark: 3% é bom para negócio local
+    if (engRate >= 0.05) engagementScore = 80;
+    else if (engRate >= 0.03) engagementScore = 55;
+    else if (engRate >= 0.01) engagementScore = 30;
+    else if (engRate > 0) engagementScore = 10;
+
+    // Recência penaliza engajamento também
+    const hasRecentPosts = (igProfile.recentPostsCount ?? 0) > 0;
+    if (!hasRecentPosts) engagementScore = Math.round(engagementScore * 0.5);
+  }
+  if ((clientType === 'b2b' || clientType === 'b2g') && linkedinPresent) {
+    engagementScore = Math.max(engagementScore, 35); // LinkedIn ativo = baseline
+  }
+
+  // Website
+  const websiteScore = hasWebsite ? 40 : 0;
+
+  // Ponderação: reviews 40% + engajamento 35% + website 25%
+  return reviewScore * 0.40 + engagementScore * 0.35 + websiteScore * 0.25;
+}
+
+// ─── Pesos por clientType (3 dimensões) ──────────────────────────────────────
+const WEIGHTS: Record<string, { d1: number; d2: number; d3: number }> = {
+  b2c: { d1: 0.30, d2: 0.40, d3: 0.30 },  // descoberta mais importante
+  b2b: { d1: 0.20, d2: 0.35, d3: 0.45 },  // credibilidade crucial
+  b2g: { d1: 0.15, d2: 0.45, d3: 0.40 },  // descoberta + credibilidade
 };
 
 // ─── Interface de breakdown ──────────────────────────────────────────────────
 export interface InfluenceBreakdown {
   total: number;
-  d1_discovery: number;
-  d2_credibility: number;
-  d3_reach: number;
-  d4_ai_visibility: number;
+  d1_discovery: number;   // agora = Alcance (reach)
+  d2_credibility: number; // agora = Descoberta (Google + AI)
+  d3_reach: number;       // agora = Credibilidade (reviews + engajamento)
+  d4_ai_visibility: number; // mantido para compat, sempre = d2 (merged)
 }
 
 // ─── Google Influence Calculator (preservado para compatibilidade) ────────────
@@ -241,7 +279,7 @@ export function calculateWebInfluence(
   return { score: Math.min(score, 1.0), available: true };
 }
 
-// ─── Composite Influence (4D model) ──────────────────────────────────────────
+// ─── Composite Influence (3D model) ──────────────────────────────────────────
 
 export function calculateCompositeInfluence(
   google: GoogleInfluence,
@@ -256,38 +294,38 @@ export function calculateCompositeInfluence(
   const ct = clientType || 'b2c';
   const weights = WEIGHTS[ct] || WEIGHTS.b2c;
 
-  // Has website? Check via SERP or Maps
+  // Has website?
   const hasWebsite = !!(
     (organicPresence?.available && organicPresence.totalRanked > 0) ||
     google.mapsPresence?.website ||
     (webData.available && webData.monthlyVisits)
   );
 
-  // Calculate 4 dimensions
-  const d1 = scoreD1(google.serpPositions, google.mapsPresence);
-  const d2 = scoreD2(google.mapsPresence, hasWebsite);
-  const d3 = scoreD3(
-    instagram.profile.dataAvailable ? instagram.profile : null,
-    linkedinPresent || false,
-    ct,
-  );
-  const d4 = scoreD4(aiVisibility || null);
+  const igProfile = instagram.profile.dataAvailable ? instagram.profile : null;
+
+  // 3 dimensões
+  const d1 = scoreD1_reach(igProfile, linkedinPresent || false, ct);
+  const d2 = scoreD2_discovery(google.serpPositions, google.mapsPresence, aiVisibility || null);
+  const d3 = scoreD3_credibility(google.mapsPresence, hasWebsite, igProfile, linkedinPresent || false, ct);
 
   const totalInfluence = Math.round(
-    d1 * weights.d1 + d2 * weights.d2 + d3 * weights.d3 + d4 * weights.d4
+    d1 * weights.d1 + d2 * weights.d2 + d3 * weights.d3
   );
 
+  // Breakdown: mantém nomes de campo para compat, mas semantica mudou:
+  // d1_discovery → Alcance, d2_credibility → Descoberta, d3_reach → Credibilidade
+  // d4_ai_visibility mantido como alias de d2 (AI está dentro de Descoberta)
   const breakdown: InfluenceBreakdown = {
     total: totalInfluence,
-    d1_discovery: Math.round(d1),
-    d2_credibility: Math.round(d2),
-    d3_reach: Math.round(d3),
-    d4_ai_visibility: Math.round(d4),
+    d1_discovery: Math.round(d1),    // Alcance (reach real)
+    d2_credibility: Math.round(d2),  // Descoberta (Google + AI)
+    d3_reach: Math.round(d3),        // Credibilidade (reviews + engajamento)
+    d4_ai_visibility: Math.round(d2), // alias de d2 (AI merged)
   };
 
-  console.log(`[Influence 4D] D1=${breakdown.d1_discovery} D2=${breakdown.d2_credibility} D3=${breakdown.d3_reach} D4=${breakdown.d4_ai_visibility} → Total=${totalInfluence}% (${ct} weights)`);
+  console.log(`[Influence 3D] Alcance=${breakdown.d1_discovery} Descoberta=${breakdown.d2_credibility} Credibilidade=${breakdown.d3_reach} → Total=${totalInfluence}% (${ct} weights: d1=${weights.d1} d2=${weights.d2} d3=${weights.d3})`);
 
-  // Backward-compat: also compute old-style scores
+  // Backward-compat: old-style scores
   const googleScore = google.ctrShare;
   const instagramScore = instagram.relativeShare;
   const instagramAvailable = instagram.profile.dataAvailable;
@@ -302,7 +340,7 @@ export function calculateCompositeInfluence(
     totalInfluence,
     google: {
       score: Math.round(googleScore * 100),
-      weight: weights.d1,
+      weight: weights.d2,
       available: true,
       organic: organicPresence?.available ? {
         totalRanked: organicPresence.totalRanked,
@@ -313,7 +351,7 @@ export function calculateCompositeInfluence(
     },
     instagram: {
       score: Math.round(instagramScore * 100),
-      weight: weights.d3,
+      weight: weights.d1,
       available: instagramAvailable,
     },
     web: {

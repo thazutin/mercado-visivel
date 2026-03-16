@@ -390,9 +390,9 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               {(results as any).influenceBreakdown4D && (
                 <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 16, paddingTop: 12, borderTop: `1px solid ${V.slate}` }}>
                   {[
-                    { label: "Alcance", value: (results as any).influenceBreakdown4D.d3_reach },
-                    { label: "Descoberta", value: Math.round(((results as any).influenceBreakdown4D.d1_discovery + (results as any).influenceBreakdown4D.d4_ai_visibility) / 2) },
-                    { label: "Credibilidade", value: (results as any).influenceBreakdown4D.d2_credibility },
+                    { label: "Alcance", value: (results as any).influenceBreakdown4D.d1_discovery },
+                    { label: "Descoberta", value: (results as any).influenceBreakdown4D.d2_credibility },
+                    { label: "Credibilidade", value: (results as any).influenceBreakdown4D.d3_reach },
                   ].map((dim, i) => (
                     <div key={i} style={{ textAlign: "center" }}>
                       <div style={{ fontFamily: V.mono, fontSize: 14, fontWeight: 700, color: dim.value > 50 ? V.teal : dim.value > 20 ? V.amberSoft : V.ash }}>{dim.value}</div>
