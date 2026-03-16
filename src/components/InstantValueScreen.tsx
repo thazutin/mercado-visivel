@@ -332,17 +332,46 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         </Expandable>
         </div>
 
-        {/* ── Concorrência ── */}
-        {hasCi && (
-          <div style={{ marginBottom: 12 }}>
-            <Expandable title="Concorrência no seu raio" icon="🏪">
+        {/* ── 3. Concorrência + sub-bloco ── */}
+        <div style={{ marginBottom: 4 }}>
+          {hasCi ? (
+            <div style={{ background: V.white, borderRadius: "14px 14px 0 0", padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, borderBottom: "none" }}>
               {ci!.activeCompetitors === 0 && ci!.totalCompetitors === 0 ? (
-                <p style={{ fontSize: 12, color: V.teal, margin: 0 }}>Nenhum concorrente digital encontrado no seu raio — oportunidade.</p>
+                <>
+                  <div style={{ fontFamily: V.display, fontSize: "clamp(22px, 5vw, 32px)", fontWeight: 700, color: V.teal, lineHeight: 1.2 }}>Sem concorrência</div>
+                  <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>nenhum concorrente digital no seu raio</p>
+                </>
               ) : (
-                <div>
-                  <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 12px", lineHeight: 1.5 }}>
-                    {ci!.activeCompetitors} negócio{ci!.activeCompetitors !== 1 ? 's' : ''} disputa{ci!.activeCompetitors === 1 ? '' : 'm'} atenção com você nesta região.
-                  </p>
+                <>
+                  <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1, color: ci!.color === 'green' ? V.teal : ci!.color === 'yellow' ? V.amber : V.coral }}>
+                    {ci!.activeCompetitors}
+                  </div>
+                  <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>negócio{ci!.activeCompetitors !== 1 ? 's' : ''} disputando atenção com você</p>
+                  <span style={{
+                    display: "inline-block", marginTop: 8, fontFamily: V.mono, fontSize: 10, padding: "3px 10px", borderRadius: 100, fontWeight: 600,
+                    background: ci!.color === 'green' ? "rgba(45,155,131,0.12)" : ci!.color === 'yellow' ? V.amberWash : V.coralWash,
+                    color: ci!.color === 'green' ? V.teal : ci!.color === 'yellow' ? V.amber : V.coral,
+                  }}>
+                    {ci!.labelText}
+                  </span>
+                </>
+              )}
+            </div>
+          ) : (
+            <div style={{ background: V.white, borderRadius: "14px 14px 0 0", padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, borderBottom: "none", opacity: 0.6 }}>
+              <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Concorrência indisponível para esta região</p>
+            </div>
+          )}
+          <Expandable title="Concorrência no seu raio" icon="🏪">
+            {!hasCi ? (
+              <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Dados de concorrência não disponíveis para esta região.</p>
+            ) : ci!.activeCompetitors === 0 && ci!.totalCompetitors === 0 ? (
+              <p style={{ fontSize: 12, color: V.teal, margin: 0 }}>Nenhum concorrente digital encontrado no seu raio — oportunidade.</p>
+            ) : (
+              <div>
+                <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 12px", lineHeight: 1.5 }}>
+                  {ci!.activeCompetitors} negócio{ci!.activeCompetitors !== 1 ? 's' : ''} disputa{ci!.activeCompetitors === 1 ? '' : 'm'} atenção com você nesta região.
+                </p>
                   {ci!.competitors.filter(c => c.hasWebsite || c.hasInstagram).slice(0, 8).map((c, i) => (
                     <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0", fontSize: 12, color: V.zinc, borderBottom: i < Math.min(ci!.competitors.filter(cc => cc.hasWebsite || cc.hasInstagram).length, 8) - 1 ? `1px solid ${V.fog}` : "none" }}>
                       <span style={{ flex: 1 }}>{c.name}</span>
@@ -362,10 +391,9 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 </div>
               )}
             </Expandable>
-          </div>
-        )}
+        </div>
 
-        {/* ── 3. Influência Digital (indicador principal) ── */}
+        {/* ── 4. Influência Digital (indicador principal) ── */}
         <div style={{ marginBottom: 4 }}>
           {/* Separator */}
           <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0 16px" }}>
