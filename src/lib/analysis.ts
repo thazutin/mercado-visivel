@@ -129,49 +129,92 @@ async function fetchTermVolumes(
     }
   }
 
-  // --- 2. DataForSEO — cidade com fallback rápido para estado (máx 2 chamadas) ---
+  // --- 2. DataForSEO — cidade/região/estado em PARALELO, usa o mais específico ---
   if (process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD) {
-    const { getCityLocationCode, UF_LOCATION_CODES, BRAZIL_LOCATION_CODE } = await import('./pipeline/dataforseo-locations');
+    const { getCityLocationCode, getRegionalGroup, getRegionalProxyCode, UF_LOCATION_CODES, BRAZIL_LOCATION_CODE } = await import('./pipeline/dataforseo-locations');
     const dfsClient = createDataForSEOClient({
       login: process.env.DATAFORSEO_LOGIN,
       password: process.env.DATAFORSEO_PASSWORD,
     });
 
-    // Resolve cidade e estado
     const cityMatch = getCityLocationCode(region);
     const ufMatch = region.match(/\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/);
     const stateCode = ufMatch ? UF_LOCATION_CODES[ufMatch[1]] : BRAZIL_LOCATION_CODE;
     const VOLUME_THRESHOLD = 3;
 
-    // Chamada 1: cidade (se disponível) ou estado direto
-    const primaryCode = cityMatch?.code || stateCode;
-    const primaryLevel = cityMatch ? 'city' : (ufMatch ? 'state' : 'country');
-    const primaryLabel = cityMatch?.cityName || (ufMatch?.[1] ?? 'Brasil');
+    // Monta chamadas em paralelo: cidade + região + estado
+    type GeoCall = { level: string; label: string; code: number; promise: Promise<TermVolumeData[]> };
+    const calls: GeoCall[] = [];
+
+    // Sempre inclui estado (garantia de dados)
+    calls.push({
+      level: ufMatch ? 'state' : 'country',
+      label: ufMatch?.[1] ?? 'Brasil',
+      code: stateCode,
+      promise: dfsClient(terms, region, stateCode),
+    });
+
+    // Cidade (se tem code próprio e é diferente do estado)
+    if (cityMatch && cityMatch.code !== stateCode) {
+      calls.push({
+        level: 'city',
+        label: cityMatch.cityName,
+        code: cityMatch.code,
+        promise: dfsClient(terms, region, cityMatch.code),
+      });
+
+      // Região (proxy: maior cidade do grupo, diferente da cidade do lead)
+      const group = getRegionalGroup(cityMatch.cityName);
+      if (group) {
+        const proxy = getRegionalProxyCode(group.groupName, cityMatch.cityName);
+        if (proxy && proxy.code !== cityMatch.code && proxy.code !== stateCode) {
+          calls.push({
+            level: 'regional',
+            label: group.groupName,
+            code: proxy.code,
+            promise: dfsClient(terms, region, proxy.code),
+          });
+        }
+      }
+    }
+
+    console.log(`[Analysis] DataForSEO: ${calls.length} chamadas em paralelo: ${calls.map(c => `${c.level}(${c.label})`).join(', ')}`);
 
     try {
-      console.log(`[Analysis] DataForSEO: ${primaryLevel} (${primaryLabel}), code=${primaryCode}`);
-      const volumes = await dfsClient(terms, region, primaryCode);
-      const withData = volumes.filter(v => v.monthlyVolume > 0).length;
-      console.log(`[Analysis] DataForSEO ${primaryLevel}: ${withData}/${volumes.length} termos com volume`);
+      const results = await Promise.allSettled(calls.map(c => c.promise));
 
-      if (withData >= VOLUME_THRESHOLD || !cityMatch) {
-        // Dados suficientes OU já estava no nível estado — aceitar
-        return { volumes, source: 'dataforseo', geoLevel: primaryLevel, geoLabel: primaryLabel };
+      // Avalia resultados do mais específico (city) ao mais genérico (state)
+      const priority = ['city', 'regional', 'state', 'country'];
+      const ranked = calls
+        .map((call, i) => ({
+          ...call,
+          result: results[i],
+          withData: results[i].status === 'fulfilled'
+            ? results[i].value.filter(v => v.monthlyVolume > 0).length
+            : 0,
+        }))
+        .sort((a, b) => priority.indexOf(a.level) - priority.indexOf(b.level));
+
+      for (const r of ranked) {
+        console.log(`[Analysis] DataForSEO ${r.level} (${r.label}): ${r.result.status === 'fulfilled' ? `${r.withData}/${r.result.value.length} termos` : 'FALHOU'}`);
       }
 
-      // Chamada 2: fallback para estado (só se a chamada cidade teve poucos dados)
-      console.log(`[Analysis] Cidade com poucos dados (${withData}), fallback → estado ${ufMatch?.[1] || 'BR'}`);
-      const stateVolumes = await dfsClient(terms, region, stateCode);
-      const stateWithData = stateVolumes.filter(v => v.monthlyVolume > 0).length;
-      console.log(`[Analysis] DataForSEO estado: ${stateWithData}/${stateVolumes.length} termos com volume`);
-      return {
-        volumes: stateVolumes,
-        source: 'dataforseo',
-        geoLevel: ufMatch ? 'state' : 'country',
-        geoLabel: ufMatch?.[1] ?? 'Brasil',
-      };
+      // Escolhe o mais específico com dados suficientes
+      for (const r of ranked) {
+        if (r.result.status === 'fulfilled' && (r.withData >= VOLUME_THRESHOLD || r.level === 'state' || r.level === 'country')) {
+          console.log(`[Analysis] ✅ Usando ${r.level} (${r.label})`);
+          return { volumes: r.result.value, source: 'dataforseo', geoLevel: r.level, geoLabel: r.label };
+        }
+      }
+
+      // Se nenhum passou o threshold, usa o que tiver mais dados
+      const best = ranked.filter(r => r.result.status === 'fulfilled').sort((a, b) => b.withData - a.withData)[0];
+      if (best && best.result.status === 'fulfilled') {
+        console.log(`[Analysis] ⚠️ Nenhum passou threshold, usando ${best.level} (${best.label}) com ${best.withData} termos`);
+        return { volumes: best.result.value, source: 'dataforseo', geoLevel: best.level, geoLabel: best.label };
+      }
     } catch (err) {
-      console.error('[Analysis] DataForSEO falhou:', err);
+      console.error('[Analysis] DataForSEO paralelo falhou:', err);
     }
   }
 

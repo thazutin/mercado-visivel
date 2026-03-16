@@ -253,6 +253,28 @@ export function getRegionalGroupCodes(
   return results;
 }
 
+/**
+ * Retorna a maior cidade de um grupo regional (proxy para dados regionais).
+ * Usa a primeira cidade da lista com code disponível que NÃO seja a cidade do lead.
+ * Se não encontrar outra, retorna a primeira com code.
+ */
+export function getRegionalProxyCode(
+  groupName: string,
+  excludeCity?: string,
+): { cityName: string; code: number } | null {
+  const codes = getRegionalGroupCodes(groupName);
+  if (codes.length === 0) return null;
+
+  // Tenta encontrar uma cidade diferente da do lead (para ter dados complementares)
+  if (excludeCity) {
+    const normalized = normalizeCityName(excludeCity);
+    const other = codes.find(c => normalizeCityName(c.cityName) !== normalized);
+    if (other) return other;
+  }
+
+  return codes[0];
+}
+
 // ---------------------------------------------------------------------------
 // Função principal: resolução hierárquica de localização
 // ---------------------------------------------------------------------------
