@@ -138,6 +138,11 @@ export default function ProcessingScreen({ product, region, businessName, onComp
         }}>
           Analisando {displayName}
         </h2>
+        {region && (
+          <p style={{ color: V.ash, fontSize: 13, margin: "0 0 8px" }}>
+            {region}
+          </p>
+        )}
         <p style={{ color: V.zinc, fontSize: 12, fontFamily: V.mono, marginBottom: 32 }}>
           Isso pode levar até 60 segundos
         </p>

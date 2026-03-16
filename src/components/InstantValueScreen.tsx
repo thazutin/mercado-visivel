@@ -157,15 +157,10 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           Seu mercado em números
         </p>
 
-        <div style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-          marginBottom: 16,
-        }}>
-          {/* 1. Mercado Endereçável */}
+        {/* ── 1. Pessoas no mercado + Tamanho da audiência ── */}
+        <div style={{ marginBottom: 4 }}>
           {hasAudiencia ? (
-            <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}` }}>
+            <div style={{ background: V.white, borderRadius: "14px 14px 0 0", padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, borderBottom: "none" }}>
               <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 ~{fmtPop(aud!.audienciaTarget)}
               </div>
@@ -173,117 +168,11 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>Mercado endereçável · {audSublabel}</p>
             </div>
           ) : (
-            <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, opacity: 0.6 }}>
+            <div style={{ background: V.white, borderRadius: "14px 14px 0 0", padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, borderBottom: "none", opacity: 0.6 }}>
               <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Mercado endereçável indisponível para este município</p>
             </div>
           )}
-
-          {/* 2. Demanda Ativa */}
-          {hasVolume ? (
-            <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}` }}>
-              <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.night, letterSpacing: "-0.03em", lineHeight: 1 }}>
-                <AnimatedCounter target={results.totalVolume} duration={1500} />
-              </div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>Demanda ativa · buscas/mês</p>
-              {results.pipeline?.sourcesUsed?.includes("claude_volume_estimate") && (
-                <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>volume estimado</p>
-              )}
-            </div>
-          ) : (
-            <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, opacity: 0.6 }}>
-              <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Demanda ativa indisponível para este mercado</p>
-            </div>
-          )}
-
-          {/* 3. Nível de Competição */}
-          {hasCi && (
-            <div style={{ background: V.white, borderRadius: 14, padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}` }}>
-              {ci!.activeCompetitors === 0 && ci!.totalCompetitors === 0 ? (
-                <>
-                  <div style={{ fontFamily: V.display, fontSize: 18, fontWeight: 600, color: V.teal, lineHeight: 1.3 }}>Sem concorrência digital</div>
-                  <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>Nível de competição · nenhum concorrente no raio</p>
-                  <span style={{ display: "inline-block", marginTop: 8, fontFamily: V.mono, fontSize: 10, padding: "3px 10px", borderRadius: 100, background: "rgba(45,155,131,0.12)", color: V.teal, fontWeight: 600 }}>Oportunidade</span>
-                </>
-              ) : (
-                <>
-                  <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1, color: ci!.color === 'green' ? V.teal : ci!.color === 'yellow' ? V.amber : V.coral }}>
-                    {ci!.indexValue.toLocaleString("pt-BR")}
-                  </div>
-                  <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>Nível de competição · buscas por concorrente</p>
-                  <span style={{
-                    display: "inline-block", marginTop: 8, fontFamily: V.mono, fontSize: 10, padding: "3px 10px", borderRadius: 100, fontWeight: 600,
-                    background: ci!.color === 'green' ? "rgba(45,155,131,0.12)" : ci!.color === 'yellow' ? V.amberWash : V.coralWash,
-                    color: ci!.color === 'green' ? V.teal : ci!.color === 'yellow' ? V.amber : V.coral,
-                  }}>
-                    {ci!.labelText}
-                  </span>
-                </>
-              )}
-            </div>
-          )}
-
-        </div>
-
-        {/* ═══ SEPARATOR: "A variável que você controla" ═══ */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0 16px" }}>
-          <div style={{ flex: 1, height: 1, background: V.fog }} />
-          <span style={{ fontSize: 11, fontFamily: V.mono, color: V.ash, letterSpacing: "0.04em", textTransform: "uppercase" as const, whiteSpace: "nowrap" as const }}>
-            A variável que você controla
-          </span>
-          <div style={{ flex: 1, height: 1, background: V.fog }} />
-        </div>
-
-        {/* 4. Influência Digital — HIGHLIGHTED */}
-        {hasInfluence ? (
-          <div style={{ background: V.night, borderRadius: 14, padding: "28px 18px", textAlign: "center", border: `1px solid ${V.slate}`, marginBottom: 12 }}>
-            <div style={{
-              fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1,
-              color: results.influencePercent < 20 ? V.amberSoft : V.teal,
-            }}>
-              {results.influencePercent}%
-            </div>
-            <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>Influência digital</p>
-            <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>{isB2G ? 'Google + Portais Públicos' : isB2B ? 'Google + LinkedIn + Instagram' : 'Google + Instagram + AI'}</p>
-            {/* D1-D4 sub-scores */}
-            {(results as any).influenceBreakdown4D && (
-              <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 16, paddingTop: 12, borderTop: `1px solid ${V.slate}` }}>
-                {[
-                  { label: "Descoberta", value: (results as any).influenceBreakdown4D.d1_discovery },
-                  { label: "Credibilidade", value: (results as any).influenceBreakdown4D.d2_credibility },
-                  { label: "Alcance", value: (results as any).influenceBreakdown4D.d3_reach },
-                  { label: "IA", value: (results as any).influenceBreakdown4D.d4_ai_visibility },
-                ].map((dim, i) => (
-                  <div key={i} style={{ textAlign: "center" }}>
-                    <div style={{ fontFamily: V.mono, fontSize: 14, fontWeight: 700, color: dim.value > 50 ? V.teal : dim.value > 20 ? V.amberSoft : V.ash }}>{dim.value}</div>
-                    <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono, letterSpacing: "0.02em", marginTop: 2 }}>{dim.label}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (
-          <div style={{ background: V.night, borderRadius: 14, padding: "28px 18px", textAlign: "center", border: `1px solid ${V.slate}`, marginBottom: 12 }}>
-            <div style={{ fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, color: V.coral, letterSpacing: "-0.03em", lineHeight: 1 }}>0%</div>
-            <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>Influência digital</p>
-            <p style={{ fontSize: 11, color: V.coral, margin: "4px 0 0" }}>Invisível no mercado</p>
-          </div>
-        )}
-
-        {/* Contexto */}
-        <div style={{ background: results.influencePercent === 0 ? V.coralWash : V.amberWash, borderRadius: 12, padding: "14px 18px", marginBottom: 20 }}>
-          <p style={{ fontSize: 14, color: V.night, margin: 0, lineHeight: 1.6 }}>
-            {results.influencePercent === 0
-              ? `Quando alguém busca ${product} em ${shortRegion}, você não aparece. Enquanto isso, seus concorrentes recebem esses clientes.`
-              : results.influencePercent < 20
-              ? `Você captura ${results.influencePercent}% do mercado digital. O restante vai para quem tem mais presença — não necessariamente quem é melhor.`
-              : `Você captura ${results.influencePercent}% do mercado digital — boa posição. O plano mostra como proteger e ampliar essa vantagem.`}
-          </p>
-        </div>
-
-        {/* ═══ 5 BLOCOS COLAPSÁVEIS ═══ */}
-
-        {/* Bloco 1 — Tamanho da audiência */}
-        <Expandable title="Tamanho da audiência" icon="👥" defaultOpen={!!hasAudiencia}>
+          <Expandable title="Tamanho da audiência" icon="👥" defaultOpen={!!hasAudiencia}>
           {aud && aud.populacaoRaio > 0 ? (
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
@@ -346,12 +235,29 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Dados IBGE indisponíveis para este município.</p>
           )}
         </Expandable>
+        </div>
 
-        {/* Bloco 2 — Volume de buscas */}
-        <Expandable
-          title="Volume de buscas"
-          icon="🔍"
-        >
+        {/* ── 2. Demanda ativa + Volume de buscas ── */}
+        <div style={{ marginBottom: 4 }}>
+          {hasVolume ? (
+            <div style={{ background: V.white, borderRadius: "14px 14px 0 0", padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, borderBottom: "none" }}>
+              <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.night, letterSpacing: "-0.03em", lineHeight: 1 }}>
+                <AnimatedCounter target={results.totalVolume} duration={1500} />
+              </div>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>Demanda ativa · buscas/mês</p>
+              {results.pipeline?.sourcesUsed?.includes("claude_volume_estimate") && (
+                <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>volume estimado</p>
+              )}
+            </div>
+          ) : (
+            <div style={{ background: V.white, borderRadius: "14px 14px 0 0", padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, borderBottom: "none", opacity: 0.6 }}>
+              <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Demanda ativa indisponível para este mercado</p>
+            </div>
+          )}
+          <Expandable
+            title="Volume de buscas"
+            icon="🔍"
+          >
           <p style={{ fontSize: 12, color: V.ash, margin: "0 0 12px", lineHeight: 1.5 }}>
             Termos reais que pessoas buscam no Google quando precisam de {product} na sua região.
           </p>
@@ -426,9 +332,66 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             Dados: DataForSEO (volume + SERP)
           </p>
         </Expandable>
+        </div>
 
-        {/* Bloco 3 — Capacidade de influência */}
-        <Expandable title="Capacidade de influência" icon="📊">
+        {/* ── 3. Influência Digital (indicador principal) ── */}
+        <div style={{ marginBottom: 4 }}>
+          {/* Separator */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0 16px" }}>
+            <div style={{ flex: 1, height: 1, background: V.fog }} />
+            <span style={{ fontSize: 11, fontFamily: V.mono, color: V.ash, letterSpacing: "0.04em", textTransform: "uppercase" as const, whiteSpace: "nowrap" as const }}>
+              A variável que você controla
+            </span>
+            <div style={{ flex: 1, height: 1, background: V.fog }} />
+          </div>
+
+          {/* Influence card */}
+          {hasInfluence ? (
+            <div style={{ background: V.night, borderRadius: "14px 14px 0 0", padding: "28px 18px", textAlign: "center", border: `1px solid ${V.slate}`, borderBottom: "none" }}>
+              <div style={{
+                fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1,
+                color: results.influencePercent < 20 ? V.amberSoft : V.teal,
+              }}>
+                {results.influencePercent}%
+              </div>
+              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>Influência digital</p>
+              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>{isB2G ? 'Google + Portais Públicos' : isB2B ? 'Google + LinkedIn + Instagram' : 'Google + Instagram + AI'}</p>
+              {(results as any).influenceBreakdown4D && (
+                <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 16, paddingTop: 12, borderTop: `1px solid ${V.slate}` }}>
+                  {[
+                    { label: "Descoberta", value: (results as any).influenceBreakdown4D.d1_discovery },
+                    { label: "Credibilidade", value: (results as any).influenceBreakdown4D.d2_credibility },
+                    { label: "Alcance", value: (results as any).influenceBreakdown4D.d3_reach },
+                    { label: "IA", value: (results as any).influenceBreakdown4D.d4_ai_visibility },
+                  ].map((dim, i) => (
+                    <div key={i} style={{ textAlign: "center" }}>
+                      <div style={{ fontFamily: V.mono, fontSize: 14, fontWeight: 700, color: dim.value > 50 ? V.teal : dim.value > 20 ? V.amberSoft : V.ash }}>{dim.value}</div>
+                      <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono, letterSpacing: "0.02em", marginTop: 2 }}>{dim.label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ background: V.night, borderRadius: "14px 14px 0 0", padding: "28px 18px", textAlign: "center", border: `1px solid ${V.slate}`, borderBottom: "none" }}>
+              <div style={{ fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, color: V.coral, letterSpacing: "-0.03em", lineHeight: 1 }}>0%</div>
+              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>Influência digital</p>
+              <p style={{ fontSize: 11, color: V.coral, margin: "4px 0 0" }}>Invisível no mercado</p>
+            </div>
+          )}
+
+          {/* Context */}
+          <div style={{ background: results.influencePercent === 0 ? V.coralWash : V.amberWash, padding: "14px 18px", border: `1px solid ${V.fog}`, borderTop: "none", borderBottom: "none" }}>
+            <p style={{ fontSize: 14, color: V.night, margin: 0, lineHeight: 1.6 }}>
+              {results.influencePercent === 0
+                ? `Quando alguém busca ${product} em ${shortRegion}, você não aparece. Enquanto isso, seus concorrentes recebem esses clientes.`
+                : results.influencePercent < 20
+                ? `Você captura ${results.influencePercent}% do mercado digital. O restante vai para quem tem mais presença — não necessariamente quem é melhor.`
+                : `Você captura ${results.influencePercent}% do mercado digital — boa posição. O plano mostra como proteger e ampliar essa vantagem.`}
+            </p>
+          </div>
+
+          <Expandable title="Capacidade de influência" icon="📊">
           <p style={{ fontSize: 12, color: V.ash, margin: "0 0 12px", lineHeight: 1.5 }}>
             Cruzamos dados de Google, Instagram e AI para calcular quanto do mercado digital local você captura.
           </p>
@@ -526,8 +489,9 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             </div>
           )}
         </Expandable>
+        </div>
 
-        {/* Bloco 4 — Rotas de trabalho priorizadas */}
+        {/* ── 4. Rotas de trabalho priorizadas ── */}
         {results.workRoutes && results.workRoutes.length > 0 && (
           <Expandable title="Rotas de trabalho priorizadas" icon="🎯" defaultOpen={true}>
             {results.gapHeadline && (

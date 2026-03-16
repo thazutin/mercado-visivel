@@ -281,7 +281,7 @@ export default function Home() {
       content: (
         <>
           <Field label="Nome do seu negócio *">
-            <input style={inputStyle} type="text" placeholder="Ex: Studio Profitteratti, Barbearia do Zé" value={formData.businessName}
+            <input style={inputStyle} type="text" placeholder="Ex: Salão da Ana, Restaurante do João" value={formData.businessName}
               onChange={(e: any) => updateField("businessName", e.target.value)} />
           </Field>
           <Field label={t.formProductLabel}>
@@ -481,10 +481,7 @@ export default function Home() {
 
           <div style={{ padding: "20px 18px 0" }}>
             {/* Mockup header */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: V.night, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ fontWeight: 700, fontSize: 14, color: V.white }}>C</span>
-              </div>
+            <div style={{ marginBottom: 20 }}>
               <span style={{ fontSize: 12, color: V.ash }}>Clínica de estética · Av. Paulista, São Paulo</span>
             </div>
 
@@ -515,7 +512,7 @@ export default function Home() {
               <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 640
               </div>
-              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>buscas por concorrente ativo</p>
+              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>buscas por concorrente</p>
               <span style={{ display: "inline-block", marginTop: 6, fontFamily: V.mono, fontSize: 9, padding: "2px 8px", borderRadius: 100, background: V.tealWash, color: V.teal, fontWeight: 600 }}>
                 Mercado subatendido
               </span>
@@ -535,7 +532,7 @@ export default function Home() {
               <div style={{ fontFamily: V.display, fontSize: 32, fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 23%
               </div>
-              <p style={{ fontSize: 11, color: V.mist, margin: "6px 0 0" }}>da demanda ativa você consegue alcançar</p>
+              <p style={{ fontSize: 11, color: V.mist, margin: "6px 0 0" }}>potencial de influência sobre a demanda</p>
               <p style={{ fontSize: 10, color: V.amber, margin: "8px 0 0" }}>↑ Esta é a métrica que o Virô gerencia.</p>
               {/* Sub-scores */}
               <div style={{ display: "flex", justifyContent: "center", gap: 14, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${V.slate}` }}>
@@ -554,6 +551,26 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Work routes preview */}
+          <div style={{ padding: "14px 18px 0" }}>
+            <p style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.ash, margin: "0 0 8px" }}>
+              Rotas de trabalho priorizadas
+            </p>
+            {[
+              { n: 1, title: "Criar perfil no Google Meu Negócio", horizon: "curto prazo" },
+              { n: 2, title: "Publicar 3 Reels/semana com roteiro", horizon: "curto prazo" },
+              { n: 3, title: "Coletar avaliações de clientes atuais", horizon: "médio prazo" },
+            ].map((r) => (
+              <div key={r.n} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderBottom: r.n < 3 ? `1px solid ${V.fog}` : "none" }}>
+                <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 700, color: V.amber, background: V.amberWash, width: 20, height: 20, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  {r.n}
+                </span>
+                <span style={{ fontSize: 12, color: V.night, flex: 1 }}>{r.title}</span>
+                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.teal, background: V.tealWash, padding: "2px 6px", borderRadius: 100, whiteSpace: "nowrap" as const }}>{r.horizon}</span>
+              </div>
+            ))}
+          </div>
+
           {/* Blur overlay at bottom */}
           <div style={{
             padding: "32px 18px 20px",
@@ -561,7 +578,7 @@ export default function Home() {
             textAlign: "center", marginTop: -20, position: "relative",
           }}>
             <p style={{ fontSize: 13, fontWeight: 600, color: V.amber, margin: 0 }}>
-              Desbloqueie o diagnóstico completo →
+              Receba seu plano de 90 dias para aumentar sua influência →
             </p>
           </div>
         </div>
@@ -611,12 +628,12 @@ export default function Home() {
             { label: "PLANO", title: "90 dias de roteiro", desc: "12 semanas com ações específicas para seu negócio.", color: V.amber },
             { label: "PLANO", title: "Briefing semanal", desc: "Toda semana: o que mudou + ação da semana. Por email e WhatsApp.", color: V.amber },
           ].map((item, i) => (
-            <div key={i} style={{ padding: "16px", borderRadius: 12, border: `1px solid ${V.fog}`, background: V.white }}>
-              <span style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", fontWeight: 600, color: item.color, background: `${item.color}15`, padding: "2px 6px", borderRadius: 4 }}>
+            <div key={i} style={{ padding: "20px", borderRadius: 12, border: `1px solid ${V.fog}`, background: V.white }}>
+              <span style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", fontWeight: 600, color: item.color, background: `${item.color}15`, padding: "3px 8px", borderRadius: 4 }}>
                 {item.label}
               </span>
-              <div style={{ fontSize: 14, fontWeight: 700, color: V.night, margin: "8px 0 4px" }}>{item.title}</div>
-              <p style={{ fontSize: 12, color: V.zinc, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
+              <div style={{ fontSize: 16, fontWeight: 700, color: V.night, margin: "10px 0 6px" }}>{item.title}</div>
+              <p style={{ fontSize: 14, color: V.zinc, lineHeight: 1.6, margin: 0 }}>{item.desc}</p>
             </div>
           ))}
         </div>
