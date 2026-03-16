@@ -84,15 +84,13 @@ export async function POST(req: NextRequest) {
       text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim()
     );
 
-    // 3. Save plan to Supabase
+    // 3. Save plan to Supabase (tabela usa content JSONB, não colunas separadas)
     await supabase.from("plans").upsert({
       lead_id: leadId,
-      blocks: plan.blocks,
-      weekly_plan: plan.weeklyPlan,
-      generated_at: new Date().toISOString(),
-      model: "claude-sonnet-4-5-20250929",
+      content: { blocks: plan.blocks, weeklyPlan: plan.weeklyPlan },
+      generation_model: "claude-sonnet-4-5-20250929",
       status: "ready",
-    });
+    }, { onConflict: "lead_id" });
 
     // 3b. Gerar plan_tasks a partir do weeklyPlan
     try {
