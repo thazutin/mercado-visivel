@@ -85,12 +85,18 @@ export async function POST(req: NextRequest) {
     );
 
     // 3. Save plan to Supabase (tabela usa content JSONB, não colunas separadas)
-    await supabase.from("plans").upsert({
+    // Deleta plano anterior se existir, depois insere novo
+    await supabase.from("plans").delete().eq("lead_id", leadId);
+    const { error: planError } = await supabase.from("plans").insert({
       lead_id: leadId,
       content: { blocks: plan.blocks, weeklyPlan: plan.weeklyPlan },
       generation_model: "claude-sonnet-4-5-20250929",
       status: "ready",
-    }, { onConflict: "lead_id" });
+    });
+    if (planError) {
+      console.error("[PlanGen] Error saving plan:", planError);
+      throw new Error(`Plan save failed: ${planError.message}`);
+    }
 
     // 3b. Gerar plan_tasks a partir do weeklyPlan
     try {
@@ -118,8 +124,8 @@ export async function POST(req: NextRequest) {
     console.log(`[PlanGen] Plan ready for lead ${leadId}`);
 
     return NextResponse.json({ ok: true, leadId });
-  } catch (err) {
-    console.error("[PlanGen] Error:", err);
+  } catch (err: any) {
+    console.error("[PlanGen] Error:", err?.message || err);
 
     // Mark as failed
     await supabase
@@ -127,7 +133,7 @@ export async function POST(req: NextRequest) {
       .update({ plan_status: "failed" })
       .eq("id", leadId);
 
-    return NextResponse.json({ error: "Plan generation failed" }, { status: 500 });
+    return NextResponse.json({ error: "Plan generation failed", detail: err?.message || String(err) }, { status: 500 });
   }
 }
 
