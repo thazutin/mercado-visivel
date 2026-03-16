@@ -161,8 +161,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 // ═════════════════════════════════════════════════════════════════════
 export default function Home() {
-  const [locale, setLocale] = useState<Locale>("pt");
-  const t = dictionaries[locale];
+  const t = dictionaries.pt;
   const [screen, setScreen] = useState<"landing" | "processing" | "value">("landing");
   const [formStep, setFormStep] = useState(1);
   const [formData, setFormData] = useState<LeadFormData>(initialFormData);
@@ -361,22 +360,6 @@ export default function Home() {
         opacity: heroVisible ? 1 : 0, transition: "opacity 0.6s ease",
       }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
-          {/* Language toggle */}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
-            <div style={{ display: "flex", borderRadius: 8, overflow: "hidden", border: `1px solid ${V.slate}` }}>
-              {(["pt", "en", "es"] as Locale[]).map(l => (
-                <button key={l} onClick={() => { setLocale(l); updateField("locale", l); }}
-                  style={{
-                    padding: "6px 14px", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600,
-                    background: locale === l ? V.white : "transparent",
-                    color: locale === l ? V.night : V.ash,
-                    transition: "all 0.15s",
-                  }}>
-                  {l.toUpperCase()}
-                </button>
-              ))}
-            </div>
-          </div>
           <span style={{ fontFamily: V.display, fontSize: 24, fontWeight: 700, color: V.white, letterSpacing: "-0.03em" }}>
             Virô
           </span>
