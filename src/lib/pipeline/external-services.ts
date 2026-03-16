@@ -905,28 +905,29 @@ export function createGoogleAdsKPClient(config: GoogleAdsConfig) {
 // Env vars: DATAFORSEO_LOGIN, DATAFORSEO_PASSWORD
 // Custo: ~$0.05 por request (até 700 keywords por request)
 
-// DataForSEO state-level location codes for Brazilian states
-// Source: https://api.dataforseo.com/v3/serp/google/locations
-const DATAFORSEO_UF_CODES: Record<string, number> = {
-  AC: 20015, AL: 20017, AP: 20019, AM: 20021, BA: 20023,
-  CE: 20025, DF: 20027, ES: 20029, GO: 20031, MA: 20033,
-  MT: 20035, MS: 20037, MG: 20039, PA: 20041, PB: 20043,
-  PR: 20045, PE: 20047, PI: 20049, RJ: 20051, RN: 20053,
-  RS: 20055, RO: 20057, RR: 20059, SC: 20061, SP: 20063,
-  SE: 20065, TO: 20067,
-};
+// Geo-targeting: usa módulo centralizado de localização
+import { UF_LOCATION_CODES, BRAZIL_LOCATION_CODE, getCityLocationCode } from './dataforseo-locations';
 
 function extractLocationCodeFromRegion(region: string): number {
+  // 1. Tenta cidade específica
+  const cityMatch = getCityLocationCode(region);
+  if (cityMatch) {
+    console.log(`[DataForSEO] Location: city="${cityMatch.cityName}" → code=${cityMatch.code} (city-level)`);
+    return cityMatch.code;
+  }
+
+  // 2. Fallback: estado (UF)
   const ufMatch = region.match(/\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/);
   if (ufMatch) {
-    const code = DATAFORSEO_UF_CODES[ufMatch[1]];
+    const code = UF_LOCATION_CODES[ufMatch[1]];
     if (code) {
       console.log(`[DataForSEO] Location: UF=${ufMatch[1]} → code=${code} (state-level)`);
       return code;
     }
   }
-  console.log(`[DataForSEO] Location: no UF found in "${region}", using 2076 (Brazil)`);
-  return 2076; // fallback: Brazil country-level
+
+  console.log(`[DataForSEO] Location: no match in "${region}", using ${BRAZIL_LOCATION_CODE} (Brazil)`);
+  return BRAZIL_LOCATION_CODE;
 }
 
 interface DataForSEOConfig {

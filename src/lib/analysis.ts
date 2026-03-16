@@ -98,7 +98,7 @@ const PIPELINE_VERSION = "momento1-v2.1-block2";
 async function fetchTermVolumes(
   terms: string[],
   region: string,
-): Promise<{ volumes: TermVolumeData[]; source: string }> {
+): Promise<{ volumes: TermVolumeData[]; source: string; geoLevel?: string; geoLabel?: string }> {
 
   // --- 1. Google Ads Keyword Planner ---
   if (
@@ -129,20 +129,39 @@ async function fetchTermVolumes(
     }
   }
 
-  // --- 2. DataForSEO (fallback) ---
+  // --- 2. DataForSEO com fallback progressivo (cidade → região → estado) ---
   if (process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD) {
-    try {
-      console.log('[Analysis] Buscando volumes via DataForSEO (fallback)...');
-      const dfsClient = createDataForSEOClient({
-        login: process.env.DATAFORSEO_LOGIN,
-        password: process.env.DATAFORSEO_PASSWORD,
-      });
-      const volumes = await dfsClient(terms, region);
-      const withData = volumes.filter(v => v.monthlyVolume > 0).length;
-      console.log(`[Analysis] DataForSEO: ${withData}/${volumes.length} termos com volume`);
-      return { volumes, source: 'dataforseo' };
-    } catch (err) {
-      console.error('[Analysis] DataForSEO falhou:', err);
+    const { resolveLocationHierarchy } = await import('./pipeline/dataforseo-locations');
+    const hierarchy = resolveLocationHierarchy(region);
+    const dfsClient = createDataForSEOClient({
+      login: process.env.DATAFORSEO_LOGIN,
+      password: process.env.DATAFORSEO_PASSWORD,
+    });
+
+    const VOLUME_THRESHOLD = 3; // mínimo de termos com volume para aceitar
+
+    for (const level of hierarchy.levels) {
+      try {
+        // Para nível regional, usamos o primeiro code (a API não aceita múltiplos)
+        // mas logamos que estamos expandindo
+        const locationCode = level.locationCodes[0];
+        console.log(`[Analysis] DataForSEO: tentando nível ${level.level} (${level.label}), code=${locationCode}`);
+
+        const volumes = await dfsClient(terms, region, locationCode);
+        const withData = volumes.filter(v => v.monthlyVolume > 0).length;
+        console.log(`[Analysis] DataForSEO ${level.level}: ${withData}/${volumes.length} termos com volume`);
+
+        if (withData >= VOLUME_THRESHOLD || level.level === 'country') {
+          const geoLevel = level.level;
+          const geoLabel = level.label;
+          console.log(`[Analysis] ✅ Usando dados de nível ${geoLevel} (${geoLabel})`);
+          return { volumes, source: 'dataforseo', geoLevel, geoLabel };
+        }
+
+        console.log(`[Analysis] Poucos dados no nível ${level.level} (${withData} < ${VOLUME_THRESHOLD}), expandindo...`);
+      } catch (err) {
+        console.error(`[Analysis] DataForSEO ${level.level} falhou:`, err);
+      }
     }
   }
 
@@ -472,10 +491,17 @@ Responda APENAS em JSON, sem markdown:
   // Collect volume results
   let fetchedVolumes: TermVolumeData[] = [];
   let volumeSource = 'none';
+  let volumeGeoLevel: string | undefined;
+  let volumeGeoLabel: string | undefined;
   const volumeResult = parallelResults[0];
   if (volumeResult.status === "fulfilled") {
     fetchedVolumes = volumeResult.value.volumes;
     volumeSource = volumeResult.value.source;
+    volumeGeoLevel = volumeResult.value.geoLevel;
+    volumeGeoLabel = volumeResult.value.geoLabel;
+    if (volumeGeoLevel) {
+      console.log(`[Pipeline] Volume geo: ${volumeGeoLevel} (${volumeGeoLabel})`);
+    }
   } else {
     console.error("[Pipeline] Volumes failed:", volumeResult.reason);
   }
@@ -962,6 +988,7 @@ Responda APENAS em JSON, sem markdown:
     sourcesUnavailable,
     confidenceLevel,
     // @ts-ignore — extending Momento1Result with runtime data
+    volumeGeo: volumeGeoLevel ? { level: volumeGeoLevel, label: volumeGeoLabel } : null,
     ibgeData: ibgeData || null,
     audiencia: audienciaDisplay,
     competitionIndex: competitionIndex || null,

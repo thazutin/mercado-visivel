@@ -46,6 +46,7 @@ interface Results {
   lat?: number | null;
   lng?: number | null;
   clientType?: 'b2c' | 'b2b' | 'b2g';
+  volumeGeo?: { level: string; label: string } | null;
   pncp?: {
     totalEncontradas: number; valorTotalEstimado: number;
     modalidades: { modalidade: string; count: number }[];
@@ -245,6 +246,11 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 <AnimatedCounter target={results.totalVolume} duration={1500} />
               </div>
               <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>Demanda ativa · buscas/mês</p>
+              {results.volumeGeo && results.volumeGeo.level !== 'city' && (
+                <p style={{ fontSize: 10, color: V.amber, margin: "4px 0 0", fontFamily: V.mono }}>
+                  Dados de {results.volumeGeo.level === 'regional' ? results.volumeGeo.label : results.volumeGeo.level === 'state' ? `estado ${results.volumeGeo.label}` : 'Brasil'}
+                </p>
+              )}
               {results.pipeline?.sourcesUsed?.includes("claude_volume_estimate") && (
                 <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>volume estimado</p>
               )}
@@ -329,7 +335,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             </div>
           )}
           <p style={{ fontSize: 10, color: V.ash, margin: "12px 0 0", fontFamily: V.mono }}>
-            Dados: DataForSEO (volume + SERP)
+            Dados: DataForSEO (volume + SERP){results.volumeGeo ? ` · ${results.volumeGeo.level === 'city' ? results.volumeGeo.label : results.volumeGeo.level === 'regional' ? `região ${results.volumeGeo.label}` : results.volumeGeo.level === 'state' ? `estado ${results.volumeGeo.label}` : 'Brasil'}` : ''}
           </p>
         </Expandable>
         </div>
