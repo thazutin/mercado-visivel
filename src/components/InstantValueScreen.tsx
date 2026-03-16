@@ -691,7 +691,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           </div>
           <div style={{ fontFamily: V.display, fontSize: 32, fontWeight: 700, marginBottom: 16 }}>R$ 397</div>
 
-          {["Diagnóstico completo por canal", "Plano de 90 dias com ações semanais", "Sugestão de ação semanal por email + WhatsApp"].map((d, i) => (
+          {["Diagnóstico completo por canal", "Plano de 90 dias com ações semanais", "Sugestão de ação semanal por email"].map((d, i) => (
             <div key={i} style={{ display: "flex", gap: 10, marginBottom: 8, alignItems: "center" }}>
               <span style={{ color: V.amber, fontSize: 12 }}>✓</span>
               <span style={{ fontSize: 13, color: V.mist }}>{d}</span>
@@ -737,7 +737,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           <div style={{ padding: "12px", borderRadius: 8, background: V.cloud, borderLeft: `3px solid #8B5CF6` }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: V.night, marginBottom: 4 }}>Inteligência semanal</div>
             <div style={{ fontSize: 12, color: V.zinc, lineHeight: 1.5, marginBottom: 8 }}>
-              Toda semana: o que mudou no seu mercado + uma ação específica com o como executar. Por email e WhatsApp.
+              Toda semana: o que mudou no seu mercado + uma ação específica com o como executar. Por email.
             </div>
             <div style={{ fontSize: 11, color: V.ash, lineHeight: 1.5, fontStyle: "italic" }}>
               Ex: "Otimize o Google Meu Negócio — 3 passos" · "Grave Reels 30s com roteiro" · "Invista R$X em mídia e capture Y clientes"

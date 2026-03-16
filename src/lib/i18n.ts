@@ -159,7 +159,7 @@ export const dictionaries: Record<Locale, any> = {
     formSiteHint: "Opcional — analisamos se disponível",
     formSitePlaceholder: "https://seunegocio.com.br",
     formStep2Title: "Como te encontramos",
-    formStep2Subtitle: "Para enviar o diagnóstico por email e WhatsApp.",
+    formStep2Subtitle: "Para enviar o diagnóstico por email.",
     formEmailLabel: "Seu melhor email",
     formEmailPlaceholder: "voce@email.com",
     formWhatsappLabel: "WhatsApp",

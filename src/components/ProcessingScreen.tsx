@@ -220,7 +220,7 @@ export default function ProcessingScreen({ product, region, businessName, onComp
 
         {/* Notification */}
         <p style={{ color: V.ash, fontSize: 11, fontFamily: V.body, marginTop: 20 }}>
-          Você também receberá o resultado por WhatsApp.
+          Você também receberá o resultado por email.
         </p>
       </div>
 

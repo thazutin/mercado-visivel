@@ -327,7 +327,7 @@ export default function Home() {
             <input style={inputStyle} type="text" placeholder="Como prefere ser chamado" value={(formData as any).name || ""}
               onChange={(e: any) => updateField("name" as any, e.target.value)} />
           </Field>
-          <Field label={`${t.formWhatsappLabel} *`} hint="Obrigatório — enviamos seu resultado por aqui">
+          <Field label={`${t.formWhatsappLabel} *`} hint="Para contato sobre seu diagnóstico">
             <input style={inputStyle} type="tel" placeholder={t.formWhatsappPlaceholder} value={formData.whatsapp}
               onChange={(e: any) => updateField("whatsapp", e.target.value)} />
           </Field>
@@ -623,7 +623,7 @@ export default function Home() {
             { label: "GRÁTIS", title: "Oportunidades claras", desc: "Onde há espaço para atrair mais clientes.", color: V.teal },
             { label: "PLANO", title: "O que fazer primeiro", desc: "Próximos passos concretos, em ordem de prioridade.", color: V.amber },
             { label: "PLANO", title: "90 dias de roteiro", desc: "12 semanas com ações específicas para seu negócio.", color: V.amber },
-            { label: "PLANO", title: "Acompanhamento semanal", desc: "O que mudou + próxima ação. Por email e WhatsApp.", color: V.amber },
+            { label: "PLANO", title: "Acompanhamento semanal", desc: "O que mudou + próxima ação. Por email.", color: V.amber },
           ].map((item, i) => (
             <div key={i} style={{ padding: "20px", borderRadius: 12, border: `1px solid ${V.fog}`, background: V.white }}>
               <span style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", fontWeight: 600, color: item.color, background: `${item.color}15`, padding: "3px 8px", borderRadius: 4 }}>
