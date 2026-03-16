@@ -6,6 +6,7 @@
 // File: src/lib/pipeline/briefing-generator.ts
 
 import Anthropic from "@anthropic-ai/sdk";
+import { createClient } from "@supabase/supabase-js";
 import type { SnapshotDiff, DiffChange } from "./diff-engine";
 
 const MODEL = "claude-sonnet-4-5-20250929";
@@ -30,6 +31,8 @@ interface BriefingInput {
   // Summary stats
   currentFollowers: number;
   currentRating: number | null;
+  // Priority task title from plan_tasks (Feature 2)
+  topTaskTitle?: string | null;
 }
 
 /**
@@ -74,7 +77,11 @@ Como: ${input.plannedAction.how}
 Métrica de sucesso: ${input.plannedAction.metric}`
     : "Sem ação específica planejada para esta semana.";
 
-  const prompt = `CONTEXTO:
+  const topTaskText = input.topTaskTitle
+    ? `AÇÃO DA SEMANA (tarefa prioritária do plano): ${input.topTaskTitle}`
+    : null;
+
+  const prompt = `${topTaskText ? topTaskText + "\n\n" : ""}CONTEXTO:
 Negócio: ${input.product} em ${input.region}
 Semana: ${input.weekNumber} de 12
 Influência digital atual: ${input.currentInfluence}%
@@ -102,8 +109,8 @@ Com base nessas informações, gere o briefing semanal em JSON com o seguinte fo
 
 REGRAS:
 - changes: máximo 5 itens. Priorize os mais significativos. Use linguagem simples.
-- weeklyAction: baseie-se na ação planejada MAS adapte se o diff mostrar algo mais urgente.
-- narrative: seja específico ao negócio. Nada genérico. Conecte as mudanças ao que o dono deve fazer.
+- weeklyAction: se houver AÇÃO DA SEMANA no topo, USE-A como base para o weeklyAction (adapte se o diff mostrar algo mais urgente). Caso contrário, baseie-se na ação planejada.
+- narrative: COMECE com a ação da semana quando disponível. Seja específico ao negócio. Nada genérico. Conecte as mudanças ao que o dono deve fazer.
 - Se não houve mudanças, foque na ação planejada e no progresso acumulado.
 - Tom: direto, sem jargão, como um consultor que conhece a rua.
 
@@ -163,7 +170,9 @@ function buildFallbackBriefing(input: BriefingInput): BriefingContent {
     description: c.description,
   }));
 
-  const weeklyAction = input.plannedAction
+  const weeklyAction = input.topTaskTitle
+    ? input.topTaskTitle
+    : input.plannedAction
     ? `${input.plannedAction.action} — ${input.plannedAction.why}`
     : "Continue executando o plano da semana anterior.";
 
@@ -182,4 +191,73 @@ function buildFallbackBriefing(input: BriefingInput): BriefingContent {
       diffSummary: input.diff.summary,
     },
   };
+}
+
+// ─── GET TOP ACTION FOR WEEK ────────────────────────────────────────
+// Calculates current week from paid_at and returns the next uncompleted
+// task at or before (currentWeek + 1) from the plan's weeklyPlan.
+
+export async function getTopActionForWeek(leadId: string): Promise<string | null> {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  // 1. Get lead paid_at to calculate current week
+  const { data: lead } = await supabase
+    .from("leads")
+    .select("paid_at, weeks_active")
+    .eq("id", leadId)
+    .single();
+
+  if (!lead?.paid_at) return null;
+
+  const paidAt = new Date(lead.paid_at);
+  const now = new Date();
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+  const currentWeek = Math.min(12, Math.max(1, Math.ceil((now.getTime() - paidAt.getTime()) / msPerWeek)));
+
+  // 2. Check plan_tasks table first (if it exists)
+  try {
+    const { data: tasks, error } = await supabase
+      .from("plan_tasks")
+      .select("title, week, completed")
+      .eq("lead_id", leadId)
+      .eq("completed", false)
+      .lte("week", currentWeek + 1)
+      .order("week", { ascending: true })
+      .limit(1);
+
+    if (!error && tasks && tasks.length > 0) {
+      console.log(`[TopAction] Found task from plan_tasks: "${tasks[0].title}" (week ${tasks[0].week})`);
+      return tasks[0].title;
+    }
+  } catch {
+    // plan_tasks table may not exist yet — fall through to weeklyPlan
+  }
+
+  // 3. Fallback: get from plan's weeklyPlan JSON
+  const { data: plan } = await supabase
+    .from("plans")
+    .select("content")
+    .eq("lead_id", leadId)
+    .eq("status", "ready")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!plan?.content) return null;
+
+  const weeklyPlan = plan.content.weeklyPlan || plan.content.weekly_plan;
+  if (!Array.isArray(weeklyPlan)) return null;
+
+  // Find the task for the current week (0-indexed array)
+  const weekTask = weeklyPlan[currentWeek - 1];
+  if (weekTask) {
+    const title = weekTask.title || weekTask.action || weekTask.mainAction || null;
+    console.log(`[TopAction] Found task from weeklyPlan: "${title}" (week ${currentWeek})`);
+    return title;
+  }
+
+  return null;
 }

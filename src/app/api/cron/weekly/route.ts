@@ -17,7 +17,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { weeklyRescrape } from "@/lib/pipeline/weekly-rescrape";
 import { calculateDiff } from "@/lib/pipeline/diff-engine";
-import { generateBriefing } from "@/lib/pipeline/briefing-generator";
+import { generateBriefing, getTopActionForWeek } from "@/lib/pipeline/briefing-generator";
 import { sendWeeklyEmail } from "@/lib/email/weekly-email";
 import { sendWhatsAppReminder } from "@/lib/email/whatsapp-reminder";
 import { notifyUpsell, notifyClosure } from "@/lib/notify";
@@ -202,6 +202,17 @@ async function processLeadWeekly(supabase: any, lead: any): Promise<void> {
   }
   console.log(`[Cron] plannedAction semana ${nextWeek}:`, plannedAction ? `title="${plannedAction.title}", action="${(plannedAction.mainAction || plannedAction.action || '').slice(0, 80)}"` : 'null');
 
+  // ─── Get top action for this week (Feature 2) ───
+  let topTaskTitle: string | null = null;
+  try {
+    topTaskTitle = await getTopActionForWeek(lead.id);
+    if (topTaskTitle) {
+      console.log(`[Cron] Top action for lead ${lead.id} week ${nextWeek}: "${topTaskTitle}"`);
+    }
+  } catch (err) {
+    console.warn(`[Cron] getTopActionForWeek failed for lead ${lead.id}:`, (err as Error).message);
+  }
+
   // ─── Generate briefing ───
   const igProfile = rescrapeResult.rawData?.instagramProfile;
 
@@ -215,6 +226,7 @@ async function processLeadWeekly(supabase: any, lead: any): Promise<void> {
     currentInfluence: rescrapeResult.influenceScore,
     currentFollowers: igProfile?.followers || 0,
     currentRating: rescrapeResult.mapsPresence?.rating || null,
+    topTaskTitle,
   });
 
   // ─── Save briefing ───
@@ -239,6 +251,7 @@ async function processLeadWeekly(supabase: any, lead: any): Promise<void> {
       product: lead.product,
       region: lead.region,
       briefing,
+      topTaskTitle,
     });
 
     // Mark email as sent

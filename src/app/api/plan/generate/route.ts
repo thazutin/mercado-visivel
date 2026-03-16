@@ -94,6 +94,14 @@ export async function POST(req: NextRequest) {
       status: "ready",
     });
 
+    // 3b. Gerar plan_tasks a partir do weeklyPlan
+    try {
+      await generatePlanTasks(supabase, leadId, plan.weeklyPlan || []);
+    } catch (taskErr) {
+      // Não-fatal: se falhar, o plano texto continua funcionando
+      console.error("[PlanGen] Task generation failed (non-fatal):", taskErr);
+    }
+
     // 4. Update lead status
     await supabase
       .from("leads")
@@ -236,6 +244,59 @@ REGRAS PARA OS BLOCOS:
 - Bloco 5: KPIs claros com baseline (hoje) e meta (90 dias)
 
 Gere APENAS o JSON. Sem texto antes ou depois.`;
+}
+
+// ─── PLAN TASKS GENERATION ─────────────────────────────────────────
+
+const CATEGORY_TO_CHANNEL: Record<string, string> = {
+  presence: "google_maps",
+  content: "instagram",
+  authority: "geral",
+  engagement: "instagram",
+};
+
+async function generatePlanTasks(supabase: any, leadId: string, weeklyPlan: any[]) {
+  if (!weeklyPlan || weeklyPlan.length === 0) return;
+
+  // Limpa tasks anteriores (re-geração)
+  await supabase.from("plan_tasks").delete().eq("lead_id", leadId);
+
+  const tasks: any[] = [];
+
+  for (const week of weeklyPlan) {
+    const channel = CATEGORY_TO_CHANNEL[week.category] || "geral";
+
+    // Task principal: mainAction da semana
+    tasks.push({
+      lead_id: leadId,
+      week: week.week,
+      channel,
+      title: week.title,
+      description: week.mainAction || "",
+      completed: false,
+    });
+
+    // Task secundária: KPI como tarefa de verificação
+    if (week.kpi) {
+      tasks.push({
+        lead_id: leadId,
+        week: week.week,
+        channel,
+        title: `Verificar meta: ${week.kpi}`,
+        description: week.script ? `Roteiro: ${week.script}` : "",
+        completed: false,
+      });
+    }
+  }
+
+  if (tasks.length > 0) {
+    const { error } = await supabase.from("plan_tasks").insert(tasks);
+    if (error) {
+      console.error("[PlanGen] Error inserting plan_tasks:", error);
+      throw error;
+    }
+    console.log(`[PlanGen] Inserted ${tasks.length} plan_tasks for lead ${leadId}`);
+  }
 }
 
 // (Email e WhatsApp centralizados em src/lib/notify.ts)

@@ -60,6 +60,14 @@ export default async function DashboardPage({ params }: { params: { leadId: stri
     .eq("lead_id", leadId)
     .order("week_number", { ascending: true });
 
+  // Load plan tasks (checkboxes)
+  const { data: planTasks } = await supabase
+    .from("plan_tasks")
+    .select("*")
+    .eq("lead_id", leadId)
+    .order("week", { ascending: true })
+    .order("id", { ascending: true });
+
   return (
     <DashboardClient
       lead={lead}
@@ -67,6 +75,7 @@ export default async function DashboardPage({ params }: { params: { leadId: stri
       briefings={briefings || []}
       diagnosis={diagnosis}
       snapshots={snapshots || []}
+      planTasks={planTasks || []}
     />
   );
 }

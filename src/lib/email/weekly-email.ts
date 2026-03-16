@@ -13,6 +13,7 @@ interface WeeklyEmailInput {
   product: string;
   region: string;
   briefing: BriefingContent;
+  topTaskTitle?: string | null;
 }
 
 export async function sendWeeklyEmail(input: WeeklyEmailInput): Promise<void> {
@@ -55,6 +56,18 @@ export async function sendWeeklyEmail(input: WeeklyEmailInput): Promise<void> {
       <p style="font-size: 14px; color: #6E6E78; margin-bottom: 24px;">
         ${input.product} em ${input.region} — semana ${input.weekNumber} de 12.
       </p>
+
+      <!-- Priority Action (Feature 2) -->
+      ${input.topTaskTitle ? `
+        <div style="background: rgba(45,155,131,0.06); border-left: 4px solid #2D9B83; border-radius: 0 10px 10px 0; padding: 16px 18px; margin-bottom: 24px;">
+          <div style="font-family: monospace; font-size: 10px; color: #2D9B83; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">
+            PRIORIDADE DA SEMANA
+          </div>
+          <div style="font-size: 16px; font-weight: 600; color: #161618; line-height: 1.5;">
+            ${input.topTaskTitle}
+          </div>
+        </div>
+      ` : ""}
 
       <!-- Changes -->
       ${input.briefing.changes.length > 0 ? `

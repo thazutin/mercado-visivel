@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import PlanTasks from "@/components/PlanTasks";
+import type { PlanTask } from "@/components/PlanTasks";
+import TaskContentButton from "@/components/TaskContentButton";
 
 const V = {
   night: "#161618", graphite: "#232326", slate: "#3A3A40",
@@ -18,9 +21,10 @@ interface Props {
   briefings: any[];
   diagnosis: any;
   snapshots: any[];
+  planTasks?: PlanTask[];
 }
 
-export default function DashboardClient({ lead, plan, briefings, diagnosis, snapshots }: Props) {
+export default function DashboardClient({ lead, plan, briefings, diagnosis, snapshots, planTasks = [] }: Props) {
   const [tab, setTab] = useState<"plan" | "weekly" | "briefings">("plan");
   const [expandedBlock, setExpandedBlock] = useState<string | null>(null);
 
@@ -142,65 +146,70 @@ export default function DashboardClient({ lead, plan, briefings, diagnosis, snap
               </div>
             )}
 
-            {/* Tab: Weekly Plan */}
+            {/* Tab: Weekly Plan — tarefas com checkbox ou fallback texto */}
             {tab === "weekly" && (
               <div>
-                {weeklyPlan.map((week: any, i: number) => {
-                  const catColors: Record<string, string> = {
-                    presence: V.teal, content: V.amber,
-                    authority: "#8B5CF6", engagement: "#E1306C",
-                  };
-                  return (
-                    <div key={i} style={{
-                      background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`,
-                      padding: "20px 24px", marginBottom: 12,
-                    }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <div style={{
-                            fontFamily: V.mono, fontSize: 11, fontWeight: 600,
-                            color: V.teal, background: "rgba(45,155,131,0.1)",
-                            width: 32, height: 32, borderRadius: "50%",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                          }}>
-                            {week.week}
+                {planTasks.length > 0 ? (
+                  <PlanTasks tasks={planTasks} />
+                ) : (
+                  /* Fallback: exibicao texto quando nao ha plan_tasks */
+                  weeklyPlan.map((week: any, i: number) => {
+                    const catColors: Record<string, string> = {
+                      presence: V.teal, content: V.amber,
+                      authority: "#8B5CF6", engagement: "#E1306C",
+                    };
+                    return (
+                      <div key={i} style={{
+                        background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`,
+                        padding: "20px 24px", marginBottom: 12,
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <div style={{
+                              fontFamily: V.mono, fontSize: 11, fontWeight: 600,
+                              color: V.teal, background: "rgba(45,155,131,0.1)",
+                              width: 32, height: 32, borderRadius: "50%",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                            }}>
+                              {week.week}
+                            </div>
+                            <div style={{ fontSize: 15, fontWeight: 600, color: V.night }}>
+                              {week.title}
+                            </div>
                           </div>
-                          <div style={{ fontSize: 15, fontWeight: 600, color: V.night }}>
-                            {week.title}
-                          </div>
+                          {week.category && (
+                            <span style={{
+                              fontFamily: V.mono, fontSize: 9, letterSpacing: "0.05em",
+                              textTransform: "uppercase", padding: "3px 10px", borderRadius: 100,
+                              color: catColors[week.category] || V.ash,
+                              background: `${catColors[week.category] || V.ash}15`,
+                            }}>
+                              {week.category}
+                            </span>
+                          )}
                         </div>
-                        {week.category && (
-                          <span style={{
-                            fontFamily: V.mono, fontSize: 9, letterSpacing: "0.05em",
-                            textTransform: "uppercase", padding: "3px 10px", borderRadius: 100,
-                            color: catColors[week.category] || V.ash,
-                            background: `${catColors[week.category] || V.ash}15`,
+                        <div style={{ fontSize: 14, color: V.zinc, lineHeight: 1.7, marginBottom: 10 }}>
+                          {week.mainAction}
+                        </div>
+                        {week.script && (
+                          <div style={{
+                            background: V.cloud, borderRadius: 8, padding: "12px 16px",
+                            fontSize: 13, color: V.zinc, lineHeight: 1.6, marginBottom: 10,
+                            borderLeft: `3px solid ${V.amber}`,
                           }}>
-                            {week.category}
-                          </span>
+                            <strong style={{ color: V.night, fontSize: 12 }}>Roteiro/Template:</strong><br />
+                            {week.script}
+                          </div>
+                        )}
+                        {week.kpi && (
+                          <div style={{ fontSize: 12, color: V.ash }}>
+                            <strong>Meta:</strong> {week.kpi}
+                          </div>
                         )}
                       </div>
-                      <div style={{ fontSize: 14, color: V.zinc, lineHeight: 1.7, marginBottom: 10 }}>
-                        {week.mainAction}
-                      </div>
-                      {week.script && (
-                        <div style={{
-                          background: V.cloud, borderRadius: 8, padding: "12px 16px",
-                          fontSize: 13, color: V.zinc, lineHeight: 1.6, marginBottom: 10,
-                          borderLeft: `3px solid ${V.amber}`,
-                        }}>
-                          <strong style={{ color: V.night, fontSize: 12 }}>Roteiro/Template:</strong><br />
-                          {week.script}
-                        </div>
-                      )}
-                      {week.kpi && (
-                        <div style={{ fontSize: 12, color: V.ash }}>
-                          <strong>Meta:</strong> {week.kpi}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
             )}
 
