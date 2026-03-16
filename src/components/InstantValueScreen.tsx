@@ -176,7 +176,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 ~{fmtPop(aud!.audienciaTarget)}
               </div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>{isB2G ? 'órgãos públicos potenciais' : isB2B ? 'empresas que poderiam comprar com você' : 'pessoas que poderiam comprar com você'}</p>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>{isB2G ? 'órgãos públicos que poderiam contratar você' : isB2B ? 'empresas que poderiam contratar você' : 'pessoas que poderiam contratar você'}</p>
               <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>Mercado endereçável · {audSublabel}</p>
             </div>
           ) : (
@@ -256,7 +256,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.night, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 <AnimatedCounter target={results.totalVolume} duration={1500} />
               </div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>buscas no Google e AI por mês que poderiam encontrar você</p>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>buscas/mês que poderiam levar até você</p>
               {results.volumeGeo && results.volumeGeo.level !== 'city' && (
                 <p style={{ fontSize: 10, color: V.amber, margin: "4px 0 0", fontFamily: V.mono }}>
                   Dados de {results.volumeGeo.level === 'regional' ? results.volumeGeo.label : results.volumeGeo.level === 'state' ? `estado ${results.volumeGeo.label}` : 'Brasil'}
@@ -276,7 +276,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             icon="🔍"
           >
           <p style={{ fontSize: 12, color: V.ash, margin: "0 0 12px", lineHeight: 1.5 }}>
-            Termos reais que pessoas buscam no Google quando precisam de {product} na sua região.
+            Estas são as buscas que importam para o seu negócio na sua região.
           </p>
           {/* Header */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: `1px solid ${V.fog}`, fontSize: 10, color: V.ash, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
@@ -327,7 +327,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             <p style={{ fontSize: 11, color: V.ash, marginTop: 8, textAlign: "center" }}>+{results.terms.length - 15} termos no diagnóstico completo</p>
           )}
           <p style={{ fontSize: 10, color: V.ash, margin: "12px 0 0", fontFamily: V.mono }}>
-            Dados: DataForSEO (volume + SERP){results.volumeGeo ? ` · ${results.volumeGeo.level === 'city' ? results.volumeGeo.label : results.volumeGeo.level === 'regional' ? `região ${results.volumeGeo.label}` : results.volumeGeo.level === 'state' ? `estado ${results.volumeGeo.label}` : 'Brasil'}` : ''}
+            Fonte: Google Ads + SERP{results.volumeGeo ? ` · ${results.volumeGeo.level === 'city' ? results.volumeGeo.label : results.volumeGeo.level === 'regional' ? results.volumeGeo.label : results.volumeGeo.level === 'state' ? results.volumeGeo.label : 'Brasil'}` : ''}
           </p>
         </Expandable>
         </div>
@@ -443,15 +443,17 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             <p style={{ fontSize: 14, color: V.night, margin: 0, lineHeight: 1.6 }}>
               {results.influencePercent === 0
                 ? `Quando alguém busca ${product} em ${shortRegion}, você não aparece. Enquanto isso, seus concorrentes recebem esses clientes.`
-                : results.influencePercent < 20
-                ? `Você captura ${results.influencePercent}% do mercado digital. O restante vai para quem tem mais presença — não necessariamente quem é melhor.`
-                : `Você captura ${results.influencePercent}% do mercado digital — boa posição. O plano mostra como proteger e ampliar essa vantagem.`}
+                : results.influencePercent < 15
+                ? `Você aparece para ${results.influencePercent}% das buscas. A maioria dos clientes encontra seus concorrentes antes de você.`
+                : results.influencePercent < 40
+                ? `Você aparece para ${results.influencePercent}% das buscas. Há espaço para crescer — o plano mostra onde.`
+                : `Você aparece para ${results.influencePercent}% das buscas — posição forte. O plano mostra como manter essa vantagem.`}
             </p>
           </div>
 
           <Expandable title="Capacidade de influência" icon="📊">
           <p style={{ fontSize: 12, color: V.ash, margin: "0 0 12px", lineHeight: 1.5 }}>
-            Cruzamos dados de Google, Instagram e AI para calcular quanto do mercado digital local você captura.
+            Como seu negócio aparece para quem busca o que você faz na sua região.
           </p>
 
           {/* Alcance — Instagram/LinkedIn reach */}
@@ -504,7 +506,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 )}
                 {competitors.length === 0 && (
                   <p style={{ fontSize: 11, color: V.ash, margin: "4px 0 0" }}>
-                    Influência calculada com base no alcance absoluto do perfil. Diagnóstico completo inclui comparativo com concorrentes da região.
+                    Sem concorrentes para comparar nesta análise. O plano completo inclui comparativo.
                   </p>
                 )}
               </>
@@ -533,7 +535,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                   );
                   if (aiDimFactor) return `AI: ${aiDimFactor.factor}. Score ${results.aiVisibility!.score}/100.`;
                   if (results.aiVisibility!.likelyMentioned) return `AI: Seu negócio provavelmente é mencionado em respostas de AI. Score ${results.aiVisibility!.score}/100.`;
-                  return `AI: Não aparece em nenhuma busca de IA local. ${results.aiVisibility!.summary}`;
+                  return `AI: Não aparece em nenhuma busca de IA na região. ${results.aiVisibility!.summary}`;
                 })()}
               </p>
             )}
@@ -673,13 +675,13 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         {/* ═══ CTA ═══ */}
         <div style={{ padding: "24px 0 16px" }}>
           <p style={{ fontSize: 18, fontWeight: 700, color: V.night, margin: "0 0 8px", lineHeight: 1.4 }}>
-            Pare de adivinhar. Comece a decidir com dado.
+            Agora você sabe. O próximo passo é agir.
           </p>
           <p style={{ fontSize: 14, color: V.zinc, margin: "0 0 4px", lineHeight: 1.6 }}>
-            <strong style={{ color: V.night }}>De:</strong> Faço posts e espero que apareça cliente
+            <strong style={{ color: V.night }}>Antes:</strong> Não sabia onde meu negócio aparecia
           </p>
           <p style={{ fontSize: 14, color: V.zinc, margin: "0 0 20px", lineHeight: 1.6 }}>
-            <strong style={{ color: V.teal }}>Para:</strong> Sei onde estou, onde estão meus concorrentes e o que fazer essa semana
+            <strong style={{ color: V.teal }}>Agora:</strong> Sei onde estou, quem compete comigo e o que fazer primeiro
           </p>
         </div>
 

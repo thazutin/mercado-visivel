@@ -478,7 +478,7 @@ export default function Home() {
               <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 ~18 mil
               </div>
-              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>pessoas que poderiam comprar com você</p>
+              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>pessoas que poderiam contratar você</p>
               <p style={{ fontSize: 9, color: V.ash, margin: "2px 0 0", fontFamily: V.mono }}>População total no raio: 142 mil</p>
             </div>
 
@@ -487,7 +487,7 @@ export default function Home() {
               <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.night, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 3.200
               </div>
-              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>buscas no Google e AI por mês</p>
+              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>buscas/mês que poderiam levar até você</p>
             </div>
 
             {/* Card 3 — Nível de Competição */}
