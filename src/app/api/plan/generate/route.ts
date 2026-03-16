@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
 
     const response = await claude.messages.create({
       model: "claude-sonnet-4-5-20250929",
-      max_tokens: 8000,
+      max_tokens: 16000,
       temperature: 0.3,
       messages: [{ role: "user", content: prompt }],
     });
