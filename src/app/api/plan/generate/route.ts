@@ -9,7 +9,7 @@ import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { notifyPlanReady } from "@/lib/notify";
 
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 function getSupabase() {
   return createClient(
