@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const V = {
   night: "#161618", graphite: "#232326", slate: "#3A3A40",
   zinc: "#6E6E78", ash: "#9E9EA8", fog: "#EAEAEE",
   cloud: "#F4F4F7", white: "#FEFEFF", amber: "#CF8523",
-  teal: "#2D9B83", coral: "#D9534F",
+  teal: "#2D9B83", coral: "#D9534F", coralWash: "rgba(217,83,79,0.08)",
   display: "'Satoshi', 'General Sans', -apple-system, sans-serif",
   mono: "'JetBrains Mono', 'SF Mono', monospace",
 };
@@ -16,9 +17,10 @@ interface Props {
   plan: any;
   briefings: any[];
   diagnosis: any;
+  snapshots: any[];
 }
 
-export default function DashboardClient({ lead, plan, briefings, diagnosis }: Props) {
+export default function DashboardClient({ lead, plan, briefings, diagnosis, snapshots }: Props) {
   const [tab, setTab] = useState<"plan" | "weekly" | "briefings">("plan");
   const [expandedBlock, setExpandedBlock] = useState<string | null>(null);
 
@@ -205,6 +207,48 @@ export default function DashboardClient({ lead, plan, briefings, diagnosis }: Pr
             {/* Tab: Briefings */}
             {tab === "briefings" && (
               <div>
+                {/* Score Evolution Chart */}
+                {snapshots.length > 1 && (() => {
+                  const chartData = snapshots
+                    .filter((s: any) => s.data?.influenceScore != null)
+                    .map((s: any) => ({
+                      week: `S${s.week_number}`,
+                      influence: Math.round(s.data.influenceScore),
+                    }));
+
+                  if (chartData.length < 2) return null;
+
+                  return (
+                    <div style={{
+                      background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`,
+                      padding: "20px 24px", marginBottom: 16,
+                    }}>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: V.night, marginBottom: 16 }}>
+                        Evolução da Influência Digital
+                      </div>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <LineChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={V.fog} />
+                          <XAxis dataKey="week" tick={{ fontSize: 11, fill: V.ash }} />
+                          <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: V.ash }} unit="%" />
+                          <Tooltip
+                            contentStyle={{
+                              background: V.night, border: "none", borderRadius: 8,
+                              fontSize: 13, color: V.white,
+                            }}
+                            formatter={(value: number) => [`${value}%`, "Influência"]}
+                          />
+                          <Line
+                            type="monotone" dataKey="influence" stroke={V.teal}
+                            strokeWidth={2} dot={{ fill: V.teal, r: 4 }}
+                            activeDot={{ r: 6, fill: V.amber }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  );
+                })()}
+
                 {briefings.length === 0 ? (
                   <div style={{
                     background: V.white, borderRadius: 14, padding: "40px 24px",
@@ -219,7 +263,29 @@ export default function DashboardClient({ lead, plan, briefings, diagnosis }: Pr
                   </div>
                 ) : (
                   briefings.map((b: any, i: number) => {
-                    const content = typeof b.content === "string" ? JSON.parse(b.content) : b.content;
+                    let content: any = null;
+                    try {
+                      content = typeof b.content === "string" ? JSON.parse(b.content) : b.content;
+                    } catch {
+                      // malformed JSON — render fallback
+                    }
+
+                    if (!content) {
+                      return (
+                        <div key={i} style={{
+                          background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`,
+                          padding: "20px 24px", marginBottom: 12,
+                        }}>
+                          <span style={{ fontFamily: V.mono, fontSize: 11, color: V.amber, fontWeight: 600 }}>
+                            Semana {b.week_number}
+                          </span>
+                          <p style={{ fontSize: 13, color: V.ash, margin: "8px 0 0" }}>
+                            Conteúdo indisponível para esta semana.
+                          </p>
+                        </div>
+                      );
+                    }
+
                     return (
                       <div key={i} style={{
                         background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`,

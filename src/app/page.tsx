@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import ProgressBar from "@/components/ProgressBar";
 import ProcessingScreen from "@/components/ProcessingScreen";
 import InstantValueScreen from "@/components/InstantValueScreen";
 import { initialFormData, type LeadFormData, stepValidation } from "@/lib/schema";
@@ -14,7 +13,8 @@ const V = {
   zinc: "#6E6E78", ash: "#9E9EA8", mist: "#C8C8D0",
   fog: "#EAEAEE", cloud: "#F4F4F7", white: "#FEFEFF",
   amber: "#CF8523", amberSoft: "#E6A445", amberWash: "rgba(207,133,35,0.08)",
-  teal: "#2D9B83",
+  teal: "#2D9B83", tealWash: "rgba(45,155,131,0.08)",
+  coral: "#D9534F",
   display: "'Satoshi', 'General Sans', -apple-system, sans-serif",
   body: "'Satoshi', 'General Sans', -apple-system, sans-serif",
   mono: "'JetBrains Mono', 'SF Mono', monospace",
@@ -142,6 +142,23 @@ function PlacesAutocomplete({ value, onChange, onPlaceSelected, placeholder }: {
   );
 }
 
+// ─── Section wrapper ────────────────────────────────────────────────
+function Section({ bg = V.white, children, id }: { bg?: string; children: React.ReactNode; id?: string }) {
+  return (
+    <section id={id} style={{ background: bg, padding: "64px 24px" }}>
+      <div style={{ maxWidth: 680, margin: "0 auto" }}>{children}</div>
+    </section>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: V.amber, marginBottom: 12 }}>
+      {children}
+    </div>
+  );
+}
+
 // ═════════════════════════════════════════════════════════════════════
 export default function Home() {
   const [locale, setLocale] = useState<Locale>("pt");
@@ -264,12 +281,17 @@ export default function Home() {
       content: (
         <>
           <Field label="Nome do seu negócio *">
-            <input style={inputStyle} type="text" placeholder="Ex: Studio Profitteratti, Clínica Dente Feliz" value={formData.businessName}
+            <input style={inputStyle} type="text" placeholder="Ex: Studio Profitteratti, Barbearia do Zé" value={formData.businessName}
               onChange={(e: any) => updateField("businessName", e.target.value)} />
           </Field>
-          <Field label={t.formProductLabel} hint={t.formProductHint}>
-            <input style={inputStyle} type="text" placeholder={t.formProductPlaceholder} value={formData.product}
+          <Field label={t.formProductLabel}>
+            <input style={inputStyle} type="text"
+              placeholder="Seu servi\u00e7o principal \u2014 ex: barbearia masculina, cl\u00ednica de est\u00e9tica, pizzaria artesanal"
+              value={formData.product}
               onChange={(e: any) => updateField("product", e.target.value)} />
+            <p style={{ fontSize: 11, color: V.ash, margin: "6px 0 0", lineHeight: 1.4 }}>
+              Quanto mais espec\u00edfico, mais preciso seu diagn\u00f3stico.
+            </p>
           </Field>
 
           <Field label={t.formRegionLabel} hint={isNational ? t.formRegionNationalHint : t.formRegionHint}>
@@ -306,19 +328,19 @@ export default function Home() {
             <input style={inputStyle} type="text" placeholder="Como prefere ser chamado" value={(formData as any).name || ""}
               onChange={(e: any) => updateField("name" as any, e.target.value)} />
           </Field>
-          <Field label={`${t.formWhatsappLabel} *`} hint="Obrigatório — enviamos seu resultado por aqui">
+          <Field label={`${t.formWhatsappLabel} *`} hint="Obrigat\u00f3rio \u2014 enviamos seu resultado por aqui">
             <input style={inputStyle} type="tel" placeholder={t.formWhatsappPlaceholder} value={formData.whatsapp}
               onChange={(e: any) => updateField("whatsapp", e.target.value)} />
           </Field>
-          <Field label={t.formEmailLabel} hint="Opcional — enviamos uma cópia do diagnóstico">
+          <Field label={t.formEmailLabel} hint="Opcional \u2014 enviamos uma c\u00f3pia do diagn\u00f3stico">
             <input style={inputStyle} type="email" placeholder={t.formEmailPlaceholder} value={formData.email}
               onChange={(e: any) => updateField("email", e.target.value)} />
           </Field>
-          <Field label="Instagram" hint="Opcional — usamos para analisar sua presença">
+          <Field label="Instagram" hint="Opcional \u2014 usamos para analisar sua presen\u00e7a">
             <input style={inputStyle} type="text" placeholder="@seuperfil" value={formData.instagram}
               onChange={(e: any) => updateField("instagram", e.target.value)} />
           </Field>
-          <Field label="LinkedIn" hint="Opcional — se atende outras empresas">
+          <Field label="LinkedIn" hint="Opcional \u2014 se atende outras empresas">
             <input style={inputStyle} type="text" placeholder="linkedin.com/company/sua-empresa" value={(formData as any).linkedin || ""}
               onChange={(e: any) => updateField("linkedin" as any, e.target.value)} />
           </Field>
@@ -332,9 +354,8 @@ export default function Home() {
 
   return (
     <div style={{ minHeight: "100vh", background: V.white }}>
-      {/* Google Places: API REST via proxy server-side (não precisa de JS client) */}
 
-      {/* ═══ HERO ═══ */}
+      {/* ═══ SECTION 1 — HERO + FORM ═══ */}
       <div style={{
         background: V.night, padding: "60px 24px 48px", textAlign: "center",
         opacity: heroVisible ? 1 : 0, transition: "opacity 0.6s ease",
@@ -357,7 +378,7 @@ export default function Home() {
             </div>
           </div>
           <span style={{ fontFamily: V.display, fontSize: 24, fontWeight: 700, color: V.white, letterSpacing: "-0.03em" }}>
-            Virô
+            Vir\u00f4
           </span>
           <h1 style={{
             fontFamily: V.display, fontSize: "clamp(28px, 5vw, 38px)", fontWeight: 700,
@@ -374,8 +395,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ═══ FORM ═══ */}
-      <div style={{ maxWidth: 480, margin: "-24px auto 0", padding: "0 20px 60px" }}>
+      {/* ═══ FORM CARD ═══ */}
+      <div style={{ maxWidth: 480, margin: "-24px auto 0", padding: "0 20px 0" }}>
         <div style={{
           background: V.white, borderRadius: 16, border: `1px solid ${V.fog}`,
           padding: "28px 24px", boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
@@ -400,7 +421,7 @@ export default function Home() {
 
           <div key={formStep}>{currentStep.content}</div>
 
-          {/* Honeypot — invisível para humanos, bots preenchem automaticamente */}
+          {/* Honeypot */}
           <div style={{ position: "absolute", left: "-9999px", top: "-9999px", opacity: 0, pointerEvents: "none" }} aria-hidden="true">
             <input
               type="text"
@@ -435,39 +456,293 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ═══ COMO OBTEMOS OS DADOS ═══ */}
-      <div style={{ background: V.cloud, padding: "48px 24px", borderTop: `1px solid ${V.fog}` }}>
-        <div style={{ maxWidth: 600, margin: "0 auto" }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: V.night, marginBottom: 16, fontFamily: V.display }}>
-            Como obtemos os dados
+      {/* ═══ SECTION 2 — MOCKUP EST\u00c1TICO DO RESULTADO ═══ */}
+      <Section bg={V.white}>
+        <div style={{ textAlign: "center", marginBottom: 36 }}>
+          <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 10px", lineHeight: 1.25 }}>
+            \u00c9 isso que voc\u00ea recebe em 60 segundos
           </h2>
-          <p style={{ fontSize: 14, lineHeight: 1.7, color: V.zinc }}>
-            O Virô cruza 9 fontes em tempo real para montar o diagnóstico do seu mercado local:
-            Google Search, Google Maps, Google Ads, Instagram (dados públicos), Perplexity AI,
-            DataForSEO, IBGE, PNCP e modelos proprietários de inteligência artificial.
+          <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.6, margin: 0 }}>
+            Um raio-x completo do seu mercado local \u2014 sem precisar de conta ou cart\u00e3o.
           </p>
         </div>
-      </div>
+
+        {/* Mockup container */}
+        <div style={{
+          border: `1px solid ${V.fog}`, borderRadius: 16, overflow: "hidden",
+          boxShadow: "0 8px 40px rgba(0,0,0,0.06)", position: "relative",
+        }}>
+          {/* Mockup label */}
+          <div style={{ background: V.cloud, padding: "10px 18px", borderBottom: `1px solid ${V.fog}`, display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.ash }}>
+              PR\u00c9VIA DO RESULTADO
+            </span>
+          </div>
+
+          <div style={{ padding: "20px 18px 0" }}>
+            {/* Mockup header */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: V.night, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ fontWeight: 700, fontSize: 14, color: V.white }}>C</span>
+              </div>
+              <span style={{ fontSize: 12, color: V.ash }}>Cl\u00ednica de est\u00e9tica \u00b7 Av. Paulista, S\u00e3o Paulo</span>
+            </div>
+
+            {/* Section label */}
+            <p style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.ash, margin: "0 0 10px" }}>
+              Seu mercado em n\u00fameros
+            </p>
+
+            {/* Card 1 — Mercado Endere\u00e7\u00e1vel */}
+            <div style={{ background: V.white, borderRadius: 12, padding: "18px 14px", textAlign: "center", border: `1px solid ${V.fog}`, marginBottom: 8 }}>
+              <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
+                ~18 mil
+              </div>
+              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>pessoas no seu mercado \u00b7 Raio 3km</p>
+              <p style={{ fontSize: 9, color: V.ash, margin: "2px 0 0", fontFamily: V.mono }}>Popula\u00e7\u00e3o total no raio: 142 mil</p>
+            </div>
+
+            {/* Card 2 — Demanda Ativa */}
+            <div style={{ background: V.white, borderRadius: 12, padding: "18px 14px", textAlign: "center", border: `1px solid ${V.fog}`, marginBottom: 8 }}>
+              <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.night, letterSpacing: "-0.03em", lineHeight: 1 }}>
+                3.200
+              </div>
+              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>buscas/m\u00eas por est\u00e9tica na sua regi\u00e3o</p>
+            </div>
+
+            {/* Card 3 — N\u00edvel de Competi\u00e7\u00e3o */}
+            <div style={{ background: V.white, borderRadius: 12, padding: "18px 14px", textAlign: "center", border: `1px solid ${V.fog}`, marginBottom: 8 }}>
+              <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
+                640
+              </div>
+              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>buscas por concorrente ativo</p>
+              <span style={{ display: "inline-block", marginTop: 6, fontFamily: V.mono, fontSize: 9, padding: "2px 8px", borderRadius: 100, background: V.tealWash, color: V.teal, fontWeight: 600 }}>
+                Mercado subatendido
+              </span>
+            </div>
+
+            {/* Separator */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "12px 0 10px" }}>
+              <div style={{ flex: 1, height: 1, background: V.fog }} />
+              <span style={{ fontSize: 9, fontFamily: V.mono, color: V.ash, letterSpacing: "0.04em", textTransform: "uppercase" as const, whiteSpace: "nowrap" as const }}>
+                A vari\u00e1vel que voc\u00ea controla
+              </span>
+              <div style={{ flex: 1, height: 1, background: V.fog }} />
+            </div>
+
+            {/* Card 4 — Influ\u00eancia Digital (highlighted) */}
+            <div style={{ background: V.night, borderRadius: 12, padding: "22px 14px", textAlign: "center", marginBottom: 0 }}>
+              <div style={{ fontFamily: V.display, fontSize: 32, fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
+                23%
+              </div>
+              <p style={{ fontSize: 11, color: V.mist, margin: "6px 0 0" }}>da demanda ativa voc\u00ea consegue alcan\u00e7ar</p>
+              <p style={{ fontSize: 10, color: V.amber, margin: "8px 0 0" }}>\u2191 Esta \u00e9 a m\u00e9trica que o Vir\u00f4 gerencia.</p>
+              {/* Sub-scores */}
+              <div style={{ display: "flex", justifyContent: "center", gap: 14, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${V.slate}` }}>
+                {[
+                  { label: "Descoberta", value: 18 },
+                  { label: "Credibilidade", value: 31 },
+                  { label: "Alcance", value: 28 },
+                  { label: "IA", value: 12 },
+                ].map((d, i) => (
+                  <div key={i} style={{ textAlign: "center" }}>
+                    <div style={{ fontFamily: V.mono, fontSize: 13, fontWeight: 700, color: d.value > 25 ? V.teal : V.ash }}>{d.value}</div>
+                    <div style={{ fontSize: 8, color: V.ash, fontFamily: V.mono, marginTop: 1 }}>{d.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Blur overlay at bottom */}
+          <div style={{
+            padding: "32px 18px 20px",
+            background: "linear-gradient(to bottom, rgba(254,254,255,0) 0%, rgba(254,254,255,0.95) 40%, rgba(254,254,255,1) 100%)",
+            textAlign: "center", marginTop: -20, position: "relative",
+          }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: V.amber, margin: 0 }}>
+              Desbloqueie o diagn\u00f3stico completo \u2192
+            </p>
+          </div>
+        </div>
+      </Section>
+
+      {/* ═══ SECTION 3 — COMO FUNCIONA ═══ */}
+      <Section bg={V.cloud}>
+        <SectionLabel>como funciona</SectionLabel>
+        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 32px", lineHeight: 1.25 }}>
+          Como funciona
+        </h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 20 }}>
+          {[
+            { icon: "\ud83d\udccb", title: "Descreva seu neg\u00f3cio", text: "Informe o tipo de neg\u00f3cio e seu endere\u00e7o. Leva menos de 2 minutos." },
+            { icon: "\ud83d\udd0d", title: "An\u00e1lise em tempo real", text: "Cruzamos Google, Instagram, IBGE e IA para montar o raio-x do seu mercado." },
+            { icon: "\ud83d\udcca", title: "Resultado instant\u00e2neo", text: "Veja demanda, concorr\u00eancia e sua influ\u00eancia digital \u2014 gr\u00e1tis." },
+          ].map((step, i) => (
+            <div key={i} style={{ background: V.white, borderRadius: 14, padding: "24px 20px", border: `1px solid ${V.fog}` }}>
+              <div style={{ fontSize: 28, marginBottom: 12 }}>{step.icon}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 700, color: V.amber, background: V.amberWash, width: 22, height: 22, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                  {i + 1}
+                </span>
+                <span style={{ fontSize: 15, fontWeight: 700, color: V.night }}>{step.title}</span>
+              </div>
+              <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: 0 }}>{step.text}</p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* ═══ SECTION 4 — O QUE VOC\u00ca VAI RECEBER ═══ */}
+      <Section bg={V.white}>
+        <SectionLabel>o que voc\u00ea vai receber</SectionLabel>
+        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
+          Diagn\u00f3stico gratuito + plano de a\u00e7\u00e3o
+        </h2>
+        <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.6, margin: "0 0 28px" }}>
+          O resultado gr\u00e1tis j\u00e1 mostra o tamanho do mercado e sua posi\u00e7\u00e3o. O plano completo mostra como mudar.
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          {[
+            { label: "GR\u00c1TIS", title: "Raio-x do mercado", desc: "Demanda real, concorr\u00eancia mapeada, influ\u00eancia digital medida.", color: V.teal },
+            { label: "GR\u00c1TIS", title: "Termos de busca reais", desc: "O que pessoas buscam no Google quando precisam do que voc\u00ea faz.", color: V.teal },
+            { label: "GR\u00c1TIS", title: "Score de influ\u00eancia", desc: "4 dimens\u00f5es: Descoberta, Credibilidade, Alcance e IA.", color: V.teal },
+            { label: "PLANO", title: "A\u00e7\u00f5es priorizadas", desc: "O que fazer primeiro, em que ordem e por qu\u00ea.", color: V.amber },
+            { label: "PLANO", title: "90 dias de roteiro", desc: "12 semanas com a\u00e7\u00f5es espec\u00edficas para seu neg\u00f3cio.", color: V.amber },
+            { label: "PLANO", title: "Briefing semanal", desc: "Toda semana: o que mudou + a\u00e7\u00e3o da semana. Por email e WhatsApp.", color: V.amber },
+          ].map((item, i) => (
+            <div key={i} style={{ padding: "16px", borderRadius: 12, border: `1px solid ${V.fog}`, background: V.white }}>
+              <span style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", fontWeight: 600, color: item.color, background: `${item.color}15`, padding: "2px 6px", borderRadius: 4 }}>
+                {item.label}
+              </span>
+              <div style={{ fontSize: 14, fontWeight: 700, color: V.night, margin: "8px 0 4px" }}>{item.title}</div>
+              <p style={{ fontSize: 12, color: V.zinc, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* ═══ SECTION 5 — DEPOIMENTOS ═══ */}
+      <Section bg={V.cloud}>
+        <SectionLabel>quem j\u00e1 usou</SectionLabel>
+        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 28px", lineHeight: 1.25 }}>
+          O que dizem sobre o Vir\u00f4
+        </h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
+          {[
+            { quote: "Eu achava que meu mercado era pequeno. O Vir\u00f4 mostrou que 3.400 pessoas buscam o que eu fa\u00e7o todo m\u00eas \u2014 e eu n\u00e3o aparecia pra nenhuma.", name: "Renata M.", role: "Cl\u00ednica de est\u00e9tica, SP" },
+            { quote: "Em 60 segundos eu descobri que meu concorrente direto tem 4x mais avalia\u00e7\u00f5es no Google. Nunca tinha parado pra olhar isso.", name: "Carlos A.", role: "Barbearia, RJ" },
+            { quote: "O diagn\u00f3stico gratuito j\u00e1 valeu. Mostrou exatamente onde eu estava perdendo clientes. O plano de 90 dias organizou tudo.", name: "Juliana S.", role: "Pizzaria artesanal, MG" },
+          ].map((t, i) => (
+            <div key={i} style={{ background: V.white, borderRadius: 14, padding: "24px 20px", border: `1px solid ${V.fog}` }}>
+              <p style={{ fontSize: 14, color: V.night, lineHeight: 1.65, margin: "0 0 16px", fontStyle: "italic" }}>
+                &ldquo;{t.quote}&rdquo;
+              </p>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: V.night }}>{t.name}</div>
+                <div style={{ fontSize: 11, color: V.ash }}>{t.role}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* ═══ SECTION 6 — METODOLOGIA E FONTES ═══ */}
+      <Section bg={V.white}>
+        <SectionLabel>metodologia</SectionLabel>
+        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
+          Dados reais, n\u00e3o achismo
+        </h2>
+        <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: "0 0 28px" }}>
+          O Vir\u00f4 cruza 9 fontes em tempo real para montar o diagn\u00f3stico do seu mercado local.
+          Nenhum dado \u00e9 inventado \u2014 tudo vem de APIs oficiais e \u00e9 coletado no momento da an\u00e1lise.
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
+          {[
+            "Google Search", "Google Maps", "Google Ads",
+            "Instagram", "Perplexity AI", "DataForSEO",
+            "IBGE", "PNCP", "Claude AI",
+          ].map((source, i) => (
+            <span key={i} style={{
+              fontFamily: V.mono, fontSize: 11, letterSpacing: "0.02em",
+              color: V.teal, background: V.tealWash, padding: "6px 12px", borderRadius: 8, fontWeight: 500,
+            }}>
+              {source}
+            </span>
+          ))}
+        </div>
+        <div style={{ background: V.cloud, borderRadius: 12, padding: "20px", border: `1px solid ${V.fog}` }}>
+          <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.7, margin: 0 }}>
+            <strong style={{ color: V.night }}>Influ\u00eancia digital em 4 dimens\u00f5es:</strong>{" "}
+            Descoberta (SERP + Maps), Credibilidade (avalia\u00e7\u00f5es + site), Alcance Social (Instagram + LinkedIn) e Visibilidade em IA.
+            O score \u00e9 ponderado pelo tipo de neg\u00f3cio (B2C, B2B ou B2G) e normalizado contra benchmarks do segmento.
+          </p>
+        </div>
+      </Section>
+
+      {/* ═══ SECTION 7 — FAQ ═══ */}
+      <Section bg={V.cloud}>
+        <SectionLabel>perguntas frequentes</SectionLabel>
+        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 24px", lineHeight: 1.25 }}>
+          D\u00favidas comuns
+        </h2>
+        {[
+          { q: "Preciso criar conta?", a: "N\u00e3o. Basta preencher o formul\u00e1rio e o resultado aparece na tela. Sem cadastro, sem cart\u00e3o." },
+          { q: "Quanto tempo demora?", a: "A an\u00e1lise roda em tempo real e leva cerca de 60 segundos. O resultado aparece direto na tela." },
+          { q: "O resultado gratuito \u00e9 limitado?", a: "O resultado gr\u00e1tis inclui o raio-x completo: mercado, demanda, concorr\u00eancia e influ\u00eancia digital. O plano de a\u00e7\u00e3o de 90 dias \u00e9 pago." },
+          { q: "Funciona para qualquer tipo de neg\u00f3cio?", a: "Sim. Funciona para neg\u00f3cios locais (B2C), empresas que vendem para empresas (B2B) e fornecedores do governo (B2G)." },
+          { q: "Meus dados ficam seguros?", a: "Seus dados s\u00e3o usados exclusivamente para gerar o diagn\u00f3stico. N\u00e3o vendemos nem compartilhamos informa\u00e7\u00f5es com terceiros." },
+          { q: "O que \u00e9 o score de influ\u00eancia digital?", a: "Mede quanto do mercado digital local voc\u00ea captura, em 4 dimens\u00f5es: Descoberta, Credibilidade, Alcance Social e Visibilidade em IA. N\u00e3o \u00e9 um n\u00famero absoluto \u2014 \u00e9 relativo ao seu mercado." },
+        ].map((faq, i) => (
+          <FAQItem key={i} question={faq.q} answer={faq.a} />
+        ))}
+      </Section>
 
       {/* ═══ FOOTER ═══ */}
       <footer style={{ background: V.night, padding: "32px 24px", textAlign: "center" }}>
         <div style={{ maxWidth: 600, margin: "0 auto" }}>
           <span style={{ fontFamily: V.display, fontSize: 16, fontWeight: 700, color: V.white, letterSpacing: "-0.02em" }}>
-            Virô
+            Vir\u00f4
           </span>
           <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 16 }}>
             <a href="/privacidade" style={{ fontSize: 13, color: V.ash, textDecoration: "none" }}>
-              Política de Privacidade
+              Pol\u00edtica de Privacidade
             </a>
             <a href="/termos" style={{ fontSize: 13, color: V.ash, textDecoration: "none" }}>
-              Termos de Serviço
+              Termos de Servi\u00e7o
             </a>
           </div>
           <p style={{ fontSize: 12, color: V.slate, marginTop: 16 }}>
-            © {new Date().getFullYear()} Virô. Todos os direitos reservados.
+            \u00a9 {new Date().getFullYear()} Vir\u00f4. Todos os direitos reservados.
           </p>
         </div>
       </footer>
+    </div>
+  );
+}
+
+// ─── FAQ Accordion Item ─────────────────────────────────────────────
+function FAQItem({ question, answer }: { question: string; answer: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ borderBottom: `1px solid ${V.fog}`, marginBottom: 0 }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center",
+          padding: "16px 0", background: "none", border: "none", cursor: "pointer", textAlign: "left",
+        }}
+      >
+        <span style={{ fontSize: 15, fontWeight: 600, color: V.night, flex: 1, paddingRight: 16 }}>{question}</span>
+        <span style={{ fontSize: 18, color: V.ash, transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0)", flexShrink: 0 }}>
+          \u25be
+        </span>
+      </button>
+      {open && (
+        <p style={{ fontSize: 14, color: V.zinc, lineHeight: 1.7, margin: "0 0 16px", paddingRight: 32 }}>
+          {answer}
+        </p>
+      )}
     </div>
   );
 }

@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
-import { createOrLinkClerkUser } from "@/lib/auth";
+import { createOrLinkClerkUser, sendMagicLinkEmail } from "@/lib/auth";
 import { trackEvent } from "@/lib/events";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -84,6 +84,15 @@ export async function POST(req: NextRequest) {
         try {
           clerkUserId = await createOrLinkClerkUser(leadId, email);
           console.log(`[Webhook] Clerk user linked: ${clerkUserId}`);
+
+          // Send magic link for dashboard access
+          try {
+            await sendMagicLinkEmail(email, `https://virolocal.com/dashboard`);
+            console.log(`[Webhook] Magic link enviado para ${email}`);
+          } catch (mlErr) {
+            console.warn(`[Webhook] Magic link failed for ${email}:`, mlErr);
+            // Non-fatal — user can sign in manually
+          }
         } catch (err) {
           console.error("[Webhook] Clerk user creation failed:", err);
           // Non-fatal — plan generation can still proceed

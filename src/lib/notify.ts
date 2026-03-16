@@ -195,6 +195,105 @@ export async function notifyPlanReady(opts: {
   ]);
 }
 
+// ─── Upsell (semana 8) ────────────────────────────────────────────────────────
+
+export async function notifyUpsell(opts: {
+  email: string;
+  name: string;
+  product: string;
+  leadId: string;
+}): Promise<void> {
+  const { email, name, product, leadId } = opts;
+  const firstName = name.split(" ")[0] || "Olá";
+  const url = `${BASE_URL}/resultado/${leadId}`;
+
+  await sendEmail({
+    to: email,
+    subject: `${firstName}, seu diagnóstico está funcionando — veja os resultados`,
+    html: emailShell(`
+      <h1 style="font-size:22px;color:#161618;margin:0 0 12px;line-height:1.3;">
+        8 semanas de dados reais sobre ${product}.
+      </h1>
+      <p style="font-size:15px;color:#6E6E78;line-height:1.7;margin:0 0 20px;">
+        ${firstName}, nas últimas 8 semanas monitoramos seu mercado toda segunda-feira.
+        Seu painel acumula dados que nenhum concorrente tem — e estamos só na metade.
+      </p>
+      <div style="background:#F4F4F7;border-radius:12px;padding:20px;margin:0 0 20px;">
+        <p style="font-size:14px;color:#3A3A40;margin:0;line-height:1.7;">
+          <strong>O que vem nas próximas 4 semanas:</strong><br/>
+          → Análise de tendência com dados acumulados<br/>
+          → Comparativo de evolução vs concorrentes<br/>
+          → Ações cada vez mais específicas para seu mercado
+        </p>
+      </div>
+      <div style="text-align:center;margin:0 0 24px;">
+        <a href="${url}" style="background:#161618;color:#FEFEFF;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;display:inline-block;">
+          Ver meu painel
+        </a>
+      </div>
+      <p style="font-size:13px;color:#9E9EA8;margin:0;line-height:1.6;">
+        Quer continuar recebendo briefings após as 12 semanas?
+        Responda este email e conversamos sobre as opções.
+      </p>
+    `),
+  });
+}
+
+// ─── Closure (semana 10) ──────────────────────────────────────────────────────
+
+export async function notifyClosure(opts: {
+  email: string;
+  name: string;
+  product: string;
+  leadId: string;
+  scoreInicial: number;
+  scoreAtual: number;
+}): Promise<void> {
+  const { email, name, product, leadId, scoreInicial, scoreAtual } = opts;
+  const firstName = name.split(" ")[0] || "Olá";
+  const url = `${BASE_URL}/resultado/${leadId}`;
+  const diff = scoreAtual - scoreInicial;
+  const diffText = diff > 0 ? `+${diff}pp` : diff === 0 ? "estável" : `${diff}pp`;
+  const feedbackUrl = `${BASE_URL}/feedback/${leadId}`;
+
+  await sendEmail({
+    to: email,
+    subject: `${firstName}, faltam 2 semanas — seu resumo de evolução`,
+    html: emailShell(`
+      <h1 style="font-size:22px;color:#161618;margin:0 0 12px;line-height:1.3;">
+        Faltam 2 semanas. Veja o que mudou.
+      </h1>
+      <p style="font-size:15px;color:#6E6E78;line-height:1.7;margin:0 0 24px;">
+        ${firstName}, seu acompanhamento de <strong>${product}</strong> está na reta final.
+        Aqui está um resumo da sua evolução:
+      </p>
+      <div style="display:flex;gap:12px;margin:0 0 24px;">
+        <div style="flex:1;background:#F4F4F7;border-radius:12px;padding:20px 16px;text-align:center;">
+          <div style="font-size:32px;font-weight:700;color:#9E9EA8;line-height:1;margin-bottom:4px;">${scoreInicial}%</div>
+          <div style="font-size:11px;color:#9E9EA8;">Semana 1</div>
+        </div>
+        <div style="flex:1;background:#F4F4F7;border-radius:12px;padding:20px 16px;text-align:center;">
+          <div style="font-size:32px;font-weight:700;color:#2D9B83;line-height:1;margin-bottom:4px;">${scoreAtual}%</div>
+          <div style="font-size:11px;color:#6E6E78;">Semana 10 (${diffText})</div>
+        </div>
+      </div>
+      <div style="text-align:center;margin:0 0 16px;">
+        <a href="${url}" style="background:#161618;color:#FEFEFF;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;display:inline-block;">
+          Ver painel completo
+        </a>
+      </div>
+      <div style="text-align:center;margin:0 0 24px;">
+        <a href="${feedbackUrl}" style="color:#CF8523;font-size:13px;font-weight:500;text-decoration:underline;">
+          Dar feedback sobre o Virô (30 segundos)
+        </a>
+      </div>
+      <p style="font-size:13px;color:#9E9EA8;margin:0;line-height:1.6;">
+        Quer renovar o acompanhamento? Responda este email.
+      </p>
+    `),
+  });
+}
+
 // ─── Email templates ─────────────────────────────────────────────────────────
 
 function emailShell(content: string): string {

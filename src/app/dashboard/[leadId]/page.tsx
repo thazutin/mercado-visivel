@@ -53,12 +53,20 @@ export default async function DashboardPage({ params }: { params: { leadId: stri
     .limit(1)
     .single();
 
+  // Load snapshots for score evolution chart
+  const { data: snapshots } = await supabase
+    .from("snapshots")
+    .select("week_number, data")
+    .eq("lead_id", leadId)
+    .order("week_number", { ascending: true });
+
   return (
     <DashboardClient
       lead={lead}
       plan={plan}
       briefings={briefings || []}
       diagnosis={diagnosis}
+      snapshots={snapshots || []}
     />
   );
 }

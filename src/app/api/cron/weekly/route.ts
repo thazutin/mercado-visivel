@@ -20,6 +20,7 @@ import { calculateDiff } from "@/lib/pipeline/diff-engine";
 import { generateBriefing } from "@/lib/pipeline/briefing-generator";
 import { sendWeeklyEmail } from "@/lib/email/weekly-email";
 import { sendWhatsAppReminder } from "@/lib/email/whatsapp-reminder";
+import { notifyUpsell, notifyClosure } from "@/lib/notify";
 import { trackEvent } from "@/lib/events";
 
 function getSupabase() {
@@ -192,12 +193,14 @@ async function processLeadWeekly(supabase: any, lead: any): Promise<void> {
     .single();
 
   let plannedAction = null;
-  if (plan?.content?.blocks) {
-    const weekPlan = plan.content.blocks.find((b: any) => b.id === "plano_12_semanas");
-    if (weekPlan?.content?.weeks) {
-      plannedAction = weekPlan.content.weeks.find((w: any) => w.week === nextWeek) || null;
-    }
+  if (plan?.content?.weeklyPlan && Array.isArray(plan.content.weeklyPlan)) {
+    // weeklyPlan is a root-level array, indexed 0-11 for weeks 1-12
+    plannedAction = plan.content.weeklyPlan[nextWeek - 1] || null;
+  } else if (plan?.content?.weekly_plan && Array.isArray(plan.content.weekly_plan)) {
+    // Fallback: snake_case variant
+    plannedAction = plan.content.weekly_plan[nextWeek - 1] || null;
   }
+  console.log(`[Cron] plannedAction semana ${nextWeek}:`, plannedAction ? `title="${plannedAction.title}", action="${(plannedAction.mainAction || plannedAction.action || '').slice(0, 80)}"` : 'null');
 
   // ─── Generate briefing ───
   const igProfile = rescrapeResult.rawData?.instagramProfile;
@@ -278,6 +281,50 @@ async function processLeadWeekly(supabase: any, lead: any): Promise<void> {
       last_active_at: new Date().toISOString(),
     })
     .eq("id", lead.id);
+
+  // ─── Lifecycle emails (upsell week 8, closure week 10) ───
+  if (nextWeek === 8 && !lead.upsell_email_sent) {
+    try {
+      await notifyUpsell({
+        email: lead.email,
+        name: lead.name || "",
+        product: lead.product,
+        leadId: lead.id,
+      });
+      await supabase.from("leads").update({ upsell_email_sent: true }).eq("id", lead.id);
+      console.log(`[Cron] Upsell email sent for lead ${lead.id}`);
+    } catch (err) {
+      console.warn(`[Cron] Upsell email failed for lead ${lead.id}:`, (err as Error).message);
+    }
+  }
+
+  if (nextWeek === 10 && !lead.closure_email_sent) {
+    try {
+      // Get initial and current scores
+      const { data: initialSnapshot } = await supabase
+        .from("snapshots")
+        .select("data")
+        .eq("lead_id", lead.id)
+        .order("week_number", { ascending: true })
+        .limit(1)
+        .single();
+      const scoreInicial = initialSnapshot?.data?.influenceScore ?? diagnosis.influence_percent ?? 0;
+      const scoreAtual = rescrapeResult.influenceScore ?? scoreInicial;
+
+      await notifyClosure({
+        email: lead.email,
+        name: lead.name || "",
+        product: lead.product,
+        leadId: lead.id,
+        scoreInicial: Math.round(scoreInicial),
+        scoreAtual: Math.round(scoreAtual),
+      });
+      await supabase.from("leads").update({ closure_email_sent: true }).eq("id", lead.id);
+      console.log(`[Cron] Closure email sent for lead ${lead.id}`);
+    } catch (err) {
+      console.warn(`[Cron] Closure email failed for lead ${lead.id}:`, (err as Error).message);
+    }
+  }
 
   // ─── Track event ───
   await trackEvent({
