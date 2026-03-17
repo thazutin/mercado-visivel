@@ -176,8 +176,8 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 ~{fmtPop(aud!.audienciaTarget)}
               </div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>{isB2G ? 'órgãos públicos que poderiam contratar você' : isB2B ? 'empresas que poderiam contratar você' : 'pessoas que poderiam contratar você'}</p>
-              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>Mercado endereçável · {audSublabel}</p>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>{isB2G ? 'órgãos públicos que poderiam contratar você' : isB2B ? 'empresas que poderiam contratar você' : 'pessoas que poderiam contratar você'}{aud!.raioKm && aud!.densidade !== "nacional" ? ` no raio de ${aud!.raioKm}km` : ''}</p>
+              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>Mercado endereçável · {aud!.municipioNome}{aud!.raioKm ? ` · ${aud!.densidade === "alta" ? "Alta" : "Baixa"} densidade` : ''}</p>
             </div>
           ) : (
             <div style={{ background: V.white, borderRadius: "14px 14px 0 0", padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, borderBottom: "none", opacity: 0.6 }}>

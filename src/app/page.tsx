@@ -478,8 +478,8 @@ export default function Home() {
               <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 ~18 mil
               </div>
-              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>pessoas que poderiam contratar você</p>
-              <p style={{ fontSize: 9, color: V.ash, margin: "2px 0 0", fontFamily: V.mono }}>População total no raio: 142 mil</p>
+              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>pessoas que poderiam contratar você no raio de 3km</p>
+              <p style={{ fontSize: 9, color: V.ash, margin: "2px 0 0", fontFamily: V.mono }}>Mercado endereçável · São Paulo · Alta densidade</p>
             </div>
 
             {/* Card 2 — Demanda Ativa */}
@@ -490,14 +490,14 @@ export default function Home() {
               <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>buscas/mês que poderiam levar até você</p>
             </div>
 
-            {/* Card 3 — Nível de Competição */}
+            {/* Card 3 — Concorrência */}
             <div style={{ background: V.white, borderRadius: 12, padding: "18px 14px", textAlign: "center", border: `1px solid ${V.fog}`, marginBottom: 8 }}>
-              <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
-                640
+              <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.amber, letterSpacing: "-0.03em", lineHeight: 1 }}>
+                12
               </div>
-              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>buscas por concorrente</p>
-              <span style={{ display: "inline-block", marginTop: 6, fontFamily: V.mono, fontSize: 9, padding: "2px 8px", borderRadius: 100, background: V.tealWash, color: V.teal, fontWeight: 600 }}>
-                Mercado subatendido
+              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>negócios disputando atenção com você</p>
+              <span style={{ display: "inline-block", marginTop: 6, fontFamily: V.mono, fontSize: 9, padding: "2px 8px", borderRadius: 100, background: V.amberWash, color: V.amber, fontWeight: 600 }}>
+                Mercado equilibrado
               </span>
             </div>
 
@@ -512,18 +512,16 @@ export default function Home() {
 
             {/* Card 4 — Influência Digital (highlighted) */}
             <div style={{ background: V.night, borderRadius: 12, padding: "22px 14px", textAlign: "center", marginBottom: 0 }}>
-              <div style={{ fontFamily: V.display, fontSize: 32, fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
-                23%
+              <div style={{ fontFamily: V.display, fontSize: 32, fontWeight: 700, color: V.amberSoft, letterSpacing: "-0.03em", lineHeight: 1 }}>
+                18%
               </div>
               <p style={{ fontSize: 11, color: V.mist, margin: "6px 0 0" }}>chance de capturar nova demanda digital</p>
-              <p style={{ fontSize: 10, color: V.amber, margin: "8px 0 0" }}>↑ Esta é a métrica que o Virô gerencia.</p>
               {/* Sub-scores */}
               <div style={{ display: "flex", justifyContent: "center", gap: 14, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${V.slate}` }}>
                 {[
-                  { label: "Descoberta", value: 18 },
-                  { label: "Credibilidade", value: 31 },
-                  { label: "Alcance", value: 28 },
-                  { label: "IA", value: 12 },
+                  { label: "Alcance", value: 12 },
+                  { label: "Descoberta", value: 22 },
+                  { label: "Credibilidade", value: 18 },
                 ].map((d, i) => (
                   <div key={i} style={{ textAlign: "center" }}>
                     <div style={{ fontFamily: V.mono, fontSize: 13, fontWeight: 700, color: d.value > 25 ? V.teal : V.ash }}>{d.value}</div>
@@ -534,10 +532,10 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Work routes preview */}
+          {/* Oportunidades preview */}
           <div style={{ padding: "14px 18px 0" }}>
             <p style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.ash, margin: "0 0 8px" }}>
-              Rotas de trabalho priorizadas
+              Oportunidades identificadas
             </p>
             {[
               { n: 1, title: "Aparecer no Google quando buscam você", horizon: "curto prazo" },
