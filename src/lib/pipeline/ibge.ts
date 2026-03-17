@@ -166,7 +166,7 @@ function detectarDensidade(populacao: number, densidadeHabKm2?: number): 'alta' 
 }
 
 function getRaioKm(densidade: 'alta' | 'baixa'): number {
-  return densidade === 'alta' ? 3 : 20;
+  return densidade === 'alta' ? 3 : 10;
 }
 
 interface MunicipioInfo {
