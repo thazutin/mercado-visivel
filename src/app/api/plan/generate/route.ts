@@ -331,7 +331,7 @@ Regras:
     weeklyAction: parsed.weeklyAction || firstAction,
     narrative: parsed.narrative || "",
     meta: {
-      weekNumber: 0,
+      weekNumber: 1,
       generatedAt: new Date().toISOString(),
       model: "claude-sonnet-4-5-20250929",
       diffSummary: { improvements: 0, declines: 0, totalChanges: 0 },
@@ -339,11 +339,11 @@ Regras:
   };
 
   // Deleta briefing anterior se existir
-  await supabase.from("briefings").delete().eq("lead_id", leadId).eq("week_number", 0);
+  await supabase.from("briefings").delete().eq("lead_id", leadId).eq("week_number", 1);
 
   const { error } = await supabase.from("briefings").insert({
     lead_id: leadId,
-    week_number: 0,
+    week_number: 1,
     content: briefingContent,
     generation_model: "claude-sonnet-4-5-20250929",
     email_sent_at: null,
