@@ -46,8 +46,14 @@ export async function PATCH(
     .eq("id", task.lead_id)
     .single();
 
-  if (!lead || lead.clerk_user_id !== userId) {
+  if (!lead) {
+    return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+  }
+  if (lead.clerk_user_id && lead.clerk_user_id !== userId) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  if (!lead.clerk_user_id) {
+    await supabase.from("leads").update({ clerk_user_id: userId }).eq("id", task.lead_id);
   }
 
   // 3. Toggle completed

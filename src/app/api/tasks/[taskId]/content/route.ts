@@ -143,16 +143,26 @@ export async function POST(
     if (!taskError && taskData) {
       task = taskData;
 
-      // Verify ownership: lead must belong to user
+      // Verify ownership: lead must belong to user (by clerk_user_id or email fallback)
       const { data: leadData } = await supabase
         .from("leads")
         .select("*")
         .eq("id", task.lead_id)
-        .eq("clerk_user_id", userId)
         .single();
 
       if (!leadData) {
+        return NextResponse.json({ error: "Lead não encontrado" }, { status: 404 });
+      }
+
+      // Check ownership: clerk_user_id match, or update if missing
+      if (leadData.clerk_user_id && leadData.clerk_user_id !== userId) {
+        console.warn(`[TaskContent] Ownership mismatch: lead.clerk=${leadData.clerk_user_id}, auth=${userId}`);
         return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+      }
+      if (!leadData.clerk_user_id) {
+        // Auto-link: se o lead não tem clerk_user_id, vincular agora
+        await supabase.from("leads").update({ clerk_user_id: userId }).eq("id", task.lead_id);
+        console.log(`[TaskContent] Auto-linked clerk_user_id=${userId} to lead ${task.lead_id}`);
       }
       lead = leadData;
     }
