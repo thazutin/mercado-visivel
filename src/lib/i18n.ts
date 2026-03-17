@@ -211,8 +211,8 @@ export const dictionaries: Record<Locale, any> = {
 
   en: {
     badge: "marketing for local businesses",
-    heroTitle1: "How much of your local market",
-    heroTitle2: "knows you exist?",
+    heroTitle1: "See how your business shows up",
+    heroTitle2: "in your local market",
     heroSub: "Real demand, competition and positioning analysis. Free. 30 seconds.",
     heroWho: "For business owners who serve local customers and want to see the market around them clearly.",
     heroCta: "See my market",
@@ -238,7 +238,7 @@ export const dictionaries: Record<Locale, any> = {
       { step: "01", title: "Fill out the form", desc: "2 minutes. What you do, where you operate, how people find you.", tag: "free" },
       { step: "02", title: "Analysis runs in real time", desc: "We cross-reference search, positioning and competition around you. Fully automated." },
       { step: "03", title: "You see the result", desc: "Real search terms, volume, influence and where you show up (or don't).", tag: "free" },
-      { step: "04", title: "Unlock full diagnostic", desc: "Full diagnostic + custom 12-week plan + weekly briefing. $199 one-time.", tag: "$199" },
+      { step: "04", title: "Unlock full diagnostic", desc: "Full diagnostic + custom 12-week plan + weekly briefing. One-time payment.", tag: "paid" },
     ],
     formTitle: "Your market in 2 minutes",
     formSub: "Take your time. Each field improves the analysis.",
@@ -299,12 +299,12 @@ export const dictionaries: Record<Locale, any> = {
     step4WhatsappHint: "To send you results and weekly briefings.",
 
     contextLabel: "what Virô unlocks",
-    contextP1: "The free result shows where you stand. The full diagnostic shows why and what to do — with 12 weeks of follow-up.",
-    contextP2: "Full diagnostic, competitive map, 12-week action plan, and weekly briefing on what changed in your market. All based on real data from your area.",
+    contextP1: "The result shows where you stand. The full plan shows how to change — with 90 days of follow-up.",
+    contextP2: "Full diagnostic + 90-day plan + 12 weekly briefings. Based on real data.",
     contextPrice: "Virô Complete Package",
     contextPriceValue: "$199",
-    contextRecurring: "Includes 12 weeks of weekly briefing",
-    contextRecurringValue: "included",
+    contextRecurring: "One-time payment · all included",
+    contextRecurringValue: "diagnostic + plan + 12 briefings",
 
     footer: "Virô · local market intelligence · virolocal.com",
 
@@ -331,7 +331,7 @@ export const dictionaries: Record<Locale, any> = {
     // ─── 2-step form (current) ───
     formStep1Title: "About your business",
     formProductLabel: "What do you do?",
-    formProductHint: "E.g.: dental implants, men's barbershop, artisan açaí",
+    formProductHint: "E.g.: dental implants, men's barbershop, custom cakes",
     formProductPlaceholder: "Describe in a few words",
     formDiffLabel: "What sets you apart?",
     formDiffHint: "Optional — what makes you unique compared to others",
@@ -351,7 +351,7 @@ export const dictionaries: Record<Locale, any> = {
     formSiteHint: "Optional — we analyze it if available",
     formSitePlaceholder: "https://yourbusiness.com",
     formStep2Title: "How we find you",
-    formStep2Subtitle: "To send your diagnosis by email and WhatsApp.",
+    formStep2Subtitle: "To send your diagnosis by email.",
     formEmailLabel: "Your best email",
     formEmailPlaceholder: "you@email.com",
     formWhatsappLabel: "WhatsApp",
@@ -359,9 +359,9 @@ export const dictionaries: Record<Locale, any> = {
     formStepOf: (s: number, t: number) => `Step ${s} of ${t}`,
     formBack: "Back",
     formNext: "Continue →",
-    formSubmit: "See my market →",
-    heroSubShort: "Real demand, competition and positioning analysis.",
-    heroFree: "Free. 60 seconds.",
+    formSubmit: "See my free diagnosis",
+    heroSubShort: "Get a clear read on your visibility, competition and opportunities to attract more customers in your area.",
+    heroFree: "Takes 60 seconds · Personalized result · No cost",
 
     processingSteps: [
       "Mapping search terms in your area...",
@@ -401,8 +401,8 @@ export const dictionaries: Record<Locale, any> = {
 
   es: {
     badge: "marketing para negocios locales",
-    heroTitle1: "¿Cuánto de tu mercado local",
-    heroTitle2: "te conoce?",
+    heroTitle1: "Descubre cómo aparece tu negocio",
+    heroTitle2: "en tu mercado local",
     heroSub: "Análisis real de demanda, competencia y posicionamiento. Gratis. 30 segundos.",
     heroWho: "Para dueños de negocio que atienden clientes en la región y quieren ver el mercado a su alrededor con claridad.",
     heroCta: "Ver mi mercado",
@@ -428,7 +428,7 @@ export const dictionaries: Record<Locale, any> = {
       { step: "01", title: "Completa el formulario", desc: "2 minutos. Qué haces, dónde operas, cómo te encuentran hoy.", tag: "gratis" },
       { step: "02", title: "El análisis corre en tiempo real", desc: "Cruzamos búsqueda, posicionamiento y competencia a tu alrededor. Todo automático." },
       { step: "03", title: "Ves el resultado", desc: "Términos de búsqueda reales, volumen, influencia y dónde apareces (o no).", tag: "gratis" },
-      { step: "04", title: "Desbloquea el diagnóstico completo", desc: "Diagnóstico + plan de 12 semanas + briefing semanal personalizado. $199 único.", tag: "$199" },
+      { step: "04", title: "Desbloquea el diagnóstico completo", desc: "Diagnóstico + plan de 12 semanas + briefing semanal personalizado. Pago único.", tag: "pago" },
     ],
     formTitle: "Tu mercado en 2 minutos",
     formSub: "Tómate tu tiempo. Cada campo mejora el análisis.",
@@ -489,12 +489,12 @@ export const dictionaries: Record<Locale, any> = {
     step4WhatsappHint: "Para enviarte el resultado y el briefing semanal.",
 
     contextLabel: "lo que Virô desbloquea",
-    contextP1: "El resultado gratuito muestra dónde estás. El diagnóstico completo muestra por qué y qué hacer — con seguimiento por 12 semanas.",
-    contextP2: "Diagnóstico completo, mapa competitivo, plan de acción de 12 semanas y briefing semanal con lo que cambió en tu mercado. Todo basado en datos reales de tu zona.",
+    contextP1: "El resultado muestra dónde estás. El plan completo muestra cómo cambiar — con seguimiento por 90 días.",
+    contextP2: "Diagnóstico completo + plan de 90 días + 12 briefings semanales. Basado en datos reales.",
     contextPrice: "Paquete Virô Completo",
     contextPriceValue: "$199 USD",
-    contextRecurring: "Incluye 12 semanas de briefing semanal",
-    contextRecurringValue: "incluido",
+    contextRecurring: "Pago único · todo incluido",
+    contextRecurringValue: "diagnóstico + plan + 12 briefings",
 
     footer: "Virô · inteligencia de mercado local · virolocal.com",
 
@@ -521,7 +521,7 @@ export const dictionaries: Record<Locale, any> = {
     // ─── 2-step form (current) ───
     formStep1Title: "Sobre tu negocio",
     formProductLabel: "¿Qué haces?",
-    formProductHint: "Ej: implantes dentales, barbería masculina, açaí artesanal",
+    formProductHint: "Ej: implantes dentales, barbería masculina, pasteles a pedido",
     formProductPlaceholder: "Describe en pocas palabras",
     formDiffLabel: "¿Qué te diferencia?",
     formDiffHint: "Opcional — qué te hace único comparado a los demás",
@@ -541,7 +541,7 @@ export const dictionaries: Record<Locale, any> = {
     formSiteHint: "Opcional — lo analizamos si está disponible",
     formSitePlaceholder: "https://tunegocio.com",
     formStep2Title: "Cómo te encontramos",
-    formStep2Subtitle: "Para enviar el diagnóstico por email y WhatsApp.",
+    formStep2Subtitle: "Para enviar el diagnóstico por email.",
     formEmailLabel: "Tu mejor email",
     formEmailPlaceholder: "tu@email.com",
     formWhatsappLabel: "WhatsApp",
@@ -549,9 +549,9 @@ export const dictionaries: Record<Locale, any> = {
     formStepOf: (s: number, t: number) => `Paso ${s} de ${t}`,
     formBack: "Volver",
     formNext: "Continuar →",
-    formSubmit: "Ver mi mercado →",
-    heroSubShort: "Análisis real de demanda, competencia y posicionamiento.",
-    heroFree: "Gratis. 60 segundos.",
+    formSubmit: "Ver mi diagnóstico gratis",
+    heroSubShort: "Recibe una lectura clara de tu visibilidad, la competencia y las oportunidades de atraer más clientes en tu zona.",
+    heroFree: "60 segundos · Resultado personalizado · Sin costo",
 
     processingSteps: [
       "Mapeando términos de búsqueda en tu zona...",
