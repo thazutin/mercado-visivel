@@ -88,31 +88,31 @@ Influência digital atual: ${input.currentInfluence}%
 Seguidores Instagram: ${input.currentFollowers}
 Nota Google Maps: ${input.currentRating ?? "não disponível"}
 
-MUDANÇAS DETECTADAS (semana ${input.weekNumber} vs semana ${input.weekNumber - 1}):
+MUDANÇAS DETECTADAS:
 ${changesText}
-
-Resumo: ${input.diff.summary.improvements} melhoria(s), ${input.diff.summary.declines} queda(s), ${input.diff.summary.totalChanges} mudança(s) total.
 
 ${plannedText}
 
 ---
 
-Com base nessas informações, gere o briefing semanal em JSON com o seguinte formato:
+Gere o BRIEFING DE CONTEÚDO semanal — um guia prático para o dono gravar/publicar esta semana.
 
+Retorne JSON:
 {
   "changes": [
-    { "direction": "up" | "down" | "neutral", "description": "texto curto e direto" }
+    { "direction": "up" | "down" | "neutral", "description": "texto curto" }
   ],
-  "weeklyAction": "A ação mais importante para esta semana, em 1-2 frases diretas",
-  "narrative": "2-3 parágrafos com tom direto, explicando o que aconteceu, o que importa, e o que fazer. Fale com o dono do negócio em 2ª pessoa."
+  "weeklyAction": "O conteúdo que precisa ser criado esta semana (1 frase)",
+  "narrative": "BRIEFING CRIATIVO completo com: contexto (por que este conteúdo agora), sentimento a construir (ex: autoridade, proximidade, confiança), roteiro (o que falar/mostrar, passo a passo), formato (Reels, carrossel, story, post), dicas de captação e edição, legenda pronta, CTA (o que pedir ao final), e melhor horário para publicar. Tudo específico para ${input.product} em ${input.region}."
 }
 
 REGRAS:
-- changes: máximo 5 itens. Priorize os mais significativos. Use linguagem simples.
-- weeklyAction: se houver AÇÃO DA SEMANA no topo, USE-A como base para o weeklyAction (adapte se o diff mostrar algo mais urgente). Caso contrário, baseie-se na ação planejada.
-- narrative: COMECE com a ação da semana quando disponível. Seja específico ao negócio. Nada genérico. Conecte as mudanças ao que o dono deve fazer.
-- Se não houve mudanças, foque na ação planejada e no progresso acumulado.
-- Tom: direto, sem jargão, como um consultor que conhece a rua.
+- weeklyAction: baseie-se na AÇÃO DA SEMANA se disponível. Se não, crie uma ação de conteúdo relevante.
+- narrative: é um BRIEFING DE PRODUÇÃO, não análise de mercado. O dono deve conseguir pegar o celular e gravar seguindo o que está escrito.
+- Inclua: contexto → sentimento → roteiro → formato → captação/edição → legenda → CTA
+- Se houver mudanças no mercado, conecte ao conteúdo (ex: "concorrente ganhou avaliações → grave um vídeo mostrando bastidores para humanizar")
+- Tom: direto, criativo, como um diretor de conteúdo que conhece o negócio.
+- NUNCA use jargão de marketing (awareness, branding, engajamento). Use linguagem prática.
 
 Responda APENAS com o JSON.`;
 

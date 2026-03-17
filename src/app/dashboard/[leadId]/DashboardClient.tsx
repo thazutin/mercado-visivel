@@ -5,6 +5,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import PlanTasks from "@/components/PlanTasks";
 import type { PlanTask } from "@/components/PlanTasks";
 import TaskContentButton from "@/components/TaskContentButton";
+import InstantValueScreen from "@/components/InstantValueScreen";
 
 function formatPop(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(".", ",")} mi`;
@@ -107,57 +108,22 @@ export default function DashboardClient({ lead, plan, briefings, diagnosis, snap
               ))}
             </div>
 
-            {/* Tab: Overview — diagnóstico inicial */}
+            {/* Tab: Overview — componente real do diagnóstico inicial */}
             {tab === "overview" && (
-              <div style={{ background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`, padding: "24px" }}>
+              <div>
                 {lead.diagnosis_display ? (
-                  <>
-                    <p style={{ fontSize: 11, fontFamily: V.mono, color: V.ash, letterSpacing: "0.06em", textTransform: "uppercase" as const, margin: "0 0 16px" }}>
-                      Seu mercado em números
-                    </p>
-                    {/* Métricas principais */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
-                      {lead.diagnosis_display.audiencia?.audienciaTarget > 0 && (
-                        <div style={{ background: V.cloud, borderRadius: 10, padding: "16px", textAlign: "center" }}>
-                          <div style={{ fontSize: 24, fontWeight: 700, color: V.teal }}>~{formatPop(lead.diagnosis_display.audiencia.audienciaTarget)}</div>
-                          <div style={{ fontSize: 11, color: V.zinc, marginTop: 4 }}>pessoas no mercado</div>
-                        </div>
-                      )}
-                      <div style={{ background: V.cloud, borderRadius: 10, padding: "16px", textAlign: "center" }}>
-                        <div style={{ fontSize: 24, fontWeight: 700, color: V.night }}>{(lead.diagnosis_display.totalVolume || 0).toLocaleString("pt-BR")}</div>
-                        <div style={{ fontSize: 11, color: V.zinc, marginTop: 4 }}>buscas/mês</div>
-                      </div>
-                      <div style={{ background: V.cloud, borderRadius: 10, padding: "16px", textAlign: "center" }}>
-                        <div style={{ fontSize: 24, fontWeight: 700, color: lead.diagnosis_display.influencePercent < 20 ? V.amber : V.teal }}>{lead.diagnosis_display.influencePercent || 0}%</div>
-                        <div style={{ fontSize: 11, color: V.zinc, marginTop: 4 }}>influência digital</div>
-                      </div>
-                      {lead.diagnosis_display.competitionIndex && (
-                        <div style={{ background: V.cloud, borderRadius: 10, padding: "16px", textAlign: "center" }}>
-                          <div style={{ fontSize: 24, fontWeight: 700, color: V.night }}>{lead.diagnosis_display.competitionIndex.activeCompetitors}</div>
-                          <div style={{ fontSize: 11, color: V.zinc, marginTop: 4 }}>concorrentes</div>
-                        </div>
-                      )}
-                    </div>
-                    {/* Rotas de trabalho */}
-                    {lead.diagnosis_display.workRoutes?.length > 0 && (
-                      <>
-                        <p style={{ fontSize: 11, fontFamily: V.mono, color: V.ash, letterSpacing: "0.06em", textTransform: "uppercase" as const, margin: "0 0 12px" }}>
-                          Oportunidades identificadas
-                        </p>
-                        {lead.diagnosis_display.workRoutes.slice(0, 3).map((r: any, i: number) => (
-                          <div key={i} style={{ padding: "12px", marginBottom: 8, borderRadius: 8, background: i === 0 ? "rgba(207,133,35,0.08)" : V.cloud }}>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: V.night, marginBottom: 4 }}>{r.title}</div>
-                            <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>{r.rationale?.slice(0, 200)}{r.rationale?.length > 200 ? '...' : ''}</p>
-                          </div>
-                        ))}
-                      </>
-                    )}
-                    <p style={{ fontSize: 10, color: V.ash, fontFamily: V.mono, marginTop: 16 }}>
-                      Diagnóstico gerado em {new Date(lead.created_at).toLocaleDateString("pt-BR")}
-                    </p>
-                  </>
+                  <InstantValueScreen
+                    product={lead.product}
+                    region={lead.region}
+                    results={lead.diagnosis_display}
+                    onCheckout={() => {}}
+                    leadId={lead.id}
+                    hideCTA
+                  />
                 ) : (
-                  <p style={{ fontSize: 14, color: V.zinc }}>Diagnóstico inicial não disponível.</p>
+                  <div style={{ background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`, padding: "24px" }}>
+                    <p style={{ fontSize: 14, color: V.zinc }}>Diagnóstico inicial não disponível.</p>
+                  </div>
                 )}
               </div>
             )}

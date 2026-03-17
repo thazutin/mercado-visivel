@@ -54,7 +54,7 @@ interface Results {
     contratacoes: { objeto: string; orgaoEntidade: string; valorEstimado: number; modalidade: string }[];
   } | null;
 }
-interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; leadId?: string; }
+interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; leadId?: string; hideCTA?: boolean; }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -122,7 +122,7 @@ function Chip({ children, color = V.ash }: { children: React.ReactNode; color?: 
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
-export default function InstantValueScreen({ product, region, results, onCheckout, loading, leadId }: Props) {
+export default function InstantValueScreen({ product, region, results, onCheckout, loading, leadId, hideCTA }: Props) {
   const [show, setShow] = useState(false);
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
@@ -673,7 +673,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         )}
 
         {/* ═══ CTA ═══ */}
-        <div style={{ padding: "24px 0 16px" }}>
+        {!hideCTA && (<><div style={{ padding: "24px 0 16px" }}>
           <p style={{ fontSize: 18, fontWeight: 700, color: V.night, margin: "0 0 8px", lineHeight: 1.4 }}>
             Agora você sabe. O próximo passo é agir.
           </p>
@@ -743,7 +743,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               Ex: "Otimize o Google Meu Negócio — 3 passos" · "Grave Reels 30s com roteiro" · "Invista R$X em mídia e capture Y clientes"
             </div>
           </div>
-        </Expandable>
+        </Expandable></>)}
 
         {/* Feedback */}
         {leadId && (
