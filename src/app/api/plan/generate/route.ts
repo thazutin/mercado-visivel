@@ -102,14 +102,20 @@ export async function POST(req: NextRequest) {
     try {
       await generatePlanTasks(supabase, leadId, weeklyPlan || []);
     } catch (taskErr) {
-      // Não-fatal: se falhar, o plano texto continua funcionando
       console.error("[PlanGen] Task generation failed (non-fatal):", taskErr);
+    }
+
+    // 3c. Gerar primeiro briefing (semana 0 — boas-vindas)
+    try {
+      await generateWelcomeBriefing(supabase, claude, leadId, lead, weeklyPlan);
+    } catch (briefErr) {
+      console.error("[PlanGen] Welcome briefing failed (non-fatal):", briefErr);
     }
 
     // 4. Update lead status
     await supabase
       .from("leads")
-      .update({ plan_status: "ready" })
+      .update({ plan_status: "ready", weeks_active: 0 })
       .eq("id", leadId);
 
     // 5. Notifica por WhatsApp + email
@@ -169,45 +175,52 @@ ${(gaps.gaps || []).slice(0, 3).map((g: any) => `- ${g.title}`).join("\n")}`;
 }
 
 function buildBlocksPrompt(context: string): string {
-  return `Você é Vero, estrategista de mercado da Virô. Gere 5 blocos de diagnóstico.
+  return `Você é um consultor de mercado local que fala de forma simples e direta.
 
 ${context}
 
-Retorne APENAS um array JSON com 5 objetos:
+Gere 5 blocos de análise para o dono deste negócio. Retorne APENAS um array JSON:
 [
-  {"id": "digital_presence", "title": "Presença Digital", "content": "markdown..."},
-  {"id": "demand_map", "title": "Mapa de Demanda", "content": "markdown..."},
-  {"id": "competitive_analysis", "title": "Análise Competitiva", "content": "markdown..."},
-  {"id": "action_plan", "title": "Plano de Ação", "content": "markdown..."},
-  {"id": "metrics", "title": "Métricas", "content": "markdown..."}
+  {"id": "digital_presence", "title": "Onde você aparece hoje", "content": "markdown..."},
+  {"id": "demand_map", "title": "O que as pessoas buscam", "content": "markdown..."},
+  {"id": "competitive_analysis", "title": "Quem compete com você", "content": "markdown..."},
+  {"id": "action_plan", "title": "O que fazer primeiro", "content": "markdown..."},
+  {"id": "metrics", "title": "Como medir o progresso", "content": "markdown..."}
 ]
 
-REGRAS:
-- Content em markdown (##, **, listas). Máximo 300 palavras por bloco.
-- Cite dados reais (volumes, posições, concorrentes).
-- Bloco 1: onde está vs onde deveria estar. Bloco 2: termos por intenção. Bloco 3: concorrentes.
-- Bloco 4: resumo das prioridades. Bloco 5: KPIs com baseline e meta 90 dias.
-- Tom direto, sem jargão. Gere APENAS o JSON.`;
+REGRAS DE LINGUAGEM (muito importante):
+- Escreva como se estivesse explicando para o dono do negócio pessoalmente
+- NUNCA use termos técnicos de marketing: nada de "Map Pack", "SERP", "CTR", "SEO", "engajamento", "alcance orgânico", "conversão", "funil"
+- Use equivalentes simples: "resultados do Google" (não SERP), "aparecer no Google Maps" (não Map Pack), "pessoas que buscam" (não tráfego orgânico)
+- Cite dados reais (números de buscas, posições, concorrentes) mas explique o que significam na prática
+- Máximo 300 palavras por bloco. Markdown (##, **, listas).
+- Bloco 1: onde aparece e onde não aparece. Bloco 2: o que as pessoas procuram. Bloco 3: quem aparece no lugar dele.
+- Bloco 4: as 3 coisas mais importantes para fazer. Bloco 5: como saber se está funcionando (metas simples).
+- Tom: direto, útil, como um vizinho que entende de negócio.
+- Gere APENAS o JSON.`;
 }
 
 function buildWeeklyPrompt(context: string): string {
-  return `Você é Vero, estrategista de mercado da Virô. Gere o plano semanal de 12 semanas.
+  return `Você é um consultor de mercado local que fala de forma simples e direta.
 
 ${context}
 
-Retorne APENAS um array JSON com 12 objetos:
+Gere um plano de 12 semanas para este negócio. Retorne APENAS um array JSON com 12 objetos:
 [
-  {"week": 1, "title": "Título curto", "mainAction": "Ação específica com passo a passo", "script": "Template/roteiro se aplicável", "kpi": "Métrica de execução", "category": "presence"}
+  {"week": 1, "title": "Título curto", "mainAction": "O que fazer, passo a passo", "script": "Texto pronto para usar (se aplicável)", "kpi": "Como saber se fez certo", "category": "presence"}
 ]
 
-REGRAS:
+REGRAS DE LINGUAGEM (muito importante):
+- NUNCA use jargão de marketing: nada de "engajamento", "awareness", "posicionamento", "branding", "otimização"
+- Use linguagem de ação: "peça avaliações", "publique um vídeo mostrando...", "responda todas as avaliações do Google"
+- Cada ação deve ser tão clara que o dono execute sozinho em 30 minutos
+
+REGRAS DE CONTEÚDO:
 - category: "presence" | "content" | "authority" | "engagement"
-- Semanas 1-4: quick wins (GMB, primeiras avaliações, primeiro conteúdo)
-- Semanas 5-8: autoridade (conteúdo regular, parcerias locais)
-- Semanas 9-12: otimização e escala
-- Cada ação ESPECÍFICA: não "crie conteúdo", mas "grave Reels de 30s mostrando X"
+- Semanas 1-4: coisas rápidas (cadastro no Google, primeiras avaliações, primeiro vídeo)
+- Semanas 5-8: criar rotina (publicar toda semana, responder clientes, pedir indicações)
+- Semanas 9-12: dobrar no que funcionou
 - Cite dados reais do diagnóstico como fundamento
-- Tom direto, acionável por alguém sem equipe de marketing
 - Gere APENAS o JSON.`;
 }
 
@@ -261,6 +274,85 @@ async function generatePlanTasks(supabase: any, leadId: string, weeklyPlan: any[
       throw error;
     }
     console.log(`[PlanGen] Inserted ${tasks.length} plan_tasks for lead ${leadId}`);
+  }
+}
+
+// ─── WELCOME BRIEFING (primeiro briefing, gerado junto com o plano) ───
+
+async function generateWelcomeBriefing(
+  supabase: any,
+  claude: any,
+  leadId: string,
+  lead: any,
+  weeklyPlan: any[],
+) {
+  const firstAction = weeklyPlan[0]?.mainAction || weeklyPlan[0]?.title || "Configure seu Google Meu Negócio";
+  const shortRegion = (lead.region || "").split(",")[0].trim();
+
+  const prompt = `Você é o consultor de mercado do Virô. Gere o briefing de boas-vindas para um novo cliente.
+
+NEGÓCIO: ${lead.product} em ${shortRegion}
+PRIMEIRA AÇÃO DO PLANO: ${firstAction}
+
+Gere um JSON com:
+{
+  "changes": [{"direction": "neutral", "description": "Ponto de partida — seu diagnóstico acabou de ser gerado."}],
+  "weeklyAction": "A primeira coisa para fazer esta semana (baseada na primeira ação do plano)",
+  "narrative": "2 parágrafos de boas-vindas: o que fizemos até agora (diagnóstico + plano), o que esperar (briefings semanais), e o que fazer agora (primeira ação). Tom: direto, animador, sem jargão."
+}
+
+Regras:
+- weeklyAction deve ser prática e específica
+- narrative: máximo 100 palavras, fale com o dono em 2ª pessoa
+- Gere APENAS o JSON.`;
+
+  const response = await claude.messages.create({
+    model: "claude-sonnet-4-5-20250929",
+    max_tokens: 1000,
+    temperature: 0.3,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const text = response.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join("");
+  let parsed: any;
+  try {
+    parsed = JSON.parse(text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim());
+  } catch {
+    // Fallback simples
+    parsed = {
+      changes: [{ direction: "neutral", description: "Diagnóstico concluído — seu plano de 90 dias está pronto." }],
+      weeklyAction: firstAction,
+      narrative: `Seu diagnóstico de ${lead.product} em ${shortRegion} está pronto. Analisamos seu mercado, mapeamos a concorrência e montamos um plano de 12 semanas. A cada segunda-feira você recebe um briefing com o que mudou e o que fazer. Comece agora pela primeira tarefa do plano.`,
+    };
+  }
+
+  const briefingContent = {
+    changes: parsed.changes || [],
+    weeklyAction: parsed.weeklyAction || firstAction,
+    narrative: parsed.narrative || "",
+    meta: {
+      weekNumber: 0,
+      generatedAt: new Date().toISOString(),
+      model: "claude-sonnet-4-5-20250929",
+      diffSummary: { improvements: 0, declines: 0, totalChanges: 0 },
+    },
+  };
+
+  // Deleta briefing anterior se existir
+  await supabase.from("briefings").delete().eq("lead_id", leadId).eq("week_number", 0);
+
+  const { error } = await supabase.from("briefings").insert({
+    lead_id: leadId,
+    week_number: 0,
+    content: briefingContent,
+    generation_model: "claude-sonnet-4-5-20250929",
+    email_sent_at: null,
+  });
+
+  if (error) {
+    console.error("[PlanGen] Welcome briefing insert error:", error);
+  } else {
+    console.log(`[PlanGen] Welcome briefing generated for lead ${leadId}`);
   }
 }
 
