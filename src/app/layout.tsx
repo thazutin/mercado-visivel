@@ -1,23 +1,8 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import { ClerkProvider } from "@clerk/nextjs";
-import { ptBR, enUS, esES } from "@clerk/localizations";
+import { ptBR } from "@clerk/localizations";
 import WhatsAppButton from "@/components/WhatsAppButton";
-import { LOCALE_COOKIE_NAME } from "@/lib/i18n-config";
-import type { Locale } from "@/lib/i18n";
 import "./globals.css";
-
-const CLERK_LOCALIZATIONS: Record<Locale, any> = {
-  pt: ptBR,
-  en: enUS,
-  es: esES,
-};
-
-const LANG_MAP: Record<Locale, string> = {
-  pt: "pt-BR",
-  en: "en",
-  es: "es",
-};
 
 export const metadata: Metadata = {
   title: "Virô — Seu mercado, visível.",
@@ -36,14 +21,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const cookieStore = await cookies();
-  const locale = (cookieStore.get(LOCALE_COOKIE_NAME)?.value || "pt") as Locale;
-  const validLocale = ["pt", "en", "es"].includes(locale) ? locale : "pt";
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider
-      localization={CLERK_LOCALIZATIONS[validLocale]}
+      localization={ptBR}
       appearance={{
         variables: {
           colorPrimary: "#161618",
@@ -63,7 +44,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         },
       }}
     >
-      <html lang={LANG_MAP[validLocale]} suppressHydrationWarning>
+      <html lang="pt-BR" suppressHydrationWarning>
         <body>
           {children}
           <WhatsAppButton />

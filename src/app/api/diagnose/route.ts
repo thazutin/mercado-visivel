@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { leadSchema } from "@/lib/schema";
-import { updateLeadStatus, insertDiagnosis } from "@/lib/supabase";
+import { insertLead, updateLeadStatus, insertDiagnosis } from "@/lib/supabase";
 import { runInstantAnalysis } from "@/lib/analysis";
 import { notifyDiagnosisReady } from "@/lib/notify";
 import { createClient } from "@supabase/supabase-js";
@@ -43,58 +43,46 @@ export async function POST(req: NextRequest) {
 
     const formData = parsed.data;
     const locale = formData.locale || "pt";
-    const countryCode = req.headers.get("x-vercel-ip-country") || "BR";
 
-    // 1. Salva lead (usa service role key para bypassar RLS)
-    const supabaseAdmin = getSupabaseAdmin();
-    const leadPayload = {
-      name: (formData as any).businessName || (formData as any).name || "",
-      email: formData.email || "",
-      whatsapp: formData.whatsapp || "",
-      site: formData.site || "",
-      instagram: formData.instagram || "",
-      linkedin: (formData as any).linkedin || "",
-      other_social: "",
-      google_maps: "",
-      product: formData.product,
-      customer_description: formData.customerDescription || "",
-      region: formData.region,
-      address: formData.address || "",
-      place_id: formData.placeId || "",
-      lat: formData.lat || null,
-      lng: formData.lng || null,
-      ticket: typeof formData.ticket === "number"
-        ? String(formData.ticket)
-        : formData.ticket || "",
-      channels: formData.channels || [],
-      differentiator: formData.differentiator || "",
-      competitors: formData.competitors || [],
-      challenge: formData.challenge || "",
-      free_text: formData.freeText || "",
-      locale,
-      coupon: formData.coupon || "",
-      client_type: formData.clientType || "b2c",
-      status: "processing",
-    };
-
+    // 1. Salva lead
     let lead: { id: string };
-    const { data: leadData, error: leadError } = await supabaseAdmin
-      .from("leads")
-      .insert(leadPayload)
-      .select("id")
-      .single();
-
-    if (leadError) {
-      console.error("[Diagnose] insertLead failed:", leadError.message, leadError.details, leadError.hint);
-      return NextResponse.json(
-        { error: "Erro ao salvar lead: " + leadError.message },
-        { status: 500 }
-      );
+    try {
+      lead = await insertLead({
+        name: (formData as any).businessName || (formData as any).name || "",
+        email: formData.email || "",
+        whatsapp: formData.whatsapp || "",
+        site: formData.site || "",
+        instagram: formData.instagram || "",
+        linkedin: (formData as any).linkedin || "",
+        other_social: "",
+        google_maps: "",
+        product: formData.product,
+        customer_description: formData.customerDescription || "",
+        region: formData.region,
+        address: formData.address || "",
+        place_id: formData.placeId || "",
+        lat: formData.lat || null,
+        lng: formData.lng || null,
+        ticket: typeof formData.ticket === "number"
+          ? String(formData.ticket)
+          : formData.ticket || "",
+        channels: formData.channels || [],
+        differentiator: formData.differentiator || "",
+        competitors: formData.competitors || [],
+        challenge: formData.challenge || "",
+        free_text: formData.freeText || "",
+        locale,
+        coupon: formData.coupon || "",
+        client_type: formData.clientType || "b2c",
+        status: "processing",
+      });
+    } catch (dbError) {
+      console.error("[Diagnose] insertLead failed:", dbError);
+      lead = { id: "temp_" + Date.now() };
     }
-    lead = leadData;
 
     // 2. Roda pipeline (síncrono — Vercel aguarda até maxDuration=180s)
-    const pipelineResult = await runInstantAnalysis(formData, locale, countryCode);
+    const pipelineResult = await runInstantAnalysis(formData, locale);
     pipelineResult.leadId = lead.id;
 
     // 3. Salva diagnóstico
@@ -135,7 +123,8 @@ export async function POST(req: NextRequest) {
 
     // 4. Salva pipeline_run
     try {
-      await supabaseAdmin.from("pipeline_runs").insert({
+      const supabase = getSupabaseAdmin();
+      await supabase.from("pipeline_runs").insert({
         lead_id: lead.id,
         pipeline_version: pipelineResult.pipelineVersion,
         total_duration_ms: pipelineResult.totalProcessingTimeMs,
@@ -162,7 +151,8 @@ export async function POST(req: NextRequest) {
 
     // 6. Salva display no lead (para /resultado/[leadId] e polling)
     try {
-      const { error: updateError } = await supabaseAdmin
+      const supabase = getSupabaseAdmin();
+      const { error: updateError } = await supabase
         .from("leads")
         .update({ status: "done", diagnosis_display: display, client_type: pipelineResult.clientType || "b2c" })
         .eq("id", lead.id);

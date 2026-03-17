@@ -18,18 +18,17 @@ export interface FormInput {
   // Presença digital
   customerSources: string[];          // "De onde vem seu cliente" (Google, Instagram, indicação, etc.)
   digitalAssets: DigitalAsset[];      // Ativos digitais com tipo e identificador
-
+  
   // Competição e posicionamento
   differentiator: string;             // "O que te diferencia" (auto-declaração)
   competitors: CompetitorInput[];     // Até 3 concorrentes com Instagram opcional
-
+  
   // Contexto qualitativo
   challenge: string;                  // "Maior desafio" (alternativa)
   freeText?: string;                  // "Quer contar algo mais?"
-
+  
   // Meta
   locale: 'pt-BR' | 'en' | 'es';
-  countryCode: string;                // ISO alpha-2 (BR, PT, US, ES, etc.) — inferido por IP ou formulário
   submittedAt: string;                // ISO timestamp
 }
 

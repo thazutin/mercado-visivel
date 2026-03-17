@@ -14,7 +14,32 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(cd \"C:\\\\Users\\\\ThalesZutin\\\\Downloads\\\\mercado-visivel\\\\mercado-visivel\" && npm run build 2>&1 | tail -25)",
-      "Bash(cd \"C:\\\\Users\\\\ThalesZutin\\\\Downloads\\\\mercado-visivel\\\\mercado-visivel\" && npm run build 2>&1 | tail -30)"
+      "Bash(cd \"C:\\\\Users\\\\ThalesZutin\\\\Downloads\\\\mercado-visivel\\\\mercado-visivel\" && npm run build 2>&1 | tail -30)",
+      "Bash(cd \"C:\\\\Users\\\\ThalesZutin\\\\Downloads\\\\mercado-visivel\\\\mercado-visivel\" && npm run build 2>&1 | tail -20)",
+      "Bash(cd \"C:\\\\Users\\\\ThalesZutin\\\\Downloads\\\\mercado-visivel\\\\mercado-visivel\" && npm run build 2>&1 | tail -10)",
+      "Bash(vercel --version 2>&1)",
+      "Bash(npx vercel:*)",
+      "WebFetch(domain:servicodados.ibge.gov.br)",
+      "WebFetch(domain:maps.googleapis.com)",
+      "Bash(npm run:*)",
+      "Bash(find /c/Users/ThalesZutin/Downloads/mercado-visivel/mercado-visivel/src -name \"*.tsx\" -o -name \"*.ts\" | xargs grep -l \"gmpac\\\\|PlacesAutocomplete\\\\|inputStyle\" 2>/dev/null)",
+      "Bash(cd \"C:\\\\Users\\\\ThalesZutin\\\\Downloads\\\\mercado-visivel\\\\mercado-visivel\" && npx next build 2>&1 | grep -E \"error|Error|✓|✗\" | tail -10)",
+      "Bash(cd \"C:/Users/ThalesZutin/Downloads/mercado-visivel/mercado-visivel\" && npm install recharts 2>&1 | tail -5)",
+      "Bash(npm install:*)",
+      "Bash(npx tsx:*)",
+      "Bash(find:*)",
+      "Bash(xargs grep:*)",
+      "Bash(gh api:*)",
+      "Bash(cd:*)",
+      "Bash(where stripe:*)",
+      "Bash(curl:*)",
+      "Bash(source:*)",
+      "WebFetch(domain:virolocal.com)",
+      "Bash(grep -r \"api\\\\|API\\\\|fetch\\\\|http\" /c/Users/ThalesZutin/Downloads/mercado-visivel/mercado-visivel/src/lib/pipeline/*.ts)",
+      "Bash(grep -r \"PERPLEXITY\\\\|Nominatim\\\\|openstreetmap\" /c/Users/ThalesZutin/Downloads/mercado-visivel/mercado-visivel/src/lib --include=*.ts -A 2 -B 2)",
+      "WebSearch",
+      "Bash(grep -r \"hardcoded\\\\|português\\\\|pt-BR\" /c/Users/ThalesZutin/Downloads/mercado-visivel/mercado-visivel/src --include=*.tsx --include=*.ts)",
+      "Bash(grep -n \"BR\\\\|Brazil\\\\|brasil\\\\|BRL\\\\|R$\\\\|country\\\\|geo\\\\|languageCode\\\\|locationCode\\\\|BRAZIL\" src/lib/pipeline/external-services.ts)"
     ]
   }
 }

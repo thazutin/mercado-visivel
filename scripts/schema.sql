@@ -96,22 +96,23 @@ alter table public.leads enable row level security;
 alter table public.diagnoses enable row level security;
 
 -- Allow inserts from anon (form submissions)
-create policy "Allow anonymous inserts" on public.leads
-  for insert with check (true);
-
-create policy "Allow anonymous inserts" on public.diagnoses
-  for insert with check (true);
-
--- Allow reads for own data (by lead_id in query)
-create policy "Allow anonymous reads" on public.leads
-  for select using (true);
-
-create policy "Allow anonymous reads" on public.diagnoses
-  for select using (true);
-
--- Allow status updates
-create policy "Allow anonymous updates" on public.leads
-  for update using (true);
+do $$ begin
+  if not exists (select 1 from pg_policies where tablename='leads' and policyname='Allow anonymous inserts') then
+    create policy "Allow anonymous inserts" on public.leads for insert with check (true);
+  end if;
+  if not exists (select 1 from pg_policies where tablename='diagnoses' and policyname='Allow anonymous inserts') then
+    create policy "Allow anonymous inserts" on public.diagnoses for insert with check (true);
+  end if;
+  if not exists (select 1 from pg_policies where tablename='leads' and policyname='Allow anonymous reads') then
+    create policy "Allow anonymous reads" on public.leads for select using (true);
+  end if;
+  if not exists (select 1 from pg_policies where tablename='diagnoses' and policyname='Allow anonymous reads') then
+    create policy "Allow anonymous reads" on public.diagnoses for select using (true);
+  end if;
+  if not exists (select 1 from pg_policies where tablename='leads' and policyname='Allow anonymous updates') then
+    create policy "Allow anonymous updates" on public.leads for update using (true);
+  end if;
+end $$;
 
 -- ─── Migration: add columns if missing ───────────────────────────────────
 -- Run these if the table already exists but is missing newer columns.
@@ -279,8 +280,20 @@ alter table public.briefings enable row level security;
 alter table public.events enable row level security;
 alter table public.pipeline_runs enable row level security;
 
-create policy "Allow all plans" on public.plans for all using (true) with check (true);
-create policy "Allow all snapshots" on public.snapshots for all using (true) with check (true);
-create policy "Allow all briefings" on public.briefings for all using (true) with check (true);
-create policy "Allow all events" on public.events for all using (true) with check (true);
-create policy "Allow all pipeline_runs" on public.pipeline_runs for all using (true) with check (true);
+do $$ begin
+  if not exists (select 1 from pg_policies where tablename='plans' and policyname='Allow all plans') then
+    create policy "Allow all plans" on public.plans for all using (true) with check (true);
+  end if;
+  if not exists (select 1 from pg_policies where tablename='snapshots' and policyname='Allow all snapshots') then
+    create policy "Allow all snapshots" on public.snapshots for all using (true) with check (true);
+  end if;
+  if not exists (select 1 from pg_policies where tablename='briefings' and policyname='Allow all briefings') then
+    create policy "Allow all briefings" on public.briefings for all using (true) with check (true);
+  end if;
+  if not exists (select 1 from pg_policies where tablename='events' and policyname='Allow all events') then
+    create policy "Allow all events" on public.events for all using (true) with check (true);
+  end if;
+  if not exists (select 1 from pg_policies where tablename='pipeline_runs' and policyname='Allow all pipeline_runs') then
+    create policy "Allow all pipeline_runs" on public.pipeline_runs for all using (true) with check (true);
+  end if;
+end $$;

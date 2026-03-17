@@ -2,21 +2,12 @@
 // Virô — Clerk Middleware
 // Protects /dashboard/* and /admin/* routes
 // Rate limiting: /api/diagnose POST apenas — máx 3 submissões por IP/hora
-// Locale detection: x-vercel-ip-country → cookie viro_locale
 // ============================================================================
 // File: src/middleware.ts
 
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { LOCALE_COOKIE_NAME, SUPPORTED_LOCALES } from "@/lib/i18n-config";
-import { countryToLocale } from "@/lib/i18n-config";
-
-const RATE_LIMIT_MESSAGES: Record<string, string> = {
-  pt: "Muitas requisições. Tente novamente em 1 hora.",
-  en: "Too many requests. Try again in 1 hour.",
-  es: "Demasiadas solicitudes. Inténtalo de nuevo en 1 hora.",
-};
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -59,21 +50,7 @@ function isRateLimited(ip: string): boolean {
 }
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
-  const response = NextResponse.next();
-
-  // ─── Locale detection: IP country → cookie ────────────────────────────
-  const existingLocale = req.cookies.get(LOCALE_COOKIE_NAME)?.value;
-  if (!existingLocale || !SUPPORTED_LOCALES.includes(existingLocale as any)) {
-    const country = req.headers.get("x-vercel-ip-country") || null;
-    const detectedLocale = countryToLocale(country);
-    response.cookies.set(LOCALE_COOKIE_NAME, detectedLocale, {
-      path: "/",
-      maxAge: 365 * 24 * 60 * 60,
-      sameSite: "lax",
-    });
-  }
-
-  // ─── Rate limiting: apenas POST (GET é polling de status, não conta) ──
+  // Rate limiting: apenas POST (GET é polling de status, não conta)
   if (req.method === "POST" && req.nextUrl.pathname.startsWith("/api/diagnose")) {
     const ip =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -81,10 +58,8 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
       "unknown";
 
     if (isRateLimited(ip)) {
-      const locale = req.cookies.get(LOCALE_COOKIE_NAME)?.value || "pt";
-      const message = RATE_LIMIT_MESSAGES[locale] || RATE_LIMIT_MESSAGES.pt;
       return NextResponse.json(
-        { error: message },
+        { error: "Muitas requisições. Tente novamente em 1 hora." },
         { status: 429 }
       );
     }
@@ -93,8 +68,6 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   if (!isPublicRoute(req)) {
     await auth.protect();
   }
-
-  return response;
 });
 
 export const config = {

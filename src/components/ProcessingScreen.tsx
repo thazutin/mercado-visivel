@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useLocale } from "@/hooks/useLocale";
 
 const V = {
   night: "#161618",
@@ -22,6 +21,37 @@ const V = {
   mono: "'JetBrains Mono', 'SF Mono', monospace",
 };
 
+const facts = [
+  { text: "46% de todas as buscas no Google têm intenção local.", source: "Google" },
+  { text: "Negócios com fotos no Google Meu Negócio recebem 42% mais pedidos de rota.", source: "Google" },
+  { text: "76% das pessoas que buscam algo local visitam uma empresa em até 24h.", source: "Google" },
+  { text: "'Perto de mim' e 'aberto agora' são os modificadores de busca local que mais crescem.", source: "Google Trends" },
+  { text: "Negócios com mais de 100 fotos no Google Maps recebem 520% mais ligações.", source: "BrightLocal" },
+  { text: "90% dos usuários do Instagram seguem pelo menos uma empresa.", source: "Instagram" },
+  { text: "Reels têm alcance orgânico 3x maior que posts estáticos no Instagram.", source: "Meta" },
+  { text: "70% dos consumidores usam o Instagram para descobrir produtos e serviços novos.", source: "Instagram" },
+  { text: "88% dos consumidores confiam em avaliações online tanto quanto em recomendações pessoais.", source: "BrightLocal" },
+  { text: "Empresas que respondem avaliações têm 45% mais chance de receber novas avaliações.", source: "Harvard Business Review" },
+  { text: "Um aumento de 1 estrela no Google pode aumentar a receita em até 9%.", source: "Harvard Business Review" },
+  { text: "25% das pesquisas feitas com IA têm intenção de compra local.", source: "SparkToro" },
+  { text: "Negócios com website têm 2x mais chance de ser citados por ferramentas de IA.", source: "BrightLocal" },
+  { text: "Consumidores que pesquisam antes de visitar gastam em média 30% mais.", source: "Deloitte" },
+  { text: "Negócios sem presença digital perdem em média 70% das oportunidades de novos clientes.", source: "SEBRAE" },
+  { text: "93% dos brasileiros com smartphone usam WhatsApp diariamente.", source: "DataReportal" },
+  { text: "72% dos pequenos negócios brasileiros usam WhatsApp como principal canal de vendas.", source: "SEBRAE" },
+  { text: "Pequenos negócios que respondem clientes em até 5 minutos convertem 9x mais.", source: "Harvard Business Review" },
+];
+
+const processingMessages = [
+  "Mapeando termos de busca...",
+  "Consultando Google Search...",
+  "Analisando Instagram...",
+  "Calculando audiência IBGE...",
+  "Medindo influência digital...",
+  "Cruzando dados de concorrência...",
+  "Preparando seu diagnóstico...",
+];
+
 interface Props {
   product: string;
   region?: string;
@@ -31,15 +61,10 @@ interface Props {
 }
 
 export default function ProcessingScreen({ product, region, businessName, onComplete, steps: _customSteps }: Props) {
-  const { t } = useLocale();
   const [progress, setProgress] = useState(0);
   const [msgIdx, setMsgIdx] = useState(0);
   const [msgVisible, setMsgVisible] = useState(true);
-
-  const facts: { text: string; source: string }[] = t.processingFacts || [];
-  const messages: string[] = t.processingMessages || [];
-
-  const [factIdx, setFactIdx] = useState(() => Math.floor(Math.random() * Math.max(facts.length, 1)));
+  const [factIdx, setFactIdx] = useState(() => Math.floor(Math.random() * facts.length));
   const [factVisible, setFactVisible] = useState(true);
 
   // Progress ring animation: 0→100 over 60s
@@ -63,20 +88,18 @@ export default function ProcessingScreen({ product, region, businessName, onComp
 
   // Rotating processing message every 4s
   useEffect(() => {
-    if (messages.length === 0) return;
     const interval = setInterval(() => {
       setMsgVisible(false);
       setTimeout(() => {
-        setMsgIdx(prev => (prev + 1) % messages.length);
+        setMsgIdx(prev => (prev + 1) % processingMessages.length);
         setMsgVisible(true);
       }, 300);
     }, 4000);
     return () => clearInterval(interval);
-  }, [messages.length]);
+  }, []);
 
   // Fact carousel every 8s
   useEffect(() => {
-    if (facts.length === 0) return;
     const interval = setInterval(() => {
       setFactVisible(false);
       setTimeout(() => {
@@ -85,10 +108,10 @@ export default function ProcessingScreen({ product, region, businessName, onComp
       }, 400);
     }, 8000);
     return () => clearInterval(interval);
-  }, [facts.length]);
+  }, []);
 
   const displayName = businessName || product;
-  const currentFact = facts[factIdx] || { text: "", source: "" };
+  const currentFact = facts[factIdx];
 
   // SVG ring
   const size = 160;
@@ -113,7 +136,7 @@ export default function ProcessingScreen({ product, region, businessName, onComp
           fontFamily: V.display, fontSize: 22, fontWeight: 700,
           color: V.white, letterSpacing: "-0.03em", marginBottom: 6,
         }}>
-          {t.processingTitle(displayName)}
+          Analisando {displayName}
         </h2>
         {region && (
           <p style={{ color: V.ash, fontSize: 13, margin: "0 0 8px" }}>
@@ -121,18 +144,34 @@ export default function ProcessingScreen({ product, region, businessName, onComp
           </p>
         )}
         <p style={{ color: V.zinc, fontSize: 12, fontFamily: V.mono, marginBottom: 32 }}>
-          {t.processingWait}
+          Isso pode levar até 60 segundos
         </p>
 
         {/* Progress Ring */}
         <div style={{ position: "relative", width: size, height: size, margin: "0 auto 24px" }}>
           <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-            <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={V.graphite} strokeWidth={strokeWidth} />
-            <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={V.amber} strokeWidth={strokeWidth}
-              strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset}
-              style={{ transition: "stroke-dashoffset 0.1s linear" }} />
+            {/* Background ring */}
+            <circle
+              cx={size / 2} cy={size / 2} r={radius}
+              fill="none" stroke={V.graphite} strokeWidth={strokeWidth}
+            />
+            {/* Progress ring */}
+            <circle
+              cx={size / 2} cy={size / 2} r={radius}
+              fill="none" stroke={V.amber} strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              style={{ transition: "stroke-dashoffset 0.1s linear" }}
+            />
           </svg>
-          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", fontSize: 36, animation: "spin 3s linear infinite" }}>
+          {/* Center icon */}
+          <div style={{
+            position: "absolute", top: "50%", left: "50%",
+            transform: "translate(-50%, -50%)",
+            fontSize: 36,
+            animation: "spin 3s linear infinite",
+          }}>
             🔍
           </div>
         </div>
@@ -141,33 +180,47 @@ export default function ProcessingScreen({ product, region, businessName, onComp
         <div style={{ minHeight: 24, marginBottom: 32 }}>
           <p style={{
             fontSize: 14, color: V.mist, fontFamily: V.body,
-            opacity: msgVisible ? 1 : 0, transition: "opacity 0.3s ease", margin: 0,
+            opacity: msgVisible ? 1 : 0,
+            transition: "opacity 0.3s ease",
+            margin: 0,
           }}>
-            {messages[msgIdx] || ""}
+            {processingMessages[msgIdx]}
           </p>
         </div>
 
         {/* Fact card */}
-        {currentFact.text && (
+        <div style={{
+          padding: "16px 20px",
+          background: V.graphite,
+          borderRadius: 10,
+          border: `1px solid ${V.slate}`,
+          minHeight: 76,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+        }}>
           <div style={{
-            padding: "16px 20px", background: V.graphite, borderRadius: 10,
-            border: `1px solid ${V.slate}`, minHeight: 76,
-            display: "flex", flexDirection: "column", justifyContent: "center",
+            opacity: factVisible ? 1 : 0,
+            transition: "opacity 0.4s ease",
           }}>
-            <div style={{ opacity: factVisible ? 1 : 0, transition: "opacity 0.4s ease" }}>
-              <p style={{ fontSize: 13, color: V.white, margin: "0 0 6px", lineHeight: 1.5, fontFamily: V.body }}>
-                {currentFact.text}
-              </p>
-              <p style={{ fontSize: 10, color: V.ash, margin: 0, fontFamily: V.mono, letterSpacing: "0.02em", opacity: 0.7 }}>
-                {t.processingSource}: {currentFact.source}
-              </p>
-            </div>
+            <p style={{
+              fontSize: 13, color: V.white, margin: "0 0 6px",
+              lineHeight: 1.5, fontFamily: V.body,
+            }}>
+              {currentFact.text}
+            </p>
+            <p style={{
+              fontSize: 10, color: V.ash, margin: 0,
+              fontFamily: V.mono, letterSpacing: "0.02em", opacity: 0.7,
+            }}>
+              Fonte: {currentFact.source}
+            </p>
           </div>
-        )}
+        </div>
 
         {/* Notification */}
         <p style={{ color: V.ash, fontSize: 11, fontFamily: V.body, marginTop: 20 }}>
-          {t.processingEmailNote}
+          Você também receberá o resultado por email.
         </p>
       </div>
 
