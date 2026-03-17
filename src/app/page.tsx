@@ -290,17 +290,17 @@ export default function Home() {
       title: t.formStep1Title,
       content: (
         <>
-          <Field label="Nome do seu negócio *">
-            <input style={inputStyle} type="text" placeholder="Ex: Salão da Ana, Restaurante do João" value={formData.businessName}
+          <Field label={t.formBusinessNameLabel}>
+            <input style={inputStyle} type="text" placeholder={t.formBusinessNamePlaceholder} value={formData.businessName}
               onChange={(e: any) => updateField("businessName", e.target.value)} />
           </Field>
           <Field label={t.formProductLabel}>
             <input style={inputStyle} type="text"
-              placeholder="Seu serviço principal — ex: barbearia masculina, clínica de estética, pizzaria artesanal"
+              placeholder={t.formProductPlaceholderLong}
               value={formData.product}
               onChange={(e: any) => updateField("product", e.target.value)} />
             <p style={{ fontSize: 11, color: V.ash, margin: "6px 0 0", lineHeight: 1.4 }}>
-              Quanto mais específico, mais preciso seu diagnóstico.
+              {t.formProductHintExtra}
             </p>
           </Field>
 
@@ -322,7 +322,7 @@ export default function Home() {
             <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 13, color: V.ash, cursor: "pointer" }}>
               <input type="checkbox" checked={isNational} onChange={(e: any) => {
                 setIsNational(e.target.checked);
-                if (e.target.checked) updateField("region", "Brasil (nacional)");
+                if (e.target.checked) updateField("region", t.formNationalRegionValue);
                 else updateField("region", "");
               }} style={{ width: 16, height: 16, accentColor: V.amber }} />
               {t.formNationalCheckbox}
@@ -336,24 +336,24 @@ export default function Home() {
       content: (
         <>
           <p style={{ fontSize: 13, color: V.ash, margin: "0 0 16px", lineHeight: 1.5 }}>{t.formStep2Subtitle}</p>
-          <Field label="Seu nome">
-            <input style={inputStyle} type="text" placeholder="Como prefere ser chamado" value={(formData as any).name || ""}
+          <Field label={t.formNameLabel}>
+            <input style={inputStyle} type="text" placeholder={t.formNamePlaceholder} value={(formData as any).name || ""}
               onChange={(e: any) => updateField("name" as any, e.target.value)} />
           </Field>
-          <Field label={`${t.formEmailLabel} *`} hint="Enviamos seu resultado por aqui">
+          <Field label={`${t.formEmailLabel} *`} hint={t.formEmailHint}>
             <input style={inputStyle} type="email" placeholder={t.formEmailPlaceholder} value={formData.email}
               onChange={(e: any) => updateField("email", e.target.value)} />
           </Field>
-          <Field label={t.formWhatsappLabel} hint="Opcional — para contato sobre seu diagnóstico">
+          <Field label={t.formWhatsappLabel} hint={t.formWhatsappHint}>
             <input style={inputStyle} type="tel" placeholder={t.formWhatsappPlaceholder} value={formData.whatsapp}
               onChange={(e: any) => updateField("whatsapp", e.target.value)} />
           </Field>
-          <Field label="Instagram" hint="Opcional — usamos para analisar sua presença">
-            <input style={inputStyle} type="text" placeholder="@seuperfil" value={formData.instagram}
+          <Field label="Instagram" hint={t.formInstagramHint2}>
+            <input style={inputStyle} type="text" placeholder={t.formInstagramPlaceholder2} value={formData.instagram}
               onChange={(e: any) => updateField("instagram", e.target.value)} />
           </Field>
-          <Field label="LinkedIn" hint="Opcional — se atende outras empresas">
-            <input style={inputStyle} type="text" placeholder="linkedin.com/company/sua-empresa" value={(formData as any).linkedin || ""}
+          <Field label={t.formLinkedinLabel} hint={t.formLinkedinHint}>
+            <input style={inputStyle} type="text" placeholder={t.formLinkedinPlaceholder} value={(formData as any).linkedin || ""}
               onChange={(e: any) => updateField("linkedin" as any, e.target.value)} />
           </Field>
         </>
