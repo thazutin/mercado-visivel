@@ -158,8 +158,8 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
  */
 function detectarDensidade(populacao: number, densidadeHabKm2?: number): 'alta' | 'baixa' {
   // Primeiro: população é proxy confiável
-  if (populacao >= 100_000) return 'alta';
-  if (populacao < 30_000) return 'baixa';
+  if (populacao >= 500_000) return 'alta';
+  if (populacao < 100_000) return 'baixa';
   // Faixa intermediária: usa densidade se disponível
   if (densidadeHabKm2 && densidadeHabKm2 > 500) return 'alta';
   return 'baixa';
