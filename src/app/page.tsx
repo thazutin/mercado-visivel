@@ -515,20 +515,7 @@ export default function Home() {
               <div style={{ fontFamily: V.display, fontSize: 32, fontWeight: 700, color: V.amberSoft, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 18%
               </div>
-              <p style={{ fontSize: 11, color: V.mist, margin: "6px 0 0" }}>chance de capturar nova demanda digital</p>
-              {/* Sub-scores */}
-              <div style={{ display: "flex", justifyContent: "center", gap: 14, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${V.slate}` }}>
-                {[
-                  { label: "Alcance", value: 12 },
-                  { label: "Descoberta", value: 22 },
-                  { label: "Credibilidade", value: 18 },
-                ].map((d, i) => (
-                  <div key={i} style={{ textAlign: "center" }}>
-                    <div style={{ fontFamily: V.mono, fontSize: 13, fontWeight: 700, color: d.value > 25 ? V.teal : V.ash }}>{d.value}</div>
-                    <div style={{ fontSize: 8, color: V.ash, fontFamily: V.mono, marginTop: 1 }}>{d.label}</div>
-                  </div>
-                ))}
-              </div>
+              <p style={{ fontSize: 11, color: V.mist, margin: "6px 0 0" }}>da demanda é o pedaço que você disputa para capturar</p>
             </div>
           </div>
 

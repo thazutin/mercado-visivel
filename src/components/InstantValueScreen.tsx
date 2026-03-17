@@ -413,27 +413,12 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               }}>
                 {results.influencePercent}%
               </div>
-              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>chance de capturar nova demanda digital</p>
-              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>Alcance · Descoberta · Credibilidade</p>
-              {(results as any).influenceBreakdown4D && (
-                <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 16, paddingTop: 12, borderTop: `1px solid ${V.slate}` }}>
-                  {[
-                    { label: "Alcance", value: (results as any).influenceBreakdown4D.d1_discovery },
-                    { label: "Descoberta", value: (results as any).influenceBreakdown4D.d2_credibility },
-                    { label: "Credibilidade", value: (results as any).influenceBreakdown4D.d3_reach },
-                  ].map((dim, i) => (
-                    <div key={i} style={{ textAlign: "center" }}>
-                      <div style={{ fontFamily: V.mono, fontSize: 14, fontWeight: 700, color: dim.value > 50 ? V.teal : dim.value > 20 ? V.amberSoft : V.ash }}>{dim.value}</div>
-                      <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono, letterSpacing: "0.02em", marginTop: 2 }}>{dim.label}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>da demanda é o pedaço que você disputa para capturar</p>
             </div>
           ) : (
             <div style={{ background: V.night, borderRadius: "14px 14px 0 0", padding: "28px 18px", textAlign: "center", border: `1px solid ${V.slate}`, borderBottom: "none" }}>
               <div style={{ fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, color: V.coral, letterSpacing: "-0.03em", lineHeight: 1 }}>0%</div>
-              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>chance de capturar nova demanda digital</p>
+              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>da demanda é o pedaço que você disputa para capturar</p>
               <p style={{ fontSize: 11, color: V.coral, margin: "4px 0 0" }}>Invisível no mercado</p>
             </div>
           )}
@@ -444,9 +429,9 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               {results.influencePercent === 0
                 ? `Quando alguém busca ${product} em ${shortRegion}, você não aparece. Enquanto isso, seus concorrentes recebem esses clientes.`
                 : results.influencePercent < 15
-                ? `Você aparece para ${results.influencePercent}% das buscas. A maioria dos clientes encontra seus concorrentes antes de você.`
+                ? `Você não aparece para ${100 - results.influencePercent}% dos potenciais compradores. Há espaço para crescer — o plano mostra onde.`
                 : results.influencePercent < 40
-                ? `Você aparece para ${results.influencePercent}% das buscas. Há espaço para crescer — o plano mostra onde.`
+                ? `Você não aparece para ${100 - results.influencePercent}% dos potenciais compradores. Há espaço para crescer — o plano mostra onde.`
                 : `Você aparece para ${results.influencePercent}% das buscas — posição forte. O plano mostra como manter essa vantagem.`}
             </p>
           </div>
