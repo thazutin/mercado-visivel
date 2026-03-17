@@ -1,7 +1,7 @@
 // File: src/app/resultado/[leadId]/page.tsx
 
 import { createClient } from "@supabase/supabase-js";
-import { redirect } from "next/navigation";
+import Link from "next/link";
 import ResultadoClient from "./ResultadoClient";
 
 function getSupabase() {
@@ -11,20 +11,50 @@ function getSupabase() {
   );
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function ErrorScreen({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)] px-4">
+      <div className="text-center max-w-md">
+        <div className="text-5xl mb-6">🔍</div>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-3">{title}</h1>
+        <p className="text-[var(--text-secondary)] mb-8">{subtitle}</p>
+        <Link
+          href="/"
+          className="inline-block px-6 py-3 rounded-xl font-semibold text-white transition-colors"
+          style={{ backgroundColor: "var(--accent-primary)" }}
+        >
+          Fazer novo diagnóstico
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default async function ResultadoPage({ params }: { params: { leadId: string } }) {
   const { leadId } = params;
+
+  if (!UUID_REGEX.test(leadId)) {
+    return <ErrorScreen title="Resultado não encontrado" subtitle="O link que você acessou é inválido. Verifique se copiou o endereço corretamente." />;
+  }
+
   const supabase = getSupabase();
 
   const { data: lead } = await supabase
     .from("leads").select("id, product, region, email, status").eq("id", leadId).single();
 
-  if (!lead) redirect("/?error=not_found");
+  if (!lead) {
+    return <ErrorScreen title="Resultado não encontrado" subtitle="Não encontramos nenhum diagnóstico com esse link. Ele pode ter expirado ou sido removido." />;
+  }
 
   const { data: diagnosis } = await supabase
     .from("diagnoses").select("*").eq("lead_id", leadId)
     .order("created_at", { ascending: false }).limit(1).single();
 
-  if (!diagnosis) redirect("/?error=no_diagnosis");
+  if (!diagnosis) {
+    return <ErrorScreen title="Diagnóstico em processamento" subtitle="Seu diagnóstico ainda está sendo gerado. Tente novamente em alguns instantes." />;
+  }
 
   const raw = diagnosis.raw_data || {};
   const display = buildDisplay(raw);
