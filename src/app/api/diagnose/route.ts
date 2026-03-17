@@ -209,7 +209,7 @@ export async function GET(req: NextRequest) {
   try {
     const { data: lead } = await supabase
       .from("leads")
-      .select("status, diagnosis_display, lat, lng")
+      .select("status, diagnosis_display, lat, lng, plan_status")
       .eq("id", leadId)
       .single();
 
@@ -221,10 +221,17 @@ export async function GET(req: NextRequest) {
       const displayData = lead.diagnosis_display;
       if (!displayData.lat && lead.lat) displayData.lat = lead.lat;
       if (!displayData.lng && lead.lng) displayData.lng = lead.lng;
-      return NextResponse.json({ status: "done", results: displayData });
+      return NextResponse.json({
+        status: "done",
+        results: displayData,
+        plan_status: lead.plan_status || null,
+      });
     }
 
-    return NextResponse.json({ status: lead.status || "processing" });
+    return NextResponse.json({
+      status: lead.status || "processing",
+      plan_status: lead.plan_status || null,
+    });
   } catch (err) {
     console.error("[Diagnose] GET error:", err);
     return NextResponse.json({ status: "processing" });

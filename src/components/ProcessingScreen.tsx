@@ -121,7 +121,7 @@ export default function ProcessingScreen({ product, region, businessName, onComp
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   return (
-    <div style={{
+    <div id="viro-processing-screen" style={{
       minHeight: "100vh",
       background: V.night,
       display: "flex",

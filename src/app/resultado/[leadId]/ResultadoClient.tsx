@@ -4,6 +4,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import InstantValueScreen from "@/components/InstantValueScreen";
+import PostPaymentScreen from "@/components/PostPaymentScreen";
 
 interface Props {
   product: string;
@@ -17,21 +18,58 @@ export default function ResultadoClient({ product, region, leadId, results, isPa
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [showPaidBanner, setShowPaidBanner] = useState(false);
+  const [showPostPayment, setShowPostPayment] = useState(false);
+  const [planReady, setPlanReady] = useState(false);
 
+  // Detecta retorno do Stripe com ?paid=true
   useEffect(() => {
     if (searchParams.get("paid") === "true") {
-      setShowPaidBanner(true);
-      const timer = setTimeout(() => {
-        router.replace(`/resultado/${leadId}`, { scroll: false });
-      }, 3000);
-      return () => clearTimeout(timer);
+      setShowPostPayment(true);
+      // Remove ?paid=true da URL sem recarregar
+      router.replace(`/resultado/${leadId}`, { scroll: false });
     }
   }, [searchParams, leadId, router]);
 
+  // Quando na tela pós-pagamento, poll para saber quando o plano ficou pronto
+  useEffect(() => {
+    if (!showPostPayment) return;
+
+    const poll = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/diagnose?leadId=${leadId}`);
+        const data = await res.json();
+        // Checa se o plano já foi gerado (lead.plan_status === "ready")
+        if (data.planReady || data.plan_status === "ready") {
+          setPlanReady(true);
+          clearInterval(poll);
+        }
+      } catch {
+        // ignora erros de polling
+      }
+    }, 10_000); // Poll a cada 10s
+
+    // Timeout: após 5 min, redireciona mesmo assim
+    const timeout = setTimeout(() => {
+      clearInterval(poll);
+      setShowPostPayment(false);
+    }, 5 * 60_000);
+
+    return () => { clearInterval(poll); clearTimeout(timeout); };
+  }, [showPostPayment, leadId]);
+
+  // Quando plano fica pronto, aguarda 2s e sai da tela de loading
+  useEffect(() => {
+    if (!planReady) return;
+    const timer = setTimeout(() => {
+      setShowPostPayment(false);
+      // Recarrega a página para pegar dados atualizados
+      window.location.reload();
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [planReady]);
+
   const handleCheckout = useCallback(async (coupon?: string) => {
     if (isPaid) {
-      // Já pagou — rola até o conteúdo completo na própria página pública
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -51,29 +89,19 @@ export default function ResultadoClient({ product, region, leadId, results, isPa
     }
   }, [leadId, isPaid]);
 
+  // Tela pós-pagamento fullscreen
+  if (showPostPayment) {
+    return <PostPaymentScreen product={product} region={region} />;
+  }
+
   return (
-    <>
-      {showPaidBanner && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000,
-          background: "#2D9B83", color: "#FEFEFF", textAlign: "center",
-          padding: "14px 20px", fontSize: 14, fontWeight: 600,
-          fontFamily: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-        }}>
-          ✓ Pagamento confirmado — seu diagnóstico completo está sendo preparado.
-          <div style={{ fontSize: 12, fontWeight: 400, marginTop: 4, opacity: 0.9 }}>
-            O diagnóstico completo será enviado por email em até 5 minutos.
-          </div>
-        </div>
-      )}
-      <InstantValueScreen
-        product={product}
-        region={region}
-        results={results}
-        onCheckout={handleCheckout}
-        loading={checkoutLoading}
-        leadId={leadId}
-      />
-    </>
+    <InstantValueScreen
+      product={product}
+      region={region}
+      results={results}
+      onCheckout={handleCheckout}
+      loading={checkoutLoading}
+      leadId={leadId}
+    />
   );
 }
