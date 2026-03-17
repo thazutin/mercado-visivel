@@ -13,24 +13,63 @@ export const INTENT_WEIGHTS: Record<TermIntent, number> = {
   informational: 0.1,
 };
 
+// Language-specific prompt configuration for term generation
+const LOCALE_PROMPTS: Record<string, {
+  expertRole: string;
+  nearMe: string;
+  nearMeVariations: string;
+  ticketPrefix: string;
+  b2gExamples: string;
+  b2bExamples: string;
+}> = {
+  'pt-BR': {
+    expertRole: 'especialista em marketing local e comportamento de busca do consumidor brasileiro',
+    nearMe: 'perto de mim',
+    nearMeVariations: '"perto de mim", "na minha região", "próximo"',
+    ticketPrefix: 'R$',
+    b2gExamples: '"licitação [produto]", "pregão [serviço]", "fornecedor [produto] governo", "ata de registro de preços [produto]"',
+    b2bExamples: '"contabilidade para empresas", "fornecedor [produto] atacado"',
+  },
+  'en': {
+    expertRole: 'expert in local marketing and consumer search behavior',
+    nearMe: 'near me',
+    nearMeVariations: '"near me", "in my area", "nearby", "close to me"',
+    ticketPrefix: '$',
+    b2gExamples: '"government contract [product]", "RFP [service]", "[product] supplier government", "federal procurement [product]"',
+    b2bExamples: '"[product] for businesses", "[product] wholesale supplier", "B2B [service] provider"',
+  },
+  'es': {
+    expertRole: 'experto en marketing local y comportamiento de búsqueda del consumidor',
+    nearMe: 'cerca de mí',
+    nearMeVariations: '"cerca de mí", "en mi zona", "próximo", "cercano"',
+    ticketPrefix: '€',
+    b2gExamples: '"licitación [producto]", "contratación pública [servicio]", "proveedor [producto] gobierno"',
+    b2bExamples: '"[producto] para empresas", "proveedor [producto] al por mayor"',
+  },
+};
+
 export function buildTermGenerationPrompt(input: FormInput): string {
+  const lp = LOCALE_PROMPTS[input.locale] || LOCALE_PROMPTS['pt-BR'];
+
   const context = [
     `NEGÓCIO: ${input.product}`,
     input.differentiator ? `DIFERENCIAL: ${input.differentiator}` : null,
     `REGIÃO: ${input.region}`,
     input.address ? `ENDEREÇO: ${input.address}` : null,
     input.customerDescription ? `COMO O CLIENTE DESCREVE: ${input.customerDescription}` : null,
-    input.ticket ? `TICKET MÉDIO: R$${input.ticket}` : null,
+    input.ticket ? `TICKET MÉDIO: ${lp.ticketPrefix}${input.ticket}` : null,
+    `IDIOMA DO MERCADO: ${input.locale}`,
+    `PAÍS: ${input.countryCode}`,
   ].filter(Boolean).join('\n');
 
-  return `Você é um especialista em marketing local e comportamento de busca do consumidor brasileiro.
+  return `Você é um ${lp.expertRole}.
 
 CONTEXTO:
 ${context}
 
 TAREFA:
 1. Classifique o tipo de cliente deste negócio: "b2c", "b2b" ou "b2g"
-2. Gere 25-30 termos de busca que pessoas reais usariam no Google
+2. Gere 25-30 termos de busca que pessoas reais usariam no Google NO IDIOMA "${input.locale}"
 
 CLASSIFICAÇÃO clientType:
 - "b2c" se vende para pessoas físicas/consumidores (ex: clínica, salão, restaurante, academia, arquiteto residencial, loja)
@@ -38,13 +77,14 @@ CLASSIFICAÇÃO clientType:
 - "b2g" se vende predominantemente para GOVERNO / setor público (ex: fornecedor de licitações, empresa de obras públicas, TI para governo, uniformes para prefeituras, serviços de engenharia para órgãos públicos)
 
 REGRAS para termos:
-1. Linguagem natural — como uma pessoa digitaria no Google
+1. Linguagem natural — como uma pessoa digitaria no Google NO IDIOMA "${input.locale}"
 2. NÃO inclua nomes de cidades, bairros ou regiões nos termos — a localização é configurada separadamente via geo-targeting
-3. HEAD TERMS obrigatórios: categoria genérica + "perto de mim" (ex: "arquiteto perto de mim") deve vir primeiro
-4. Use variações genéricas de proximidade: "perto de mim", "na minha região", "próximo" — os termos devem ser o que alguém JÁ NAQUELA LOCALIZAÇÃO digitaria
+3. HEAD TERMS obrigatórios: categoria genérica + "${lp.nearMe}" (ex: "[category] ${lp.nearMe}") deve vir primeiro
+4. Use variações genéricas de proximidade: ${lp.nearMeVariations} — os termos devem ser o que alguém JÁ NAQUELA LOCALIZAÇÃO digitaria
 5. Considere a tensão: o dono diz "clínica de estética avançada", o cliente busca "botox preço"
-6. Se b2b: gere termos que empresários e decisores buscam ao contratar (ex: "contabilidade para empresas", "fornecedor [produto] atacado"). Evite termos de consumidor final.
-7. Se b2g: gere termos que gestores públicos e equipes de compras buscam (ex: "licitação [produto]", "pregão [serviço]", "fornecedor [produto] governo", "ata de registro de preços [produto]"). Inclua termos de compliance e certificação.
+6. Se b2b: gere termos que empresários e decisores buscam ao contratar (ex: ${lp.b2bExamples}). Evite termos de consumidor final.
+7. Se b2g: gere termos que gestores públicos e equipes de compras buscam (ex: ${lp.b2gExamples}). Inclua termos de compliance e certificação.
+8. TODOS os termos devem estar no idioma "${input.locale}" — não misture idiomas
 
 DISTRIBUIÇÃO:
 - TRANSACIONAIS (8-12): prontos para comprar/contratar
@@ -57,7 +97,7 @@ FORMATO (JSON estrito, sem markdown):
 {
   "clientType": "b2c",
   "terms": [
-    { "term": "botox preço perto de mim", "intent": "transactional", "category": "core", "rationale": "Alta intenção + preço + proximidade" }
+    { "term": "botox preço ${lp.nearMe}", "intent": "transactional", "category": "core", "rationale": "Alta intenção + preço + proximidade" }
   ]
 }
 

@@ -4,9 +4,9 @@
 // ============================================================================
 
 import type { LeadFormData } from "./schema";
-import type { FormInput, DigitalAsset, CompetitorInput } from "../types/pipeline.types";
+import type { FormInput, DigitalAsset, CompetitorInput } from "./types/pipeline.types";
 
-export function adaptFormToInput(form: LeadFormData, locale: string): FormInput {
+export function adaptFormToInput(form: LeadFormData, locale: string, countryCode: string = 'BR'): FormInput {
   // --- Digital Assets ---
   const digitalAssets: DigitalAsset[] = [];
 
@@ -100,6 +100,7 @@ export function adaptFormToInput(form: LeadFormData, locale: string): FormInput 
     challenge: form.challenge,
     freeText: form.freeText || undefined,
     locale: localeMap[locale] || "pt-BR",
+    countryCode: countryCode.toUpperCase() || 'BR',
     submittedAt: new Date().toISOString(),
   };
 }

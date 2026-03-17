@@ -38,8 +38,26 @@ export const AI_VISIBILITY_PROMPT_VERSION = 'ai-visibility-v2.0-serp';
 // Estas são as queries que um usuário real faria a uma AI ou ao Google
 // para encontrar um negócio como este
 
-function buildDiscoveryQueries(product: string, region: string): string[] {
+function buildDiscoveryQueries(product: string, region: string, locale?: string): string[] {
   const shortRegion = region.split(',')[0].trim();
+
+  if (locale === 'en') {
+    return [
+      `best ${product} in ${shortRegion}`,
+      `${product} recommended ${shortRegion}`,
+      `${product} ${shortRegion}`,
+    ];
+  }
+
+  if (locale === 'es') {
+    return [
+      `mejor ${product} en ${shortRegion}`,
+      `${product} recomendado ${shortRegion}`,
+      `${product} ${shortRegion}`,
+    ];
+  }
+
+  // Default: pt-BR
   return [
     `melhor ${product} em ${shortRegion}`,
     `${product} recomendado ${shortRegion}`,
@@ -191,10 +209,12 @@ export async function executeAIVisibilityCheck(
   claudeClient?: { createMessage: (params: any) => Promise<any> },
   // v2.1: Perplexity AI client (opcional — +10 a +35 pts dependendo da dimensão)
   perplexityClient?: (product: string, region: string, businessName: string | null, instagramHandle: string | null) => Promise<PerplexityVisibilityResult>,
+  // v3: locale para gerar queries no idioma correto
+  locale?: string,
 ): Promise<AIVisibilityResult> {
   const startTime = Date.now();
 
-  const queries = buildDiscoveryQueries(product, region);
+  const queries = buildDiscoveryQueries(product, region, locale);
   let serpAppearances = 0;
   let matchMethod: 'maps_name' | 'instagram_handle' | 'none' = 'none';
   let matchedName: string | null = null;

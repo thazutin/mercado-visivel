@@ -5,6 +5,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import InstantValueScreen from "@/components/InstantValueScreen";
 import PostPaymentScreen from "@/components/PostPaymentScreen";
+import { useLocale } from "@/hooks/useLocale";
 
 interface Props {
   product: string;
@@ -18,6 +19,7 @@ export default function ResultadoClient({ product, region, leadId, results, isPa
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { locale } = useLocale();
   const [showPostPayment, setShowPostPayment] = useState(false);
   const [planReady, setPlanReady] = useState(false);
 
@@ -78,7 +80,7 @@ export default function ResultadoClient({ product, region, leadId, results, isPa
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lead_id: leadId, locale: "pt", coupon }),
+        body: JSON.stringify({ lead_id: leadId, locale, coupon }),
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;

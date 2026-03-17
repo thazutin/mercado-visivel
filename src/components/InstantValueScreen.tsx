@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import AnimatedCounter from "./AnimatedCounter";
 import FeedbackWidget from "./FeedbackWidget";
+import { useLocale } from "@/hooks/useLocale";
+import { formatNumber, formatCurrency, getIntlLocale } from "@/lib/formatting";
 
 const V = {
   night: "#161618", graphite: "#232326", slate: "#3A3A40",
@@ -58,13 +60,19 @@ interface Props { product: string; region: string; results: Results; onCheckout:
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function fmtPop(n: number): string {
+function fmtPop(n: number, intlLocale: string = 'pt-BR'): string {
   if (n >= 1_000_000) {
     const m = n / 1_000_000;
-    return m >= 2 ? `${m.toFixed(1).replace(".", ",")} milhões` : `${m.toFixed(1).replace(".", ",")} milhão`;
+    const sep = intlLocale.startsWith('pt') ? ',' : '.';
+    const label = intlLocale.startsWith('pt') ? (m >= 2 ? 'milhões' : 'milhão')
+      : intlLocale.startsWith('es') ? 'millones' : 'million';
+    return `${m.toFixed(1).replace('.', sep)} ${label}`;
   }
-  if (n >= 1_000) return `${Math.round(n / 1_000)} mil`;
-  return n.toLocaleString("pt-BR");
+  if (n >= 1_000) {
+    const label = intlLocale.startsWith('en') ? 'k' : ' mil';
+    return `${Math.round(n / 1_000)}${label}`;
+  }
+  return n.toLocaleString(intlLocale);
 }
 
 function inferIntent(term: string, isB2B?: boolean): { label: string; color: string } {
@@ -126,6 +134,9 @@ export default function InstantValueScreen({ product, region, results, onCheckou
   const [show, setShow] = useState(false);
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
+  const { locale } = useLocale();
+  const intlLocale = getIntlLocale(locale);
+  const fmtNum = (n: number) => formatNumber(n, locale);
   useEffect(() => { setTimeout(() => setShow(true), 100); }, []);
 
   const termCount = results.termGeneration?.count || results.terms.length;
@@ -305,7 +316,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 }}>
                   <span style={{ fontSize: 13, color: V.night, lineHeight: 1.4, flex: 1 }}>{t.term}</span>
                   <span style={{ fontFamily: V.mono, fontSize: 11, color: t.volume > 0 ? V.night : V.ash, width: 60, textAlign: "right", flexShrink: 0 }}>
-                    {t.volume > 0 ? t.volume.toLocaleString("pt-BR") : "—"}
+                    {t.volume > 0 ? t.volume.toLocaleString(intlLocale) : "—"}
                   </span>
                   <span style={{ fontFamily: V.mono, fontSize: 11, color: posColor, fontWeight: pos && pos <= 10 ? 600 : 400, width: 60, textAlign: "right", flexShrink: 0 }}>
                     {posLabel}
@@ -385,7 +396,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                   ))}
                   <div style={{ marginTop: 12, padding: "10px 14px", background: ci!.color === 'green' ? "rgba(45,155,131,0.08)" : ci!.color === 'yellow' ? V.amberWash : V.coralWash, borderRadius: 8, textAlign: "center" }}>
                     <span style={{ fontFamily: V.mono, fontSize: 11, fontWeight: 600, color: ci!.color === 'green' ? V.teal : ci!.color === 'yellow' ? V.amber : V.coral }}>
-                      {ci!.labelText} · {ci!.indexValue.toLocaleString("pt-BR")} buscas por concorrente
+                      {ci!.labelText} · {ci!.indexValue.toLocaleString(intlLocale)} buscas por concorrente
                     </span>
                   </div>
                 </div>
@@ -450,11 +461,11 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             {igData?.dataAvailable ? (
               <>
                 <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 4px", lineHeight: 1.5 }}>
-                  @{igData.handle}: {igData.followers.toLocaleString("pt-BR")} seguidores · {(igData.avgViews || igData.avgLikes || 0).toLocaleString("pt-BR")} alcance médio · {(igData.engagementRate * 100).toFixed(1)}% engajamento · {igData.postsLast30d} posts/30d
+                  @{igData.handle}: {igData.followers.toLocaleString(intlLocale)} seguidores · {(igData.avgViews || igData.avgLikes || 0).toLocaleString(intlLocale)} alcance médio · {(igData.engagementRate * 100).toFixed(1)}% engajamento · {igData.postsLast30d} posts/30d
                 </p>
                 {(igData.recentPostsCount ?? 0) > 0 ? (
                   <p style={{ fontSize: 11, color: V.teal, margin: "0 0 8px", fontWeight: 500 }}>
-                    {igData.recentPostsCount} {igData.recentPostsCount === 1 ? "post" : "posts"} nos últimos 15 dias · {(igData.recentAvgReach || 0).toLocaleString("pt-BR")} alcance médio recente
+                    {igData.recentPostsCount} {igData.recentPostsCount === 1 ? "post" : "posts"} nos últimos 15 dias · {(igData.recentAvgReach || 0).toLocaleString(intlLocale)} alcance médio recente
                   </p>
                 ) : (
                   <p style={{
@@ -475,15 +486,15 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontSize: 12, background: V.amberWash, borderRadius: 4, paddingLeft: 4, paddingRight: 4, marginTop: 2 }}>
                       <span style={{ color: V.amber, fontWeight: 600, width: "30%" }}>@{igData.handle}</span>
-                      <span style={{ color: V.night, width: "20%", textAlign: "right" }}>{igData.followers.toLocaleString("pt-BR")}</span>
-                      <span style={{ color: V.night, width: "25%", textAlign: "right" }}>{(igData.avgViews || igData.avgLikes || 0).toLocaleString("pt-BR")}</span>
+                      <span style={{ color: V.night, width: "20%", textAlign: "right" }}>{igData.followers.toLocaleString(intlLocale)}</span>
+                      <span style={{ color: V.night, width: "25%", textAlign: "right" }}>{(igData.avgViews || igData.avgLikes || 0).toLocaleString(intlLocale)}</span>
                       <span style={{ color: V.night, width: "25%", textAlign: "right" }}>{(igData.engagementRate * 100).toFixed(1)}%</span>
                     </div>
                     {competitors.map((c, i) => (
                       <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 4px", fontSize: 12, borderBottom: i < competitors.length - 1 ? `1px solid ${V.fog}` : "none" }}>
                         <span style={{ color: V.zinc, width: "30%" }}>@{c.handle}</span>
-                        <span style={{ color: V.zinc, width: "20%", textAlign: "right" }}>{c.followers.toLocaleString("pt-BR")}</span>
-                        <span style={{ color: V.zinc, width: "25%", textAlign: "right" }}>{((c as any).avgViews || (c as any).avgLikes || Math.round(c.followers * 0.1)).toLocaleString("pt-BR")}</span>
+                        <span style={{ color: V.zinc, width: "20%", textAlign: "right" }}>{c.followers.toLocaleString(intlLocale)}</span>
+                        <span style={{ color: V.zinc, width: "25%", textAlign: "right" }}>{((c as any).avgViews || (c as any).avgLikes || Math.round(c.followers * 0.1)).toLocaleString(intlLocale)}</span>
                         <span style={{ color: V.zinc, width: "25%", textAlign: "right" }}>{(c.engagementRate * 100).toFixed(1)}%</span>
                       </div>
                     ))}

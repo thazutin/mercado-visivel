@@ -185,11 +185,11 @@ interface MunicipioInfo {
 /**
  * Geocode via Nominatim (OpenStreetMap) — fallback para obter lat/lng do município.
  */
-export async function geocodeNominatim(city: string, state: string): Promise<{ lat: number; lng: number } | null> {
+export async function geocodeNominatim(city: string, state: string, country: string = 'Brazil'): Promise<{ lat: number; lng: number } | null> {
   try {
     const params = new URLSearchParams({
       city,
-      country: 'Brazil',
+      country,
       format: 'json',
       limit: '1',
     });

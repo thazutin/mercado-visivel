@@ -12,12 +12,13 @@ const WHATSAPP_TEMPLATES = {
   plano_pronto: "HX904aa5fc3eaee7c3fc2351626ce3fb52",
 } as const;
 
-function cleanPhone(whatsapp: string): string {
+function cleanPhone(whatsapp: string, countryPrefix: string = '55'): string {
   const digits = whatsapp.replace(/\D/g, "");
   if (!digits) return "";
-  // Garante formato E.164 brasileiro: +55 + DDD (2 dígitos) + número (8-9 dígitos)
-  const withCountry = digits.startsWith("55") ? digits : `55${digits}`;
-  console.log(`[Notify] cleanPhone: "${whatsapp}" → "+${withCountry}"`);
+  // Garante formato E.164: prefixo do país + número
+  const prefix = countryPrefix.replace(/\D/g, "");
+  const withCountry = digits.startsWith(prefix) ? digits : `${prefix}${digits}`;
+  console.log(`[Notify] cleanPhone: "${whatsapp}" → "+${withCountry}" (prefix=${prefix})`);
   return withCountry;
 }
 

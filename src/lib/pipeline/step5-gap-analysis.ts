@@ -75,7 +75,28 @@ ${competitorIgLines || '  Nenhum concorrente com dados disponíveis'}`;
   const isB2B = input.clientType === 'b2b';
   const isB2G = input.clientType === 'b2g';
 
+  // Currency symbol based on market potential currency
+  const currencySymbol = sizing.sizing.marketPotential.currency === 'USD' ? '$'
+    : sizing.sizing.marketPotential.currency === 'EUR' ? '€' : 'R$';
+
+  // Professional registries by country (used in B2B context)
+  const professionalRegistries: Record<string, string> = {
+    'pt-BR': 'OAB, CRC, CRM etc.',
+    'en': 'state bar, CPA board, medical board, etc.',
+    'es': 'colegios profesionales, registros oficiales, etc.',
+  };
+  const registries = professionalRegistries[input.locale] || professionalRegistries['pt-BR'];
+
+  // Determine response language
+  const languageInstruction = input.locale === 'en'
+    ? 'Respond ENTIRELY in English. All text fields in the JSON must be in English.'
+    : input.locale === 'es'
+    ? 'Responde ENTERAMENTE en español. Todos los campos de texto del JSON deben estar en español.'
+    : 'Responda INTEIRAMENTE em português brasileiro. Todos os campos de texto no JSON devem estar em português.';
+
   return `Você é Vero, o agente de inteligência de mercado do Virô. Você analisa dados reais — não opina, não especula. Seu tom é preciso, fundamentado, sem floreio. Direto ao ponto que importa.
+
+${languageInstruction}
 
 Analise os dados abaixo e:
 1. Detecte os gaps mais relevantes entre a posição declarada e a realidade
@@ -87,13 +108,13 @@ DECLARAÇÕES DO DONO:
   Diferencial declarado: "${input.differentiator}"
   Maior desafio: "${input.challenge}"
   Canais de aquisição: ${input.customerSources.join(', ')}
-  ${input.ticket > 0 ? `Ticket médio: R$${input.ticket}` : ''}
+  ${input.ticket > 0 ? `Ticket médio: ${currencySymbol}${input.ticket}` : ''}
   ${input.freeText ? `Contexto adicional: "${input.freeText}"` : ''}
 
 DADOS REAIS DE MERCADO:
   Volume total de busca: ${volumes.totalMonthlyVolume} buscas/mês
   Volume ponderado por intenção: ${volumes.weightedMonthlyVolume} buscas/mês
-  Mercado potencial mensal: R$${sizing.sizing.marketPotential.low.toLocaleString()} — R$${sizing.sizing.marketPotential.high.toLocaleString()}
+  Mercado potencial mensal: ${currencySymbol}${sizing.sizing.marketPotential.low.toLocaleString()} — ${currencySymbol}${sizing.sizing.marketPotential.high.toLocaleString()}
   Influência digital total: ${influence.influence.totalInfluence}%
 
 TERMOS DE MAIOR VOLUME:
@@ -154,7 +175,7 @@ REGRAS:
 - Escreva todas as frases por extenso — sem abreviações obscuras ou palavras truncadas
 - Use o índice de saturação para contextualizar as rotas: se subatendido, enfatize captura de demanda existente; se saturado, enfatize diferenciação e nicho. NUNCA mencione o valor numérico do índice nem os pesos percentuais internos no texto gerado
 ${isB2G ? `- CONTEXTO B2G: Este negócio vende para GOVERNO / setor público. As rotas devem focar em: cadastro em portais de compras (ComprasNet, BEC, licitações estaduais), registro no SICAF, visibilidade em buscas de licitação, site com documentação técnica/certidões, presença em associações setoriais, e credibilidade institucional.${pncp ? ` Dados PNCP: ${pncp.totalEncontradas} contratações recentes no segmento (R$${(pncp.valorTotalEstimado / 1000).toFixed(0)}k total, ${pncp.orgaosUnicos} órgãos). Modalidades mais comuns: ${pncp.modalidades.slice(0, 3).map(m => m.modalidade).join(', ')}.` : ''}` : ''}
-${isB2B ? `- CONTEXTO B2B: Este negócio vende para OUTRAS EMPRESAS, não consumidores finais. As rotas devem focar em: autoridade setorial, cases de empresas atendidas, presença em diretórios profissionais (OAB, CRC, CRM etc.), LinkedIn como canal primário, e indicação estruturada. Evite recomendar conteúdo de bastidores pessoal ou estratégias voltadas a consumidor final.` : ''}
+${isB2B ? `- CONTEXTO B2B: Este negócio vende para OUTRAS EMPRESAS, não consumidores finais. As rotas devem focar em: autoridade setorial, cases de empresas atendidas, presença em diretórios profissionais (${registries}), LinkedIn como canal primário, e indicação estruturada. Evite recomendar conteúdo de bastidores pessoal ou estratégias voltadas a consumidor final.` : ''}
 
 FORMATO DE RESPOSTA (JSON estrito, sem markdown):
 {

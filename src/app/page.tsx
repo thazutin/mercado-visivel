@@ -5,6 +5,8 @@ import ProcessingScreen from "@/components/ProcessingScreen";
 import InstantValueScreen from "@/components/InstantValueScreen";
 import { initialFormData, type LeadFormData, stepValidation } from "@/lib/schema";
 import { dictionaries, type Locale } from "@/lib/i18n";
+import { useLocale } from "@/hooks/useLocale";
+import LocaleToggle from "@/components/LocaleToggle";
 
 
 // ─── Design Tokens ─────────────────────────────────────────────────
@@ -161,7 +163,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 // ═════════════════════════════════════════════════════════════════════
 export default function Home() {
-  const t = dictionaries.pt;
+  const { locale, setLocale, t } = useLocale();
   const [screen, setScreen] = useState<"landing" | "processing" | "value">("landing");
   const [formStep, setFormStep] = useState(1);
   const [formData, setFormData] = useState<LeadFormData>(initialFormData);
@@ -200,7 +202,7 @@ export default function Home() {
       const res = await fetch("/api/diagnose", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, locale }),
       });
       const data = await res.json();
       if (data.results) {
@@ -360,9 +362,12 @@ export default function Home() {
         opacity: heroVisible ? 1 : 0, transition: "opacity 0.6s ease",
       }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
-          <span style={{ fontFamily: V.display, fontSize: 24, fontWeight: 700, color: V.white, letterSpacing: "-0.03em" }}>
-            Virô
-          </span>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <span style={{ fontFamily: V.display, fontSize: 24, fontWeight: 700, color: V.white, letterSpacing: "-0.03em" }}>
+              Virô
+            </span>
+            <LocaleToggle locale={locale} onChange={setLocale} />
+          </div>
           <h1 style={{
             fontFamily: V.display, fontSize: "clamp(28px, 5vw, 38px)", fontWeight: 700,
             color: V.white, letterSpacing: "-0.03em", margin: "24px 0 16px", lineHeight: 1.2,

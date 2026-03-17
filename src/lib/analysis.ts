@@ -17,6 +17,9 @@ import { executeStep5 } from "./pipeline/step5-gap-analysis";
 import { executeAIVisibilityCheck } from "./pipeline/ai-visibility";
 import { getIBGEMunicipalData, fetchAudienciaEstimada, geocodeNominatim } from "./pipeline/ibge";
 import { inferirTargetAudiencia } from "./pipeline/audience-target";
+import { getCountryConfig, type CountryConfig } from "./country-config";
+import { getCensusAdapter } from "./pipeline/census";
+import { getProcurementAdapter } from "./pipeline/procurement";
 import {
   createApifySerpScraper,
   createApifyMapsScraper,
@@ -239,12 +242,14 @@ async function fetchTermVolumes(
 
 export async function runInstantAnalysis(
   formData: LeadFormData,
-  locale: string
+  locale: string,
+  countryCode: string = 'BR',
 ): Promise<Momento1Result> {
   const pipelineStart = Date.now();
   const claude = getClaudeClient();
   const apifyConfig = getApifyConfig();
-  const input = adaptFormToInput(formData, locale);
+  const countryConfig = getCountryConfig(countryCode);
+  const input = adaptFormToInput(formData, locale, countryCode);
 
   const sourcesUsed: string[] = ["claude_term_gen"];
   const sourcesUnavailable: string[] = [];
@@ -665,7 +670,7 @@ Responda APENAS em JSON, sem markdown:
   if (!pipelineLat || !pipelineLng) {
     console.log(`[Pipeline] Lat/lng não veio do form (lat=${formData.lat}, lng=${formData.lng}) — geocodificando via Nominatim...`);
     try {
-      const geo = await geocodeNominatim(extractedCity, extractedState);
+      const geo = await geocodeNominatim(extractedCity, extractedState, countryConfig.nominatimCountry);
       if (geo) {
         pipelineLat = geo.lat;
         pipelineLng = geo.lng;
@@ -701,6 +706,7 @@ Responda APENAS em JSON, sem markdown:
     input.ticket,
     category,
     ibgeData,
+    countryConfig.currency,
   );
 
   console.log(
@@ -828,17 +834,47 @@ Responda APENAS em JSON, sem markdown:
   // =========================================================================
   // AUDIÊNCIA ESTIMADA (IBGE + Claude Haiku) — roda em paralelo com AI Visibility
   // =========================================================================
-  const isNacional = /brasil.*nacional|nacional|todo o brasil/i.test(input.region);
+  const isNacional = countryConfig.nationalCheckRegex.test(input.region);
 
   const audienciaPromise = (async (): Promise<{ estimada: AudienciaEstimada | null; target: AudienciaTarget | null }> => {
     try {
-      const estimada = await fetchAudienciaEstimada(
-        extractedCity,
-        extractedState,
-        isNacional,
-        pipelineLat,
-        pipelineLng,
-      );
+      let estimada: AudienciaEstimada | null = null;
+
+      if (countryCode === 'BR') {
+        // Use existing IBGE logic for Brazil
+        estimada = await fetchAudienciaEstimada(
+          extractedCity,
+          extractedState,
+          isNacional,
+          pipelineLat,
+          pipelineLng,
+        );
+      } else {
+        // Use census adapter for other countries
+        if (isNacional) {
+          estimada = {
+            populacaoRaio: countryConfig.nationalPopulation,
+            raioKm: null,
+            densidade: 'nacional',
+            municipioNome: countryConfig.nationalLabel,
+            municipioId: 0,
+          };
+        } else {
+          const censusAdapter = getCensusAdapter(countryConfig.populationApi);
+          const censusResult = censusAdapter ? await censusAdapter.getPopulation(extractedCity, extractedState) : null;
+          if (censusResult) {
+            const densidade = censusResult.populacao >= 500_000 ? 'alta' as const : 'baixa' as const;
+            estimada = {
+              populacaoRaio: censusResult.populacao,
+              raioKm: densidade === 'alta' ? 3 : 10,
+              densidade,
+              municipioNome: censusResult.municipioNome,
+              municipioId: parseInt(censusResult.municipioId, 10) || 0,
+              ibgeAno: censusResult.ano,
+            };
+          }
+        }
+      }
       if (!estimada) return { estimada: null, target: null };
 
       const target = await inferirTargetAudiencia(
@@ -894,6 +930,7 @@ Responda APENAS em JSON, sem markdown:
         dataForSEOClient ? { getKeywordVolumes: dataForSEOClient } : undefined,
         undefined,                                 // claude client deprecated em v2
         perplexityClient,
+        input.locale === 'pt-BR' ? 'pt' : input.locale === 'es' ? 'es' : 'en',
       ),
       20_000,
       "AI Visibility",
@@ -919,22 +956,55 @@ Responda APENAS em JSON, sem markdown:
   console.log(`[Pipeline] Step 4 OK: influence ${step4.influence.totalInfluence}%`);
 
   // =========================================================================
-  // STEP 4c — PNCP (Contratações Públicas) — only for B2G
+  // STEP 4c — Procurement (Contratações Públicas) — only for B2G
+  // Uses procurement adapter factory (PNCP for BR, SAM.gov for US, etc.)
   // =========================================================================
   let pncpData: PNCPResumo | null = null;
   if (inferredClientType === 'b2g') {
     try {
-      pncpData = await withTimeout(
-        buscarContratacoesPNCP(input.product, extractedState || undefined),
-        12_000,
-        "PNCP",
-      );
-      if (pncpData && pncpData.totalEncontradas > 0) {
-        sourcesUsed.push("pncp");
-        console.log(`[Pipeline] PNCP OK: ${pncpData.totalEncontradas} contratações, R$${(pncpData.valorTotalEstimado / 1000).toFixed(0)}k`);
+      const procurementAdapter = getProcurementAdapter(countryConfig.procurementApi as any);
+      if (procurementAdapter) {
+        const procResult = await withTimeout(
+          procurementAdapter.searchContracts(input.product, extractedState || undefined),
+          12_000,
+          "Procurement",
+        );
+        if (procResult && procResult.totalFound > 0) {
+          // Convert ProcurementResult back to PNCPResumo for downstream compatibility
+          pncpData = {
+            totalEncontradas: procResult.totalFound,
+            contratacoes: procResult.contracts.map(c => ({
+              numeroContratacao: c.id,
+              objeto: c.description,
+              orgaoEntidade: c.entity,
+              uf: c.region,
+              modalidade: c.category,
+              valorEstimado: c.estimatedValue,
+              dataPublicacao: c.publishDate,
+              situacao: c.status,
+            })),
+            valorTotalEstimado: procResult.totalEstimatedValue,
+            modalidades: procResult.categories.map(c => ({ modalidade: c.category, count: c.count })),
+            orgaosUnicos: procResult.uniqueEntities,
+            periodoConsultado: procResult.period,
+          };
+          sourcesUsed.push("procurement");
+          console.log(`[Pipeline] Procurement OK: ${pncpData.totalEncontradas} contracts, ${countryConfig.currencySymbol}${(pncpData.valorTotalEstimado / 1000).toFixed(0)}k`);
+        }
+      } else {
+        // Fallback: direct PNCP call for backward compatibility with BR
+        pncpData = await withTimeout(
+          buscarContratacoesPNCP(input.product, extractedState || undefined),
+          12_000,
+          "PNCP",
+        );
+        if (pncpData && pncpData.totalEncontradas > 0) {
+          sourcesUsed.push("pncp");
+          console.log(`[Pipeline] PNCP OK: ${pncpData.totalEncontradas} contratações, R$${(pncpData.valorTotalEstimado / 1000).toFixed(0)}k`);
+        }
       }
     } catch (err) {
-      console.warn("[Pipeline] PNCP failed/skipped:", (err as Error).message);
+      console.warn("[Pipeline] Procurement/PNCP failed/skipped:", (err as Error).message);
     }
   }
 

@@ -180,6 +180,33 @@ export const dictionaries: Record<Locale, any> = {
       "Medindo sua influência digital...",
       "Preparando seu resultado...",
     ],
+
+    // ─── Errors ───
+    errorInvalidData: "Dados inválidos",
+    errorSaveLead: "Erro ao salvar lead",
+    errorInternal: "Erro interno ao processar análise",
+
+    // ─── Notifications ───
+    notifyDiagnosisSubject: (product: string, region: string) =>
+      `Seu diagnóstico de mercado está pronto — ${product} em ${region}`,
+    notifyPlanSubject: (product: string, region: string) =>
+      `Seu plano de ação está pronto — ${product} em ${region}`,
+    notifyInvisible: (region: string) => `Seu negócio está invisível em ${region}.`,
+    notifyLowInfluence: (pct: number, region: string) =>
+      `Você captura apenas ${pct}% do mercado digital em ${region}.`,
+    notifyHighInfluence: (pct: number) =>
+      `Você já captura ${pct}% do mercado — mas pode mais.`,
+    notifySearchLabel: "Buscas/mês",
+    notifyDigitalInfluence: "Influência Digital",
+    notifyCtaButton: "Ver meu diagnóstico completo",
+    notifyDataSources: "Dados coletados em tempo real: Google Search, Google Maps, Instagram, IA e IBGE.",
+    notifyPlanReady: "Seu plano de 90 dias está pronto.",
+    notifyPlanItems: [
+      "Diagnóstico completo por canal",
+      "Plano semanal — 12 semanas com ações específicas",
+      "Briefings semanais toda segunda-feira",
+    ],
+    notifyPlanCta: "Acessar meu resultado",
   },
 
   en: {
@@ -343,6 +370,33 @@ export const dictionaries: Record<Locale, any> = {
       "Measuring your digital influence...",
       "Preparing your result...",
     ],
+
+    // ─── Errors ───
+    errorInvalidData: "Invalid data",
+    errorSaveLead: "Error saving lead",
+    errorInternal: "Internal error processing analysis",
+
+    // ─── Notifications ───
+    notifyDiagnosisSubject: (product: string, region: string) =>
+      `Your market diagnosis is ready — ${product} in ${region}`,
+    notifyPlanSubject: (product: string, region: string) =>
+      `Your action plan is ready — ${product} in ${region}`,
+    notifyInvisible: (region: string) => `Your business is invisible in ${region}.`,
+    notifyLowInfluence: (pct: number, region: string) =>
+      `You only capture ${pct}% of the digital market in ${region}.`,
+    notifyHighInfluence: (pct: number) =>
+      `You already capture ${pct}% of the market — but there's room to grow.`,
+    notifySearchLabel: "Searches/mo",
+    notifyDigitalInfluence: "Digital Influence",
+    notifyCtaButton: "See my full diagnosis",
+    notifyDataSources: "Data collected in real-time: Google Search, Google Maps, Instagram, AI and census data.",
+    notifyPlanReady: "Your 90-day plan is ready.",
+    notifyPlanItems: [
+      "Full diagnostic by channel",
+      "Weekly plan — 12 weeks with specific actions",
+      "Weekly briefings every Monday",
+    ],
+    notifyPlanCta: "Access my results",
   },
 
   es: {
@@ -506,5 +560,32 @@ export const dictionaries: Record<Locale, any> = {
       "Midiendo tu influencia digital...",
       "Preparando tu resultado...",
     ],
+
+    // ─── Errors ───
+    errorInvalidData: "Datos inválidos",
+    errorSaveLead: "Error al guardar lead",
+    errorInternal: "Error interno al procesar análisis",
+
+    // ─── Notifications ───
+    notifyDiagnosisSubject: (product: string, region: string) =>
+      `Tu diagnóstico de mercado está listo — ${product} en ${region}`,
+    notifyPlanSubject: (product: string, region: string) =>
+      `Tu plan de acción está listo — ${product} en ${region}`,
+    notifyInvisible: (region: string) => `Tu negocio es invisible en ${region}.`,
+    notifyLowInfluence: (pct: number, region: string) =>
+      `Solo capturas ${pct}% del mercado digital en ${region}.`,
+    notifyHighInfluence: (pct: number) =>
+      `Ya capturas ${pct}% del mercado — pero puedes más.`,
+    notifySearchLabel: "Búsquedas/mes",
+    notifyDigitalInfluence: "Influencia Digital",
+    notifyCtaButton: "Ver mi diagnóstico completo",
+    notifyDataSources: "Datos recopilados en tiempo real: Google Search, Google Maps, Instagram, IA y datos censales.",
+    notifyPlanReady: "Tu plan de 90 días está listo.",
+    notifyPlanItems: [
+      "Diagnóstico completo por canal",
+      "Plan semanal — 12 semanas con acciones específicas",
+      "Briefings semanales cada lunes",
+    ],
+    notifyPlanCta: "Acceder a mi resultado",
   },
 };
