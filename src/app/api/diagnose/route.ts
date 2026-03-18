@@ -187,10 +187,10 @@ export async function POST(req: NextRequest) {
       results: display,
     });
   } catch (err) {
-    const errMsg = err instanceof Error ? `${err.message}\n${err.stack}` : String(err);
-    console.error("[Diagnose] Unexpected error:", errMsg);
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[Diagnose] Unexpected error:", err instanceof Error ? `${err.message}\n${err.stack}` : err);
     return NextResponse.json(
-      { error: "Erro interno ao processar análise", debug: errMsg },
+      { error: "Erro interno ao processar análise", reason: errMsg },
       { status: 500 }
     );
   }
