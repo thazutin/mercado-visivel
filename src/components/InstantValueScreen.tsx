@@ -555,7 +555,9 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                   <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 600, color: i === 0 ? V.amber : V.zinc, background: i === 0 ? "rgba(207,133,35,0.15)" : V.fog, width: 20, height: 20, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{route.priority}</span>
                   <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{route.title}</span>
-                  <Chip color={route.horizon === "curto prazo" ? V.teal : V.amber}>{route.horizon}</Chip>
+                  <Chip color={route.horizon === "curto prazo" ? V.teal : route.horizon === "longo prazo" ? V.coral : V.amber}>
+                    {route.horizon === "curto prazo" ? "1–4 semanas" : route.horizon === "médio prazo" ? "1–3 meses" : route.horizon === "longo prazo" ? "3–6 meses" : route.horizon}
+                  </Chip>
                 </div>
                 <p style={{ fontSize: 12, color: V.zinc, margin: "4px 0 0", lineHeight: 1.5, paddingLeft: 28 }}>{route.rationale}</p>
               </div>

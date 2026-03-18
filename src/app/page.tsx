@@ -367,7 +367,7 @@ export default function Home() {
             fontFamily: V.display, fontSize: "clamp(28px, 5vw, 38px)", fontWeight: 700,
             color: V.white, letterSpacing: "-0.03em", margin: "24px 0 16px", lineHeight: 1.2,
           }}>
-            {t.heroTitle1} <span style={{ color: V.amber }}>{t.heroTitle2}</span>
+            Analise a visibilidade do seu negócio <span style={{ color: V.amber }}>no mercado local</span>
           </h1>
           <p style={{ fontSize: 15, color: V.ash, lineHeight: 1.6, margin: "0 0 8px" }}>
             {t.heroSubShort}
@@ -427,8 +427,10 @@ export default function Home() {
               onClick={() => { if (formStep < totalSteps) setFormStep(formStep + 1); else handleSubmit(); }}
               disabled={!isStepValid}
               style={{
-                background: formStep === totalSteps ? V.amber : V.night,
-                color: V.white, border: "none", padding: "12px 28px", borderRadius: 10,
+                background: formStep === totalSteps ? V.amber : V.white,
+                color: formStep === totalSteps ? V.white : V.night,
+                border: formStep === totalSteps ? "none" : `2px solid ${V.night}`,
+                padding: "12px 28px", borderRadius: 10,
                 fontSize: 14, fontWeight: 600, cursor: isStepValid ? "pointer" : "not-allowed",
                 opacity: isStepValid ? 1 : 0.4, transition: "all 0.15s",
               }}
@@ -497,7 +499,7 @@ export default function Home() {
               </div>
               <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>negócios disputando atenção com você</p>
               <span style={{ display: "inline-block", marginTop: 6, fontFamily: V.mono, fontSize: 9, padding: "2px 8px", borderRadius: 100, background: V.amberWash, color: V.amber, fontWeight: 600 }}>
-                Mercado equilibrado
+                Concorrência compatível com a demanda
               </span>
             </div>
 
@@ -525,9 +527,9 @@ export default function Home() {
               Oportunidades identificadas
             </p>
             {[
-              { n: 1, title: "Aparecer no Google quando buscam você", horizon: "curto prazo" },
-              { n: 2, title: "Mostrar seu trabalho no Instagram", horizon: "curto prazo" },
-              { n: 3, title: "Ganhar confiança com avaliações reais", horizon: "médio prazo" },
+              { n: 1, title: "Aparecer no Google quando buscam você", horizon: "1–4 semanas" },
+              { n: 2, title: "Mostrar seu trabalho no Instagram", horizon: "1–4 semanas" },
+              { n: 3, title: "Ganhar confiança com avaliações reais", horizon: "1–3 meses" },
             ].map((r) => (
               <div key={r.n} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderBottom: r.n < 3 ? `1px solid ${V.fog}` : "none" }}>
                 <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 700, color: V.amber, background: V.amberWash, width: 20, height: 20, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -546,7 +548,7 @@ export default function Home() {
             textAlign: "center", marginTop: -20, position: "relative",
           }}>
             <p style={{ fontSize: 13, fontWeight: 600, color: V.amber, margin: 0 }}>
-              Receba seu plano de 90 dias para aumentar sua influência →
+              Preencha o formulário acima e receba seu diagnóstico grátis →
             </p>
           </div>
         </div>

@@ -5,8 +5,8 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Virô — Seu mercado, visível.",
-  description: "Quanto do seu mercado local te conhece? Análise real de demanda, concorrência e posicionamento. Grátis. 30 segundos.",
+  title: "Virô — Analise a visibilidade do seu negócio no mercado local",
+  description: "Descubra como seu negócio aparece no Google, Instagram e IA. Análise real de demanda, concorrência e posicionamento para negócios locais. Grátis em 60 segundos.",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -15,8 +15,8 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "Virô — Seu mercado, visível.",
-    description: "Análise real de demanda, concorrência e posicionamento para empresas locais. Grátis.",
+    title: "Virô — Analise a visibilidade do seu negócio no mercado local",
+    description: "Descubra como seu negócio aparece no Google, Instagram e IA. Análise gratuita de demanda, concorrência e oportunidades para negócios locais.",
     type: "website",
   },
 };
@@ -45,6 +45,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       }}
     >
       <html lang="pt-BR" suppressHydrationWarning>
+        <head>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "SoftwareApplication",
+                "name": "Virô",
+                "applicationCategory": "BusinessApplication",
+                "description": "Análise de visibilidade e posicionamento digital para negócios locais. Cruza Google, Instagram, IBGE e IA para gerar diagnóstico gratuito em 60 segundos.",
+                "operatingSystem": "Web",
+                "offers": {
+                  "@type": "Offer",
+                  "price": "0",
+                  "priceCurrency": "BRL",
+                  "description": "Diagnóstico gratuito de visibilidade"
+                }
+              }),
+            }}
+          />
+        </head>
         <body>
           {children}
           <WhatsAppButton />

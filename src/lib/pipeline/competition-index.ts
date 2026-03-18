@@ -54,29 +54,29 @@ export function calcularIndiceSaturacao(
 
   let indexValue = 0;
   let label: CompetitionIndex['label'] = 'subatendido';
-  let labelText = 'Mercado subatendido';
+  let labelText = 'Muita demanda, pouca concorrência';
   let color: CompetitionIndex['color'] = 'green';
 
   if (activeCompetitors === 0) {
     // Sem concorrência digital identificada
     indexValue = totalSearchVolume > 0 ? totalSearchVolume : 0;
     label = 'subatendido';
-    labelText = 'Sem concorrência digital';
+    labelText = 'Nenhum concorrente digital encontrado';
     color = 'green';
   } else {
     indexValue = Math.round(totalSearchVolume / activeCompetitors);
 
     if (indexValue > 500) {
       label = 'subatendido';
-      labelText = 'Mercado subatendido';
+      labelText = 'Muita demanda, pouca concorrência';
       color = 'green';
     } else if (indexValue >= 200) {
       label = 'equilibrado';
-      labelText = 'Mercado equilibrado';
+      labelText = 'Concorrência compatível com a demanda';
       color = 'yellow';
     } else {
       label = 'saturado';
-      labelText = 'Mercado saturado';
+      labelText = 'Muita concorrência para a demanda';
       color = 'red';
     }
   }
