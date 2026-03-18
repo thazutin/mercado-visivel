@@ -31,7 +31,7 @@ const isPublicRoute = createRouteMatcher([
 // ─── Rate Limit Store (in-memory, por instância Vercel) ───────────────────
 // Conta apenas POSTs — GETs de polling não consomem o limite
 const rateLimitStore = new Map<string, { count: number; windowStart: number }>();
-const RATE_LIMIT_MAX = 3;
+const RATE_LIMIT_MAX = 50;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hora
 
 function isRateLimited(ip: string): boolean {
