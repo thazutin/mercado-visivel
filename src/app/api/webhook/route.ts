@@ -9,6 +9,7 @@ import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { createOrLinkClerkUser, sendMagicLinkEmail } from "@/lib/auth";
 import { trackEvent } from "@/lib/events";
+import { triggerContentGeneration } from "@/lib/generateContents";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
@@ -121,6 +122,13 @@ export async function POST(req: NextRequest) {
         console.log(`[Webhook] Plan generation triggered for ${leadId}`);
       } catch (err) {
         console.error("[Webhook] Failed to trigger plan generation:", err);
+      }
+
+      // ─── 5. Gera conteúdos para redes sociais em background (fire-and-forget) ───
+      if (leadId) {
+        triggerContentGeneration(leadId).catch((err) =>
+          console.error('[webhook] Erro na geração de conteúdo:', err)
+        );
       }
 
     } catch (err) {

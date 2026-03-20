@@ -6,6 +6,7 @@ import PlanTasks from "@/components/PlanTasks";
 import type { PlanTask } from "@/components/PlanTasks";
 import TaskContentButton from "@/components/TaskContentButton";
 import InstantValueScreen from "@/components/InstantValueScreen";
+import { ContentsTab } from "@/components/dashboard/ContentsTab";
 
 function formatPop(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(".", ",")} mi`;
@@ -95,7 +96,7 @@ export default function DashboardClient({ lead, plan, briefings, diagnosis, snap
                 { key: "overview", label: "Resultado" },
                 { key: "plan", label: "Diagnóstico" },
                 { key: "weekly", label: "Plano Semanal" },
-                { key: "briefings", label: `Briefings (${briefings.length})` },
+                { key: "briefings", label: "Conteúdos" },
               ] as const).map(t => (
                 <button key={t.key} onClick={() => setTab(t.key)} style={{
                   flex: 1, padding: "10px", borderRadius: 8, border: "none", cursor: "pointer",
@@ -241,127 +242,9 @@ export default function DashboardClient({ lead, plan, briefings, diagnosis, snap
               </div>
             )}
 
-            {/* Tab: Briefings */}
+            {/* Tab: Conteúdos */}
             {tab === "briefings" && (
-              <div>
-                {/* Score Evolution Chart */}
-                {snapshots.length > 1 && (() => {
-                  const chartData = snapshots
-                    .filter((s: any) => s.data?.influenceScore != null)
-                    .map((s: any) => ({
-                      week: `S${s.week_number}`,
-                      influence: Math.round(s.data.influenceScore),
-                    }));
-
-                  if (chartData.length < 2) return null;
-
-                  return (
-                    <div style={{
-                      background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`,
-                      padding: "20px 24px", marginBottom: 16,
-                    }}>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: V.night, marginBottom: 16 }}>
-                        Evolução da Influência Digital
-                      </div>
-                      <ResponsiveContainer width="100%" height={200}>
-                        <LineChart data={chartData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke={V.fog} />
-                          <XAxis dataKey="week" tick={{ fontSize: 11, fill: V.ash }} />
-                          <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: V.ash }} unit="%" />
-                          <Tooltip
-                            contentStyle={{
-                              background: V.night, border: "none", borderRadius: 8,
-                              fontSize: 13, color: V.white,
-                            }}
-                            formatter={(value: number) => [`${value}%`, "Influência"]}
-                          />
-                          <Line
-                            type="monotone" dataKey="influence" stroke={V.teal}
-                            strokeWidth={2} dot={{ fill: V.teal, r: 4 }}
-                            activeDot={{ r: 6, fill: V.amber }}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  );
-                })()}
-
-                {briefings.length === 0 ? (
-                  <div style={{
-                    background: V.white, borderRadius: 14, padding: "40px 24px",
-                    textAlign: "center", border: `1px solid ${V.fog}`,
-                  }}>
-                    <p style={{ fontSize: 15, color: V.zinc, marginBottom: 8 }}>
-                      Seu primeiro briefing chega na próxima segunda-feira.
-                    </p>
-                    <p style={{ fontSize: 13, color: V.ash }}>
-                      Toda semana: o que mudou no seu mercado + ação da semana.
-                    </p>
-                  </div>
-                ) : (
-                  briefings.map((b: any, i: number) => {
-                    let content: any = null;
-                    try {
-                      content = typeof b.content === "string" ? JSON.parse(b.content) : b.content;
-                    } catch {
-                      // malformed JSON — render fallback
-                    }
-
-                    if (!content) {
-                      return (
-                        <div key={i} style={{
-                          background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`,
-                          padding: "20px 24px", marginBottom: 12,
-                        }}>
-                          <span style={{ fontFamily: V.mono, fontSize: 11, color: V.amber, fontWeight: 600 }}>
-                            Semana {b.week_number}
-                          </span>
-                          <p style={{ fontSize: 13, color: V.ash, margin: "8px 0 0" }}>
-                            Conteúdo indisponível para esta semana.
-                          </p>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div key={i} style={{
-                        background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`,
-                        padding: "20px 24px", marginBottom: 12,
-                      }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-                          <span style={{ fontFamily: V.mono, fontSize: 11, color: V.amber, fontWeight: 600 }}>
-                            Semana {b.week_number}
-                          </span>
-                          <span style={{ fontSize: 12, color: V.ash }}>
-                            {new Date(b.created_at).toLocaleDateString("pt-BR")}
-                          </span>
-                        </div>
-                        {content?.changes?.map((c: any, j: number) => (
-                          <div key={j} style={{
-                            display: "flex", gap: 8, marginBottom: 6, fontSize: 13, color: V.zinc,
-                          }}>
-                            <span style={{ color: c.direction === "up" ? V.teal : c.direction === "down" ? V.coral : V.ash }}>
-                              {c.direction === "up" ? "↑" : c.direction === "down" ? "↓" : "→"}
-                            </span>
-                            {c.description}
-                          </div>
-                        ))}
-                        {content?.weeklyAction && (
-                          <div style={{
-                            marginTop: 12, padding: "12px 16px", background: V.cloud,
-                            borderRadius: 8, borderLeft: `3px solid ${V.teal}`,
-                          }}>
-                            <strong style={{ fontSize: 13, color: V.night }}>Ação da semana:</strong>
-                            <div style={{ fontSize: 13, color: V.zinc, marginTop: 4, lineHeight: 1.6 }}>
-                              {content.weeklyAction}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
+              <ContentsTab leadId={lead.id} />
             )}
           </>
         )}
