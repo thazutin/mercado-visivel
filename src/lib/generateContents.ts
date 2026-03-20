@@ -154,7 +154,7 @@ export async function saveGeneratedContents(
 
   if (error) {
     console.error('[generateContents] Erro ao salvar:', error)
-    throw new Error('Falha ao salvar conteúdos gerados')
+    throw new Error(`Falha ao salvar conteúdos gerados: ${error.message} (code: ${error.code})`)
   }
 }
 
