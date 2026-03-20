@@ -20,10 +20,10 @@ export async function POST(req: NextRequest) {
   try {
     await triggerContentGeneration(leadId);
     return NextResponse.json({ ok: true });
-  } catch (err) {
+  } catch (err: any) {
     console.error("[contents/generate] Erro:", err);
     return NextResponse.json(
-      { error: "Erro ao gerar conteúdos" },
+      { error: "Erro ao gerar conteúdos", reason: err?.message || String(err) },
       { status: 500 }
     );
   }
