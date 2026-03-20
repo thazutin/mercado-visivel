@@ -6,7 +6,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { auth } from "@clerk/nextjs/server";
 
 function getSupabase() {
   return createClient(
@@ -16,29 +15,12 @@ function getSupabase() {
 }
 
 export async function GET(req: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-  }
-
   const leadId = req.nextUrl.searchParams.get("leadId");
   if (!leadId) {
     return NextResponse.json({ error: "leadId obrigatório" }, { status: 400 });
   }
 
   const supabase = getSupabase();
-
-  // Verifica se o lead pertence ao usuário
-  const { data: lead } = await supabase
-    .from("leads")
-    .select("id")
-    .eq("id", leadId)
-    .eq("clerk_user_id", userId)
-    .single();
-
-  if (!lead) {
-    return NextResponse.json({ error: "Lead não encontrado" }, { status: 404 });
-  }
 
   const { data: contents, error } = await supabase
     .from("generated_contents")
