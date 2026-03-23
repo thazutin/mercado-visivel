@@ -560,21 +560,24 @@ export default function Home() {
         <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 32px", lineHeight: 1.25 }}>
           Como funciona
         </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 20 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {[
-            { icon: "📋", title: "Você informa seu negócio e sua região", text: "Leva menos de 2 minutos." },
-            { icon: "🔍", title: "A Virô analisa seu mercado local", text: "Cruzamos Google, Instagram, IBGE e IA para montar a leitura do seu mercado." },
-            { icon: "📊", title: "Você recebe um diagnóstico claro", text: "Sua visibilidade, concorrência e oportunidades — grátis." },
+            { icon: "📋", title: "Você informa seu negócio", text: "Nome, segmento e endereço. Leva menos de 1 minuto." },
+            { icon: "🔍", title: "A Virô analisa seu mercado", text: "Cruzamos Google, Instagram, Maps, IBGE e IA em tempo real." },
+            { icon: "📊", title: "Você recebe o relatório grátis", text: "Score de influência, volume de buscas e concorrentes mapeados." },
+            { icon: "🔓", title: "Desbloqueie o Diagnóstico Completo — R$497", text: "Diagnóstico por canal, checklist de ações, sazonalidade e amostra de conteúdos. Disponível no painel em 5 minutos." },
+            { icon: "🔄", title: "Assine para conteúdos toda semana — R$99/mês", text: "4 posts + 3 briefings toda sexta. Seu time ou agência executa, você acompanha no painel." },
           ].map((step, i) => (
-            <div key={i} style={{ background: V.white, borderRadius: 14, padding: "24px 20px", border: `1px solid ${V.fog}` }}>
-              <div style={{ fontSize: 28, marginBottom: 12 }}>{step.icon}</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 700, color: V.amber, background: V.amberWash, width: 22, height: 22, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+            <div key={i} style={{ background: V.white, borderRadius: 14, padding: "20px 20px", border: `1px solid ${V.fog}`, display: "flex", gap: 16, alignItems: "flex-start" }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 700, color: i < 3 ? V.amber : V.teal, background: i < 3 ? V.amberWash : V.tealWash, width: 28, height: 28, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
                   {i + 1}
                 </span>
-                <span style={{ fontSize: 15, fontWeight: 700, color: V.night }}>{step.title}</span>
               </div>
-              <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: 0 }}>{step.text}</p>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: V.night, marginBottom: 4 }}>{step.title}</div>
+                <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: 0 }}>{step.text}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -594,64 +597,54 @@ export default function Home() {
         </p>
       </Section>
 
-      {/* ═══ SECTION 4 — O QUE VOCÊ VAI RECEBER ═══ */}
+      {/* ═══ SECTION 4 — O QUE VOCÊ VAI TER ACESSO ═══ */}
       <Section bg={V.white}>
         <SectionLabel>o que você vai receber</SectionLabel>
         <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
-          O que você vai ver no seu diagnóstico
+          O que você vai ter acesso
         </h2>
         <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.6, margin: "0 0 28px" }}>
-          O resultado grátis já mostra onde seu negócio está hoje. O plano completo mostra o que fazer.
+          O relatório inicial é grátis. Diagnóstico completo, checklist e conteúdos são desbloqueados separadamente.
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+
+        {/* Grátis cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
           {[
-            { label: "GRÁTIS", title: "Visibilidade no mercado", desc: "Como seu negócio aparece no Google, Instagram e IA.", color: V.teal },
-            { label: "GRÁTIS", title: "Concorrência mapeada", desc: "Quem disputa atenção com você na sua região.", color: V.teal },
-            { label: "GRÁTIS", title: "Oportunidades claras", desc: "Onde há espaço para atrair mais clientes.", color: V.teal },
-            { label: "DIAGNÓSTICO", title: "Diagnóstico completo", desc: "Diagnóstico completo por canal (Google, Instagram, Maps, IA)", color: V.amber },
-            { label: "DIAGNÓSTICO", title: "Checklist de ações", desc: "Checklist prático com as ações de maior impacto", color: V.amber },
-            { label: "DIAGNÓSTICO", title: "Sazonalidade", desc: "Análise de sazonalidade e contexto do seu mercado", color: V.amber },
-            { label: "DIAGNÓSTICO", title: "Conteúdos prontos", desc: "Amostra de conteúdos prontos para publicar", color: V.amber },
+            { title: "Visibilidade no mercado", desc: "Como seu negócio aparece no Google, Instagram e IA." },
+            { title: "Concorrência mapeada", desc: "Quem disputa atenção com você na sua região." },
+            { title: "Oportunidades claras", desc: "Onde há espaço para atrair mais clientes." },
           ].map((item, i) => (
             <div key={i} style={{ padding: "20px", borderRadius: 12, border: `1px solid ${V.fog}`, background: V.white }}>
-              <span style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", fontWeight: 600, color: item.color, background: `${item.color}15`, padding: "3px 8px", borderRadius: 4 }}>
-                {item.label}
+              <span style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", fontWeight: 600, color: V.teal, background: `${V.teal}15`, padding: "3px 8px", borderRadius: 4 }}>
+                GRÁTIS
               </span>
               <div style={{ fontSize: 16, fontWeight: 700, color: V.night, margin: "10px 0 6px" }}>{item.title}</div>
               <p style={{ fontSize: 14, color: V.zinc, lineHeight: 1.6, margin: 0 }}>{item.desc}</p>
             </div>
           ))}
         </div>
-        <p style={{ fontSize: 12, color: V.ash, textAlign: "center", marginTop: 12 }}>
-          Pronto em 5 minutos, disponível no painel
-        </p>
-      </Section>
 
-      {/* ═══ SECTION — RECORRÊNCIA ═══ */}
-      <Section bg={V.cloud}>
-        <SectionLabel>para quem quer ir além</SectionLabel>
-        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
-          Conteúdos toda semana, sem esforço
-        </h2>
-        <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.6, margin: "0 0 24px" }}>
-          R$99/mês — depois do Diagnóstico Completo
-        </p>
-        <div style={{ background: V.white, borderRadius: 14, padding: "24px 20px", border: `1px solid ${V.fog}` }}>
-          {[
-            "4 posts prontos para publicar por semana",
-            "3 briefings para sua equipe ou agência",
-            "Atualizado toda sexta-feira no painel",
-            "Email de aviso quando estiver pronto",
-          ].map((item, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: i < 3 ? 12 : 0 }}>
-              <span style={{ color: V.teal, fontSize: 14, fontWeight: 700 }}>✓</span>
-              <span style={{ fontSize: 14, color: V.night }}>{item}</span>
-            </div>
-          ))}
+        {/* Paid blocks */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ padding: "20px", borderRadius: 12, border: `1px solid ${V.fog}`, background: V.white }}>
+            <span style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", fontWeight: 600, color: V.amber, background: V.amberWash, padding: "3px 8px", borderRadius: 4 }}>
+              R$497 · pagamento único
+            </span>
+            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, margin: "10px 0 6px" }}>Diagnóstico completo + Checklist</div>
+            <p style={{ fontSize: 14, color: V.zinc, lineHeight: 1.6, margin: 0 }}>
+              Diagnóstico detalhado por canal, checklist de ações prioritárias, análise de sazonalidade e amostra de conteúdos. Pronto em 5 minutos.
+            </p>
+          </div>
+          <div style={{ padding: "20px", borderRadius: 12, border: `1px solid ${V.fog}`, background: V.white }}>
+            <span style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", fontWeight: 600, color: V.teal, background: V.tealWash, padding: "3px 8px", borderRadius: 4 }}>
+              R$99/mês
+            </span>
+            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, margin: "10px 0 6px" }}>Conteúdos semanais</div>
+            <p style={{ fontSize: 14, color: V.zinc, lineHeight: 1.6, margin: 0 }}>
+              4 posts prontos para publicar + 3 briefings toda sexta-feira. Disponível após o Diagnóstico Completo.
+            </p>
+          </div>
         </div>
-        <p style={{ fontSize: 12, color: V.ash, textAlign: "center", marginTop: 12 }}>
-          Disponível após o Diagnóstico Completo
-        </p>
       </Section>
 
       {/* ═══ SECTION 6 — METODOLOGIA E FONTES ═══ */}
@@ -692,11 +685,14 @@ export default function Home() {
           Perguntas comuns
         </h2>
         {[
-          { q: "Preciso criar conta?", a: "Não. Preencha o formulário e o resultado aparece na tela. Sem cadastro, sem cartão." },
-          { q: "Quanto tempo demora?", a: "Cerca de 60 segundos. O resultado aparece direto na tela." },
-          { q: "O que vem de graça?", a: "Visibilidade, concorrência e oportunidades do seu mercado local. O plano de ação de 90 dias é pago." },
-          { q: "Funciona para qualquer negócio?", a: "Para negócios que atendem clientes na própria região. Lojas, clínicas, restaurantes, escritórios, studios e prestadores de serviço." },
-          { q: "Meus dados ficam seguros?", a: "Sim. Usados só para gerar o diagnóstico. Não vendemos nem compartilhamos com terceiros." },
+          { q: "O relatório inicial é mesmo gratuito?", a: "Sim, 100% gratuito. Você preenche o formulário, a Virô analisa seu mercado em tempo real e entrega o relatório sem precisar criar conta ou inserir cartão." },
+          { q: "O que está incluído no Diagnóstico Completo?", a: "O Diagnóstico Completo (R$497, pagamento único) inclui: diagnóstico detalhado por canal (Google, Instagram, Maps e IA), checklist prático com as ações de maior impacto ordenadas por prioridade, análise de sazonalidade do seu mercado e uma amostra de conteúdos prontos para publicar. Tudo fica disponível no seu painel em até 5 minutos após o pagamento." },
+          { q: "Quanto tempo leva para receber o diagnóstico?", a: "O relatório inicial fica pronto em até 1 minuto após você preencher o formulário. O Diagnóstico Completo fica disponível no painel em até 5 minutos após a confirmação do pagamento." },
+          { q: "Como acesso meu painel depois de pagar?", a: "Após o pagamento, você recebe um email com o link de acesso direto ao painel. O login é feito com o mesmo email usado no cadastro — sem senha, via link mágico." },
+          { q: "O que são os Conteúdos Semanais?", a: "São 4 posts prontos para publicar (Instagram ou LinkedIn, dependendo do perfil do seu negócio) e 3 briefings para sua equipe ou agência executarem — gerados toda sexta-feira com base no contexto atual do seu mercado. Disponível por R$99/mês após a contratação do Diagnóstico Completo." },
+          { q: "Posso cancelar a recorrência?", a: "Sim, a qualquer momento direto no painel ou por email. Não há fidelidade nem multa." },
+          { q: "Funciona para qualquer negócio?", a: "Funciona para negócios locais com atendimento físico ou regional: lojas, clínicas, restaurantes, escritórios, studios, prestadores de serviço. Se você depende de clientes na sua cidade ou região, a Virô é para você." },
+          { q: "Meus dados ficam seguros?", a: "Sim. Seus dados são usados exclusivamente para gerar seu diagnóstico e nunca são compartilhados com terceiros. Veja nossa Política de Privacidade para mais detalhes." },
         ].map((faq, i) => (
           <FAQItem key={i} question={faq.q} answer={faq.a} />
         ))}

@@ -93,28 +93,55 @@ export async function getIBGEMunicipalData(cityOrRegion: string, originalRegion?
     const estado = municipio.microrregiao?.mesorregiao?.UF?.nome || municipio.microrregiao?.mesorregiao?.UF?.sigla || '';
     console.log(`[IBGE] Município encontrado: ${nomeMunicipio} (id=${id}, UF=${uf || estado})`);
 
-    // 2. Busca população estimada (agregado 6579, variável 9324)
-    // Tenta 2024 → 2023 → 2022 (fallback)
+    // 2. Busca população — tenta estimativas (6579) e censo (1301) como fallback
     let populacao = 0;
+
+    // 2a. Estimativas populacionais (agregado 6579, variável 9324)
     for (const ano of ['2024', '2023', '2022']) {
-      const popRes = await fetch(
-        `https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/${ano}/variaveis/9324?localidades=N6[${id}]`,
-      );
-      if (popRes.ok) {
-        const popData = await popRes.json();
-        const serie = popData?.[0]?.resultados?.[0]?.series?.[0]?.serie;
-        if (serie) {
-          const valores = Object.values(serie) as string[];
-          const ultimo = valores[valores.length - 1];
-          const parsed = parseInt(ultimo, 10);
-          if (parsed > 0) {
-            populacao = parsed;
-            console.log(`[IBGE] População ${nomeMunicipio}: ${populacao} (período ${ano})`);
-            break;
+      try {
+        const popRes = await fetch(
+          `https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/${ano}/variaveis/9324?localidades=N6[${id}]`,
+        );
+        if (popRes.ok) {
+          const popData = await popRes.json();
+          const serie = popData?.[0]?.resultados?.[0]?.series?.[0]?.serie;
+          if (serie) {
+            const valores = Object.values(serie) as string[];
+            const ultimo = valores[valores.length - 1];
+            const parsed = parseInt(ultimo, 10);
+            if (parsed > 0) {
+              populacao = parsed;
+              console.log(`[IBGE] População ${nomeMunicipio}: ${populacao} (estimativa ${ano})`);
+              break;
+            }
           }
         }
+      } catch (err) {
+        console.warn(`[IBGE] Estimativa ${ano} falhou para ${nomeMunicipio}:`, (err as Error).message);
       }
-      console.log(`[IBGE] População período ${ano} não disponível para ${nomeMunicipio}, tentando anterior...`);
+    }
+
+    // 2b. Fallback: Censo 2022 (agregado 1301, variável 93)
+    if (populacao === 0) {
+      try {
+        const censoRes = await fetch(
+          `https://servicodados.ibge.gov.br/api/v3/agregados/1301/periodos/2022/variaveis/93?localidades=N6[${id}]`,
+        );
+        if (censoRes.ok) {
+          const censoData = await censoRes.json();
+          const serie = censoData?.[0]?.resultados?.[0]?.series?.[0]?.serie;
+          if (serie) {
+            const valores = Object.values(serie) as string[];
+            const parsed = parseInt(valores[valores.length - 1], 10);
+            if (parsed > 0) {
+              populacao = parsed;
+              console.log(`[IBGE] População ${nomeMunicipio}: ${populacao} (Censo 2022)`);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn(`[IBGE] Censo 2022 falhou para ${nomeMunicipio}:`, (err as Error).message);
+      }
     }
 
     if (populacao === 0) {
@@ -275,29 +302,57 @@ async function getMunicipioInfo(city: string, state: string): Promise<MunicipioI
   const nome = match.nome;
   const estado = ufNome;
 
-  // 2. Busca população estimada (agregado 6579, variável 9324)
-  // Tenta 2024 → 2023 → 2022 (fallback)
+  // 2. Busca população — estimativas (6579) + censo (1301) como fallback
   let populacao = 0;
   let ibgeAno = 0;
+
+  // 2a. Estimativas populacionais (agregado 6579, variável 9324)
   for (const ano of ['2024', '2023', '2022']) {
-    const popRes = await fetch(
-      `https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/${ano}/variaveis/9324?localidades=N6[${id}]`,
-    );
-    if (popRes.ok) {
-      const popData = await popRes.json();
-      const serie = popData?.[0]?.resultados?.[0]?.series?.[0]?.serie;
-      if (serie) {
-        const valores = Object.values(serie) as string[];
-        const parsed = parseInt(valores[valores.length - 1], 10);
-        if (parsed > 0) {
-          populacao = parsed;
-          ibgeAno = parseInt(ano, 10);
-          console.log(`[IBGE getMunicipioInfo] População ${nome}: ${populacao} (período ${ano})`);
-          break;
+    try {
+      const popRes = await fetch(
+        `https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/${ano}/variaveis/9324?localidades=N6[${id}]`,
+      );
+      if (popRes.ok) {
+        const popData = await popRes.json();
+        const serie = popData?.[0]?.resultados?.[0]?.series?.[0]?.serie;
+        if (serie) {
+          const valores = Object.values(serie) as string[];
+          const parsed = parseInt(valores[valores.length - 1], 10);
+          if (parsed > 0) {
+            populacao = parsed;
+            ibgeAno = parseInt(ano, 10);
+            console.log(`[IBGE getMunicipioInfo] População ${nome}: ${populacao} (estimativa ${ano})`);
+            break;
+          }
         }
       }
+    } catch (err) {
+      console.warn(`[IBGE getMunicipioInfo] Estimativa ${ano} falhou para ${nome}:`, (err as Error).message);
     }
-    console.log(`[IBGE getMunicipioInfo] População período ${ano} não disponível para ${nome}`);
+  }
+
+  // 2b. Fallback: Censo 2022 (agregado 1301, variável 93)
+  if (populacao === 0) {
+    try {
+      const censoRes = await fetch(
+        `https://servicodados.ibge.gov.br/api/v3/agregados/1301/periodos/2022/variaveis/93?localidades=N6[${id}]`,
+      );
+      if (censoRes.ok) {
+        const censoData = await censoRes.json();
+        const serie = censoData?.[0]?.resultados?.[0]?.series?.[0]?.serie;
+        if (serie) {
+          const valores = Object.values(serie) as string[];
+          const parsed = parseInt(valores[valores.length - 1], 10);
+          if (parsed > 0) {
+            populacao = parsed;
+            ibgeAno = 2022;
+            console.log(`[IBGE getMunicipioInfo] População ${nome}: ${populacao} (Censo 2022)`);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn(`[IBGE getMunicipioInfo] Censo 2022 falhou para ${nome}:`, (err as Error).message);
+    }
   }
 
   // 3. Área territorial (agregado 4714, variável 614 — Censo 2022)
@@ -392,13 +447,17 @@ async function getPopulacaoTotal(municipioIds: number[]): Promise<number> {
   for (let i = 0; i < municipioIds.length; i += 50) {
     const batch = municipioIds.slice(i, i + 50);
     const idsStr = batch.join('|');
-    try {
-      // Tenta 2024 → 2023 → 2022 (fallback)
-      let batchTotal = 0;
-      for (const ano of ['2024', '2023', '2022']) {
-        const res = await fetch(
-          `https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/${ano}/variaveis/9324?localidades=N6[${idsStr}]`,
-        );
+    let batchTotal = 0;
+
+    // Tenta estimativas (6579) primeiro, depois censo (1301)
+    const endpoints = [
+      ...['2024', '2023', '2022'].map(ano => `https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/${ano}/variaveis/9324?localidades=N6[${idsStr}]`),
+      `https://servicodados.ibge.gov.br/api/v3/agregados/1301/periodos/2022/variaveis/93?localidades=N6[${idsStr}]`,
+    ];
+
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url);
         if (!res.ok) continue;
         const data = await res.json();
         const series = data?.[0]?.resultados?.[0]?.series || [];
@@ -407,19 +466,92 @@ async function getPopulacaoTotal(municipioIds: number[]): Promise<number> {
           batchTotal += parseInt(valores[valores.length - 1], 10) || 0;
         }
         if (batchTotal > 0) break;
+      } catch {
+        continue;
       }
-      total += batchTotal;
-    } catch {
-      continue;
     }
+    total += batchTotal;
   }
   return total;
 }
 
 
+// Capitais e cidades grandes com população conhecida (fallback quando IBGE está fora)
+const POPULACAO_CONHECIDA: Record<string, { pop: number; densidade: 'alta' | 'baixa' }> = {
+  'são paulo': { pop: 11_451_000, densidade: 'alta' },
+  'sao paulo': { pop: 11_451_000, densidade: 'alta' },
+  'rio de janeiro': { pop: 6_211_000, densidade: 'alta' },
+  'brasília': { pop: 2_817_000, densidade: 'alta' },
+  'brasilia': { pop: 2_817_000, densidade: 'alta' },
+  'salvador': { pop: 2_418_000, densidade: 'alta' },
+  'fortaleza': { pop: 2_428_000, densidade: 'alta' },
+  'belo horizonte': { pop: 2_315_000, densidade: 'alta' },
+  'manaus': { pop: 2_063_000, densidade: 'alta' },
+  'curitiba': { pop: 1_773_000, densidade: 'alta' },
+  'recife': { pop: 1_488_000, densidade: 'alta' },
+  'goiânia': { pop: 1_437_000, densidade: 'alta' },
+  'goiania': { pop: 1_437_000, densidade: 'alta' },
+  'belém': { pop: 1_303_000, densidade: 'alta' },
+  'belem': { pop: 1_303_000, densidade: 'alta' },
+  'porto alegre': { pop: 1_332_000, densidade: 'alta' },
+  'guarulhos': { pop: 1_292_000, densidade: 'alta' },
+  'campinas': { pop: 1_139_000, densidade: 'alta' },
+  'são luís': { pop: 1_037_000, densidade: 'alta' },
+  'sao luis': { pop: 1_037_000, densidade: 'alta' },
+  'maceió': { pop: 932_000, densidade: 'alta' },
+  'maceio': { pop: 932_000, densidade: 'alta' },
+  'santo andré': { pop: 748_000, densidade: 'alta' },
+  'santo andre': { pop: 748_000, densidade: 'alta' },
+  'mauá': { pop: 477_000, densidade: 'alta' },
+  'maua': { pop: 477_000, densidade: 'alta' },
+  'osasco': { pop: 699_000, densidade: 'alta' },
+  'ribeirão preto': { pop: 720_000, densidade: 'alta' },
+  'ribeirao preto': { pop: 720_000, densidade: 'alta' },
+  'sorocaba': { pop: 695_000, densidade: 'alta' },
+  'londrina': { pop: 580_000, densidade: 'alta' },
+  'niterói': { pop: 487_000, densidade: 'alta' },
+  'niteroi': { pop: 487_000, densidade: 'alta' },
+  'joinville': { pop: 616_000, densidade: 'alta' },
+  'florianópolis': { pop: 537_000, densidade: 'alta' },
+  'florianopolis': { pop: 537_000, densidade: 'alta' },
+};
+
+/**
+ * Estimativa de fallback quando IBGE está indisponível.
+ * Usa tabela de cidades conhecidas ou estimativa genérica.
+ */
+function estimarPorDensidade(city: string): AudienciaEstimada {
+  const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const cityNorm = normalize(city);
+
+  const known = POPULACAO_CONHECIDA[cityNorm];
+  if (known) {
+    const raioKm = known.densidade === 'alta' ? 3 : 10;
+    console.log(`[IBGE Fallback] Cidade conhecida: ${city} → pop=${known.pop}, raio=${raioKm}km`);
+    return {
+      populacaoRaio: known.pop,
+      raioKm,
+      densidade: known.densidade,
+      municipioNome: city,
+      municipioId: 0,
+    };
+  }
+
+  // Estimativa genérica: cidade média brasileira ~200k habitantes
+  const estimativa = 200_000;
+  console.log(`[IBGE Fallback] Cidade desconhecida: ${city} → estimativa genérica ${estimativa}`);
+  return {
+    populacaoRaio: estimativa,
+    raioKm: 5,
+    densidade: 'baixa',
+    municipioNome: city,
+    municipioId: 0,
+  };
+}
+
 /**
  * Orquestra busca de audiência estimada.
- * Timeout de 8s, falha silenciosa.
+ * Timeout de 15s, fallback para estimativa por densidade.
  */
 export async function fetchAudienciaEstimada(
   city: string,
@@ -446,8 +578,8 @@ export async function fetchAudienciaEstimada(
     // 1. Info do município principal
     const info = await getMunicipioInfo(city, state);
     if (!info) {
-      console.warn(`[IBGE Audiência] getMunicipioInfo retornou null para city="${city}"`);
-      return null;
+      console.warn(`[IBGE Audiência] getMunicipioInfo retornou null para city="${city}" — usando estimativa por densidade`);
+      return estimarPorDensidade(city);
     }
     console.log(`[IBGE Audiência] Município: ${info.nome}, pop=${info.populacao}, area=${info.areaKm2}km², densidade=${info.densidadeHabKm2.toFixed(0)} hab/km²`);
 
@@ -483,11 +615,11 @@ export async function fetchAudienciaEstimada(
     };
   } catch (err) {
     if ((err as Error).name === 'AbortError') {
-      console.warn('[IBGE Audiência] Timeout (8s)');
+      console.warn('[IBGE Audiência] Timeout');
     } else {
       console.warn('[IBGE Audiência] Erro:', (err as Error).message);
     }
-    return null;
+    return estimarPorDensidade(city);
   } finally {
     clearTimeout(timeout);
     console.log(`[IBGE Audiência] END: city="${city}"`);
