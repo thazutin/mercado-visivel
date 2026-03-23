@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { notifyFullDiagnosisReady } from "@/lib/notify";
+import { runPostDiagnosisEnrichment } from "@/lib/analysis";
 
 export const maxDuration = 300;
 
@@ -117,6 +118,15 @@ export async function POST(req: NextRequest) {
       .from("leads")
       .update({ plan_status: "ready", weeks_active: 0 })
       .eq("id", leadId);
+
+    // 4b. Enriquecimento pós-diagnóstico (checklist + sazonalidade + conteúdos)
+    runPostDiagnosisEnrichment(
+      leadId,
+      raw as any,
+      { name: lead.name, product: lead.product, region: lead.region, client_type: lead.client_type },
+    ).catch((err: any) =>
+      console.error("[PlanGen] Erro no enriquecimento pós-diagnóstico:", err)
+    );
 
     // 5. Notifica por WhatsApp + email
     await notifyFullDiagnosisReady({

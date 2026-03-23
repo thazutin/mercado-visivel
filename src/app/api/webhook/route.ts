@@ -146,9 +146,7 @@ export async function POST(req: NextRequest) {
 
       // ─── 4. Trigger plan generation (async) ───
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
-          ? `https://${process.env.VERCEL_URL}`
-          : "http://localhost:3000";
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://virolocal.com";
 
         fetch(`${baseUrl}/api/plan/generate`, {
           method: "POST",

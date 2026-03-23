@@ -95,10 +95,11 @@ async function reverseGeocodeCity(lat: number, lng: number): Promise<{ city: str
       }
 
       if (city) {
-        console.log(`[ReverseGeocode] lat=${lat}, lng=${lng} → city="${city}", state="${state}"`);
+        console.log(`[geocode] município resolvido: ${city} (administrative_area_level_2), estado: ${state}`);
         return { city, state };
       }
     }
+    console.log(`[geocode] nenhum município encontrado para lat=${lat}, lng=${lng}`);
     return null;
   } catch (err) {
     console.warn('[ReverseGeocode] Falhou:', (err as Error).message);
@@ -107,6 +108,17 @@ async function reverseGeocodeCity(lat: number, lng: number): Promise<{ city: str
 }
 
 // --- Extract city via Claude Haiku (fallback quando não há lat/lng) ---
+function extractCityFromAddressString(region: string): string {
+  // Tenta extrair município do padrão "Bairro, Cidade - UF" ou "Cidade - UF"
+  const dashMatch = region.match(/,\s*([^,]+?)\s*-\s*[A-Z]{2}/);
+  if (dashMatch) return dashMatch[1].trim();
+  // Fallback: último segmento antes de " - UF"
+  const simpleDash = region.match(/([^,-]+)\s*-\s*[A-Z]{2}/);
+  if (simpleDash) return simpleDash[1].trim();
+  // Último recurso: primeiro segmento (pode ser rua — melhor que nada)
+  return region.split(',')[0].trim();
+}
+
 async function extractCity(region: string): Promise<string> {
   try {
     const claude = getClaudeClient();
@@ -119,9 +131,17 @@ async function extractCity(region: string): Promise<string> {
       }],
     });
     const text = (res.content as any[]).filter((c: any) => c.type === 'text').map((c: any) => c.text).join('').trim();
-    return text || region.split(',')[0].trim();
+    if (text) {
+      console.log(`[geocode] município resolvido (Claude Haiku): ${text}`);
+      return text;
+    }
+    const fallback = extractCityFromAddressString(region);
+    console.log(`[geocode] município resolvido (fallback regex): ${fallback}`);
+    return fallback;
   } catch {
-    return region.split(',')[0].trim();
+    const fallback = extractCityFromAddressString(region);
+    console.log(`[geocode] município resolvido (fallback regex, após erro): ${fallback}`);
+    return fallback;
   }
 }
 

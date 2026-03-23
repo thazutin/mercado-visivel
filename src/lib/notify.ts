@@ -398,7 +398,7 @@ function diagnosisEmailHtml(opts: {
     </div>
     <div style="background:#FEFAF3;border-left:3px solid #CF8523;padding:14px 16px;border-radius:0 8px 8px 0;margin:0 0 24px;">
       <p style="font-size:13px;color:#3A3A40;margin:0;line-height:1.6;">
-        O diagnóstico mostra <strong>exatamente onde você está perdendo clientes</strong> — e as 3 ações prioritárias para virar esse jogo.
+        Seu relatório está pronto — veja <strong>onde você está perdendo clientes</strong> e a prévia do seu checklist.
       </p>
     </div>
     <div style="text-align:center;margin:0 0 28px;">
