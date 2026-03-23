@@ -1,6 +1,7 @@
 // File: src/app/resultado/[leadId]/page.tsx
 
 import { createClient } from "@supabase/supabase-js";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import ResultadoClient from "./ResultadoClient";
 
@@ -42,10 +43,15 @@ export default async function ResultadoPage({ params }: { params: { leadId: stri
   const supabase = getSupabase();
 
   const { data: lead } = await supabase
-    .from("leads").select("id, product, region, email, status").eq("id", leadId).single();
+    .from("leads").select("id, product, region, email, status, paid_at").eq("id", leadId).single();
 
   if (!lead) {
     return <ErrorScreen title="Resultado não encontrado" subtitle="Não encontramos nenhum diagnóstico com esse link. Ele pode ter expirado ou sido removido." />;
+  }
+
+  // Se já pagou, redireciona para o dashboard
+  if (lead.paid_at) {
+    redirect(`/dashboard/${leadId}`);
   }
 
   const { data: diagnosis } = await supabase
@@ -59,7 +65,7 @@ export default async function ResultadoPage({ params }: { params: { leadId: stri
   const raw = diagnosis.raw_data || {};
   const display = buildDisplay(raw);
 
-  return <ResultadoClient product={lead!.product} region={lead!.region} leadId={leadId} results={display} isPaid={lead!.status === "paid"} />;
+  return <ResultadoClient product={lead.product} region={lead.region} leadId={leadId} results={display} />;
 }
 
 function buildDisplay(raw: any) {
@@ -90,5 +96,10 @@ function buildDisplay(raw: any) {
     serpSummary: { termsScraped: serpPositions.length, termsRanked: serpPositions.filter((sp: any) => sp.position && sp.position <= 10).length, hasLocalPack: serpPositions.some((sp: any) => sp.serpFeatures?.includes("local_pack")), hasAds: serpPositions.some((sp: any) => sp.serpFeatures?.includes("ads")) },
     aiVisibility: raw.aiVisibility || null,
     termGeneration: { count: raw.terms?.termCount || 0 },
+    audiencia: raw.audiencia || null,
+    competitionIndex: raw.competitionIndex || null,
+    clientType: raw.clientType || 'b2c',
+    volumeGeo: raw.volumeGeo || null,
+    pncp: raw.pncp || null,
   };
 }

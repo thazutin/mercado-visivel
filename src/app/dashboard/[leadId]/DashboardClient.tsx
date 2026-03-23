@@ -125,7 +125,8 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
             <LockedTab
               lockLevel={1}
               ctaLabel="Desbloquear por R$497"
-              ctaUrl={`/api/checkout?leadId=${lead.id}`}
+              ctaUrl="#"
+              leadId={lead.id}
             />
           ) : (
             <div>
@@ -188,7 +189,8 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
             <LockedTab
               lockLevel={1}
               ctaLabel="Desbloquear por R$497"
-              ctaUrl={`/api/checkout?leadId=${lead.id}`}
+              ctaUrl="#"
+              leadId={lead.id}
             />
           ) : (
             <ChecklistTab leadId={lead.id} checklist={checklist} />
@@ -201,7 +203,8 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
             <LockedTab
               lockLevel={2}
               ctaLabel="Assinar por R$99/mês"
-              ctaUrl={`/api/checkout/subscription?leadId=${lead.id}`}
+              ctaUrl="#"
+              leadId={lead.id}
             />
           ) : (
             <ContentsTab
