@@ -121,7 +121,7 @@ PARTE A — GAPS (mesmo formato anterior)
 3. Crie o HEADLINE INSIGHT — UMA frase factual e impactante que o dono vai lembrar
 
 PARTE B — ROTAS DE TRABALHO PRIORIZADAS (NOVO)
-Dado que o principal desafio declarado é "${input.challenge}", e os dados mostram o cenário acima, gere 3 ROTAS DE TRABALHO priorizadas por impacto.
+Dado que o principal desafio declarado é "${input.challenge}", e os dados mostram o cenário acima, gere 4-5 ROTAS DE TRABALHO priorizadas por impacto.
 
 Cada rota deve:
 - Ter um título claro e orientado a ação (ex: "Aparecer no Google Maps primeiro")
@@ -133,7 +133,9 @@ Cada rota deve:
 IMPORTANTE para as rotas:
 - Rota 1 deve ser a de MAIOR IMPACTO com MENOR ESFORÇO (quick win)
 - Rota 2 deve ser a de MAIOR IMPACTO no desafio declarado
-- Rota 3 deve ser a que CONSTRÓI VANTAGEM COMPETITIVA a longo prazo
+- Rota 3 deve focar em CONTEÚDO e PRESENÇA DIGITAL
+- Rota 4 deve ser a que CONSTRÓI VANTAGEM COMPETITIVA a longo prazo
+- Rota 5 (se houver dados suficientes): ação complementar baseada em dados específicos
 - Cada rota deve citar pelo menos 1 dado específico (número) como fundamento
 - O tom é: "dado o que vemos nos dados, o caminho mais eficiente é..."
 

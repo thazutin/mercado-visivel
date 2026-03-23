@@ -315,6 +315,26 @@ export default function Home() {
               {t.formNationalCheckbox}
             </label>
           </Field>
+
+          {/* Presença digital */}
+          <div style={{ marginTop: 8, paddingTop: 16, borderTop: `1px solid ${V.fog}` }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: V.night, marginBottom: 4 }}>Sua presença digital</div>
+            <p style={{ fontSize: 12, color: V.ash, margin: "0 0 16px", lineHeight: 1.4 }}>
+              Não obrigatório — mas quanto mais você compartilhar, mais personalizado fica seu diagnóstico.
+            </p>
+            <Field label="Instagram">
+              <input style={inputStyle} type="text" placeholder="@seunegocio" value={formData.instagram}
+                onChange={(e: any) => updateField("instagram", e.target.value)} />
+            </Field>
+            <Field label="Site do seu negócio">
+              <input style={inputStyle} type="text" placeholder="www.seunegocio.com.br" value={formData.site}
+                onChange={(e: any) => updateField("site", e.target.value)} />
+            </Field>
+            <Field label="LinkedIn">
+              <input style={inputStyle} type="text" placeholder="linkedin.com/company/seunegocio" value={(formData as any).linkedin || ""}
+                onChange={(e: any) => updateField("linkedin" as any, e.target.value)} />
+            </Field>
+          </div>
         </>
       ),
     },
@@ -334,14 +354,6 @@ export default function Home() {
           <Field label={t.formWhatsappLabel} hint="Opcional — para contato sobre seu diagnóstico">
             <input style={inputStyle} type="tel" placeholder={t.formWhatsappPlaceholder} value={formData.whatsapp}
               onChange={(e: any) => updateField("whatsapp", e.target.value)} />
-          </Field>
-          <Field label="Instagram" hint="Opcional — usamos para analisar sua presença">
-            <input style={inputStyle} type="text" placeholder="@seuperfil" value={formData.instagram}
-              onChange={(e: any) => updateField("instagram", e.target.value)} />
-          </Field>
-          <Field label="LinkedIn" hint="Opcional — se atende outras empresas">
-            <input style={inputStyle} type="text" placeholder="linkedin.com/company/sua-empresa" value={(formData as any).linkedin || ""}
-              onChange={(e: any) => updateField("linkedin" as any, e.target.value)} />
           </Field>
         </>
       ),
@@ -369,11 +381,8 @@ export default function Home() {
           }}>
             Saiba o que fazer agora para <span style={{ color: V.amber }}>vender mais</span>
           </h1>
-          <p style={{ fontSize: 15, color: V.ash, lineHeight: 1.6, margin: "0 0 8px" }}>
+          <p style={{ fontSize: 15, color: V.ash, lineHeight: 1.6, margin: 0 }}>
             {t.heroSubShort}
-          </p>
-          <p style={{ fontSize: 13, color: V.zinc }}>
-            {t.heroFree}
           </p>
         </div>
       </div>
@@ -597,14 +606,14 @@ export default function Home() {
         </p>
       </Section>
 
-      {/* ═══ SECTION 4 — O QUE VOCÊ VAI TER ACESSO ═══ */}
+      {/* ═══ SECTION 4 — SEU CHECKLIST PERSONALIZADO ═══ */}
       <Section bg={V.white}>
         <SectionLabel>o que você vai receber</SectionLabel>
         <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
-          O que você vai ter acesso
+          Seu checklist personalizado — pronto em 5 minutos
         </h2>
         <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.6, margin: "0 0 28px" }}>
-          O relatório inicial é grátis. Diagnóstico completo, checklist e conteúdos são desbloqueados separadamente.
+          A Virô identifica onde você está perdendo clientes e entrega as ações de maior impacto, ordenadas por prioridade. Sem achismo, sem plano genérico — só o que funciona para o seu negócio na sua região.
         </p>
 
         {/* Grátis cards */}
@@ -626,22 +635,22 @@ export default function Home() {
 
         {/* Paid blocks */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <div style={{ padding: "20px", borderRadius: 12, border: `1px solid ${V.fog}`, background: V.white }}>
+          <div style={{ padding: "20px", borderRadius: 12, border: `2px solid ${V.amber}`, background: V.white }}>
             <span style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", fontWeight: 600, color: V.amber, background: V.amberWash, padding: "3px 8px", borderRadius: 4 }}>
               R$497 · pagamento único
             </span>
-            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, margin: "10px 0 6px" }}>Diagnóstico completo + Checklist</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, margin: "10px 0 6px" }}>Checklist completo + Diagnóstico por canal</div>
             <p style={{ fontSize: 14, color: V.zinc, lineHeight: 1.6, margin: 0 }}>
-              Diagnóstico detalhado por canal, checklist de ações prioritárias, análise de sazonalidade e amostra de conteúdos. Pronto em 5 minutos.
+              Todas as ações priorizadas, com descrição detalhada e prazo de execução. Mais: diagnóstico por canal (Google, Instagram, Maps, IA), sazonalidade do seu mercado e amostra de conteúdos prontos para publicar.
             </p>
           </div>
           <div style={{ padding: "20px", borderRadius: 12, border: `1px solid ${V.fog}`, background: V.white }}>
             <span style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", fontWeight: 600, color: V.teal, background: V.tealWash, padding: "3px 8px", borderRadius: 4 }}>
               R$99/mês
             </span>
-            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, margin: "10px 0 6px" }}>Conteúdos semanais</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, margin: "10px 0 6px" }}>Conteúdos toda semana, sem esforço</div>
             <p style={{ fontSize: 14, color: V.zinc, lineHeight: 1.6, margin: 0 }}>
-              4 posts prontos para publicar + 3 briefings toda sexta-feira. Disponível após o Diagnóstico Completo.
+              4 posts prontos para publicar + 3 briefings para sua equipe ou agência. Gerados toda sexta com base no contexto atual do seu mercado. Disponível após o Diagnóstico Completo.
             </p>
           </div>
         </div>

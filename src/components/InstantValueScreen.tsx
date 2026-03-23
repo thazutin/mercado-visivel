@@ -544,29 +544,68 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         </Expandable>
         </div>
 
-        {/* ── 4. Rotas de trabalho priorizadas ── */}
+        {/* ── 4. Prévia do seu Checklist ── */}
         {results.workRoutes && results.workRoutes.length > 0 && (
-          <Expandable title="Rotas de trabalho priorizadas" icon="🎯">
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontFamily: V.mono, color: V.ash, letterSpacing: "0.06em", textTransform: "uppercase" as const, margin: "20px 0 12px" }}>
+              Prévia do seu Checklist
+            </div>
             {results.gapHeadline && (
               <p style={{ fontSize: 13, color: V.night, margin: "0 0 12px", fontWeight: 500, lineHeight: 1.5 }}>{results.gapHeadline}</p>
             )}
-            {results.workRoutes.sort((a, b) => a.priority - b.priority).slice(0, 3).map((route, i) => (
-              <div key={i} style={{ padding: "12px", marginBottom: 8, borderRadius: 8, background: i === 0 ? V.amberWash : V.cloud }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 600, color: i === 0 ? V.amber : V.zinc, background: i === 0 ? "rgba(207,133,35,0.15)" : V.fog, width: 20, height: 20, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{route.priority}</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{route.title}</span>
-                  <Chip color={route.horizon === "curto prazo" ? V.teal : route.horizon === "longo prazo" ? V.coral : V.amber}>
-                    {route.horizon === "curto prazo" ? "1–4 semanas" : route.horizon === "médio prazo" ? "1–3 meses" : route.horizon === "longo prazo" ? "3–6 meses" : route.horizon}
-                  </Chip>
-                </div>
-                <p style={{ fontSize: 12, color: V.zinc, margin: "4px 0 0", lineHeight: 1.5, paddingLeft: 28 }}>{route.rationale}</p>
-              </div>
-            ))}
-          </Expandable>
+            {(() => {
+              const sorted = [...results.workRoutes].sort((a: any, b: any) => a.priority - b.priority);
+              return sorted.slice(0, 5).map((route: any, i: number) => {
+                const isLocked = i > 0;
+                return (
+                  <div key={i} style={{
+                    padding: "12px", marginBottom: 8, borderRadius: 8,
+                    background: i === 0 ? V.amberWash : V.cloud,
+                    filter: isLocked ? "blur(3px)" : "none",
+                    pointerEvents: isLocked ? "none" : "auto",
+                    userSelect: isLocked ? "none" : "auto",
+                    position: "relative",
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 600, color: i === 0 ? V.amber : V.zinc, background: i === 0 ? "rgba(207,133,35,0.15)" : V.fog, width: 20, height: 20, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{route.priority}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{route.title}</span>
+                      <Chip color={route.horizon === "curto prazo" ? V.teal : route.horizon === "longo prazo" ? V.coral : V.amber}>
+                        {route.horizon === "curto prazo" ? "1–4 semanas" : route.horizon === "médio prazo" ? "1–3 meses" : route.horizon === "longo prazo" ? "3–6 meses" : route.horizon}
+                      </Chip>
+                    </div>
+                    <p style={{ fontSize: 12, color: V.zinc, margin: "4px 0 0", lineHeight: 1.5, paddingLeft: 28 }}>{route.rationale}</p>
+                  </div>
+                );
+              });
+            })()}
+            {/* CTA to unlock */}
+            <div style={{
+              textAlign: "center", padding: "16px", marginTop: 4,
+              background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`,
+            }}>
+              <span style={{ fontSize: 16, marginRight: 8 }}>🔒</span>
+              <span style={{ fontSize: 13, color: V.zinc }}>Ver checklist completo — </span>
+              <button
+                onClick={() => {
+                  fetch("/api/checkout", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ lead_id: leadId, locale: "pt" }),
+                  }).then(r => r.json()).then(d => { if (d.url) window.location.href = d.url; });
+                }}
+                style={{
+                  background: "none", border: "none", color: V.amber,
+                  fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline",
+                }}
+              >
+                Diagnóstico Completo por R$497
+              </button>
+            </div>
+          </div>
         )}
 
-        {/* Bloco 5 — Fontes de dados e metodologia */}
-        <Expandable title="Fontes de dados e metodologia" icon="🔬">
+        {/* Bloco 5 — Fontes de dados e metodologia (só no painel pago) */}
+        {!hideCTA && <Expandable title="Fontes de dados e metodologia" icon="🔬">
           <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
             {(() => {
               const allSources: Record<string, string> = {
@@ -611,7 +650,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           {results.pipeline?.durationMs && (
             <p style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, marginTop: 8 }}>{(results.pipeline.durationMs / 1000).toFixed(1)}s · {results.pipeline.version}</p>
           )}
-        </Expandable>
+        </Expandable>}
 
         {/* ═══ PNCP — Contratações Públicas (B2G only) ═══ */}
         {isB2G && results.pncp && results.pncp.totalEncontradas > 0 && (

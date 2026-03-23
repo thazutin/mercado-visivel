@@ -1,5 +1,6 @@
 // ============================================================================
-// Virô — Checkout Route (R$397)
+// Virô — Checkout Route
+// Amount configurável via CHECKOUT_AMOUNT (centavos). Default: 49700 (R$497)
 // File: src/app/api/checkout/route.ts
 // ============================================================================
 
@@ -19,11 +20,12 @@ export async function POST(req: NextRequest) {
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://virolocal.com";
+    const checkoutAmount = parseInt(process.env.CHECKOUT_AMOUNT || "49700", 10);
 
     const pricing: Record<string, { amount: number; currency: string }> = {
-      pt: { amount: 49700, currency: "brl" },    // R$497
-      en: { amount: 9700, currency: "usd" },      // $97
-      es: { amount: 9700, currency: "usd" },      // $97
+      pt: { amount: checkoutAmount, currency: "brl" },
+      en: { amount: 9700, currency: "usd" },
+      es: { amount: 9700, currency: "usd" },
     };
     const { amount, currency } = pricing[locale || "pt"] || pricing.pt;
 

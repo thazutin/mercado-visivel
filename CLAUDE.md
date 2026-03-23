@@ -46,7 +46,7 @@ Pipeline types are centralized in `src/lib/types/pipeline.types.ts`.
 | Clerk | Auth (dashboard/admin protection) | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` |
 | Anthropic Claude | Term generation, gap analysis, AI visibility | `ANTHROPIC_API_KEY` |
 | Apify | SERP, Google Maps, Instagram scraping | `APIFY_API_TOKEN` |
-| Stripe | Checkout/payments/subscriptions | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_SUBSCRIPTION_PRICE_ID` |
+| Stripe | Checkout/payments/subscriptions | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_SUBSCRIPTION_PRICE_ID`, `CHECKOUT_AMOUNT` |
 
 ### Auth & Middleware
 
@@ -90,7 +90,9 @@ Two notification channels: **Email (Resend)** and **WhatsApp (Twilio)**.
 5. Webhook `customer.subscription.deleted` → `subscription_status = "cancelled"`
 6. Webhook `customer.subscription.updated` → sincroniza status (`active`/`cancelled`)
 
-**Env var necessária:** `STRIPE_SUBSCRIPTION_PRICE_ID` — price ID do produto de recorrência no Stripe
+**Env vars:**
+- `STRIPE_SUBSCRIPTION_PRICE_ID` — price ID do produto de recorrência no Stripe
+- `CHECKOUT_AMOUNT` — valor do checkout em centavos (default: `49700` = R$497). Para testar: `CHECKOUT_AMOUNT=100` (R$1)
 
 #### Cron: conteúdos semanais para assinantes
 

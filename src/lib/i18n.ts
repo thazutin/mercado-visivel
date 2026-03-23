@@ -169,8 +169,8 @@ export const dictionaries: Record<Locale, any> = {
     formNext: "Continuar →",
     formSubmit: "Ver meu diagnóstico grátis",
     // ─── Hero (current simplified) ───
-    heroSubShort: "Virô analisa sua visibilidade digital e entrega um checklist de ações, além de conteúdos prontos para você não perder clientes — Em 1 minuto. Grátis.",
-    heroFree: "Dados reais · Plano Personalizado",
+    heroSubShort: "Virô analisa sua visibilidade digital e entrega um checklist de ações, e conteúdos prontos para você ter novos clientes - em 1 minuto. Grátis.",
+    heroFree: "",
 
     // ─── Processing ───
     processingSteps: [

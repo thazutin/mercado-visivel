@@ -59,7 +59,54 @@ function getClaudeClient() {
   return { createMessage: (params: any) => client.messages.create(params) };
 }
 
-// --- Extract city via Claude Haiku ---
+// --- Reverse geocoding via Google (fonte de verdade para município) ---
+async function reverseGeocodeCity(lat: number, lng: number): Promise<{ city: string; state: string } | null> {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey || !lat || !lng) return null;
+
+  try {
+    const res = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&language=pt-BR&key=${apiKey}`
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+
+    if (!data.results || data.results.length === 0) return null;
+
+    // Procura nos componentes do primeiro resultado
+    for (const result of data.results) {
+      const components = result.address_components || [];
+      let city = '';
+      let state = '';
+
+      for (const comp of components) {
+        const types: string[] = comp.types || [];
+        // administrative_area_level_2 = município no Brasil
+        if (types.includes('administrative_area_level_2') && !city) {
+          city = comp.long_name;
+        }
+        // locality como fallback
+        if (types.includes('locality') && !city) {
+          city = comp.long_name;
+        }
+        if (types.includes('administrative_area_level_1')) {
+          state = comp.short_name; // "SP", "RJ", etc.
+        }
+      }
+
+      if (city) {
+        console.log(`[ReverseGeocode] lat=${lat}, lng=${lng} → city="${city}", state="${state}"`);
+        return { city, state };
+      }
+    }
+    return null;
+  } catch (err) {
+    console.warn('[ReverseGeocode] Falhou:', (err as Error).message);
+    return null;
+  }
+}
+
+// --- Extract city via Claude Haiku (fallback quando não há lat/lng) ---
 async function extractCity(region: string): Promise<string> {
   try {
     const claude = getClaudeClient();
@@ -68,7 +115,7 @@ async function extractCity(region: string): Promise<string> {
       max_tokens: 50,
       messages: [{
         role: 'user',
-        content: `Extraia apenas o nome completo da cidade (sem abreviações) desta string de endereço/região. Responda somente com o nome da cidade, sem mais nada. Exemplo: "R. Jundiaí" → "Jundiaí", "S. Paulo" → "São Paulo". Região: ${region}`,
+        content: `Extraia apenas o nome do MUNICÍPIO (cidade) desta string de endereço brasileiro. Ignore nomes de ruas/bairros. Responda somente com o nome da cidade. Exemplo: "R. Jundiaí, 407 - Matriz, Mauá - SP" → "Mauá", "Av. Paulista, 1000 - Bela Vista, São Paulo - SP" → "São Paulo". Região: ${region}`,
       }],
     });
     const text = (res.content as any[]).filter((c: any) => c.type === 'text').map((c: any) => c.text).join('').trim();
@@ -653,17 +700,37 @@ Responda APENAS em JSON, sem markdown:
   // =========================================================================
   // Extract city + resolve lat/lng (reused by IBGE, Perplexity, etc.)
   // =========================================================================
-  const extractedCity = await extractCity(input.region);
   // Extrai sigla UF do endereço completo (ex: "R. Jundiaí, 604 - Matriz, Mauá - SP, 09370-180" → "SP")
   const ufMatch = input.region.match(/\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/);
-  const extractedState = ufMatch ? ufMatch[1] : '';
-  console.log(`[Pipeline] Cidade extraída: "${extractedCity}", estado: "${extractedState}" (de region="${input.region.slice(0, 80)}")`);
+  let extractedState = ufMatch ? ufMatch[1] : '';
 
   // Resolve lat/lng: form (Google Places) → Nominatim fallback
   let pipelineLat = formData.lat || 0;
   let pipelineLng = formData.lng || 0;
+
+  // Prioridade 1: reverse geocoding via Google (fonte de verdade para município)
+  let extractedCity = '';
+  if (pipelineLat && pipelineLng) {
+    console.log(`[Pipeline] Lat/lng do form (Google Places): lat=${pipelineLat}, lng=${pipelineLng}`);
+    const reverseResult = await reverseGeocodeCity(pipelineLat, pipelineLng);
+    if (reverseResult) {
+      extractedCity = reverseResult.city;
+      if (reverseResult.state) extractedState = reverseResult.state;
+      console.log(`[Pipeline] Reverse geocoding → cidade="${extractedCity}", estado="${extractedState}"`);
+    }
+  }
+
+  // Prioridade 2: Claude Haiku (quando não tem lat/lng ou reverse falhou)
+  if (!extractedCity) {
+    extractedCity = await extractCity(input.region);
+    console.log(`[Pipeline] Claude Haiku → cidade="${extractedCity}"`);
+  }
+
+  console.log(`[Pipeline] Cidade final: "${extractedCity}", estado: "${extractedState}" (de region="${input.region.slice(0, 80)}")`);
+
+  // Resolve lat/lng se não veio do form
   if (!pipelineLat || !pipelineLng) {
-    console.log(`[Pipeline] Lat/lng não veio do form (lat=${formData.lat}, lng=${formData.lng}) — geocodificando via Nominatim...`);
+    console.log(`[Pipeline] Lat/lng não veio do form — geocodificando via Nominatim...`);
     try {
       const geo = await geocodeNominatim(extractedCity, extractedState);
       if (geo) {
@@ -676,8 +743,6 @@ Responda APENAS em JSON, sem markdown:
     } catch (err) {
       console.warn('[Pipeline] Nominatim geocoding falhou:', (err as Error).message);
     }
-  } else {
-    console.log(`[Pipeline] Lat/lng do form (Google Places): lat=${pipelineLat}, lng=${pipelineLng}`);
   }
 
   // =========================================================================

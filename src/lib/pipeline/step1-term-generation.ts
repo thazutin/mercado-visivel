@@ -14,6 +14,7 @@ export const INTENT_WEIGHTS: Record<TermIntent, number> = {
 };
 
 export function buildTermGenerationPrompt(input: FormInput): string {
+  const siteUrl = input.digitalAssets?.find(a => a.type === 'website')?.identifier;
   const context = [
     `NEGÓCIO: ${input.product}`,
     input.differentiator ? `DIFERENCIAL: ${input.differentiator}` : null,
@@ -21,6 +22,7 @@ export function buildTermGenerationPrompt(input: FormInput): string {
     input.address ? `ENDEREÇO: ${input.address}` : null,
     input.customerDescription ? `COMO O CLIENTE DESCREVE: ${input.customerDescription}` : null,
     input.ticket ? `TICKET MÉDIO: R$${input.ticket}` : null,
+    siteUrl ? `SITE DO NEGÓCIO: ${siteUrl} — considere a presença e qualidade do site na análise` : null,
   ].filter(Boolean).join('\n');
 
   return `Você é um especialista em marketing local e comportamento de busca do consumidor brasileiro.
