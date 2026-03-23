@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://virolocal.com";
 
     const pricing: Record<string, { amount: number; currency: string }> = {
-      pt: { amount: 39700, currency: "brl" },    // R$397
+      pt: { amount: 49700, currency: "brl" },    // R$497
       en: { amount: 9700, currency: "usd" },      // $97
       es: { amount: 9700, currency: "usd" },      // $97
     };

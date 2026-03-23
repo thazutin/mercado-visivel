@@ -429,10 +429,10 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               {results.influencePercent === 0
                 ? `Quando alguém busca ${product} em ${shortRegion}, você não aparece. Enquanto isso, seus concorrentes recebem esses clientes.`
                 : results.influencePercent < 15
-                ? `Você não aparece para ${100 - results.influencePercent}% dos potenciais compradores. Há espaço para crescer — o plano mostra onde.`
+                ? `Você não aparece para ${100 - results.influencePercent}% dos potenciais compradores. Há espaço para crescer — o checklist mostra o que fazer agora.`
                 : results.influencePercent < 40
-                ? `Você não aparece para ${100 - results.influencePercent}% dos potenciais compradores. Há espaço para crescer — o plano mostra onde.`
-                : `Você aparece para ${results.influencePercent}% das buscas — posição forte. O plano mostra como manter essa vantagem.`}
+                ? `Você não aparece para ${100 - results.influencePercent}% dos potenciais compradores. Há espaço para crescer — o checklist mostra o que fazer agora.`
+                : `Você aparece para ${results.influencePercent}% das buscas — posição forte. O checklist mostra o que fazer agora para manter essa vantagem.`}
             </p>
           </div>
 
@@ -491,7 +491,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 )}
                 {competitors.length === 0 && (
                   <p style={{ fontSize: 11, color: V.ash, margin: "4px 0 0" }}>
-                    Sem concorrentes para comparar nesta análise. O plano completo inclui comparativo.
+                    Sem concorrentes para comparar nesta análise. O diagnóstico completo inclui comparativo.
                   </p>
                 )}
               </>
@@ -665,10 +665,10 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             Agora você sabe. O próximo passo é agir.
           </p>
           <p style={{ fontSize: 14, color: V.zinc, margin: "0 0 4px", lineHeight: 1.6 }}>
-            <strong style={{ color: V.night }}>Antes:</strong> Não sabia onde meu negócio aparecia
+            <strong style={{ color: V.night }}>Antes:</strong> Não sabia o que fazer primeiro
           </p>
           <p style={{ fontSize: 14, color: V.zinc, margin: "0 0 20px", lineHeight: 1.6 }}>
-            <strong style={{ color: V.teal }}>Agora:</strong> Sei onde estou, quem compete comigo e o que fazer primeiro
+            <strong style={{ color: V.teal }}>Agora:</strong> Sei onde estou, quem compete comigo e tenho um checklist para agir agora
           </p>
         </div>
 
@@ -676,9 +676,9 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.04em", textTransform: "uppercase" as const, marginBottom: 4 }}>
             Pacote completo · pagamento único
           </div>
-          <div style={{ fontFamily: V.display, fontSize: 32, fontWeight: 700, marginBottom: 16 }}>R$ 397</div>
+          <div style={{ fontFamily: V.display, fontSize: 32, fontWeight: 700, marginBottom: 16 }}>R$ 497</div>
 
-          {["Diagnóstico completo por canal", "Plano de 90 dias com ações semanais", "Sugestão de ação semanal por email"].map((d, i) => (
+          {["Diagnóstico completo por canal (Google, Instagram, Maps, IA)", "Checklist prático com as ações de maior impacto", "Análise de sazonalidade e contexto do seu mercado", "Amostra de conteúdos prontos para publicar"].map((d, i) => (
             <div key={i} style={{ display: "flex", gap: 10, marginBottom: 8, alignItems: "center" }}>
               <span style={{ color: V.amber, fontSize: 12 }}>✓</span>
               <span style={{ fontSize: 13, color: V.mist }}>{d}</span>
@@ -701,7 +701,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               background: V.white, color: V.night, fontSize: 15, fontWeight: 600,
               cursor: loading ? "wait" : "pointer", opacity: loading ? 0.7 : 1,
             }}>
-              {loading ? "Redirecionando..." : "Desbloquear plano completo"}
+              {loading ? "Redirecionando..." : "Desbloquear diagnóstico completo"}
             </button>
             <p style={{ fontSize: 11, color: V.ash, textAlign: "center", marginTop: 8 }}>Pagamento único · sem assinatura</p>
           </div>
@@ -716,18 +716,15 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             </div>
           </div>
           <div style={{ padding: "12px", borderRadius: 8, background: V.cloud, marginBottom: 8, borderLeft: `3px solid ${V.teal}` }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: V.night, marginBottom: 4 }}>Plano de 90 dias</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: V.night, marginBottom: 4 }}>Checklist de ações prioritárias</div>
             <div style={{ fontSize: 12, color: V.zinc, lineHeight: 1.5 }}>
-              O que fazer, em que ordem e por quê — para sair da posição atual com ações concretas a cada semana.
+              O que fazer, em que ordem e por quê — ordenado por impacto para você começar hoje.
             </div>
           </div>
           <div style={{ padding: "12px", borderRadius: 8, background: V.cloud, borderLeft: `3px solid #8B5CF6` }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: V.night, marginBottom: 4 }}>Inteligência semanal</div>
-            <div style={{ fontSize: 12, color: V.zinc, lineHeight: 1.5, marginBottom: 8 }}>
-              Toda semana: o que mudou no seu mercado + uma ação específica com o como executar. Por email.
-            </div>
-            <div style={{ fontSize: 11, color: V.ash, lineHeight: 1.5, fontStyle: "italic" }}>
-              Ex: "Otimize o Google Meu Negócio — 3 passos" · "Grave Reels 30s com roteiro" · "Invista R$X em mídia e capture Y clientes"
+            <div style={{ fontSize: 13, fontWeight: 600, color: V.night, marginBottom: 4 }}>Conteúdos prontos</div>
+            <div style={{ fontSize: 12, color: V.zinc, lineHeight: 1.5 }}>
+              Posts prontos para Instagram, Google Meu Negócio e WhatsApp — copie, adapte e publique.
             </div>
           </div>
         </Expandable></>)}
