@@ -1,6 +1,6 @@
 // ============================================================================
-// Virô — Stripe Webhook (Updated for Sprint 2)
-// After payment: mark paid → create Clerk user → trigger plan generation → email
+// Virô — Stripe Webhook
+// Handles: one-time payment, subscription created, subscription cancelled/updated
 // ============================================================================
 // File: src/app/api/webhook/route.ts
 
@@ -10,6 +10,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createOrLinkClerkUser, sendMagicLinkEmail } from "@/lib/auth";
 import { trackEvent } from "@/lib/events";
 import { triggerContentGeneration } from "@/lib/generateContents";
+import { notifyWeeklyContents } from "@/lib/notify";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
@@ -39,19 +40,66 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
+  const supabase = getSupabase();
+
+  // ─── checkout.session.completed ─────────────────────────────────────────────
+
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const leadId = session.metadata?.lead_id;
     const email = session.customer_email || session.metadata?.email;
+    const sessionType = session.metadata?.type;
 
     if (!leadId) {
       console.error("[Webhook] No lead_id in session metadata");
       return NextResponse.json({ ok: true });
     }
 
-    console.log(`[Webhook] Payment completed for lead ${leadId}, email: ${email}`);
+    // ─── SUBSCRIPTION CHECKOUT ───
+    if (sessionType === "subscription") {
+      console.log(`[Webhook] Subscription activated for lead ${leadId}`);
 
-    const supabase = getSupabase();
+      try {
+        await supabase
+          .from("leads")
+          .update({
+            subscription_status: "active",
+            subscription_stripe_id: session.subscription,
+            subscription_started_at: new Date().toISOString(),
+          })
+          .eq("id", leadId);
+
+        await trackEvent({
+          eventType: "subscription_started",
+          leadId,
+          metadata: { stripe_subscription_id: session.subscription },
+        });
+
+        // Notifica que assinatura está ativa (conteúdos já existem da amostra)
+        if (email) {
+          const { data: lead } = await supabase
+            .from("leads")
+            .select("name")
+            .eq("id", leadId)
+            .single();
+
+          notifyWeeklyContents({
+            leadId,
+            email,
+            name: lead?.name || "",
+          }).catch((err) =>
+            console.error("[Webhook] notifyWeeklyContents failed:", err)
+          );
+        }
+      } catch (err) {
+        console.error("[Webhook] Subscription processing error:", err);
+      }
+
+      return NextResponse.json({ ok: true });
+    }
+
+    // ─── ONE-TIME PAYMENT (diagnóstico completo) ───
+    console.log(`[Webhook] Payment completed for lead ${leadId}, email: ${email}`);
 
     try {
       // ─── 1. Mark lead as paid ───
@@ -80,29 +128,23 @@ export async function POST(req: NextRequest) {
       });
 
       // ─── 3. Create Clerk user ───
-      let clerkUserId: string | null = null;
       if (email) {
         try {
-          clerkUserId = await createOrLinkClerkUser(leadId, email);
+          const clerkUserId = await createOrLinkClerkUser(leadId, email);
           console.log(`[Webhook] Clerk user linked: ${clerkUserId}`);
 
-          // Send magic link for dashboard access
           try {
             await sendMagicLinkEmail(email, `https://virolocal.com/dashboard`);
             console.log(`[Webhook] Magic link enviado para ${email}`);
           } catch (mlErr) {
             console.warn(`[Webhook] Magic link failed for ${email}:`, mlErr);
-            // Non-fatal — user can sign in manually
           }
         } catch (err) {
           console.error("[Webhook] Clerk user creation failed:", err);
-          // Non-fatal — plan generation can still proceed
         }
       }
 
       // ─── 4. Trigger plan generation (async) ───
-      // Call the plan generation endpoint — fire and forget
-      // The plan generation runs async and updates plan_status when done
       try {
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
           ? `https://${process.env.VERCEL_URL}`
@@ -124,15 +166,52 @@ export async function POST(req: NextRequest) {
         console.error("[Webhook] Failed to trigger plan generation:", err);
       }
 
-      // ─── 5. Gera conteúdos para redes sociais em background (fire-and-forget) ───
+      // ─── 5. Gera conteúdos para redes sociais em background ───
       if (leadId) {
         triggerContentGeneration(leadId).catch((err) =>
-          console.error('[webhook] Erro na geração de conteúdo:', err)
+          console.error("[Webhook] Erro na geração de conteúdo:", err)
         );
       }
 
     } catch (err) {
       console.error("[Webhook] Processing error:", err);
+    }
+  }
+
+  // ─── customer.subscription.deleted ──────────────────────────────────────────
+
+  if (event.type === "customer.subscription.deleted") {
+    const subscription = event.data.object as Stripe.Subscription;
+    const subscriptionId = subscription.id;
+
+    console.log(`[Webhook] Subscription deleted: ${subscriptionId}`);
+
+    try {
+      await supabase
+        .from("leads")
+        .update({ subscription_status: "cancelled" })
+        .eq("subscription_stripe_id", subscriptionId);
+    } catch (err) {
+      console.error("[Webhook] Subscription deletion processing error:", err);
+    }
+  }
+
+  // ─── customer.subscription.updated ──────────────────────────────────────────
+
+  if (event.type === "customer.subscription.updated") {
+    const subscription = event.data.object as Stripe.Subscription;
+    const subscriptionId = subscription.id;
+    const newStatus = subscription.status === "active" ? "active" : "cancelled";
+
+    console.log(`[Webhook] Subscription updated: ${subscriptionId} → ${newStatus}`);
+
+    try {
+      await supabase
+        .from("leads")
+        .update({ subscription_status: newStatus })
+        .eq("subscription_stripe_id", subscriptionId);
+    } catch (err) {
+      console.error("[Webhook] Subscription update processing error:", err);
     }
   }
 

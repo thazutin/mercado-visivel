@@ -441,6 +441,32 @@ export interface CompetitionIndex {
   }[];
 }
 
+// --- CHECKLIST ---
+
+export interface ChecklistItem {
+  id: string;
+  category: string;
+  title: string;
+  description: string;
+  priority: 'alta' | 'média' | 'baixa';
+  status: 'pending' | 'done';
+}
+
+// --- SEASONALITY ---
+
+export interface SeasonalityData {
+  months: Array<{ month: string; volume: number }>;
+  peak_month: string;
+  low_month: string;
+}
+
+// --- MACRO CONTEXT ---
+
+export interface MacroContext {
+  summary: string;
+  indicators: any[];
+}
+
 // --- ERROR HANDLING ---
 
 export interface StepError {

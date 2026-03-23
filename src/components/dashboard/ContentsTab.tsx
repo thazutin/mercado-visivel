@@ -32,9 +32,10 @@ interface Content {
 
 interface Props {
   leadId: string;
+  showUpgradeBanner?: boolean;
 }
 
-export function ContentsTab({ leadId }: Props) {
+export function ContentsTab({ leadId, showUpgradeBanner }: Props) {
   const [contents, setContents] = useState<Content[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -123,6 +124,44 @@ export function ContentsTab({ leadId }: Props) {
 
   return (
     <div>
+      {/* Upgrade banner for paid (non-subscriber) users */}
+      {showUpgradeBanner && (
+        <div style={{
+          background: "rgba(45,155,131,0.06)", border: "1px solid rgba(45,155,131,0.15)",
+          borderRadius: 12, padding: "16px 20px", marginBottom: 16,
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          flexWrap: "wrap", gap: 12,
+        }}>
+          <p style={{ fontSize: 13, color: V.zinc, margin: 0, flex: 1 }}>
+            Estes conteúdos foram gerados com base no seu diagnóstico. Assine para receber novos conteúdos toda sexta-feira.
+          </p>
+          <button
+            onClick={async () => {
+              try {
+                const res = await fetch("/api/checkout/subscription", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ leadId }),
+                });
+                if (res.ok) {
+                  const data = await res.json();
+                  if (data.url) window.location.href = data.url;
+                }
+              } catch (err) {
+                console.error("Erro ao iniciar checkout:", err);
+              }
+            }}
+            style={{
+              padding: "8px 20px", borderRadius: 8, border: "none",
+              background: V.teal, color: V.white, fontSize: 13,
+              fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
+            }}
+          >
+            Assinar por R$99/mês
+          </button>
+        </div>
+      )}
+
       {/* Header com botão de regerar */}
       <div style={{
         display: "flex", justifyContent: "space-between", alignItems: "center",

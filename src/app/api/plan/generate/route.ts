@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
-import { notifyPlanReady } from "@/lib/notify";
+import { notifyFullDiagnosisReady } from "@/lib/notify";
 
 export const maxDuration = 300;
 
@@ -119,12 +119,13 @@ export async function POST(req: NextRequest) {
       .eq("id", leadId);
 
     // 5. Notifica por WhatsApp + email
-    await notifyPlanReady({
+    await notifyFullDiagnosisReady({
       email: lead.email,
       whatsapp: lead.whatsapp,
       leadId,
       product: lead.product,
       region: lead.region,
+      name: lead.name,
     });
 
     console.log(`[PlanGen] Plan ready for lead ${leadId}`);

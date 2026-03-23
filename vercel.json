@@ -1,8 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/cron/weekly",
-      "schedule": "0 10 * * 1"
+      "path": "/api/cron/weekly-contents",
+      "schedule": "0 8 * * 5"
     }
   ],
   "functions": {
@@ -13,6 +13,9 @@
       "maxDuration": 300
     },
     "src/app/api/cron/weekly/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/cron/weekly-contents/route.ts": {
       "maxDuration": 300
     }
   }

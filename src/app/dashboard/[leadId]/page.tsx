@@ -4,7 +4,6 @@
 // ============================================================================
 
 import { createClient } from "@supabase/supabase-js";
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import DashboardClient from "./DashboardClient";
 
@@ -29,9 +28,17 @@ export default async function DashboardPage({ params }: { params: { leadId: stri
     .eq("id", leadId)
     .single();
 
-  if (!lead || lead.status !== "paid") {
+  if (!lead) {
     redirect("/?error=not_found");
   }
+
+  // Determine tier
+  const tier: "free" | "paid" | "subscriber" =
+    lead.subscription_status === "active"
+      ? "subscriber"
+      : lead.paid_at
+        ? "paid"
+        : "free";
 
   // Load plan
   const { data: plan } = await supabase
@@ -39,13 +46,6 @@ export default async function DashboardPage({ params }: { params: { leadId: stri
     .select("*")
     .eq("lead_id", leadId)
     .single();
-
-  // Load briefings
-  const { data: briefings } = await supabase
-    .from("briefings")
-    .select("*")
-    .eq("lead_id", leadId)
-    .order("week_number", { ascending: true });
 
   // Load diagnosis for summary data
   const { data: diagnosis } = await supabase
@@ -56,29 +56,22 @@ export default async function DashboardPage({ params }: { params: { leadId: stri
     .limit(1)
     .single();
 
-  // Load snapshots for score evolution chart
-  const { data: snapshots } = await supabase
-    .from("snapshots")
-    .select("week_number, data")
-    .eq("lead_id", leadId)
-    .order("week_number", { ascending: true });
-
-  // Load plan tasks (checkboxes)
-  const { data: planTasks } = await supabase
-    .from("plan_tasks")
+  // Load checklist
+  const { data: checklist } = await supabase
+    .from("checklists")
     .select("*")
     .eq("lead_id", leadId)
-    .order("week", { ascending: true })
-    .order("id", { ascending: true });
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
 
   return (
     <DashboardClient
       lead={lead}
       plan={plan}
-      briefings={briefings || []}
       diagnosis={diagnosis}
-      snapshots={snapshots || []}
-      planTasks={planTasks || []}
+      tier={tier}
+      checklist={checklist || null}
     />
   );
 }

@@ -152,7 +152,7 @@ export async function notifyDiagnosisReady(opts: {
 
     sendEmail({
       to: email,
-      subject: `Seu diagnóstico de mercado está pronto — ${product} em ${shortRegion}`,
+      subject: `${(opts as any).name || product} — seu relatório de visibilidade está pronto`,
       html: diagnosisEmailHtml({ product, shortRegion, influencePercent, searchVolume, url }),
     }),
   ]);
@@ -167,18 +167,20 @@ export async function notifyDiagnosisReady(opts: {
   });
 }
 
-// ─── Plano completo pós-pagamento ────────────────────────────────────────────
+// ─── Diagnóstico completo pós-pagamento ──────────────────────────────────────
 
-export async function notifyPlanReady(opts: {
+export async function notifyFullDiagnosisReady(opts: {
   email: string;
   whatsapp: string;
   leadId: string;
   product: string;
   region: string;
+  name?: string;
 }): Promise<void> {
-  const { email, whatsapp, leadId, product, region } = opts;
+  const { email, whatsapp, leadId, product, region, name } = opts;
   const dashboardUrl = `${BASE_URL}/dashboard/${leadId}`;
   const shortRegion = region.split(",")[0].trim();
+  const displayName = name || product;
 
   await Promise.allSettled([
     sendWhatsApp(
@@ -189,10 +191,43 @@ export async function notifyPlanReady(opts: {
 
     sendEmail({
       to: email,
-      subject: `Seu plano de ação está pronto — ${product} em ${shortRegion}`,
-      html: planEmailHtml({ product, shortRegion, url: dashboardUrl }),
+      subject: `${displayName} — diagnóstico completo e checklist prontos`,
+      html: fullDiagnosisEmailHtml({ product, shortRegion, url: dashboardUrl }),
     }),
   ]);
+}
+
+// ─── Conteúdos semanais (recorrência) ────────────────────────────────────────
+
+export async function notifyWeeklyContents(opts: {
+  leadId: string;
+  email: string;
+  name: string;
+}): Promise<void> {
+  const { leadId, email, name } = opts;
+  const dashboardUrl = `${BASE_URL}/dashboard/${leadId}`;
+  const firstName = name.split(" ")[0] || "Olá";
+
+  await sendEmail({
+    to: email,
+    subject: `Seus conteúdos da semana estão prontos — ${firstName}`,
+    html: emailShell(`
+      <h1 style="font-size:22px;color:#161618;margin:0 0 16px;line-height:1.3;">
+        Seus conteúdos da semana estão prontos.
+      </h1>
+      <p style="font-size:15px;color:#6E6E78;line-height:1.7;margin:0 0 24px;">
+        Seus 4 conteúdos desta semana foram gerados e estão no seu painel.
+      </p>
+      <div style="text-align:center;margin:0 0 28px;">
+        <a href="${dashboardUrl}" style="background:#161618;color:#FEFEFF;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;display:inline-block;">
+          Acessar agora
+        </a>
+      </div>
+      <p style="font-size:13px;color:#9E9EA8;line-height:1.6;margin:0;">
+        Copie, adapte e publique — o trabalho de criação já está feito.
+      </p>
+    `),
+  });
 }
 
 // ─── Upsell (semana 8) ────────────────────────────────────────────────────────
@@ -377,32 +412,31 @@ function diagnosisEmailHtml(opts: {
   `);
 }
 
-function planEmailHtml(opts: {
+function fullDiagnosisEmailHtml(opts: {
   product: string;
   shortRegion: string;
   url: string;
 }): string {
-  const { product, shortRegion, url } = opts;
+  const { url } = opts;
 
   return emailShell(`
     <h1 style="font-size:22px;color:#161618;margin:0 0 16px;line-height:1.3;">
-      Seu plano de 90 dias está pronto.
+      Seu diagnóstico completo está pronto.
     </h1>
     <p style="font-size:15px;color:#6E6E78;line-height:1.7;margin:0 0 24px;">
-      O diagnóstico completo e o plano de ação de 90 dias para
-      <strong>${product}</strong> em <strong>${shortRegion}</strong>
-      estão disponíveis na sua página de resultado.
+      Seu diagnóstico completo está pronto — e junto com ele, um checklist com as ações de maior impacto para você começar hoje.
     </p>
     <div style="margin:0 0 20px;">
       ${[
-        "Diagnóstico completo por canal",
-        "Plano semanal — 12 semanas com ações específicas",
-        "Briefings semanais toda segunda-feira",
+        "Diagnóstico completo por canal (Google, Instagram, Maps, IA)",
+        "Checklist prático ordenado por prioridade",
+        "Análise de sazonalidade do seu mercado",
+        "Amostra de conteúdos prontos para publicar",
       ]
         .map(
           (item) => `
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-          <span style="color:#CF8523;font-size:14px;font-weight:700;">✓</span>
+          <span style="color:#CF8523;font-size:14px;font-weight:700;">→</span>
           <span style="font-size:14px;color:#3A3A40;">${item}</span>
         </div>`
         )
@@ -410,12 +444,8 @@ function planEmailHtml(opts: {
     </div>
     <div style="text-align:center;margin:0 0 28px;">
       <a href="${url}" style="background:#161618;color:#FEFEFF;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;display:inline-block;">
-        Acessar meu resultado
+        Acessar meu painel
       </a>
     </div>
-    <p style="font-size:13px;color:#9E9EA8;line-height:1.6;margin:0;">
-      A partir de agora, toda segunda-feira você recebe o briefing semanal 
-      com o que mudou no seu mercado e a ação da semana.
-    </p>
   `);
 }

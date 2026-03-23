@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { leadSchema } from "@/lib/schema";
 import { insertLead, updateLeadStatus, insertDiagnosis } from "@/lib/supabase";
-import { runInstantAnalysis } from "@/lib/analysis";
+import { runInstantAnalysis, runPostDiagnosisEnrichment } from "@/lib/analysis";
 import { notifyDiagnosisReady } from "@/lib/notify";
 import { createClient } from "@supabase/supabase-js";
 
@@ -181,7 +181,15 @@ export async function POST(req: NextRequest) {
       console.error("[Diagnose] notify failed:", err);
     }
 
-    // 8. Responde com resultado completo (frontend exibe imediatamente)
+    // 8. Post-diagnosis enrichment (fire-and-forget — não bloqueia resposta)
+    runPostDiagnosisEnrichment(lead.id, pipelineResult, {
+      name: (formData as any).name || formData.product,
+      product: formData.product,
+      region: formData.region,
+      client_type: pipelineResult.clientType || "b2c",
+    }).catch((err) => console.error("[Diagnose] Enrichment failed:", err));
+
+    // 9. Responde com resultado completo (frontend exibe imediatamente)
     return NextResponse.json({
       lead_id: lead.id,
       results: display,

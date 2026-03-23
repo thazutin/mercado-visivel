@@ -367,7 +367,7 @@ export default function Home() {
             fontFamily: V.display, fontSize: "clamp(28px, 5vw, 38px)", fontWeight: 700,
             color: V.white, letterSpacing: "-0.03em", margin: "24px 0 16px", lineHeight: 1.2,
           }}>
-            Analise a visibilidade do seu negócio <span style={{ color: V.amber }}>no mercado local</span>
+            Saiba o que fazer agora para <span style={{ color: V.amber }}>vender mais</span>
           </h1>
           <p style={{ fontSize: 15, color: V.ash, lineHeight: 1.6, margin: "0 0 8px" }}>
             {t.heroSubShort}
@@ -608,9 +608,10 @@ export default function Home() {
             { label: "GRÁTIS", title: "Visibilidade no mercado", desc: "Como seu negócio aparece no Google, Instagram e IA.", color: V.teal },
             { label: "GRÁTIS", title: "Concorrência mapeada", desc: "Quem disputa atenção com você na sua região.", color: V.teal },
             { label: "GRÁTIS", title: "Oportunidades claras", desc: "Onde há espaço para atrair mais clientes.", color: V.teal },
-            { label: "PLANO", title: "O que fazer primeiro", desc: "Próximos passos concretos, em ordem de prioridade.", color: V.amber },
-            { label: "PLANO", title: "90 dias de roteiro", desc: "12 semanas com ações específicas para seu negócio.", color: V.amber },
-            { label: "PLANO", title: "Acompanhamento semanal", desc: "O que mudou + próxima ação. Por email.", color: V.amber },
+            { label: "DIAGNÓSTICO", title: "Diagnóstico completo", desc: "Diagnóstico completo por canal (Google, Instagram, Maps, IA)", color: V.amber },
+            { label: "DIAGNÓSTICO", title: "Checklist de ações", desc: "Checklist prático com as ações de maior impacto", color: V.amber },
+            { label: "DIAGNÓSTICO", title: "Sazonalidade", desc: "Análise de sazonalidade e contexto do seu mercado", color: V.amber },
+            { label: "DIAGNÓSTICO", title: "Conteúdos prontos", desc: "Amostra de conteúdos prontos para publicar", color: V.amber },
           ].map((item, i) => (
             <div key={i} style={{ padding: "20px", borderRadius: 12, border: `1px solid ${V.fog}`, background: V.white }}>
               <span style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", fontWeight: 600, color: item.color, background: `${item.color}15`, padding: "3px 8px", borderRadius: 4 }}>
@@ -621,6 +622,36 @@ export default function Home() {
             </div>
           ))}
         </div>
+        <p style={{ fontSize: 12, color: V.ash, textAlign: "center", marginTop: 12 }}>
+          Pronto em 5 minutos, disponível no painel
+        </p>
+      </Section>
+
+      {/* ═══ SECTION — RECORRÊNCIA ═══ */}
+      <Section bg={V.cloud}>
+        <SectionLabel>para quem quer ir além</SectionLabel>
+        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
+          Conteúdos toda semana, sem esforço
+        </h2>
+        <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.6, margin: "0 0 24px" }}>
+          R$99/mês — depois do Diagnóstico Completo
+        </p>
+        <div style={{ background: V.white, borderRadius: 14, padding: "24px 20px", border: `1px solid ${V.fog}` }}>
+          {[
+            "4 posts prontos para publicar por semana",
+            "3 briefings para sua equipe ou agência",
+            "Atualizado toda sexta-feira no painel",
+            "Email de aviso quando estiver pronto",
+          ].map((item, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: i < 3 ? 12 : 0 }}>
+              <span style={{ color: V.teal, fontSize: 14, fontWeight: 700 }}>✓</span>
+              <span style={{ fontSize: 14, color: V.night }}>{item}</span>
+            </div>
+          ))}
+        </div>
+        <p style={{ fontSize: 12, color: V.ash, textAlign: "center", marginTop: 12 }}>
+          Disponível após o Diagnóstico Completo
+        </p>
       </Section>
 
       {/* ═══ SECTION 6 — METODOLOGIA E FONTES ═══ */}

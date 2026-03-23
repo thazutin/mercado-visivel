@@ -43,13 +43,12 @@ const facts = [
 ];
 
 const processingMessages = [
-  "Mapeando termos de busca...",
-  "Consultando Google Search...",
-  "Analisando Instagram...",
-  "Calculando audiência IBGE...",
-  "Medindo influência digital...",
-  "Cruzando dados de concorrência...",
-  "Preparando seu diagnóstico...",
+  "Analisando como você aparece no Google...",
+  "Verificando sua presença no Instagram...",
+  "Mapeando concorrentes na sua região...",
+  "Calculando onde você está perdendo clientes...",
+  "Identificando as ações de maior impacto...",
+  "Preparando seu checklist personalizado...",
 ];
 
 interface Props {

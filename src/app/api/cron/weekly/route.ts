@@ -1,3 +1,4 @@
+// DEPRECATED — substituído por /api/cron/weekly-contents em 2026-03-23
 // ============================================================================
 // Virô — Weekly Cron Job
 // Runs every Monday at 7am BRT (10:00 UTC).

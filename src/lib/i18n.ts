@@ -158,8 +158,8 @@ export const dictionaries: Record<Locale, any> = {
     formSiteLabel: "Tem site?",
     formSiteHint: "Opcional — analisamos se disponível",
     formSitePlaceholder: "https://seunegocio.com.br",
-    formStep2Title: "Como te encontramos",
-    formStep2Subtitle: "Para enviar o diagnóstico por email.",
+    formStep2Title: "Seus dados de contato",
+    formStep2Subtitle: "Onde enviamos seu diagnóstico e checklist de ações",
     formEmailLabel: "Seu melhor email",
     formEmailPlaceholder: "voce@email.com",
     formWhatsappLabel: "WhatsApp",
@@ -169,8 +169,8 @@ export const dictionaries: Record<Locale, any> = {
     formNext: "Continuar →",
     formSubmit: "Ver meu diagnóstico grátis",
     // ─── Hero (current simplified) ───
-    heroSubShort: "Receba uma leitura clara da sua visibilidade, da concorrência e das oportunidades de atrair mais clientes na sua região.",
-    heroFree: "Leva 60 segundos · Resultado personalizado · Sem custo",
+    heroSubShort: "Virô analisa sua visibilidade digital e entrega um checklist com as ações de maior impacto para o seu negócio — em 5 minutos.",
+    heroFree: "Grátis · Resultado em 5 minutos · Checklist personalizado",
 
     // ─── Processing ───
     processingSteps: [
