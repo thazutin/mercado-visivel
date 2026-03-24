@@ -22,10 +22,10 @@ const V = {
 
 const processingMessages = [
   "Gerando diagnóstico completo por canal...",
-  "Montando plano de 90 dias...",
-  "Definindo ações semanais personalizadas...",
-  "Analisando lacunas competitivas...",
-  "Criando briefings estratégicos...",
+  "Montando plano de ação prioritário...",
+  "Definindo itens estruturantes...",
+  "Analisando sazonalidade do mercado...",
+  "Gerando amostra de conteúdos...",
   "Finalizando seu plano de ação...",
 ];
 
@@ -114,7 +114,7 @@ export default function PostPaymentScreen({ product, region }: Props) {
           fontFamily: V.body, fontSize: 15, color: V.mist,
           lineHeight: 1.6, margin: "0 0 32px",
         }}>
-          Obrigado pela compra. Estamos preparando seu plano completo para{" "}
+          Obrigado pela compra. Estamos preparando seu diagnóstico completo e plano de ação para{" "}
           <strong style={{ color: V.white }}>{product}</strong> em{" "}
           <strong style={{ color: V.white }}>{shortRegion}</strong>.
         </p>
@@ -174,9 +174,10 @@ export default function PostPaymentScreen({ product, region }: Props) {
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[
-              { icon: "📊", text: "Seu diagnóstico completo e plano de 90 dias estão sendo gerados" },
-              { icon: "📧", text: "Você receberá um email assim que estiver pronto" },
-              { icon: "⏱️", text: "Tempo estimado: até 5 minutos" },
+              { icon: "📊", text: "Diagnóstico completo por canal sendo gerado" },
+              { icon: "📋", text: "Plano de ação com itens priorizados" },
+              { icon: "📝", text: "Amostra de conteúdos prontos para publicar" },
+              { icon: "📧", text: "Email de aviso quando estiver pronto — até 5 minutos" },
             ].map((item, i) => (
               <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <span style={{ fontSize: 16, lineHeight: "22px", flexShrink: 0 }}>{item.icon}</span>

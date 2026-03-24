@@ -9,7 +9,6 @@ import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { createOrLinkClerkUser, sendMagicLinkEmail } from "@/lib/auth";
 import { trackEvent } from "@/lib/events";
-import { triggerContentGeneration } from "@/lib/generateContents";
 import { notifyWeeklyContents } from "@/lib/notify";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -164,12 +163,7 @@ export async function POST(req: NextRequest) {
         console.error("[Webhook] Failed to trigger plan generation:", err);
       }
 
-      // ─── 5. Gera conteúdos para redes sociais em background ───
-      if (leadId) {
-        triggerContentGeneration(leadId).catch((err) =>
-          console.error("[Webhook] Erro na geração de conteúdo:", err)
-        );
-      }
+      // Conteúdos são gerados via runPostDiagnosisEnrichment dentro de /api/plan/generate
 
     } catch (err) {
       console.error("[Webhook] Processing error:", err);
