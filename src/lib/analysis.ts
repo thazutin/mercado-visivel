@@ -342,7 +342,7 @@ export async function runInstantAnalysis(
           temperature: 0.3,
           messages: [{
             role: "user",
-            content: `Gere 20 termos de busca de alta intenção local para "${input.product}" na região "${input.region}".
+            content: `Gere 20 termos de busca de alta intenção local para "${input.product}" na região "${resolvedRegion}".
             
 Foco: termos que um consumidor digita no Google quando está pronto para comprar ou agendar.
 Inclua variações com: nome da cidade, "perto de mim", preço, melhor, agendar, telefone, avaliação.
@@ -388,6 +388,57 @@ Responda APENAS em JSON, sem markdown:
   }
 
   // =========================================================================
+  // RESOLVE MUNICIPALITY — must run BEFORE any query that uses location
+  // Source of truth: lat/lng → Google Geocoding (administrative_area_level_2)
+  // Fallback: Claude Haiku extraction from address string
+  // =========================================================================
+  const ufMatch = input.region.match(/\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/);
+  let extractedState = ufMatch ? ufMatch[1] : '';
+
+  let pipelineLat = formData.lat || 0;
+  let pipelineLng = formData.lng || 0;
+
+  let extractedCity = '';
+  if (pipelineLat && pipelineLng) {
+    console.log(`[Pipeline] Lat/lng do form (Google Places): lat=${pipelineLat}, lng=${pipelineLng}`);
+    const reverseResult = await reverseGeocodeCity(pipelineLat, pipelineLng);
+    if (reverseResult) {
+      extractedCity = reverseResult.city;
+      if (reverseResult.state) extractedState = reverseResult.state;
+      console.log(`[Pipeline] Reverse geocoding → cidade="${extractedCity}", estado="${extractedState}"`);
+    }
+  }
+
+  if (!extractedCity) {
+    extractedCity = await extractCity(input.region);
+    console.log(`[Pipeline] Claude Haiku → cidade="${extractedCity}"`);
+  }
+
+  // resolvedRegion: município limpo para usar em TODAS as queries externas
+  const resolvedRegion = extractedState
+    ? `${extractedCity} - ${extractedState}`
+    : extractedCity || input.region;
+
+  console.log(`[Pipeline] Município resolvido: "${resolvedRegion}" (cidade="${extractedCity}", estado="${extractedState}", region original="${input.region.slice(0, 80)}")`);
+
+  // Resolve lat/lng se não veio do form
+  if (!pipelineLat || !pipelineLng) {
+    console.log(`[Pipeline] Lat/lng não veio do form — geocodificando via Nominatim...`);
+    try {
+      const geo = await geocodeNominatim(extractedCity, extractedState);
+      if (geo) {
+        pipelineLat = geo.lat;
+        pipelineLng = geo.lng;
+        console.log(`[Pipeline] Nominatim geocoding OK: lat=${pipelineLat}, lng=${pipelineLng}`);
+      } else {
+        console.warn('[Pipeline] Nominatim geocoding retornou null — audiência sem coordenadas');
+      }
+    } catch (err) {
+      console.warn('[Pipeline] Nominatim geocoding falhou:', (err as Error).message);
+    }
+  }
+
+  // =========================================================================
   // STEP 2 — Search Volumes + SERP + Maps + Instagram (parallel)
   // =========================================================================
   // Extract top terms for SERP scraping (max 5 to save Apify credits and speed)
@@ -430,11 +481,12 @@ Responda APENAS em JSON, sem markdown:
   // AUTO-DISCOVER competitors via SERP if no competitors declared
   if (instagramHandles.length <= 1 && apifyConfig) {
     try {
-      console.log(`[Pipeline] Auto-discovering Instagram competitors for "${input.product}" in "${input.region}"...`);
+      console.log(`[Pipeline] Auto-discovering Instagram competitors for "${input.product}" in "${resolvedRegion}"...`);
       const serpScraper = createApifySerpScraper(apifyConfig);
-      const searchQuery = `instagram ${input.product} ${input.region.split(",")[0].trim()}`;
+      console.log(`[pipeline] município usado em Competitor Discovery SERP:`, extractedCity);
+      const searchQuery = `instagram ${input.product} ${extractedCity}`;
       const discoveryResults = await withTimeout(
-        serpScraper([searchQuery], input.region, undefined),
+        serpScraper([searchQuery], resolvedRegion, undefined),
         20_000,
         "Competitor Discovery",
       );
@@ -483,9 +535,10 @@ Responda APENAS em JSON, sem markdown:
   const promiseLabels: string[] = [];
 
   // 1. DataForSEO volumes (runs in parallel with Apify — biggest speed win)
+  console.log(`[pipeline] município usado em Volumes (DataForSEO):`, extractedCity);
   parallelPromises.push(
     withTimeout(
-      fetchTermVolumes(allTermStrings, input.region),
+      fetchTermVolumes(allTermStrings, resolvedRegion),
       30_000,
       "Volumes",
     )
@@ -506,7 +559,8 @@ Responda APENAS em JSON, sem markdown:
           const t0 = Date.now();
           console.log('[SERP] started');
           try {
-            const r = await serpScraper(topTerms, input.region, siteDomain);
+            console.log(`[pipeline] município usado em SERP:`, extractedCity);
+            const r = await serpScraper(topTerms, resolvedRegion, siteDomain);
             sourcesUsed.push("apify_serp");
             console.log(`[SERP] completed in ${((Date.now() - t0) / 1000).toFixed(1)}s — ${r.length} positions`);
             return r;
@@ -528,7 +582,8 @@ Responda APENAS em JSON, sem markdown:
           const t0 = Date.now();
           console.log('[Maps] started');
           try {
-            const r = await mapsScraper(input.businessName || input.product, input.region);
+            console.log(`[pipeline] município usado em Maps:`, extractedCity);
+            const r = await mapsScraper(input.businessName || input.product, resolvedRegion);
             sourcesUsed.push("apify_maps");
             console.log(`[Maps] completed in ${((Date.now() - t0) / 1000).toFixed(1)}s — found=${r.found}, rating=${r.rating}`);
             return r;
@@ -579,7 +634,8 @@ Responda APENAS em JSON, sem markdown:
             const t0 = Date.now();
             console.log('[DataForSEO Organic] started');
             try {
-              const r = await organicChecker(siteDomain, topTerms, input.region);
+              console.log(`[pipeline] município usado em DataForSEO Organic:`, extractedCity);
+              const r = await organicChecker(siteDomain, topTerms, resolvedRegion);
               sourcesUsed.push("dataforseo_organic");
               console.log(`[DataForSEO Organic] completed in ${((Date.now() - t0) / 1000).toFixed(1)}s — ${r.totalRanked} terms ranked, top=${r.topPosition}`);
               return r;
@@ -718,61 +774,14 @@ Responda APENAS em JSON, sem markdown:
   console.log(`[Pipeline] Step 2 OK: ${termVolumes.length} terms, totalVolume=${totalMonthlyVolume}, source=${volumeSource}`);
 
   // =========================================================================
-  // Extract city + resolve lat/lng (reused by IBGE, Perplexity, etc.)
-  // =========================================================================
-  // Extrai sigla UF do endereço completo (ex: "R. Jundiaí, 604 - Matriz, Mauá - SP, 09370-180" → "SP")
-  const ufMatch = input.region.match(/\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/);
-  let extractedState = ufMatch ? ufMatch[1] : '';
-
-  // Resolve lat/lng: form (Google Places) → Nominatim fallback
-  let pipelineLat = formData.lat || 0;
-  let pipelineLng = formData.lng || 0;
-
-  // Prioridade 1: reverse geocoding via Google (fonte de verdade para município)
-  let extractedCity = '';
-  if (pipelineLat && pipelineLng) {
-    console.log(`[Pipeline] Lat/lng do form (Google Places): lat=${pipelineLat}, lng=${pipelineLng}`);
-    const reverseResult = await reverseGeocodeCity(pipelineLat, pipelineLng);
-    if (reverseResult) {
-      extractedCity = reverseResult.city;
-      if (reverseResult.state) extractedState = reverseResult.state;
-      console.log(`[Pipeline] Reverse geocoding → cidade="${extractedCity}", estado="${extractedState}"`);
-    }
-  }
-
-  // Prioridade 2: Claude Haiku (quando não tem lat/lng ou reverse falhou)
-  if (!extractedCity) {
-    extractedCity = await extractCity(input.region);
-    console.log(`[Pipeline] Claude Haiku → cidade="${extractedCity}"`);
-  }
-
-  console.log(`[Pipeline] Cidade final: "${extractedCity}", estado: "${extractedState}" (de region="${input.region.slice(0, 80)}")`);
-
-  // Resolve lat/lng se não veio do form
-  if (!pipelineLat || !pipelineLng) {
-    console.log(`[Pipeline] Lat/lng não veio do form — geocodificando via Nominatim...`);
-    try {
-      const geo = await geocodeNominatim(extractedCity, extractedState);
-      if (geo) {
-        pipelineLat = geo.lat;
-        pipelineLng = geo.lng;
-        console.log(`[Pipeline] Nominatim geocoding OK: lat=${pipelineLat}, lng=${pipelineLng}`);
-      } else {
-        console.warn('[Pipeline] Nominatim geocoding retornou null — audiência sem coordenadas');
-      }
-    } catch (err) {
-      console.warn('[Pipeline] Nominatim geocoding falhou:', (err as Error).message);
-    }
-  }
-
-  // =========================================================================
   // STEP 3 — Market Sizing (com dados IBGE opcionais)
   // =========================================================================
   const category = detectCategory(input.product, input.differentiator);
 
   let ibgeData: IBGEData | null = null;
   try {
-    ibgeData = await getIBGEMunicipalData(extractedCity, input.region);
+    console.log(`[pipeline] município usado em IBGE:`, extractedCity);
+    ibgeData = await getIBGEMunicipalData(extractedCity, resolvedRegion);
     if (ibgeData) {
       console.log(`[Pipeline] IBGE OK: ${ibgeData.municipio}/${ibgeData.estado} — pop=${ibgeData.populacao.toLocaleString('pt-BR')}`);
     }
@@ -865,7 +874,7 @@ Responda APENAS em JSON, sem markdown:
         password: process.env.DATAFORSEO_PASSWORD,
       });
       const linkedinResult = await withTimeout(
-        organicChecker('linkedin.com/company', [`"${input.businessName || input.product}" site:linkedin.com/company`], input.region),
+        organicChecker('linkedin.com/company', [`"${input.businessName || input.product}" site:linkedin.com/company`], resolvedRegion),
         10_000,
         "LinkedIn Check",
       );
@@ -888,9 +897,9 @@ Responda APENAS em JSON, sem markdown:
   try {
     if (apifyConfig && process.env.GOOGLE_PLACES_API_KEY) {
       const competitionSearch = createMapsCompetitionSearch(apifyConfig);
-      const shortRegion = input.region.split(',')[0].trim();
+      console.log(`[pipeline] município usado em Competition Index:`, extractedCity);
       const competitorResults = await withTimeout(
-        competitionSearch(input.product, shortRegion),
+        competitionSearch(input.product, resolvedRegion),
         10_000,
         "MapsCompetition",
       );
@@ -915,6 +924,7 @@ Responda APENAS em JSON, sem markdown:
   // =========================================================================
   const isNacional = /brasil.*nacional|nacional|todo o brasil/i.test(input.region);
 
+  console.log(`[pipeline] município usado em Audiência (IBGE):`, extractedCity);
   const audienciaPromise = (async (): Promise<{ estimada: AudienciaEstimada | null; target: AudienciaTarget | null }> => {
     try {
       const estimada = await fetchAudienciaEstimada(
@@ -963,10 +973,11 @@ Responda APENAS em JSON, sem markdown:
       ? createPerplexityAIVisibilityChecker(claude)
       : undefined;
 
+    console.log(`[pipeline] município usado em AI Visibility:`, extractedCity);
     aiVisibility = await withTimeout(
       executeAIVisibilityCheck(
         input.product,
-        input.region,
+        resolvedRegion,
         mapsBusinessName,                          // nome real do Maps
         businessHandle || null,                    // handle do Instagram como fallback
         hasSite,
@@ -1055,7 +1066,7 @@ Responda APENAS em JSON, sem markdown:
           description:
             "Gap analysis falhou, mas os dados de mercado foram coletados com sucesso.",
         },
-        headlineInsight: `${step1.termCount} termos mapeados para "${input.product}" em ${input.region}.`,
+        headlineInsight: `${step1.termCount} termos mapeados para "${input.product}" em ${resolvedRegion}.`,
         gaps: [],
       },
       promptVersion: "fallback",
