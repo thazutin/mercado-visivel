@@ -35,6 +35,7 @@ export interface GeneratedPost {
   hashtags: string[]
   best_time: string
   tip: string
+  image_url?: string
 }
 
 export interface GenerateResult {
@@ -143,10 +144,17 @@ export async function saveGeneratedContents(
     hashtags: p.hashtags,
     best_time: p.best_time,
     tip: p.tip,
+    image_url: p.image_url || null,
     tone,
     objective,
     status: 'draft',
   }))
+
+  // Idempotência: deleta conteúdos existentes antes de inserir (evita duplicados em reprocessamento)
+  await getSupabaseAdmin()
+    .from('generated_contents')
+    .delete()
+    .eq('lead_id', leadId)
 
   const { error } = await getSupabaseAdmin()
     .from('generated_contents')
@@ -161,17 +169,20 @@ export async function saveGeneratedContents(
 // ─── Disparo pós-pagamento (chamado pelo webhook do Stripe) ───────────────────
 
 export async function triggerContentGeneration(leadId: string): Promise<void> {
-  // Busca dados do lead com os nomes reais das colunas
+  console.log('[generateContents] Buscando lead:', leadId)
+
   const { data: lead, error: leadError } = await getSupabaseAdmin()
     .from('leads')
-    .select('id, name, business_category, region, competitors')
+    .select('id, name, product, region, competitors')
     .eq('id', leadId)
     .single()
 
   if (leadError || !lead) {
-    console.error('[triggerContentGeneration] Lead não encontrado:', leadId)
+    console.error('[generateContents] Lead não encontrado:', leadId, leadError?.message)
     return
   }
+
+  console.log('[generateContents] Lead encontrado:', lead.name, '| produto:', lead.product, '| região:', lead.region)
 
   // Busca diagnóstico mais recente para volume e score
   const { data: diagnosis } = await getSupabaseAdmin()
@@ -184,13 +195,15 @@ export async function triggerContentGeneration(leadId: string): Promise<void> {
 
   const leadContext: LeadContext = {
     id: lead.id,
-    name: lead.name,
-    segment: lead.business_category,
+    name: lead.name || lead.product,
+    segment: lead.product,
     location: lead.region,
     search_volume: diagnosis?.total_volume ?? undefined,
     influence_score: diagnosis?.influence_percent ?? undefined,
     competitors: lead.competitors,
   }
+
+  console.log('[generateContents] Gerando posts...')
 
   const result = await generateContentsForLead(
     leadContext,
@@ -198,9 +211,34 @@ export async function triggerContentGeneration(leadId: string): Promise<void> {
     'atrair novos clientes'
   )
 
+  console.log('[generateContents] Posts gerados:', result.posts.length)
+
+  // Gera imagens para posts de Instagram (em paralelo)
+  const instagramChannels = ['instagram_feed', 'instagram_stories']
+  const imagePromises = result.posts.map(async (post) => {
+    if (!instagramChannels.includes(post.channel_key)) return
+    try {
+      const { generatePostImage } = await import('./generateImage')
+      const imageUrl = await generatePostImage({
+        business_name: leadContext.name,
+        segment: leadContext.segment,
+        location: leadContext.location,
+        post_content: post.content,
+        channel: post.channel,
+      })
+      if (imageUrl) {
+        post.image_url = imageUrl
+      }
+    } catch (err) {
+      console.warn(`[generateContents] Imagem falhou para ${post.channel_key}:`, (err as Error).message)
+    }
+  })
+  await Promise.all(imagePromises)
+  console.log('[generateContents] Imagens processadas, salvando no banco...')
+
   await saveGeneratedContents(leadId, result, 'próximo e informal', 'atrair novos clientes')
 
   console.log(
-    `[triggerContentGeneration] ${result.posts.length} posts gerados para lead ${leadId}`
+    `[generateContents] ${result.posts.length} posts salvos para lead ${leadId}`
   )
 }

@@ -933,6 +933,7 @@ Responda APENAS em JSON, sem markdown:
         isNacional,
         pipelineLat,
         pipelineLng,
+        input.product,
       );
       if (!estimada) return { estimada: null, target: null };
 
@@ -1160,8 +1161,9 @@ Responda APENAS em JSON, sem markdown:
 }
 
 // ============================================================================
-// POST-DIAGNOSIS ENRICHMENT — Fire-and-forget após salvar diagnóstico
+// POST-DIAGNOSIS ENRICHMENT — Runs after plan generation
 // Checklist (step6) + Seasonality (step7) + Content generation
+// All 3 run in parallel via Promise.allSettled — function only resolves when all complete
 // ============================================================================
 
 export async function runPostDiagnosisEnrichment(
@@ -1179,9 +1181,18 @@ export async function runPostDiagnosisEnrichment(
   const clientType = (pipelineResult as any).clientType || formData.client_type || 'b2c';
   const terms = pipelineResult.terms.terms.map(t => t.term);
 
-  // --- Step 6: Checklist (fire-and-forget) ---
-  (async () => {
-    try {
+  const gapRoutes = (pipelineResult.gaps?.analysis?.workRoutes || []).map((r: any) => ({
+    title: r.title || '',
+    description: r.rationale || r.connection || '',
+    timeframe: r.horizon || '',
+  }));
+
+  console.log(`[Enrichment] Iniciando enriquecimento para lead ${leadId} (3 etapas em paralelo)`);
+
+  const results = await Promise.allSettled([
+
+    // 1. Plano de ação (step 6)
+    (async () => {
       const { executeStep6Checklist } = await import("./pipeline/step6-checklist");
       const checklist = await executeStep6Checklist({
         name: formData.name || formData.product,
@@ -1190,55 +1201,90 @@ export async function runPostDiagnosisEnrichment(
         influence_score: pipelineResult.influence.influence.totalInfluence,
         influence_breakdown: influenceBreakdown,
         client_type: clientType,
+        gap_routes: gapRoutes.length > 0 ? gapRoutes : undefined,
       });
       if (checklist.items.length > 0) {
+        // Idempotência: deleta registros existentes antes de inserir
+        await supabase.from("checklists").delete().eq("lead_id", leadId);
         await supabase.from("checklists").insert({
           lead_id: leadId,
           items: checklist.items,
         });
-        console.log(`[Enrichment] Checklist salvo: ${checklist.items.length} itens para lead ${leadId}`);
+        console.log(`[Enrichment] Plano de ação salvo: ${checklist.items.length} itens para lead ${leadId}`);
       }
-    } catch (err) {
-      console.error("[Enrichment] Checklist falhou:", err);
-    }
-  })();
+    })(),
 
-  // --- Step 7: Seasonality (fire-and-forget) ---
-  (async () => {
-    try {
-      const { executeStep7Seasonality } = await import("./pipeline/step7-seasonality");
-      const seasonality = await executeStep7Seasonality(terms);
-
-      const updateData: any = {
-        seasonality: seasonality || null,
-        macro_context: { summary: "Integração com dados macroeconômicos em breve.", indicators: [] },
-        b2b_targets: clientType === 'b2b' ? { companies: [], status: "preview" } : null,
-        b2g_tenders: clientType === 'b2g' ? { tenders: [], status: "preview" } : null,
-      };
-
-      await supabase
+    // 2. Sazonalidade (step 7)
+    (async () => {
+      const { data: latestDiag } = await supabase
         .from("diagnoses")
-        .update(updateData)
+        .select("id")
         .eq("lead_id", leadId)
         .order("created_at", { ascending: false })
-        .limit(1);
+        .limit(1)
+        .single();
 
-      console.log(`[Enrichment] Seasonality + macro salvo para lead ${leadId} (seasonality=${seasonality ? 'ok' : 'null'})`);
-    } catch (err) {
-      console.error("[Enrichment] Seasonality falhou:", err);
-    }
-  })();
+      if (!latestDiag) {
+        console.error("[Enrichment] Nenhum diagnóstico encontrado para lead", leadId);
+        return;
+      }
 
-  // --- Content generation (fire-and-forget) ---
-  (async () => {
-    try {
+      const { executeStep7Seasonality } = await import("./pipeline/step7-seasonality");
+      let seasonality = await executeStep7Seasonality(terms);
+      console.log("[Enrichment] seasonality:", JSON.stringify(seasonality));
+
+      if (!seasonality) {
+        console.warn("[Enrichment] Seasonality null — usando fallback genérico");
+        seasonality = {
+          months: [
+            { month: "Jan", volume: 0 }, { month: "Fev", volume: 0 },
+            { month: "Mar", volume: 0 }, { month: "Abr", volume: 0 },
+            { month: "Mai", volume: 0 }, { month: "Jun", volume: 0 },
+            { month: "Jul", volume: 0 }, { month: "Ago", volume: 0 },
+            { month: "Set", volume: 0 }, { month: "Out", volume: 0 },
+            { month: "Nov", volume: 0 }, { month: "Dez", volume: 0 },
+          ],
+          peak_month: "dados insuficientes",
+          low_month: "dados insuficientes",
+        };
+      }
+
+      const { error: updateErr } = await supabase
+        .from("diagnoses")
+        .update({
+          seasonality,
+          macro_context: { summary: "Integração com dados macroeconômicos em breve.", indicators: [] },
+          b2b_targets: clientType === 'b2b' ? { companies: [], status: "preview" } : null,
+          b2g_tenders: clientType === 'b2g' ? { tenders: [], status: "preview" } : null,
+        })
+        .eq("id", latestDiag.id);
+
+      if (updateErr) {
+        throw new Error(`Supabase update falhou: ${updateErr.message}`);
+      }
+      console.log(`[Enrichment] Sazonalidade salva para lead ${leadId} (diagId=${latestDiag.id}, peak=${seasonality.peak_month})`);
+    })(),
+
+    // 3. Geração de conteúdos
+    (async () => {
       const { triggerContentGeneration } = await import("./generateContents");
       await triggerContentGeneration(leadId);
-      console.log(`[Enrichment] Content generation completa para lead ${leadId}`);
-    } catch (err) {
-      console.error("[Enrichment] Content generation falhou:", err);
+      console.log(`[Enrichment] Conteúdos gerados para lead ${leadId}`);
+    })(),
+
+  ]);
+
+  // Log resultado de cada etapa
+  const labels = ["Plano de ação", "Sazonalidade", "Conteúdos"];
+  results.forEach((result, i) => {
+    if (result.status === "fulfilled") {
+      console.log(`[Enrichment] ${labels[i]}: concluído`);
+    } else {
+      console.error(`[Enrichment] ${labels[i]}: falhou —`, result.reason);
     }
-  })();
+  });
+
+  console.log(`[Enrichment] Enriquecimento completo para lead ${leadId}`);
 }
 
 // --- LEGACY EXPORTS ---
