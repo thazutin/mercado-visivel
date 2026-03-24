@@ -1203,15 +1203,16 @@ export async function runPostDiagnosisEnrichment(
         client_type: clientType,
         gap_routes: gapRoutes.length > 0 ? gapRoutes : undefined,
       });
-      if (checklist.items.length > 0) {
-        // Idempotência: deleta registros existentes antes de inserir
-        await supabase.from("checklists").delete().eq("lead_id", leadId);
-        await supabase.from("checklists").insert({
-          lead_id: leadId,
-          items: checklist.items,
-        });
-        console.log(`[Enrichment] Plano de ação salvo: ${checklist.items.length} itens para lead ${leadId}`);
+      if (checklist.items.length === 0) {
+        throw new Error('executeStep6Checklist retornou items vazio — possível falha interna no step6');
       }
+      await supabase.from("checklists").delete().eq("lead_id", leadId);
+      const { error: checklistErr } = await supabase.from("checklists").insert({
+        lead_id: leadId,
+        items: checklist.items,
+      });
+      if (checklistErr) throw new Error(`Supabase checklist insert falhou: ${checklistErr.message}`);
+      console.log(`[Enrichment] Plano de ação salvo: ${checklist.items.length} itens para lead ${leadId}`);
     })(),
 
     // 2. Sazonalidade (step 7)
