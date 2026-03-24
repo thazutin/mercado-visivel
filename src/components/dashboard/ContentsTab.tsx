@@ -26,6 +26,7 @@ interface Content {
   hashtags: string[];
   best_time: string;
   tip: string;
+  image_url?: string | null;
   status: string;
   created_at: string;
 }
@@ -39,24 +40,49 @@ export function ContentsTab({ leadId, showUpgradeBanner }: Props) {
   const [contents, setContents] = useState<Content[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [polling, setPolling] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchContents();
+    fetchContents().then((items) => {
+      // Se não há conteúdos, inicia polling automático (conteúdos podem estar sendo gerados)
+      if (items.length === 0) {
+        setPolling(true);
+      }
+    });
   }, [leadId]);
 
-  async function fetchContents() {
+  // Polling: a cada 10s por até 2 minutos
+  useEffect(() => {
+    if (!polling) return;
+    let attempts = 0;
+    const maxAttempts = 12; // 12 * 10s = 2min
+    const interval = setInterval(async () => {
+      attempts++;
+      const items = await fetchContents();
+      if (items.length > 0 || attempts >= maxAttempts) {
+        setPolling(false);
+        clearInterval(interval);
+      }
+    }, 10_000);
+    return () => clearInterval(interval);
+  }, [polling, leadId]);
+
+  async function fetchContents(): Promise<Content[]> {
     try {
       const res = await fetch(`/api/contents?leadId=${leadId}`);
       if (res.ok) {
         const data = await res.json();
-        setContents(data.contents || []);
+        const items = data.contents || [];
+        setContents(items);
+        return items;
       }
     } catch (err) {
       console.error("Erro ao carregar conteúdos:", err);
     } finally {
       setLoading(false);
     }
+    return [];
   }
 
   async function handleGenerate() {
@@ -95,6 +121,30 @@ export function ContentsTab({ leadId, showUpgradeBanner }: Props) {
   }
 
   if (contents.length === 0) {
+    // Se está em polling ou gerando, mostra estado intermediário
+    if (polling || generating) {
+      return (
+        <div style={{
+          background: V.white, borderRadius: 14, padding: "40px 24px",
+          textAlign: "center", border: `1px solid ${V.fog}`,
+        }}>
+          <div style={{
+            width: 32, height: 32, border: `3px solid ${V.fog}`,
+            borderTopColor: V.amber, borderRadius: "50%",
+            animation: "spin 0.8s linear infinite",
+            margin: "0 auto 16px",
+          }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <p style={{ fontSize: 15, color: V.zinc, marginBottom: 4 }}>
+            Seus conteúdos estão sendo gerados...
+          </p>
+          <p style={{ fontSize: 13, color: V.ash, margin: 0 }}>
+            Isso pode levar até 2 minutos. Não precisa sair desta página.
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div style={{
         background: V.white, borderRadius: 14, padding: "40px 24px",
@@ -212,6 +262,24 @@ export function ContentsTab({ leadId, showUpgradeBanner }: Props) {
                 </span>
               )}
             </div>
+
+            {/* Image */}
+            {c.image_url ? (
+              <div style={{ marginBottom: 12, borderRadius: 10, overflow: "hidden" }}>
+                <img
+                  src={c.image_url}
+                  alt={`Imagem para ${c.channel}`}
+                  style={{ width: "100%", height: 200, objectFit: "cover", display: "block" }}
+                />
+              </div>
+            ) : (c.channel_key === "instagram_feed" || c.channel_key === "instagram_stories") ? (
+              <div style={{
+                marginBottom: 12, borderRadius: 10, height: 200,
+                background: V.cloud, display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <span style={{ fontSize: 13, color: V.ash }}>Imagem sendo gerada...</span>
+              </div>
+            ) : null}
 
             {/* Content */}
             <div style={{

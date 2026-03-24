@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
       mode: "subscription",
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
+      allow_promotion_codes: true,
       customer_email: email || undefined,
       metadata: { lead_id: leadId, type: "subscription" },
       success_url: `${baseUrl}/dashboard/${leadId}?subscribed=true`,

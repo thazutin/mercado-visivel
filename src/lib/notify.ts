@@ -152,7 +152,7 @@ export async function notifyDiagnosisReady(opts: {
 
     sendEmail({
       to: email,
-      subject: `${(opts as any).name || product} — seu relatório de visibilidade está pronto`,
+      subject: `${(opts as any).name || product} — seu diagnóstico está pronto`,
       html: diagnosisEmailHtml({ product, shortRegion, influencePercent, searchVolume, url }),
     }),
   ]);
@@ -191,7 +191,7 @@ export async function notifyFullDiagnosisReady(opts: {
 
     sendEmail({
       to: email,
-      subject: `${displayName} — diagnóstico completo e checklist prontos`,
+      subject: `${displayName} — diagnóstico completo e plano de ação prontos`,
       html: fullDiagnosisEmailHtml({ product, shortRegion, url: dashboardUrl }),
     }),
   ]);
@@ -398,12 +398,12 @@ function diagnosisEmailHtml(opts: {
     </div>
     <div style="background:#FEFAF3;border-left:3px solid #CF8523;padding:14px 16px;border-radius:0 8px 8px 0;margin:0 0 24px;">
       <p style="font-size:13px;color:#3A3A40;margin:0;line-height:1.6;">
-        Seu relatório está pronto — veja <strong>onde você está perdendo clientes</strong> e a prévia do seu checklist.
+        Seu diagnóstico está pronto — veja <strong>onde você está perdendo clientes</strong> e a prévia do seu plano de ação.
       </p>
     </div>
     <div style="text-align:center;margin:0 0 28px;">
       <a href="${url}" style="background:#161618;color:#FEFEFF;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;display:inline-block;">
-        Ver meu diagnóstico completo
+        Ver meu diagnóstico personalizado
       </a>
     </div>
     <p style="font-size:12px;color:#9E9EA8;line-height:1.6;margin:0;">
@@ -424,12 +424,12 @@ function fullDiagnosisEmailHtml(opts: {
       Seu diagnóstico completo está pronto.
     </h1>
     <p style="font-size:15px;color:#6E6E78;line-height:1.7;margin:0 0 24px;">
-      Seu diagnóstico completo está pronto — e junto com ele, um checklist com as ações de maior impacto para você começar hoje.
+      Seu diagnóstico completo está pronto — e junto com ele, um plano de ação com as ações de maior impacto para você começar hoje.
     </p>
     <div style="margin:0 0 20px;">
       ${[
         "Diagnóstico completo por canal (Google, Instagram, Maps, IA)",
-        "Checklist prático ordenado por prioridade",
+        "Plano de ação ordenado por prioridade",
         "Análise de sazonalidade do seu mercado",
         "Amostra de conteúdos prontos para publicar",
       ]

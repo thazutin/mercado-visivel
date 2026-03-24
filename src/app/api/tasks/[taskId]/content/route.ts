@@ -52,7 +52,7 @@ Gere conteúdo e instruções práticas para esta tarefa no Google Maps/GMB. Inc
 1. **Texto para a ação** (post do GMB, resposta a avaliação, descrição atualizada — o que for relevante)
 2. **Passo a passo** para executar no Google Meu Negócio (tela por tela)
 3. **Script para pedir avaliações** (se relevante: mensagem para enviar a clientes por WhatsApp)
-4. **Checklist de otimização** aplicável a esta tarefa
+4. **Lista de otimização** aplicável a esta tarefa
 
 Seja específico: use o nome do negócio, produto e região.
 Nada genérico. O dono do negócio deve conseguir executar em 15 minutos.`,

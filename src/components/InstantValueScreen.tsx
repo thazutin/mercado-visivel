@@ -33,7 +33,7 @@ interface Results {
   workRoutes?: { priority: number; title: string; rationale: string; connection: string; horizon: string; expectedImpact: string }[];
   aiVisibility?: { score: number; summary: string; likelyMentioned: boolean; factors: any[]; competitorMentions: any[] } | null;
   audiencia?: {
-    populacaoRaio: number; raioKm: number | null; densidade: 'alta' | 'baixa' | 'nacional';
+    populacaoRaio: number; raioKm: number | null; densidade: string;
     municipioNome: string; targetProfile: string; estimatedPercentage: number;
     audienciaTarget: number; rationale: string; ibgeAno?: number;
   } | null;
@@ -54,7 +54,7 @@ interface Results {
     contratacoes: { objeto: string; orgaoEntidade: string; valorEstimado: number; modalidade: string }[];
   } | null;
 }
-interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; leadId?: string; hideCTA?: boolean; }
+interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; leadId?: string; hideCTA?: boolean; hideWorkRoutes?: boolean; }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -122,7 +122,7 @@ function Chip({ children, color = V.ash }: { children: React.ReactNode; color?: 
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
-export default function InstantValueScreen({ product, region, results, onCheckout, loading, leadId, hideCTA }: Props) {
+export default function InstantValueScreen({ product, region, results, onCheckout, loading, leadId, hideCTA, hideWorkRoutes }: Props) {
   const [show, setShow] = useState(false);
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
@@ -149,7 +149,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
   const audSublabel = aud
     ? aud.densidade === "nacional"
       ? "Nacional"
-      : `Raio ${aud.raioKm}km · ${aud.densidade === "alta" ? "Alta" : "Baixa"} densidade`
+      : `Raio ${aud.raioKm}km`
     : "";
 
   return (
@@ -177,7 +177,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 ~{fmtPop(aud!.audienciaTarget)}
               </div>
               <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>{isB2G ? 'órgãos públicos que poderiam contratar você' : isB2B ? 'empresas que poderiam contratar você' : 'pessoas que poderiam contratar você'}{aud!.raioKm && aud!.densidade !== "nacional" ? ` no raio de ${aud!.raioKm}km` : ''}</p>
-              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>Mercado endereçável · {aud!.municipioNome}{aud!.raioKm ? ` · ${aud!.densidade === "alta" ? "Alta" : "Baixa"} densidade` : ''}</p>
+              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>Mercado endereçável · {aud!.municipioNome}{aud!.raioKm && aud!.densidade !== "nacional" ? ` · Raio ${aud!.raioKm}km` : ''}</p>
             </div>
           ) : (
             <div style={{ background: V.white, borderRadius: "14px 14px 0 0", padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, borderBottom: "none", opacity: 0.6 }}>
@@ -197,16 +197,6 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                   {aud.ibgeAno && (
                     <span style={{ fontSize: 10, fontWeight: 400, color: V.ash }}> (IBGE {aud.ibgeAno})</span>
                   )}
-                </span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
-                <span style={{ fontSize: 12, color: V.zinc }}>Densidade</span>
-                <span style={{ fontSize: 12, fontWeight: 500, color: V.night }}>
-                  {aud.densidade === "nacional" ? (
-                    <span style={{ background: V.amberWash, color: V.amber, padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600 }}>Nacional</span>
-                  ) : aud.densidade === "alta"
-                    ? isB2B ? "Alta densidade empresarial" : "Alta densidade populacional"
-                    : isB2B ? "Baixa densidade empresarial" : "Baixa densidade populacional"}
                 </span>
               </div>
               {aud.targetProfile && (
@@ -429,10 +419,10 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               {results.influencePercent === 0
                 ? `Quando alguém busca ${product} em ${shortRegion}, você não aparece. Enquanto isso, seus concorrentes recebem esses clientes.`
                 : results.influencePercent < 15
-                ? `Você não aparece para ${100 - results.influencePercent}% dos potenciais compradores. Há espaço para crescer — o checklist mostra o que fazer agora.`
+                ? `Você não aparece para ${100 - results.influencePercent}% dos potenciais compradores. Há espaço para crescer — o plano de ação mostra o que fazer agora.`
                 : results.influencePercent < 40
-                ? `Você não aparece para ${100 - results.influencePercent}% dos potenciais compradores. Há espaço para crescer — o checklist mostra o que fazer agora.`
-                : `Você aparece para ${results.influencePercent}% das buscas — posição forte. O checklist mostra o que fazer agora para manter essa vantagem.`}
+                ? `Você não aparece para ${100 - results.influencePercent}% dos potenciais compradores. Há espaço para crescer — o plano de ação mostra o que fazer agora.`
+                : `Você aparece para ${results.influencePercent}% das buscas — posição forte. O plano de ação mostra o que fazer agora para manter essa vantagem.`}
             </p>
           </div>
 
@@ -544,11 +534,11 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         </Expandable>
         </div>
 
-        {/* ── 4. Prévia do seu Checklist ── */}
-        {results.workRoutes && results.workRoutes.length > 0 && (
+        {/* ── 4. Prévia do seu Plano de Ação ── */}
+        {!hideWorkRoutes && results.workRoutes && results.workRoutes.length > 0 && (
           <div style={{ marginBottom: 12 }}>
             <div style={{ fontSize: 11, fontFamily: V.mono, color: V.ash, letterSpacing: "0.06em", textTransform: "uppercase" as const, margin: "20px 0 12px" }}>
-              Prévia do seu Checklist
+              Prévia do seu Plano de Ação
             </div>
             {results.gapHeadline && (
               <p style={{ fontSize: 13, color: V.night, margin: "0 0 12px", fontWeight: 500, lineHeight: 1.5 }}>{results.gapHeadline}</p>
@@ -584,7 +574,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`,
             }}>
               <span style={{ fontSize: 16, marginRight: 8 }}>🔒</span>
-              <span style={{ fontSize: 13, color: V.zinc }}>Ver checklist completo — </span>
+              <span style={{ fontSize: 13, color: V.zinc }}>Ver plano de ação completo — </span>
               <button
                 onClick={() => {
                   fetch("/api/checkout", {
@@ -707,7 +697,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             <strong style={{ color: V.night }}>Antes:</strong> Não sabia o que fazer primeiro
           </p>
           <p style={{ fontSize: 14, color: V.zinc, margin: "0 0 20px", lineHeight: 1.6 }}>
-            <strong style={{ color: V.teal }}>Agora:</strong> Sei onde estou, quem compete comigo e tenho um checklist para agir agora
+            <strong style={{ color: V.teal }}>Agora:</strong> Sei onde estou, quem compete comigo e tenho um plano de ação para agir agora
           </p>
         </div>
 
@@ -717,7 +707,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           </div>
           <div style={{ fontFamily: V.display, fontSize: 32, fontWeight: 700, marginBottom: 16 }}>R$ 497</div>
 
-          {["Diagnóstico completo por canal (Google, Instagram, Maps, IA)", "Checklist prático com as ações de maior impacto", "Análise de sazonalidade e contexto do seu mercado", "Amostra de conteúdos prontos para publicar"].map((d, i) => (
+          {["Diagnóstico completo por canal (Google, Instagram, Maps, IA)", "Plano de ação com as ações de maior impacto", "Análise de sazonalidade e contexto do seu mercado", "Amostra de conteúdos prontos para publicar"].map((d, i) => (
             <div key={i} style={{ display: "flex", gap: 10, marginBottom: 8, alignItems: "center" }}>
               <span style={{ color: V.amber, fontSize: 12 }}>✓</span>
               <span style={{ fontSize: 13, color: V.mist }}>{d}</span>
@@ -755,7 +745,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             </div>
           </div>
           <div style={{ padding: "12px", borderRadius: 8, background: V.cloud, marginBottom: 8, borderLeft: `3px solid ${V.teal}` }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: V.night, marginBottom: 4 }}>Checklist de ações prioritárias</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: V.night, marginBottom: 4 }}>Plano de ação prioritário</div>
             <div style={{ fontSize: 12, color: V.zinc, lineHeight: 1.5 }}>
               O que fazer, em que ordem e por quê — ordenado por impacto para você começar hoje.
             </div>

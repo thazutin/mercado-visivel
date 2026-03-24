@@ -37,26 +37,29 @@ export async function POST(req: NextRequest) {
           price_data: {
             currency,
             product_data: {
-              name: "Virô — Pacote Completo",
+              name: "Virô — Diagnóstico Completo",
               description:
                 locale === "pt"
-                  ? "Diagnóstico completo + Plano 90 dias + 12 briefings semanais"
+                  ? "Diagnóstico por canal + Plano de ação prioritário + Sazonalidade + Amostra de conteúdos"
                   : locale === "es"
-                  ? "Diagnóstico completo + Plan 90 días + 12 briefings semanales"
-                  : "Full diagnostic + 90-day plan + 12 weekly briefings",
+                  ? "Diagnóstico por canal + Plan de acción prioritario + Estacionalidad + Muestra de contenidos"
+                  : "Channel diagnostic + Priority action plan + Seasonality + Content samples",
             },
             unit_amount: amount,
           },
           quantity: 1,
         },
       ],
+      // Nota: o label "Adicionar código" é do Stripe e não pode ser customizado via API.
+      // Para alterar, acesse Stripe Dashboard > Settings > Checkout > Branding.
+      allow_promotion_codes: !coupon ? true : undefined,
       customer_email: email || undefined,
       metadata: { lead_id, email: email || "", locale: locale || "pt" },
       success_url: `${baseUrl}/resultado/${lead_id}?paid=true`,
       cancel_url: `${baseUrl}/?checkout=cancelled`,
     };
 
-    // Apply coupon
+    // Apply coupon (disables allow_promotion_codes since Stripe doesn't allow both)
     if (coupon) {
       try {
         const promoCodes = await stripe.promotionCodes.list({

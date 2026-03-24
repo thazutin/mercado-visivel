@@ -47,6 +47,7 @@ Pipeline types are centralized in `src/lib/types/pipeline.types.ts`.
 | Anthropic Claude | Term generation, gap analysis, AI visibility | `ANTHROPIC_API_KEY` |
 | Apify | SERP, Google Maps, Instagram scraping | `APIFY_API_TOKEN` |
 | Stripe | Checkout/payments/subscriptions | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_SUBSCRIPTION_PRICE_ID`, `CHECKOUT_AMOUNT` |
+| fal.ai | Image generation for social media posts (Flux Schnell — ~2s, $0.003/img) | `FAL_API_KEY` |
 
 ### Auth & Middleware
 

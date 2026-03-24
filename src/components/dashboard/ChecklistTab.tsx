@@ -41,10 +41,10 @@ export function ChecklistTab({ leadId, checklist }: Props) {
         textAlign: "center", border: `1px solid ${V.fog}`,
       }}>
         <p style={{ fontSize: 15, color: V.zinc, marginBottom: 8 }}>
-          Checklist sendo gerado...
+          Plano de ação sendo gerado...
         </p>
         <p style={{ fontSize: 13, color: V.ash }}>
-          Seu checklist de melhorias estará disponível em instantes.
+          Seu plano de ação estará disponível em instantes.
         </p>
       </div>
     );

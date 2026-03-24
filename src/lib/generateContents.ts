@@ -93,10 +93,20 @@ Objetivo: ${objective}
 
 ${lowScore ? `CONTEXTO ESTRATÉGICO: este negócio aparece para apenas ${lead.influence_score}% da demanda local. O conteúdo deve ajudar a recuperar presença digital — foco em diferenciação e proximidade com a comunidade local.` : ''}
 
+IMPORTANTE — Propósito dos conteúdos:
+Cada post deve ser criado com intenção clara de aumentar a probabilidade de venda futura. Não é conteúdo genérico — é conteúdo que:
+1. Reduz fricção de decisão (mostra que o negócio é confiável e próximo)
+2. Antecipa objeções comuns do cliente local
+3. Posiciona o negócio como a escolha óbvia na região
+
 Gere um post para cada canal abaixo:
 ${Object.entries(CHANNEL_SPECS)
   .map(([key, ch]) => `- ${ch.label} (channel_key: "${key}"): ${ch.spec}`)
   .join('\n')}
+
+Ao final de cada post, no campo "tip", explique o PORQUÊ estratégico deste conteúdo:
+ex: "Este post reduz a objeção de desconfiança em novos clientes locais"
+ou "Este post captura demanda de quem já está pronto para comprar"
 
 Responda APENAS em JSON válido. Sem markdown, sem texto antes ou depois.
 {
@@ -107,7 +117,7 @@ Responda APENAS em JSON válido. Sem markdown, sem texto antes ou depois.
       "content": "texto completo do post",
       "hashtags": ["hashtag1", "hashtag2"],
       "best_time": "ex: terça às 19h",
-      "tip": "dica estratégica curta (1 frase)"
+      "tip": "porquê estratégico deste conteúdo (1 frase)"
     }
   ],
   "strategy_note": "observação estratégica geral (1-2 frases)"

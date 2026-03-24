@@ -18,10 +18,10 @@ const V = {
 type TabKey = "resultado" | "diagnostico" | "checklist" | "conteudos";
 
 const TABS: { key: TabKey; label: string; locked: false | 1 | 2 }[] = [
-  { key: "resultado", label: "Resultado", locked: false },
-  { key: "diagnostico", label: "Diagnóstico", locked: 1 },
-  { key: "checklist", label: "Checklist", locked: 1 },
-  { key: "conteudos", label: "Conteúdos", locked: 2 },
+  { key: "resultado", label: "Diagnóstico inicial", locked: false },
+  { key: "diagnostico", label: "Diagnóstico completo", locked: 1 },
+  { key: "checklist", label: "Plano de Ação", locked: 1 },
+  { key: "conteudos", label: "Conteúdos semanais", locked: 2 },
 ];
 
 interface Props {
@@ -95,7 +95,7 @@ export default function ResultadoClient({ product, region, leadId, results }: Pr
             {product} · {shortRegion}
           </h1>
           <p style={{ fontSize: 13, color: V.ash, margin: 0 }}>
-            Seu relatório de visibilidade
+            Seu diagnóstico de visibilidade
           </p>
         </div>
 
@@ -114,7 +114,7 @@ export default function ResultadoClient({ product, region, leadId, results }: Pr
           ))}
         </div>
 
-        {/* Tab: Resultado */}
+        {/* Tab: Diagnóstico inicial */}
         {tab === "resultado" && (
           <InstantValueScreen
             product={product}
@@ -123,6 +123,7 @@ export default function ResultadoClient({ product, region, leadId, results }: Pr
             onCheckout={() => {}}
             leadId={leadId}
             hideCTA
+            hideWorkRoutes
           />
         )}
 

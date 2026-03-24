@@ -48,7 +48,7 @@ const processingMessages = [
   "Mapeando concorrentes na sua região...",
   "Calculando onde você está perdendo clientes...",
   "Identificando as ações de maior impacto...",
-  "Preparando seu checklist personalizado...",
+  "Preparando seu plano de ação personalizado...",
 ];
 
 interface Props {

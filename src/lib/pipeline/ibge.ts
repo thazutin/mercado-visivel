@@ -183,17 +183,46 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
  * A API IBGE de área territorial retorna valores inconsistentes,
  * então usamos população como indicador mais confiável.
  */
-function detectarDensidade(populacao: number, densidadeHabKm2?: number): 'alta' | 'baixa' {
-  // Primeiro: população é proxy confiável
-  if (populacao >= 500_000) return 'alta';
-  if (populacao < 100_000) return 'baixa';
-  // Faixa intermediária: usa densidade se disponível
-  if (densidadeHabKm2 && densidadeHabKm2 > 500) return 'alta';
-  return 'baixa';
+type DensityLevel = 'very_high' | 'high' | 'medium' | 'low' | 'rural';
+
+function detectarDensidade(populacao: number, densidadeHabKm2?: number): DensityLevel {
+  if (populacao >= 1_000_000 || (densidadeHabKm2 && densidadeHabKm2 > 3000)) return 'very_high';
+  if (populacao >= 500_000 || (densidadeHabKm2 && densidadeHabKm2 > 1000)) return 'high';
+  if (populacao >= 100_000 || (densidadeHabKm2 && densidadeHabKm2 > 200)) return 'medium';
+  if (populacao >= 20_000) return 'low';
+  return 'rural';
 }
 
-function getRaioKm(densidade: 'alta' | 'baixa'): number {
-  return densidade === 'alta' ? 3 : 10;
+function calculateDynamicRadius(
+  densityLevel: DensityLevel,
+  businessCategory: string,
+): number {
+  const baseRadius: Record<DensityLevel, number> = {
+    very_high: 1,
+    high: 3,
+    medium: 5,
+    low: 10,
+    rural: 20,
+  };
+
+  const segmentMultiplier = (category: string): number => {
+    const lower = category.toLowerCase();
+    // Alimentação — raio pequeno
+    if (/restaurante|lanchonete|padaria|café|cafeteria|bar|pizzaria|hamburguer|sushi|kilo|comida/.test(lower)) return 0.5;
+    // Serviços técnicos/profissionais — raio maior
+    if (/arquitet|advogad|contábil|contador|engenhei|consultor|designer|developer/.test(lower)) return 2;
+    // B2B/B2G — raio amplo
+    if (/indústria|distribuidora|atacado|fornecedor|logística|transporte/.test(lower)) return 3;
+    // Saúde, beleza, varejo — padrão
+    return 1;
+  };
+
+  const base = baseRadius[densityLevel] ?? 3;
+  const multiplier = segmentMultiplier(businessCategory);
+  const radius = base * multiplier;
+
+  // Cap entre 1km e 20km
+  return Math.min(Math.max(Math.round(radius), 1), 20);
 }
 
 interface MunicipioInfo {
@@ -477,57 +506,57 @@ async function getPopulacaoTotal(municipioIds: number[]): Promise<number> {
 
 
 // Capitais e cidades grandes com população conhecida (fallback quando IBGE está fora)
-const POPULACAO_CONHECIDA: Record<string, { pop: number; densidade: 'alta' | 'baixa' }> = {
-  'são paulo': { pop: 11_451_000, densidade: 'alta' },
-  'sao paulo': { pop: 11_451_000, densidade: 'alta' },
-  'rio de janeiro': { pop: 6_211_000, densidade: 'alta' },
-  'brasília': { pop: 2_817_000, densidade: 'alta' },
-  'brasilia': { pop: 2_817_000, densidade: 'alta' },
-  'salvador': { pop: 2_418_000, densidade: 'alta' },
-  'fortaleza': { pop: 2_428_000, densidade: 'alta' },
-  'belo horizonte': { pop: 2_315_000, densidade: 'alta' },
-  'manaus': { pop: 2_063_000, densidade: 'alta' },
-  'curitiba': { pop: 1_773_000, densidade: 'alta' },
-  'recife': { pop: 1_488_000, densidade: 'alta' },
-  'goiânia': { pop: 1_437_000, densidade: 'alta' },
-  'goiania': { pop: 1_437_000, densidade: 'alta' },
-  'belém': { pop: 1_303_000, densidade: 'alta' },
-  'belem': { pop: 1_303_000, densidade: 'alta' },
-  'porto alegre': { pop: 1_332_000, densidade: 'alta' },
-  'guarulhos': { pop: 1_292_000, densidade: 'alta' },
-  'campinas': { pop: 1_139_000, densidade: 'alta' },
-  'são luís': { pop: 1_037_000, densidade: 'alta' },
-  'sao luis': { pop: 1_037_000, densidade: 'alta' },
-  'maceió': { pop: 932_000, densidade: 'alta' },
-  'maceio': { pop: 932_000, densidade: 'alta' },
-  'santo andré': { pop: 748_000, densidade: 'alta' },
-  'santo andre': { pop: 748_000, densidade: 'alta' },
-  'mauá': { pop: 477_000, densidade: 'alta' },
-  'maua': { pop: 477_000, densidade: 'alta' },
-  'osasco': { pop: 699_000, densidade: 'alta' },
-  'ribeirão preto': { pop: 720_000, densidade: 'alta' },
-  'ribeirao preto': { pop: 720_000, densidade: 'alta' },
-  'sorocaba': { pop: 695_000, densidade: 'alta' },
-  'londrina': { pop: 580_000, densidade: 'alta' },
-  'niterói': { pop: 487_000, densidade: 'alta' },
-  'niteroi': { pop: 487_000, densidade: 'alta' },
-  'joinville': { pop: 616_000, densidade: 'alta' },
-  'florianópolis': { pop: 537_000, densidade: 'alta' },
-  'florianopolis': { pop: 537_000, densidade: 'alta' },
+const POPULACAO_CONHECIDA: Record<string, { pop: number; densidade: DensityLevel }> = {
+  'são paulo': { pop: 11_451_000, densidade: 'very_high' },
+  'sao paulo': { pop: 11_451_000, densidade: 'very_high' },
+  'rio de janeiro': { pop: 6_211_000, densidade: 'very_high' },
+  'brasília': { pop: 2_817_000, densidade: 'very_high' },
+  'brasilia': { pop: 2_817_000, densidade: 'very_high' },
+  'salvador': { pop: 2_418_000, densidade: 'very_high' },
+  'fortaleza': { pop: 2_428_000, densidade: 'very_high' },
+  'belo horizonte': { pop: 2_315_000, densidade: 'very_high' },
+  'manaus': { pop: 2_063_000, densidade: 'very_high' },
+  'curitiba': { pop: 1_773_000, densidade: 'very_high' },
+  'recife': { pop: 1_488_000, densidade: 'very_high' },
+  'goiânia': { pop: 1_437_000, densidade: 'very_high' },
+  'goiania': { pop: 1_437_000, densidade: 'very_high' },
+  'belém': { pop: 1_303_000, densidade: 'very_high' },
+  'belem': { pop: 1_303_000, densidade: 'very_high' },
+  'porto alegre': { pop: 1_332_000, densidade: 'very_high' },
+  'guarulhos': { pop: 1_292_000, densidade: 'very_high' },
+  'campinas': { pop: 1_139_000, densidade: 'very_high' },
+  'são luís': { pop: 1_037_000, densidade: 'very_high' },
+  'sao luis': { pop: 1_037_000, densidade: 'very_high' },
+  'maceió': { pop: 932_000, densidade: 'high' },
+  'maceio': { pop: 932_000, densidade: 'high' },
+  'santo andré': { pop: 748_000, densidade: 'high' },
+  'santo andre': { pop: 748_000, densidade: 'high' },
+  'mauá': { pop: 477_000, densidade: 'high' },
+  'maua': { pop: 477_000, densidade: 'high' },
+  'osasco': { pop: 699_000, densidade: 'high' },
+  'ribeirão preto': { pop: 720_000, densidade: 'high' },
+  'ribeirao preto': { pop: 720_000, densidade: 'high' },
+  'sorocaba': { pop: 695_000, densidade: 'high' },
+  'londrina': { pop: 580_000, densidade: 'high' },
+  'niterói': { pop: 487_000, densidade: 'high' },
+  'niteroi': { pop: 487_000, densidade: 'high' },
+  'joinville': { pop: 616_000, densidade: 'high' },
+  'florianópolis': { pop: 537_000, densidade: 'high' },
+  'florianopolis': { pop: 537_000, densidade: 'high' },
 };
 
 /**
  * Estimativa de fallback quando IBGE está indisponível.
  * Usa tabela de cidades conhecidas ou estimativa genérica.
  */
-function estimarPorDensidade(city: string): AudienciaEstimada {
+function estimarPorDensidade(city: string, businessCategory?: string): AudienciaEstimada {
   const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const cityNorm = normalize(city);
 
   const known = POPULACAO_CONHECIDA[cityNorm];
   if (known) {
-    const raioKm = known.densidade === 'alta' ? 3 : 10;
-    console.log(`[IBGE Fallback] Cidade conhecida: ${city} → pop=${known.pop}, raio=${raioKm}km`);
+    const raioKm = calculateDynamicRadius(known.densidade, businessCategory || '');
+    console.log(`[IBGE Fallback] Cidade conhecida: ${city} → pop=${known.pop}, raio=${raioKm}km, densidade=${known.densidade}`);
     return {
       populacaoRaio: known.pop,
       raioKm,
@@ -539,11 +568,12 @@ function estimarPorDensidade(city: string): AudienciaEstimada {
 
   // Estimativa genérica: cidade média brasileira ~200k habitantes
   const estimativa = 200_000;
-  console.log(`[IBGE Fallback] Cidade desconhecida: ${city} → estimativa genérica ${estimativa}`);
+  const raioKm = calculateDynamicRadius('medium', businessCategory || '');
+  console.log(`[IBGE Fallback] Cidade desconhecida: ${city} → estimativa genérica ${estimativa}, raio=${raioKm}km`);
   return {
     populacaoRaio: estimativa,
-    raioKm: 5,
-    densidade: 'baixa',
+    raioKm,
+    densidade: 'medium',
     municipioNome: city,
     municipioId: 0,
   };
@@ -559,6 +589,7 @@ export async function fetchAudienciaEstimada(
   nacional: boolean,
   lat?: number,
   lng?: number,
+  businessCategory?: string,
 ): Promise<AudienciaEstimada | null> {
   console.log(`[IBGE Audiência] START: city="${city}", state="${state}", nacional=${nacional}, lat=${lat}, lng=${lng}`);
   if (nacional) {
@@ -579,13 +610,14 @@ export async function fetchAudienciaEstimada(
     const info = await getMunicipioInfo(city, state);
     if (!info) {
       console.warn(`[IBGE Audiência] getMunicipioInfo retornou null para city="${city}" — usando estimativa por densidade`);
-      return estimarPorDensidade(city);
+      return estimarPorDensidade(city, businessCategory);
     }
     console.log(`[IBGE Audiência] Município: ${info.nome}, pop=${info.populacao}, area=${info.areaKm2}km², densidade=${info.densidadeHabKm2.toFixed(0)} hab/km²`);
 
-    // 2. Detecta densidade → define raio
+    // 2. Detecta densidade → define raio dinâmico por segmento
     const densidade = detectarDensidade(info.populacao, info.densidadeHabKm2 > 0 ? info.densidadeHabKm2 : undefined);
-    const raioKm = getRaioKm(densidade);
+    const raioKm = calculateDynamicRadius(densidade, businessCategory || '');
+    console.log(`[pipeline] raio calculado: ${raioKm}km para "${businessCategory || 'genérico'}" em ${densidade}`);
 
     // 3. População do raio — soma município principal + vizinhos na mesma microrregião
     let populacaoRaio = info.populacao;
@@ -619,7 +651,7 @@ export async function fetchAudienciaEstimada(
     } else {
       console.warn('[IBGE Audiência] Erro:', (err as Error).message);
     }
-    return estimarPorDensidade(city);
+    return estimarPorDensidade(city, businessCategory);
   } finally {
     clearTimeout(timeout);
     console.log(`[IBGE Audiência] END: city="${city}"`);

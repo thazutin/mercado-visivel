@@ -130,7 +130,7 @@ export function LockedTab({ lockLevel, ctaLabel, ctaUrl, leadId }: Props) {
           </div>
           <p style={{ fontSize: 13, color: V.ash, marginBottom: 20, lineHeight: 1.5 }}>
             {lockLevel === 1
-              ? "Desbloqueie o diagnóstico completo com análise detalhada, checklist de melhorias e conteúdos prontos para suas redes."
+              ? "Desbloqueie o diagnóstico completo com análise detalhada, plano de ação e conteúdos prontos para suas redes."
               : "Assine para receber conteúdos novos toda semana, acompanhamento contínuo e suporte prioritário."}
           </p>
           {leadId ? (

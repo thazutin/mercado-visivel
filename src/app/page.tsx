@@ -162,6 +162,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 // ═════════════════════════════════════════════════════════════════════
 export default function Home() {
   const t = dictionaries.pt;
+  const formRef = useRef<HTMLDivElement>(null);
   const [screen, setScreen] = useState<"landing" | "processing" | "value">("landing");
   const [formStep, setFormStep] = useState(1);
   const [formData, setFormData] = useState<LeadFormData>(initialFormData);
@@ -343,10 +344,6 @@ export default function Home() {
       content: (
         <>
           <p style={{ fontSize: 13, color: V.ash, margin: "0 0 16px", lineHeight: 1.5 }}>{t.formStep2Subtitle}</p>
-          <Field label="Seu nome">
-            <input style={inputStyle} type="text" placeholder="Como prefere ser chamado" value={(formData as any).name || ""}
-              onChange={(e: any) => updateField("name" as any, e.target.value)} />
-          </Field>
           <Field label={`${t.formEmailLabel} *`} hint="Enviamos seu resultado por aqui">
             <input style={inputStyle} type="email" placeholder={t.formEmailPlaceholder} value={formData.email}
               onChange={(e: any) => updateField("email", e.target.value)} />
@@ -388,7 +385,7 @@ export default function Home() {
       </div>
 
       {/* ═══ FORM CARD ═══ */}
-      <div style={{ maxWidth: 480, margin: "-24px auto 0", padding: "0 20px 0" }}>
+      <div ref={formRef} style={{ maxWidth: 480, margin: "-24px auto 0", padding: "0 20px 0" }}>
         <div style={{
           background: V.white, borderRadius: 16, border: `1px solid ${V.fog}`,
           padding: "28px 24px", boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
@@ -433,7 +430,14 @@ export default function Home() {
               }}>{t.formBack}</button>
             ) : <div />}
             <button
-              onClick={() => { if (formStep < totalSteps) setFormStep(formStep + 1); else handleSubmit(); }}
+              onClick={() => {
+                if (formStep < totalSteps) {
+                  setFormStep(formStep + 1);
+                  setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+                } else {
+                  handleSubmit();
+                }
+              }}
               disabled={!isStepValid}
               style={{
                 background: formStep === totalSteps ? V.amber : V.white,
@@ -530,36 +534,70 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Oportunidades preview */}
+          {/* Checklist preview */}
           <div style={{ padding: "14px 18px 0" }}>
-            <p style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.ash, margin: "0 0 8px" }}>
-              Oportunidades identificadas
+            <p style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.ash, margin: "0 0 10px" }}>
+              Prévia do Plano de Ação
             </p>
+            {/* Item desbloqueado */}
+            <div style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "12px 14px", marginBottom: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ color: V.teal, fontSize: 14, fontWeight: 700, flexShrink: 0 }}>✓</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: V.night, flex: 1 }}>Cadastrar e otimizar perfil no Google Meu Negócio</span>
+              </div>
+              <div style={{ display: "flex", gap: 6, marginTop: 6, marginLeft: 22 }}>
+                <span style={{ fontFamily: V.mono, fontSize: 9, padding: "2px 8px", borderRadius: 100, background: "rgba(217,83,79,0.08)", color: V.coral, fontWeight: 600 }}>Alta prioridade</span>
+                <span style={{ fontFamily: V.mono, fontSize: 9, padding: "2px 8px", borderRadius: 100, background: V.tealWash, color: V.teal }}>1–4 semanas</span>
+              </div>
+              <p style={{ fontSize: 11, color: V.ash, margin: "6px 0 0 22px", lineHeight: 1.5 }}>
+                Passo a passo: acesse business.google.com, adicione fotos, horário, categoria principal e responda às primeiras avaliações.
+              </p>
+            </div>
+            {/* Itens bloqueados */}
             {[
-              { n: 1, title: "Aparecer no Google quando buscam você", horizon: "1–4 semanas" },
-              { n: 2, title: "Mostrar seu trabalho no Instagram", horizon: "1–4 semanas" },
-              { n: 3, title: "Ganhar confiança com avaliações reais", horizon: "1–3 meses" },
-            ].map((r) => (
-              <div key={r.n} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderBottom: r.n < 3 ? `1px solid ${V.fog}` : "none" }}>
-                <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 700, color: V.amber, background: V.amberWash, width: 20, height: 20, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  {r.n}
-                </span>
-                <span style={{ fontSize: 12, color: V.night, flex: 1 }}>{r.title}</span>
-                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.teal, background: V.tealWash, padding: "2px 6px", borderRadius: 100, whiteSpace: "nowrap" as const }}>{r.horizon}</span>
+              { title: "Otimizar bio do Instagram com palavras-chave locais", desc: "Atualize bio, link e destaques com termos que seus clientes buscam." },
+              { title: "Criar página de serviços com SEO local", desc: "Página com title, meta description e conteúdo estruturado para IA." },
+            ].map((item, i) => (
+              <div key={i} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "12px 14px", marginBottom: 6, filter: "blur(1.5px)", opacity: 0.6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ color: V.ash, fontSize: 14, flexShrink: 0 }}>○</span>
+                  <span style={{ fontSize: 12, color: V.zinc }}>{item.title}</span>
+                </div>
+                <p style={{ fontSize: 11, color: V.ash, margin: "4px 0 0 22px", lineHeight: 1.4 }}>{item.desc}</p>
               </div>
             ))}
           </div>
 
-          {/* Blur overlay at bottom */}
-          <div style={{
-            padding: "32px 18px 20px",
-            background: "linear-gradient(to bottom, rgba(254,254,255,0) 0%, rgba(254,254,255,0.95) 40%, rgba(254,254,255,1) 100%)",
-            textAlign: "center", marginTop: -20, position: "relative",
-          }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: V.amber, margin: 0 }}>
-              Preencha o formulário acima e receba seu diagnóstico grátis →
+          {/* Content preview */}
+          <div style={{ padding: "14px 18px 0" }}>
+            <p style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.ash, margin: "0 0 10px" }}>
+              Exemplo de conteúdo gerado
             </p>
+            <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "16px 14px" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 100, background: "rgba(225,48,108,0.08)", fontSize: 11, fontWeight: 500, color: "#E1306C", marginBottom: 10 }}>
+                📸 Instagram Feed
+              </div>
+              <p style={{ fontSize: 12, color: V.zinc, lineHeight: 1.7, margin: "0 0 10px" }}>
+                Você sabia que 3.200 pessoas buscam por serviços como o nosso todo mês em São Paulo?
+                A maioria não encontra porque poucos negócios locais aparecem no Google.
+                Estamos aqui, prontos pra atender você. 📍 Av. Paulista
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
+                {["#negóciolocal", "#SãoPaulo", "#estética"].map((tag) => (
+                  <span key={tag} style={{ fontSize: 10, color: V.teal, background: V.tealWash, padding: "2px 8px", borderRadius: 6 }}>{tag}</span>
+                ))}
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.cloud, padding: "3px 8px", borderRadius: 6 }}>Gerado pela Virô</span>
+              </div>
+            </div>
           </div>
+
+          {/* Blur fade at bottom */}
+          <div style={{
+            height: 32,
+            background: "linear-gradient(to bottom, rgba(254,254,255,0) 0%, rgba(254,254,255,1) 100%)",
+          }} />
         </div>
       </Section>
 
@@ -574,7 +612,7 @@ export default function Home() {
             { icon: "📋", title: "Você informa seu negócio", text: "Nome, segmento e endereço. Leva menos de 1 minuto." },
             { icon: "🔍", title: "A Virô analisa seu mercado", text: "Cruzamos Google, Instagram, Maps, IBGE e IA em tempo real." },
             { icon: "📊", title: "Você recebe o relatório grátis", text: "Score de influência, volume de buscas e concorrentes mapeados." },
-            { icon: "🔓", title: "Desbloqueie o Diagnóstico Completo — R$497", text: "Diagnóstico por canal, checklist de ações, sazonalidade e amostra de conteúdos. Disponível no painel em 5 minutos." },
+            { icon: "🔓", title: "Desbloqueie o Diagnóstico Completo — R$497", text: "Diagnóstico por canal, plano de ação, sazonalidade e amostra de conteúdos. Disponível no painel em 5 minutos." },
             { icon: "🔄", title: "Assine para conteúdos toda semana — R$99/mês", text: "4 posts + 3 briefings toda sexta. Seu time ou agência executa, você acompanha no painel." },
           ].map((step, i) => (
             <div key={i} style={{ background: V.white, borderRadius: 14, padding: "20px 20px", border: `1px solid ${V.fog}`, display: "flex", gap: 16, alignItems: "flex-start" }}>
@@ -606,53 +644,71 @@ export default function Home() {
         </p>
       </Section>
 
-      {/* ═══ SECTION 4 — SEU CHECKLIST PERSONALIZADO ═══ */}
+      {/* ═══ SECTION 4 — MAPA COMPLETO ═══ */}
       <Section bg={V.white}>
         <SectionLabel>o que você vai receber</SectionLabel>
-        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
-          Seu checklist personalizado — pronto em 5 minutos
+        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 32px", lineHeight: 1.25 }}>
+          Seu mapa completo para capturar mais clientes
         </h2>
-        <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.6, margin: "0 0 28px" }}>
-          A Virô identifica onde você está perdendo clientes e entrega as ações de maior impacto, ordenadas por prioridade. Sem achismo, sem plano genérico — só o que funciona para o seu negócio na sua região.
-        </p>
 
-        {/* Grátis cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+        {/* Bloco 1 — Grátis */}
+        <p style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.teal, fontWeight: 600, margin: "0 0 10px" }}>
+          Grátis · 60 segundos
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 32 }}>
           {[
-            { title: "Visibilidade no mercado", desc: "Como seu negócio aparece no Google, Instagram e IA." },
-            { title: "Concorrência mapeada", desc: "Quem disputa atenção com você na sua região." },
-            { title: "Oportunidades claras", desc: "Onde há espaço para atrair mais clientes." },
+            { title: "Demanda total", desc: "Volume de buscas mensais no seu mercado" },
+            { title: "Demanda ativa", desc: "Buscas com intenção de compra imediata" },
+            { title: "Concorrência", desc: "Negócios disputando os mesmos clientes" },
+            { title: "Sua visibilidade", desc: "Percentual da demanda que você captura hoje" },
           ].map((item, i) => (
-            <div key={i} style={{ padding: "20px", borderRadius: 12, border: `1px solid ${V.fog}`, background: V.white }}>
-              <span style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", fontWeight: 600, color: V.teal, background: `${V.teal}15`, padding: "3px 8px", borderRadius: 4 }}>
-                GRÁTIS
-              </span>
-              <div style={{ fontSize: 16, fontWeight: 700, color: V.night, margin: "10px 0 6px" }}>{item.title}</div>
-              <p style={{ fontSize: 14, color: V.zinc, lineHeight: 1.6, margin: 0 }}>{item.desc}</p>
+            <div key={i} style={{ padding: "14px 16px", borderRadius: 12, border: `1px solid ${V.teal}30`, background: V.cloud, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: V.night, marginBottom: 2 }}>{item.title}</div>
+                <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
+              </div>
+              <span style={{ fontFamily: V.mono, fontSize: 9, color: V.teal, background: `${V.teal}12`, padding: "3px 8px", borderRadius: 100, fontWeight: 600, flexShrink: 0 }}>Grátis</span>
             </div>
           ))}
         </div>
 
-        {/* Paid blocks */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <div style={{ padding: "20px", borderRadius: 12, border: `2px solid ${V.amber}`, background: V.white }}>
-            <span style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", fontWeight: 600, color: V.amber, background: V.amberWash, padding: "3px 8px", borderRadius: 4 }}>
-              R$497 · pagamento único
-            </span>
-            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, margin: "10px 0 6px" }}>Checklist completo + Diagnóstico por canal</div>
-            <p style={{ fontSize: 14, color: V.zinc, lineHeight: 1.6, margin: 0 }}>
-              Todas as ações priorizadas, com descrição detalhada e prazo de execução. Mais: diagnóstico por canal (Google, Instagram, Maps, IA), sazonalidade do seu mercado e amostra de conteúdos prontos para publicar.
+        {/* Bloco 2 — R$497 */}
+        <p style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.amber, fontWeight: 600, margin: "0 0 10px" }}>
+          R$497 · Pagamento único
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 32 }}>
+          {[
+            { title: "Diagnóstico completo", desc: "Por canal: Google, Instagram, Maps e IA" },
+            { title: "Plano de ação", desc: "Ações prioritárias com prazo de execução" },
+            { title: "Amostra de conteúdos", desc: "4 posts prontos para publicar" },
+          ].map((item, i) => (
+            <div key={i} style={{ padding: "14px 16px", borderRadius: 12, border: `2px solid ${V.amber}`, background: V.white, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: V.night, marginBottom: 2 }}>{item.title}</div>
+                <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
+              </div>
+              <span style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, background: V.amberWash, padding: "3px 8px", borderRadius: 100, fontWeight: 600, flexShrink: 0 }}>R$497</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Bloco 3 — R$99/mês */}
+        <p style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: "#8B5CF6", fontWeight: 600, margin: "0 0 10px" }}>
+          R$99/mês · Recorrência
+        </p>
+        <div style={{ padding: "14px 16px", borderRadius: 12, border: "2px solid #8B5CF6", background: V.white, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: V.night, marginBottom: 2 }}>
+              4 conteúdos semanais prontos para publicar
+            </div>
+            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.5, margin: "0 0 4px" }}>
+              + 3 briefings completos para agência ou produtora
+            </p>
+            <p style={{ fontSize: 11, color: V.ash, margin: 0, fontFamily: V.mono }}>
+              Disponível após o Diagnóstico Completo
             </p>
           </div>
-          <div style={{ padding: "20px", borderRadius: 12, border: `1px solid ${V.fog}`, background: V.white }}>
-            <span style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", fontWeight: 600, color: V.teal, background: V.tealWash, padding: "3px 8px", borderRadius: 4 }}>
-              R$99/mês
-            </span>
-            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, margin: "10px 0 6px" }}>Conteúdos toda semana, sem esforço</div>
-            <p style={{ fontSize: 14, color: V.zinc, lineHeight: 1.6, margin: 0 }}>
-              4 posts prontos para publicar + 3 briefings para sua equipe ou agência. Gerados toda sexta com base no contexto atual do seu mercado. Disponível após o Diagnóstico Completo.
-            </p>
-          </div>
+          <span style={{ fontFamily: V.mono, fontSize: 9, color: "#8B5CF6", background: "rgba(139,92,246,0.08)", padding: "3px 8px", borderRadius: 100, fontWeight: 600, flexShrink: 0 }}>R$99/mês</span>
         </div>
       </Section>
 
@@ -695,7 +751,7 @@ export default function Home() {
         </h2>
         {[
           { q: "O relatório inicial é mesmo gratuito?", a: "Sim, 100% gratuito. Você preenche o formulário, a Virô analisa seu mercado em tempo real e entrega o relatório sem precisar criar conta ou inserir cartão." },
-          { q: "O que está incluído no Diagnóstico Completo?", a: "O Diagnóstico Completo (R$497, pagamento único) inclui: diagnóstico detalhado por canal (Google, Instagram, Maps e IA), checklist prático com as ações de maior impacto ordenadas por prioridade, análise de sazonalidade do seu mercado e uma amostra de conteúdos prontos para publicar. Tudo fica disponível no seu painel em até 5 minutos após o pagamento." },
+          { q: "O que está incluído no Diagnóstico Completo?", a: "O Diagnóstico Completo (R$497, pagamento único) inclui: diagnóstico detalhado por canal (Google, Instagram, Maps e IA), plano de ação com as ações de maior impacto ordenadas por prioridade, análise de sazonalidade do seu mercado e uma amostra de conteúdos prontos para publicar. Tudo fica disponível no seu painel em até 5 minutos após o pagamento." },
           { q: "Quanto tempo leva para receber o diagnóstico?", a: "O relatório inicial fica pronto em até 1 minuto após você preencher o formulário. O Diagnóstico Completo fica disponível no painel em até 5 minutos após a confirmação do pagamento." },
           { q: "Como acesso meu painel depois de pagar?", a: "Após o pagamento, você recebe um email com o link de acesso direto ao painel. O login é feito com o mesmo email usado no cadastro — sem senha, via link mágico." },
           { q: "O que são os Conteúdos Semanais?", a: "São 4 posts prontos para publicar (Instagram ou LinkedIn, dependendo do perfil do seu negócio) e 3 briefings para sua equipe ou agência executarem — gerados toda sexta-feira com base no contexto atual do seu mercado. Disponível por R$99/mês após a contratação do Diagnóstico Completo." },

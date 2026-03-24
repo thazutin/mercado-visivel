@@ -393,10 +393,12 @@ export interface IBGEData {
 
 // --- AUDIÊNCIA ESTIMADA ---
 
+export type DensityLevel = 'very_high' | 'high' | 'medium' | 'low' | 'rural' | 'nacional';
+
 export interface AudienciaEstimada {
   populacaoRaio: number;
   raioKm: number | null;
-  densidade: 'alta' | 'baixa' | 'nacional';
+  densidade: DensityLevel;
   municipioNome: string;
   municipioId: number;
   ibgeAno?: number;
@@ -412,7 +414,7 @@ export interface AudienciaTarget {
 export interface AudienciaDisplay {
   populacaoRaio: number;
   raioKm: number | null;
-  densidade: 'alta' | 'baixa' | 'nacional';
+  densidade: DensityLevel;
   municipioNome: string;
   targetProfile: string;
   estimatedPercentage: number;
