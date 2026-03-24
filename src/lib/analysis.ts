@@ -1230,7 +1230,8 @@ export async function runPostDiagnosisEnrichment(
       }
 
       const { executeStep7Seasonality } = await import("./pipeline/step7-seasonality");
-      let seasonality = await executeStep7Seasonality(terms);
+      const termVolumes = pipelineResult.volumes?.termVolumes || [];
+      let seasonality = await executeStep7Seasonality(terms, termVolumes);
       console.log("[Enrichment] seasonality:", JSON.stringify(seasonality));
 
       if (!seasonality) {
