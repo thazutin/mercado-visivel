@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
+import { waitUntil } from "@vercel/functions";
 import { notifyFullDiagnosisReady } from "@/lib/notify";
 import { runPostDiagnosisEnrichment } from "@/lib/analysis";
 
@@ -120,12 +121,15 @@ export async function POST(req: NextRequest) {
       .eq("id", leadId);
 
     // 4b. Enriquecimento pós-diagnóstico (checklist + sazonalidade + conteúdos)
-    runPostDiagnosisEnrichment(
-      leadId,
-      raw as any,
-      { name: lead.name, product: lead.product, region: lead.region, client_type: lead.client_type },
-    ).catch((err: any) =>
-      console.error("[PlanGen] Erro no enriquecimento pós-diagnóstico:", err)
+    // waitUntil garante que o Vercel não mata o processo antes de completar
+    waitUntil(
+      runPostDiagnosisEnrichment(
+        leadId,
+        raw as any,
+        { name: lead.name, product: lead.product, region: lead.region, client_type: lead.client_type },
+      ).catch((err: any) =>
+        console.error("[PlanGen] Erro no enriquecimento pós-diagnóstico:", err)
+      )
     );
 
     // 5. Notifica por WhatsApp + email
