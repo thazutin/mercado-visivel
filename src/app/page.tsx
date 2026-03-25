@@ -612,7 +612,7 @@ export default function Home() {
             { icon: "📋", title: "Você informa seu negócio", text: "Nome, segmento e endereço. Leva menos de 1 minuto." },
             { icon: "🔍", title: "A Virô analisa seu mercado", text: "Cruzamos Google, Instagram, Maps, IBGE e IA em tempo real." },
             { icon: "📊", title: "Você recebe o relatório grátis", text: "Score de influência, volume de buscas e concorrentes mapeados." },
-            { icon: "🔓", title: "Desbloqueie o Diagnóstico Completo — R$497", text: "Diagnóstico por canal, plano de ação, sazonalidade e amostra de conteúdos. Disponível no painel em 5 minutos." },
+            { icon: "🔓", title: "Desbloqueie o Diagnóstico Completo — R$497", text: "Diagnóstico por canal, plano de ação, sazonalidade e amostra de conteúdos. Disponível no painel em até 15 minutos." },
             { icon: "🔄", title: "Assine para conteúdos toda semana — R$99/mês", text: "4 posts + 3 briefings toda sexta. Seu time ou agência executa, você acompanha no painel." },
           ].map((step, i) => (
             <div key={i} style={{ background: V.white, borderRadius: 14, padding: "20px 20px", border: `1px solid ${V.fog}`, display: "flex", gap: 16, alignItems: "flex-start" }}>
@@ -751,8 +751,8 @@ export default function Home() {
         </h2>
         {[
           { q: "O relatório inicial é mesmo gratuito?", a: "Sim, 100% gratuito. Você preenche o formulário, a Virô analisa seu mercado em tempo real e entrega o relatório sem precisar criar conta ou inserir cartão." },
-          { q: "O que está incluído no Diagnóstico Completo?", a: "O Diagnóstico Completo (R$497, pagamento único) inclui: diagnóstico detalhado por canal (Google, Instagram, Maps e IA), plano de ação com as ações de maior impacto ordenadas por prioridade, análise de sazonalidade do seu mercado e uma amostra de conteúdos prontos para publicar. Tudo fica disponível no seu painel em até 5 minutos após o pagamento." },
-          { q: "Quanto tempo leva para receber o diagnóstico?", a: "O relatório inicial fica pronto em até 1 minuto após você preencher o formulário. O Diagnóstico Completo fica disponível no painel em até 5 minutos após a confirmação do pagamento." },
+          { q: "O que está incluído no Diagnóstico Completo?", a: "O Diagnóstico Completo (R$497, pagamento único) inclui: diagnóstico detalhado por canal (Google, Instagram, Maps e IA), plano de ação com as ações de maior impacto ordenadas por prioridade, análise de sazonalidade do seu mercado e uma amostra de conteúdos prontos para publicar. Tudo fica disponível no seu painel em até 15 minutos após o pagamento." },
+          { q: "Quanto tempo leva para receber o diagnóstico?", a: "O relatório inicial fica pronto em até 1 minuto após você preencher o formulário. O Diagnóstico Completo fica disponível no painel em até 15 minutos após a confirmação do pagamento." },
           { q: "Como acesso meu painel depois de pagar?", a: "Após o pagamento, você recebe um email com o link de acesso direto ao painel. O login é feito com o mesmo email usado no cadastro — sem senha, via link mágico." },
           { q: "O que são os Conteúdos Semanais?", a: "São 4 posts prontos para publicar (Instagram ou LinkedIn, dependendo do perfil do seu negócio) e 3 briefings para sua equipe ou agência executarem — gerados toda sexta-feira com base no contexto atual do seu mercado. Disponível por R$99/mês após a contratação do Diagnóstico Completo." },
           { q: "Posso cancelar a recorrência?", a: "Sim, a qualquer momento direto no painel ou por email. Não há fidelidade nem multa." },

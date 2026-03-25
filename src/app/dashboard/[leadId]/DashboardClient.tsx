@@ -304,7 +304,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
             borderRadius: 12, padding: "14px 18px", marginBottom: 16,
             fontSize: 13, color: V.amber, fontWeight: 500, lineHeight: 1.5,
           }}>
-            ✓ Pagamento confirmado — diagnóstico completo e plano de ação ficam prontos em até 5 minutos.
+            ✓ Pagamento confirmado — diagnóstico completo e plano de ação ficam prontos em até 15 minutos.
           </div>
         )}
 

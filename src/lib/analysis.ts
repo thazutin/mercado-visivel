@@ -1312,6 +1312,8 @@ export async function runPostDiagnosisEnrichment(
 
       const { executeStep7Seasonality } = await import("./pipeline/step7-seasonality");
       const termVolumes = pipelineResult.volumes?.termVolumes || [];
+      console.log('[Enrichment:Seasonality] Iniciando step7, terms:', terms.slice(0, 3));
+      console.log('[Enrichment:Seasonality] termVolumes disponíveis:', termVolumes.length, 'com monthlyTrend:', termVolumes.filter(t => t.monthlyTrend?.length > 0).length);
       let seasonality = await executeStep7Seasonality(terms, termVolumes);
       console.log("[Enrichment] seasonality:", JSON.stringify(seasonality));
 
@@ -1373,6 +1375,8 @@ Gere APENAS o JSON.`;
         console.error('[Enrichment] Macro context falhou (usando fallback):', macroErr);
       }
 
+      console.log('[Enrichment:Seasonality] Tentando salvar diagId:', latestDiag.id, 'seasonality:', !!seasonality, 'macro:', !!macro_context);
+
       const { error: updateErr } = await supabase
         .from("diagnoses")
         .update({
@@ -1384,7 +1388,10 @@ Gere APENAS o JSON.`;
         .eq("id", latestDiag.id);
 
       if (updateErr) {
+        console.error('[Enrichment:Seasonality] UPDATE FALHOU:', updateErr.code, updateErr.message, updateErr.details);
         throw new Error(`Supabase update falhou: ${updateErr.message}`);
+      } else {
+        console.log('[Enrichment:Seasonality] UPDATE OK para diagId:', latestDiag.id);
       }
       console.log(`[Enrichment] Sazonalidade salva para lead ${leadId} (diagId=${latestDiag.id}, peak=${seasonality.peak_month})`);
     })(),

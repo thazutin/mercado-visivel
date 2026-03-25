@@ -39,9 +39,9 @@ export default function PostPaymentScreen({ product, region }: Props) {
   const [msgVisible, setMsgVisible] = useState(true);
   const [progress, setProgress] = useState(0);
 
-  // Progress ring: slow animation over 5 min (300s), but caps at 90%
+  // Progress ring: slow animation over 15 min (900s), but caps at 90%
   useEffect(() => {
-    const duration = 300_000;
+    const duration = 900_000;
     const interval = 500;
     const maxProgress = 90;
     const step = maxProgress / (duration / interval);
@@ -177,7 +177,7 @@ export default function PostPaymentScreen({ product, region }: Props) {
               { icon: "📊", text: "Diagnóstico completo por canal sendo gerado" },
               { icon: "📋", text: "Plano de ação com itens priorizados" },
               { icon: "📝", text: "Amostra de conteúdos prontos para publicar" },
-              { icon: "📧", text: "Email de aviso quando estiver pronto — até 5 minutos" },
+              { icon: "📧", text: "Email de aviso quando estiver pronto — até 15 minutos" },
             ].map((item, i) => (
               <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <span style={{ fontSize: 16, lineHeight: "22px", flexShrink: 0 }}>{item.icon}</span>

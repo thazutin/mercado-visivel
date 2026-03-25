@@ -11,7 +11,7 @@ import { waitUntil } from "@vercel/functions";
 import { notifyFullDiagnosisReady } from "@/lib/notify";
 import { runPostDiagnosisEnrichment } from "@/lib/analysis";
 
-export const maxDuration = 300;
+export const maxDuration = 800;
 
 function getSupabase() {
   return createClient(
@@ -197,6 +197,13 @@ function buildContext(lead: any, raw: any): string {
   const igPosts30d = igBusiness?.postsLast30d || 0;
   const igEngagement = igBusiness?.engagementRate || 0;
   const igHandle = lead.instagram || null;
+  const hasIgData = igFollowers > 0;
+  const hasIgHandle = !!igHandle;
+  const igStatus = hasIgData
+    ? `@${igHandle || 'handle não declarado'} — ${igFollowers} seguidores`
+    : hasIgHandle
+      ? `@${igHandle} — dados não coletados`
+      : 'sem presença identificada';
 
   // Concorrentes — top 3 do SERP + Instagram
   const serpCompetitors = serpPositions
@@ -228,7 +235,7 @@ function buildContext(lead: any, raw: any): string {
 
   return `NEGÓCIO: ${lead.product} em ${lead.region}
 Diferencial: "${lead.differentiator || "não informado"}"
-Instagram: ${igHandle || "não tem"} · Site: ${lead.site || "não tem"}
+Instagram: ${igStatus} · Site: ${lead.site || "não tem"}
 
 PRESENÇA DIGITAL ATUAL — ESTADO REAL:
 Google Maps: ${mapsFound ? `✅ "${mapsName}"` : '❌ não encontrado no Google Maps'}
@@ -238,10 +245,10 @@ ${mapsFound ? `  → Avaliação: ${mapsRating ? `${mapsRating}★` : 'sem nota'
   → Benchmark setor: negócios top têm 50+ avaliações, 20+ fotos, >80% de respostas`
 : '  → GAP CRÍTICO: negócio invisível no Maps — 0% da demanda ativa consegue encontrá-lo'}
 
-Instagram: ${igHandle ? `@${igHandle}` : '❌ sem perfil identificado'}
-${igFollowers > 0 ? `  → ${igFollowers} seguidores · ${igPosts30d} posts/mês · ${(igEngagement * 100).toFixed(1)}% engajamento
+Instagram: ${hasIgData ? `✅ ${igStatus}` : hasIgHandle ? `⚠️ ${igStatus}` : `❌ ${igStatus}`}
+${hasIgData ? `  → ${igFollowers} seguidores · ${igPosts30d} posts/mês · ${(igEngagement * 100).toFixed(1)}% engajamento
   → Benchmark: perfis ativos do setor postam 3-5x/semana e têm engajamento >3%`
-: igHandle ? '  → Perfil existe mas sem dados de engajamento coletados'
+: hasIgHandle ? '  → Perfil existe mas sem dados de engajamento coletados'
 : '  → Sem presença no Instagram — oportunidade ou decisão estratégica a avaliar'}
 
 MERCADO:
