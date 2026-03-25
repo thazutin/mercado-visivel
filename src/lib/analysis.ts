@@ -1262,11 +1262,53 @@ export async function runPostDiagnosisEnrichment(
         };
       }
 
+      // Gera macro_context via Claude Haiku
+      const macroPrompt = `Você é um analista econômico especialista em mercado local brasileiro.
+
+Negócio: ${formData.product} em ${formData.region}
+Setor inferido: ${clientType === 'b2b' ? 'B2B' : clientType === 'b2g' ? 'B2G/Governo' : 'B2C local'}
+
+Gere um contexto macroeconômico relevante para este negócio em 2025, considerando:
+- Tendências de consumo no setor específico
+- Fatores econômicos que afetam a demanda local (inflação, emprego, renda)
+- Sazonalidade econômica do setor
+- Oportunidades ou ameaças do cenário atual
+
+Responda APENAS em JSON:
+{
+  "summary": "2-3 parágrafos diretos sobre o cenário econômico atual para este negócio",
+  "indicators": [
+    { "name": "Nome do indicador", "value": "valor ou tendência", "impact": "positive|neutral|negative", "description": "o que significa para o negócio" }
+  ],
+  "outlook": "positive|neutral|negative",
+  "key_opportunity": "principal oportunidade econômica atual para este setor"
+}
+
+Gere APENAS o JSON.`;
+
+      const { default: Anthropic } = await import('@anthropic-ai/sdk');
+      const claudeClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+
+      let macro_context: any = { summary: "Contexto macroeconômico não disponível.", indicators: [], outlook: "neutral", key_opportunity: "" };
+      try {
+        const macroResponse = await claudeClient.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1000,
+          temperature: 0.3,
+          messages: [{ role: 'user', content: macroPrompt }],
+        });
+        const macroText = macroResponse.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
+        macro_context = JSON.parse(macroText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
+        console.log(`[Enrichment] Macro context gerado: outlook=${macro_context.outlook}`);
+      } catch (macroErr) {
+        console.error('[Enrichment] Macro context falhou (usando fallback):', macroErr);
+      }
+
       const { error: updateErr } = await supabase
         .from("diagnoses")
         .update({
           seasonality,
-          macro_context: { summary: "Integração com dados macroeconômicos em breve.", indicators: [] },
+          macro_context,
           b2b_targets: clientType === 'b2b' ? { companies: [], status: "preview" } : null,
           b2g_tenders: clientType === 'b2g' ? { tenders: [], status: "preview" } : null,
         })

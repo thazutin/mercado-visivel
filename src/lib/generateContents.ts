@@ -35,6 +35,8 @@ export interface GeneratedPost {
   hashtags: string[]
   best_time: string
   tip: string
+  hook: string
+  strategic_intent: string
   image_url?: string
 }
 
@@ -99,14 +101,17 @@ Cada post deve ser criado com intenção clara de aumentar a probabilidade de ve
 2. Antecipa objeções comuns do cliente local
 3. Posiciona o negócio como a escolha óbvia na região
 
+REGRAS OBRIGATÓRIAS:
+- Use o produto/serviço REAL (${lead.segment}), a região REAL (${lead.location}), e o diferencial REAL do negócio
+- Cite dados reais quando disponíveis (ex: "${lead.search_volume ? `${lead.search_volume} pessoas buscam isso por mês na sua região` : 'volume de buscas disponível'}")
+- Cada post deve ter um objetivo de negócio claro: atrair novo cliente / converter quem já conhece / fidelizar quem já comprou
+- NUNCA gere post genérico de "dica do dia" sem conexão com o negócio real
+- O "hook" deve ser a primeira frase que para o scroll — baseada no que o público-alvo REAL se preocupa
+
 Gere um post para cada canal abaixo:
 ${Object.entries(CHANNEL_SPECS)
   .map(([key, ch]) => `- ${ch.label} (channel_key: "${key}"): ${ch.spec}`)
   .join('\n')}
-
-Ao final de cada post, no campo "tip", explique o PORQUÊ estratégico deste conteúdo:
-ex: "Este post reduz a objeção de desconfiança em novos clientes locais"
-ou "Este post captura demanda de quem já está pronto para comprar"
 
 Responda APENAS em JSON válido. Sem markdown, sem texto antes ou depois.
 {
@@ -114,10 +119,12 @@ Responda APENAS em JSON válido. Sem markdown, sem texto antes ou depois.
     {
       "channel": "nome legível do canal",
       "channel_key": "chave_do_canal",
-      "content": "texto completo do post",
+      "hook": "primeira frase do post — deve parar o scroll",
+      "content": "texto completo do post (começando pelo hook)",
       "hashtags": ["hashtag1", "hashtag2"],
       "best_time": "ex: terça às 19h",
-      "tip": "porquê estratégico deste conteúdo (1 frase)"
+      "tip": "porquê estratégico deste conteúdo (1 frase)",
+      "strategic_intent": "por que este conteúdo aumenta vendas + qual etapa da jornada (awareness/consideração/decisão/retenção)"
     }
   ],
   "strategy_note": "observação estratégica geral (1-2 frases)"
@@ -183,7 +190,7 @@ export async function triggerContentGeneration(leadId: string): Promise<void> {
 
   const { data: lead, error: leadError } = await getSupabaseAdmin()
     .from('leads')
-    .select('id, name, product, region, competitors')
+    .select('id, name, product, region, competitors, site, instagram, differentiator')
     .eq('id', leadId)
     .single()
 
@@ -235,6 +242,10 @@ export async function triggerContentGeneration(leadId: string): Promise<void> {
         location: leadContext.location,
         post_content: post.content,
         channel: post.channel,
+        site: lead.site || undefined,
+        instagram: lead.instagram || undefined,
+        differentiator: lead.differentiator || undefined,
+        post_objective: post.strategic_intent?.split(/[—–-]/)?.[0]?.trim() || undefined,
       })
       if (imageUrl) {
         post.image_url = imageUrl
@@ -251,4 +262,33 @@ export async function triggerContentGeneration(leadId: string): Promise<void> {
   console.log(
     `[generateContents] ${result.posts.length} posts salvos para lead ${leadId}`
   )
+
+  // Gera briefings de produção (3 briefings para delegar para produtora)
+  try {
+    const { generateProductionBriefs } = await import('./generateProductionBriefs')
+
+    const { data: diagData } = await getSupabaseAdmin()
+      .from('diagnoses')
+      .select('raw_data')
+      .eq('lead_id', leadId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    await generateProductionBriefs(
+      leadId,
+      {
+        product: lead.product,
+        region: lead.region,
+        differentiator: lead.differentiator,
+        instagram: lead.instagram,
+        site: lead.site,
+        client_type: (lead as any).client_type,
+      },
+      diagData?.raw_data || {},
+      1,
+    )
+  } catch (briefErr) {
+    console.error('[ContentGen] Production briefs falhou (non-fatal):', (briefErr as Error).message)
+  }
 }

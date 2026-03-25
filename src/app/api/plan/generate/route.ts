@@ -178,14 +178,64 @@ function buildContext(lead: any, raw: any): string {
     .map((sp: any) => `"${sp.term}": posição ${sp.position || "—"}`)
     .join("\n  ");
 
+  // Google Maps — situação atual do negócio
+  const maps = influence.rawGoogle?.mapsPresence || raw.marketSizing?.mapsPresence || null;
+  const mapsFound = maps?.found || false;
+  const mapsRating = maps?.rating || null;
+  const mapsReviews = maps?.reviewCount || 0;
+  const mapsPhotos = maps?.photos || 0;
+  const mapsName = maps?.businessName || lead.product;
+
+  // Instagram — negócio
+  const igBusiness = influence.rawInstagram?.businessProfile || null;
+  const igFollowers = igBusiness?.followers || 0;
+  const igPosts30d = igBusiness?.postsLast30d || 0;
+  const igEngagement = igBusiness?.engagementRate || 0;
+  const igHandle = lead.instagram || null;
+
+  // Concorrentes — top 3 do SERP + Instagram
+  const serpCompetitors = serpPositions
+    .filter((sp: any) => sp.position && sp.position <= 10 && sp.domain !== lead.site)
+    .slice(0, 3)
+    .map((sp: any) => `"${sp.title || sp.domain}" (pos ${sp.position})`)
+    .join(", ");
+
+  const igCompetitors = (influence.rawInstagram?.competitorProfiles || [])
+    .slice(0, 3)
+    .map((c: any) => `@${c.handle} (${c.followers || 0} seguidores, ${c.postsLast30d || 0} posts/mês)`)
+    .join(", ");
+
+  // Audiência e mercado
+  const populacaoRaio = raw.audienciaDisplay?.populacaoRaio || null;
+  const raioKm = raw.audienciaDisplay?.raioKm || null;
+
   return `NEGÓCIO: ${lead.product} em ${lead.region}
 Diferencial: "${lead.differentiator || "não informado"}"
-Instagram: ${lead.instagram || "não informado"} · Site: ${lead.site || "não tem"}
-Volume total: ${raw.volumes?.totalMonthlyVolume || 0} buscas/mês · Influência: ${influence.totalInfluence || 0}%
+Instagram: ${igHandle || "não tem"} · Site: ${lead.site || "não tem"}
 
-TERMOS: ${topTerms}
-SERP: ${serpSummary}
-GAPS: ${gaps.headlineInsight || "N/A"}
+PRESENÇA DIGITAL ATUAL:
+Google Maps: ${mapsFound ? `✅ encontrado como "${mapsName}"` : "❌ não encontrado"}
+${mapsFound ? `  → Avaliação: ${mapsRating ? `${mapsRating}★` : "sem nota"} · ${mapsReviews} avaliações · ${mapsPhotos} fotos` : "  → Negócio não aparece no Maps — oportunidade crítica"}
+Instagram: ${igHandle ? `@${igHandle}` : "não tem"} · ${igFollowers} seguidores · ${igPosts30d} posts/mês · ${(igEngagement * 100).toFixed(1)}% engajamento
+
+MERCADO:
+Volume total: ${raw.volumes?.totalMonthlyVolume || 0} buscas/mês
+${populacaoRaio ? `População no raio de ${raioKm}km: ${populacaoRaio.toLocaleString("pt-BR")} pessoas` : ""}
+Influência atual: ${influence.totalInfluence || 0}%
+
+TOP TERMOS BUSCADOS:
+  ${topTerms}
+
+POSIÇÕES NO GOOGLE:
+  ${serpSummary || "Negócio não ranqueado para nenhum termo monitorado"}
+
+CONCORRENTES NO GOOGLE:
+${serpCompetitors || "Nenhum concorrente identificado no top 10"}
+
+CONCORRENTES NO INSTAGRAM:
+${igCompetitors || "Nenhum concorrente identificado"}
+
+GAPS IDENTIFICADOS: ${gaps.headlineInsight || "N/A"}
 ${(gaps.gaps || []).slice(0, 3).map((g: any) => `- ${g.title}`).join("\n")}`;
 }
 
@@ -212,6 +262,12 @@ REGRAS DE LINGUAGEM (muito importante):
 - Bloco 1: onde aparece e onde não aparece. Bloco 2: o que as pessoas procuram. Bloco 3: quem aparece no lugar dele.
 - Bloco 4: as 3 coisas mais importantes para fazer. Bloco 5: como saber se está funcionando (metas simples).
 - Tom: direto, útil, como um vizinho que entende de negócio.
+
+REGRAS DE CONTEÚDO (obrigatório):
+- Bloco "digital_presence": cite os números EXATOS do diagnóstico — quantas avaliações tem, qual nota, quantas fotos, quantos seguidores. Se não tem Maps: diga que não aparece. Se tem Maps mas poucas avaliações: diga exatamente quantas e compare com o mercado.
+- Bloco "competitive_analysis": cite os concorrentes reais encontrados pelo nome, posição no Google, seguidores no Instagram. Nunca invente concorrentes genéricos.
+- Bloco "action_plan": as 3 ações devem ser baseadas no GAP real — se tem 3 avaliações, a ação é "conseguir mais avaliações"; se não tem fotos, a ação é "adicionar fotos". NUNCA recomende algo que o negócio já tem em abundância.
+- Bloco "demand_map": cite os termos reais com volumes reais. Ex: "2.400 pessoas buscam 'dentista Vila Madalena' por mês".
 - Gere APENAS o JSON.`;
 }
 
@@ -236,6 +292,12 @@ REGRAS DE CONTEÚDO:
 - Semanas 5-8: criar rotina (publicar toda semana, responder clientes, pedir indicações)
 - Semanas 9-12: dobrar no que funcionou
 - Cite dados reais do diagnóstico como fundamento
+
+REGRA ANTI-GENÉRICO:
+- Se Maps já está cadastrado com >50 avaliações: NÃO recomende "cadastrar no Google Meu Negócio"
+- Se Instagram tem >500 seguidores: NÃO recomende "criar perfil no Instagram"
+- Cada semana deve atacar um gap REAL identificado no diagnóstico acima
+- Semanas 1-4 devem atacar o gap mais crítico primeiro (o que tem menor pontuação no diagnóstico)
 - Gere APENAS o JSON.`;
 }
 
