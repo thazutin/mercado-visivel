@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
+import { waitUntil } from "@vercel/functions";
 import { createOrLinkClerkUser, sendMagicLinkEmail } from "@/lib/auth";
 import { trackEvent } from "@/lib/events";
 import { notifyWeeklyContents } from "@/lib/notify";
@@ -143,10 +144,10 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // ─── 4. Trigger plan generation (async) ───
-      try {
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://virolocal.com";
+      // ─── 4. Trigger plan generation (waitUntil keeps process alive) ───
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://virolocal.com";
 
+      waitUntil(
         fetch(`${baseUrl}/api/plan/generate`, {
           method: "POST",
           headers: {
@@ -154,14 +155,15 @@ export async function POST(req: NextRequest) {
             "x-internal-secret": process.env.INTERNAL_API_SECRET || "viro-internal",
           },
           body: JSON.stringify({ leadId }),
-        }).catch((err) =>
-          console.error("[Webhook] Plan generation trigger failed:", err)
-        );
+        })
+        .then(async (res) => {
+          const text = await res.text();
+          console.log(`[Webhook] plan/generate response: ${res.status} — ${text.slice(0, 200)}`);
+        })
+        .catch((err) => console.error("[Webhook] Plan generation trigger failed:", err))
+      );
 
-        console.log(`[Webhook] Plan generation triggered for ${leadId}`);
-      } catch (err) {
-        console.error("[Webhook] Failed to trigger plan generation:", err);
-      }
+      console.log(`[Webhook] Plan generation triggered (waitUntil) for ${leadId}`);
 
       // Conteúdos são gerados via runPostDiagnosisEnrichment dentro de /api/plan/generate
 

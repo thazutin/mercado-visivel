@@ -284,7 +284,7 @@ export function calculateMarketSizing(
 
   const sizing: MarketSizing = {
     totalSearchVolume: totalVolume,
-    weightedSearchVolume: weightedVolume,
+    weightedSearchVolume: geoAdjustedVolume,
     marketPotential: {
       low: marketLow,
       mid: adjustedMid,

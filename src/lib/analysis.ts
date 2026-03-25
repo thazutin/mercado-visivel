@@ -1334,13 +1334,67 @@ export async function runPostDiagnosisEnrichment(
         };
       }
 
-      // Gera macro_context via Claude Haiku
-      const macroPrompt = `Você é um analista econômico especialista em mercado local brasileiro.
+      // Gera macro_context via web search (dados reais) + Claude Haiku (interpretação)
+      const { default: Anthropic } = await import('@anthropic-ai/sdk');
+      const claudeClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+      const sectorLabel = clientType === 'b2b' ? 'B2B' : clientType === 'b2g' ? 'B2G/Governo' : 'B2C local';
+      const regionShort = formData.region.split(',')[0];
 
-Negócio: ${formData.product} em ${formData.region}
-Setor inferido: ${clientType === 'b2b' ? 'B2B' : clientType === 'b2g' ? 'B2G/Governo' : 'B2C local'}
+      let macro_context: any = { summary: "Contexto macroeconômico não disponível.", indicators: [], outlook: "neutral", key_opportunity: "" };
+      try {
+        // Etapa 1: Web search via Claude Sonnet com tool web_search
+        let searchContext = '';
+        try {
+          const searchResponse = await claudeClient.messages.create({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1500,
+            tools: [{ type: "web_search_20250305" as any, name: "web_search" }],
+            messages: [{
+              role: 'user',
+              content: `Busque os dados macroeconômicos mais recentes do Brasil relevantes para o setor de "${formData.product}".
+Inclua: IPCA atual (IBGE), taxa SELIC atual (Banco Central), índice de confiança do consumidor mais recente,
+e qualquer dado setorial relevante para ${formData.product} em ${regionShort}.
+Foque em dados dos últimos 60 dias. Cite as fontes e datas.`
+            }],
+          });
 
-Gere um contexto macroeconômico relevante para este negócio em 2025, considerando:
+          searchContext = searchResponse.content
+            .map((b: any) => b.type === 'text' ? b.text : b.type === 'tool_result' ? JSON.stringify(b.content) : '')
+            .filter(Boolean)
+            .join('\n');
+
+          console.log(`[Enrichment] Macro: web search OK, contexto coletado (${searchContext.length} chars)`);
+        } catch (searchErr) {
+          console.warn('[Enrichment] Macro: web search falhou, usando fallback sem dados reais:', (searchErr as Error).message);
+        }
+
+        // Etapa 2: Geração do JSON interpretado
+        const macroPrompt = searchContext.length > 100
+          ? `Com base nos dados econômicos reais abaixo, gere um contexto macroeconômico
+para o negócio: ${formData.product} em ${regionShort}, setor ${sectorLabel}.
+
+DADOS REAIS COLETADOS:
+${searchContext.slice(0, 2000)}
+
+Responda APENAS em JSON:
+{
+  "summary": "2-3 parágrafos interpretando o impacto dos indicadores reais neste negócio específico",
+  "indicators": [
+    { "name": "Nome do indicador (ex: IPCA, SELIC)", "value": "valor real coletado", "impact": "positive|neutral|negative", "description": "o que este número significa para clientes de ${formData.product}" }
+  ],
+  "outlook": "positive|neutral|negative",
+  "key_opportunity": "oportunidade concreta baseada nos dados coletados",
+  "data_ref": "mês/ano dos dados (ex: março/2026)",
+  "sources": ["fonte 1", "fonte 2"]
+}
+
+Gere APENAS o JSON.`
+          : `Você é um analista econômico especialista em mercado local brasileiro.
+
+Negócio: ${formData.product} em ${regionShort}
+Setor inferido: ${sectorLabel}
+
+Gere um contexto macroeconômico relevante para este negócio em março de 2026, considerando:
 - Tendências de consumo no setor específico
 - Fatores econômicos que afetam a demanda local (inflação, emprego, renda)
 - Sazonalidade econômica do setor
@@ -1358,20 +1412,15 @@ Responda APENAS em JSON:
 
 Gere APENAS o JSON.`;
 
-      const { default: Anthropic } = await import('@anthropic-ai/sdk');
-      const claudeClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
-
-      let macro_context: any = { summary: "Contexto macroeconômico não disponível.", indicators: [], outlook: "neutral", key_opportunity: "" };
-      try {
         const macroResponse = await claudeClient.messages.create({
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 1000,
-          temperature: 0.3,
+          temperature: 0.2,
           messages: [{ role: 'user', content: macroPrompt }],
         });
         const macroText = macroResponse.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
         macro_context = JSON.parse(macroText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
-        console.log(`[Enrichment] Macro context gerado: outlook=${macro_context.outlook}`);
+        console.log(`[Enrichment] Macro context gerado: outlook=${macro_context.outlook}, sources=${macro_context.sources?.length || 0}`);
       } catch (macroErr) {
         console.error('[Enrichment] Macro context falhou (usando fallback):', macroErr);
       }

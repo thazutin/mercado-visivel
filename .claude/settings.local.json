@@ -49,7 +49,8 @@
       "Bash(npm info:*)",
       "Bash(npm uninstall:*)",
       "Bash(INTERNAL_API_SECRET=\"6a70a743-043e-42cc-b286-ba0acc7375e8\" npx tsx scripts/reprocess-lead.ts 27838d45-b8df-4961-a3f5-11adf7cd4ba5)",
-      "Bash(npx tsx -e \":*)"
+      "Bash(npx tsx -e \":*)",
+      "Bash(grep -n \"seasonality\\\\|macro_context\\\\|sazonalidade\\\\|macro\" src/app/dashboard/[leadId]/DashboardClient.tsx)"
     ]
   }
 }
