@@ -161,6 +161,8 @@ export async function saveGeneratedContents(
     hashtags: p.hashtags,
     best_time: p.best_time,
     tip: p.tip,
+    hook: p.hook || null,
+    strategic_intent: p.strategic_intent || null,
     image_url: p.image_url || null,
     tone,
     objective,

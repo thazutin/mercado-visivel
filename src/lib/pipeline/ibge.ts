@@ -620,6 +620,7 @@ export async function fetchAudienciaEstimada(
     console.log(`[pipeline] raio calculado: ${raioKm}km para "${businessCategory || 'genérico'}" em ${densidade}`);
 
     // 3. População do raio — soma município principal + vizinhos na mesma microrregião
+    const populacaoMunicipio = info.populacao; // município principal sem vizinhos
     let populacaoRaio = info.populacao;
     try {
       const vizinhosIds = await getMunicipiosVizinhosPorMicrorregiao(info.id, info.uf);
@@ -639,6 +640,7 @@ export async function fetchAudienciaEstimada(
 
     return {
       populacaoRaio,
+      populacaoMunicipio,
       raioKm,
       densidade,
       municipioNome: info.nome,

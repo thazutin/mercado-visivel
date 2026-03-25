@@ -128,6 +128,9 @@ export interface MarketSizing {
     conversionRate: { low: number; mid: number; high: number };
     conversionSource: string;         // "benchmark [categoria] — fonte"
     ticketUsed: number;
+    geoAdjustmentFactor?: number;     // fator de ajuste geográfico (popRaio/popMunicipio)
+    populacaoRaio?: number | null;
+    raioKm?: number | null;
   };
   
   // Disclaimer
@@ -425,6 +428,7 @@ export type DensityLevel = 'very_high' | 'high' | 'medium' | 'low' | 'rural' | '
 
 export interface AudienciaEstimada {
   populacaoRaio: number;
+  populacaoMunicipio?: number;  // população só do município principal (sem vizinhos)
   raioKm: number | null;
   densidade: DensityLevel;
   municipioNome: string;

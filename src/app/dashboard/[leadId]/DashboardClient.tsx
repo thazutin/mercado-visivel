@@ -138,6 +138,11 @@ function ContentCard({ c, leadId }: { c: any; leadId: string }) {
         </div>
         {c.best_time && <span style={{ fontSize: 10, color: V.ash, fontFamily: V.mono }}>{c.best_time}</span>}
       </div>
+      {c.hook && (
+        <div style={{ fontSize: 15, fontWeight: 700, color: V.night, lineHeight: 1.4, marginBottom: 10 }}>
+          {c.hook}
+        </div>
+      )}
       {c.image_url ? (
         <div style={{ marginBottom: 10, borderRadius: 8, overflow: "hidden" }}>
           <img src={c.image_url} alt="" style={{ width: "100%", height: 180, objectFit: "cover", display: "block" }} />
@@ -160,6 +165,22 @@ function ContentCard({ c, leadId }: { c: any; leadId: string }) {
       {c.tip && (
         <div style={{ padding: "8px 12px", background: V.cloud, borderRadius: 8, borderLeft: `3px solid ${V.amber}`, fontSize: 12, color: V.zinc, marginBottom: 10 }}>
           <strong style={{ color: V.night, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.03em" }}>Dica:</strong> {c.tip}
+        </div>
+      )}
+      {c.strategic_intent && (
+        <div style={{
+          padding: "10px 14px",
+          background: "rgba(45,155,131,0.06)",
+          borderRadius: 8,
+          borderLeft: `3px solid ${V.teal}`,
+          marginBottom: 10,
+        }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: V.teal, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>
+            Por que este conteúdo
+          </div>
+          <div style={{ fontSize: 12, color: V.zinc, lineHeight: 1.6 }}>
+            {c.strategic_intent}
+          </div>
         </div>
       )}
       <button onClick={() => { navigator.clipboard.writeText(fullText); setCopied(true); setTimeout(() => setCopied(false), 2000); }} style={{

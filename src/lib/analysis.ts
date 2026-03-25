@@ -884,6 +884,7 @@ Responda APENAS em JSON, sem markdown:
     input.ticket,
     category,
     ibgeData,
+    precomputedAudiencia,
   );
 
   console.log(

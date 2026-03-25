@@ -205,6 +205,7 @@ export function calculateMarketSizing(
   ticket: number,
   category: string,
   ibgeData?: IBGEData | null,
+  audienciaEstimada?: { populacaoRaio: number; populacaoMunicipio?: number; raioKm: number | null } | null,
 ): Step3Output {
   const startTime = Date.now();
   const benchmark = CATEGORY_BENCHMARKS[category] || CATEGORY_BENCHMARKS['default'];
@@ -219,7 +220,24 @@ export function calculateMarketSizing(
   );
   const ctrTable = hasLocalPack ? CTR_BENCHMARKS.withLocalPack : CTR_BENCHMARKS.organic;
 
-  // 3. Market potential (range)
+  // 3. Ajuste geográfico: volume do Google Ads KP é do município, não do raio
+  // demandaAtiva = (populacaoRaio / populacaoMunicipio) × weightedVolume
+  let geoAdjustedVolume = weightedVolume;
+  let geoAdjustmentFactor = 1.0;
+
+  if (audienciaEstimada?.populacaoMunicipio && audienciaEstimada.populacaoMunicipio > 0 && audienciaEstimada.populacaoRaio > 0) {
+    // Cap: raio nunca pode ter mais que o município inteiro
+    const cappedRaio = Math.min(audienciaEstimada.populacaoRaio, audienciaEstimada.populacaoMunicipio);
+    geoAdjustmentFactor = cappedRaio / audienciaEstimada.populacaoMunicipio;
+    // Floor: mínimo 5% do município (evita valores absurdamente pequenos)
+    geoAdjustmentFactor = Math.max(geoAdjustmentFactor, 0.05);
+    // Cap: máximo 100% (município inteiro)
+    geoAdjustmentFactor = Math.min(geoAdjustmentFactor, 1.0);
+    geoAdjustedVolume = Math.round(weightedVolume * geoAdjustmentFactor);
+    console.log(`[MarketSizing] Ajuste geográfico: popRaio=${cappedRaio} / popMunicipio=${audienciaEstimada.populacaoMunicipio} = ${(geoAdjustmentFactor * 100).toFixed(1)}% → volume ${weightedVolume} → ${geoAdjustedVolume}`);
+  }
+
+  // 4. Market potential (range)
   // Low: se o negócio ficasse em posição 3 para todos os termos
   // Mid: posição 2
   // High: posição 1
@@ -228,16 +246,16 @@ export function calculateMarketSizing(
   const ctrPos3 = ctrTable[3];
 
   const marketLow = Math.round(
-    weightedVolume * ctrPos3 * benchmark.conversionRate.low * ticket * 12
+    geoAdjustedVolume * ctrPos3 * benchmark.conversionRate.low * ticket * 12
   );
   const marketMid = Math.round(
-    weightedVolume * ctrPos2 * benchmark.conversionRate.mid * ticket * 12
+    geoAdjustedVolume * ctrPos2 * benchmark.conversionRate.mid * ticket * 12
   );
   const marketHigh = Math.round(
-    weightedVolume * ctrPos1 * benchmark.conversionRate.high * ticket * 12
+    geoAdjustedVolume * ctrPos1 * benchmark.conversionRate.high * ticket * 12
   );
 
-  // 4. Montar premissas expostas
+  // 5. Montar premissas expostas
   const assumptions = {
     ctrBenchmark: [
       { position: 1, ctr: ctrPos1 },
@@ -247,6 +265,9 @@ export function calculateMarketSizing(
     conversionRate: benchmark.conversionRate,
     conversionSource: `Benchmark ${category} — compilação WordStream/Unbounce 2024-2025`,
     ticketUsed: ticket,
+    geoAdjustmentFactor,
+    populacaoRaio: audienciaEstimada?.populacaoRaio || null,
+    raioKm: audienciaEstimada?.raioKm || null,
   };
 
   // Ajuste IBGE: normaliza para cidade de 500k hab (cap 2x, floor 0.3x)
