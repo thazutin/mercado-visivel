@@ -185,6 +185,11 @@ function buildContext(lead: any, raw: any): string {
   const mapsReviews = maps?.reviewCount || 0;
   const mapsPhotos = maps?.photos || 0;
   const mapsName = maps?.businessName || lead.product;
+  const ownerResponseRate = maps?.ownerResponseRate;
+  const ownerResponsePct = ownerResponseRate != null
+    ? `${Math.round(ownerResponseRate * 100)}%`
+    : 'desconhecido';
+  const photoCount = maps?.photoCount || maps?.photos || 0;
 
   // Instagram — negócio
   const igBusiness = influence.rawInstagram?.businessProfile || null;
@@ -205,6 +210,18 @@ function buildContext(lead: any, raw: any): string {
     .map((c: any) => `@${c.handle} (${c.followers || 0} seguidores, ${c.postsLast30d || 0} posts/mês)`)
     .join(", ");
 
+  // Concorrentes do Maps — comparação direta
+  const mapsCompetitors = maps?.mapsCompetitors || [];
+  const mapsCompetitorsSummary = mapsCompetitors.length > 0
+    ? mapsCompetitors.slice(0, 4).map((c: any) => {
+        const parts = [`"${c.name}"`];
+        if (c.rating) parts.push(`${c.rating}★`);
+        if (c.reviewCount) parts.push(`${c.reviewCount} avaliações`);
+        if (c.photoCount) parts.push(`${c.photoCount} fotos`);
+        return parts.join(' · ');
+      }).join('\n  ')
+    : 'Nenhum concorrente identificado no Maps';
+
   // Audiência e mercado
   const populacaoRaio = raw.audienciaDisplay?.populacaoRaio || null;
   const raioKm = raw.audienciaDisplay?.raioKm || null;
@@ -213,10 +230,19 @@ function buildContext(lead: any, raw: any): string {
 Diferencial: "${lead.differentiator || "não informado"}"
 Instagram: ${igHandle || "não tem"} · Site: ${lead.site || "não tem"}
 
-PRESENÇA DIGITAL ATUAL:
-Google Maps: ${mapsFound ? `✅ encontrado como "${mapsName}"` : "❌ não encontrado"}
-${mapsFound ? `  → Avaliação: ${mapsRating ? `${mapsRating}★` : "sem nota"} · ${mapsReviews} avaliações · ${mapsPhotos} fotos` : "  → Negócio não aparece no Maps — oportunidade crítica"}
-Instagram: ${igHandle ? `@${igHandle}` : "não tem"} · ${igFollowers} seguidores · ${igPosts30d} posts/mês · ${(igEngagement * 100).toFixed(1)}% engajamento
+PRESENÇA DIGITAL ATUAL — ESTADO REAL:
+Google Maps: ${mapsFound ? `✅ "${mapsName}"` : '❌ não encontrado no Google Maps'}
+${mapsFound ? `  → Avaliação: ${mapsRating ? `${mapsRating}★` : 'sem nota'} (${mapsReviews} avaliações)
+  → Fotos no perfil: ${photoCount} fotos
+  → Respostas do dono: ${ownerResponsePct} das avaliações têm resposta
+  → Benchmark setor: negócios top têm 50+ avaliações, 20+ fotos, >80% de respostas`
+: '  → GAP CRÍTICO: negócio invisível no Maps — 0% da demanda ativa consegue encontrá-lo'}
+
+Instagram: ${igHandle ? `@${igHandle}` : '❌ sem perfil identificado'}
+${igFollowers > 0 ? `  → ${igFollowers} seguidores · ${igPosts30d} posts/mês · ${(igEngagement * 100).toFixed(1)}% engajamento
+  → Benchmark: perfis ativos do setor postam 3-5x/semana e têm engajamento >3%`
+: igHandle ? '  → Perfil existe mas sem dados de engajamento coletados'
+: '  → Sem presença no Instagram — oportunidade ou decisão estratégica a avaliar'}
 
 MERCADO:
 Volume total: ${raw.volumes?.totalMonthlyVolume || 0} buscas/mês
@@ -231,6 +257,14 @@ POSIÇÕES NO GOOGLE:
 
 CONCORRENTES NO GOOGLE:
 ${serpCompetitors || "Nenhum concorrente identificado no top 10"}
+
+CONCORRENTES DIRETOS (Google Maps — mesma região geográfica):
+  ${mapsCompetitorsSummary}
+${mapsFound && mapsCompetitors.length > 0 ? `
+COMPARATIVO:
+  → Seu negócio: ${mapsRating || 'sem nota'}★ · ${mapsReviews} avaliações · ${maps?.photoCount || 0} fotos
+  → Melhor concorrente: ${mapsCompetitors.reduce((best: any, c: any) => (!best || (c.reviewCount || 0) > (best.reviewCount || 0)) ? c : best, null)?.name || 'N/A'} com ${Math.max(...mapsCompetitors.map((c: any) => c.reviewCount || 0))} avaliações
+  → Gap a fechar: ${Math.max(0, Math.max(...mapsCompetitors.map((c: any) => c.reviewCount || 0)) - mapsReviews)} avaliações` : ''}
 
 CONCORRENTES NO INSTAGRAM:
 ${igCompetitors || "Nenhum concorrente identificado"}
@@ -265,8 +299,19 @@ REGRAS DE LINGUAGEM (muito importante):
 
 REGRAS DE CONTEÚDO (obrigatório):
 - Bloco "digital_presence": cite os números EXATOS do diagnóstico — quantas avaliações tem, qual nota, quantas fotos, quantos seguidores. Se não tem Maps: diga que não aparece. Se tem Maps mas poucas avaliações: diga exatamente quantas e compare com o mercado.
-- Bloco "competitive_analysis": cite os concorrentes reais encontrados pelo nome, posição no Google, seguidores no Instagram. Nunca invente concorrentes genéricos.
-- Bloco "action_plan": as 3 ações devem ser baseadas no GAP real — se tem 3 avaliações, a ação é "conseguir mais avaliações"; se não tem fotos, a ação é "adicionar fotos". NUNCA recomende algo que o negócio já tem em abundância.
+- Bloco "competitive_analysis": use OBRIGATORIAMENTE os concorrentes reais listados acima.
+  Para cada concorrente cite: nome real, nota, número de avaliações, número de fotos.
+  Compare com os dados do negócio analisado.
+  Identifique onde o negócio está à frente e onde está atrás — com números.
+  NUNCA invente concorrentes. Se não há dados, diga explicitamente "não foi possível identificar concorrentes diretos".
+  Termine com: qual é o concorrente mais perigoso e por quê (baseado em dados).
+- Bloco "action_plan": máximo 3 ações. Cada ação OBRIGATORIAMENTE tem:
+    * ESTADO ATUAL: o número real hoje (ex: "você tem 3 avaliações e 2 fotos")
+    * META CONCRETA: onde deve chegar (ex: "meta: 30 avaliações em 60 dias")
+    * SISTEMA: como criar um processo que se auto-alimenta (não apenas "peça avaliações")
+    * NUNCA repita o mesmo objetivo em ações diferentes
+    * Priorize pela maior alavancagem: o que muda mais resultado com menos esforço
+  As 3 ações devem ser baseadas no GAP real — se tem 3 avaliações, a ação é "conseguir mais avaliações"; se não tem fotos, a ação é "adicionar fotos". NUNCA recomende algo que o negócio já tem em abundância.
 - Bloco "demand_map": cite os termos reais com volumes reais. Ex: "2.400 pessoas buscam 'dentista Vila Madalena' por mês".
 - Gere APENAS o JSON.`;
 }
@@ -298,6 +343,17 @@ REGRA ANTI-GENÉRICO:
 - Se Instagram tem >500 seguidores: NÃO recomende "criar perfil no Instagram"
 - Cada semana deve atacar um gap REAL identificado no diagnóstico acima
 - Semanas 1-4 devem atacar o gap mais crítico primeiro (o que tem menor pontuação no diagnóstico)
+
+REGRAS DE NÃO-REDUNDÂNCIA (crítico):
+- Cada semana deve ter objetivo ÚNICO e diferente das outras
+- NUNCA repita a mesma ação em semanas diferentes (ex: "conseguir 10 avaliações" na semana 3 E na semana 7 é proibido)
+- Se um objetivo tem múltiplas etapas (ex: avaliações), monte uma progressão lógica:
+  Semana 1: criar o sistema de coleta → Semana 3: ativar com primeiros clientes → Semana 6: automatizar
+- Máximo 10 semanas únicas. Semanas 11-12 devem ser consolidação/medição, não novas ações
+
+FORMATO OBRIGATÓRIO para cada semana:
+- mainAction deve incluir: "HOJE: [estado atual] → META: [onde chegar] — [como fazer passo a passo]"
+
 - Gere APENAS o JSON.`;
 }
 

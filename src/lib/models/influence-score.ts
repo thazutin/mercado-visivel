@@ -76,6 +76,7 @@ function scoreD2_discovery(
   serpPositions: SerpPosition[],
   mapsPresence: MapsPresence | null,
   aiVisibility: { score: number; likelyMentioned: boolean } | null,
+  mapsCompetitors?: Array<{ rating?: number; reviewCount?: number }>,
 ): number {
   // SERP: posição ponderada
   let serpTotal = 0;
@@ -93,6 +94,21 @@ function scoreD2_discovery(
     mapsScore = 40;
     if (mapsPresence.inLocalPack) mapsScore = 70;
     if (mapsPresence.localPackPosition && mapsPresence.localPackPosition <= 3) mapsScore = 85;
+  }
+
+  // Relativização: se concorrentes têm mais avaliações, penaliza Maps score
+  if (mapsPresence?.found && mapsCompetitors && mapsCompetitors.length > 0) {
+    const myReviews = mapsPresence.reviewCount || 0;
+    const competitorAvgReviews = mapsCompetitors.reduce((s, c) => s + (c.reviewCount || 0), 0) / mapsCompetitors.length;
+
+    // Penaliza se concorrentes têm significativamente mais avaliações
+    if (competitorAvgReviews > 0) {
+      const reviewRatio = myReviews / (myReviews + competitorAvgReviews);
+      // reviewRatio = 0.5 se igual, < 0.5 se atrás, > 0.5 se na frente
+      // Aplica como multiplicador: 0.5 ratio = 85% do score, 0.2 ratio = 60% do score
+      const relativePenalty = 0.5 + (reviewRatio * 0.5); // range 0.5-1.0
+      mapsScore = Math.round(mapsScore * relativePenalty);
+    }
   }
 
   // AI: visibilidade em ferramentas de IA
@@ -114,17 +130,46 @@ function scoreD3_credibility(
   igProfile: InstagramProfile | null,
   linkedinPresent: boolean,
   clientType: string,
+  mapsCompetitors?: Array<{ rating?: number; reviewCount?: number; photoCount?: number }>,
 ): number {
-  // Reviews (mais exigente: precisa de volume E nota boa)
+  // Reviews relativizados contra concorrentes
   let reviewScore = 0;
-  const reviews = mapsPresence?.reviewCount || 0;
-  const rating = mapsPresence?.rating || 0;
-  if (reviews >= 50 && rating >= 4.5) reviewScore = 100;
-  else if (reviews >= 50) reviewScore = 80;
-  else if (reviews >= 20 && rating >= 4.0) reviewScore = 60;
-  else if (reviews >= 20) reviewScore = 45;
-  else if (reviews >= 5) reviewScore = 25;
-  else if (reviews > 0) reviewScore = 10;
+  const myReviews = mapsPresence?.reviewCount || 0;
+  const myRating = mapsPresence?.rating || 0;
+  const myPhotos = mapsPresence?.photoCount || 0;
+  const myResponseRate = mapsPresence?.ownerResponseRate || 0;
+
+  if (mapsCompetitors && mapsCompetitors.length > 0) {
+    // Score relativo: onde estou em relação ao melhor concorrente?
+    const maxCompetitorReviews = Math.max(...mapsCompetitors.map(c => c.reviewCount || 0), 1);
+    const maxCompetitorPhotos = Math.max(...mapsCompetitors.map(c => c.photoCount || 0), 1);
+    const avgCompetitorRating = mapsCompetitors.reduce((s, c) => s + (c.rating || 0), 0) / mapsCompetitors.length;
+
+    // Ratio de avaliações vs melhor concorrente (0-1)
+    const reviewRatio = myReviews / (myReviews + maxCompetitorReviews);
+    // Ratio de fotos vs melhor concorrente (0-1)
+    const photoRatio = myPhotos / (myPhotos + maxCompetitorPhotos);
+    // Rating relativo (-1 a +1 convertido para 0-1)
+    const ratingRelative = avgCompetitorRating > 0
+      ? Math.min(myRating / avgCompetitorRating, 1.5) / 1.5
+      : 0.5;
+
+    // Combina: reviews 50% + rating 30% + fotos 20%
+    const relativeScore = reviewRatio * 0.50 + ratingRelative * 0.30 + photoRatio * 0.20;
+    reviewScore = Math.round(relativeScore * 100);
+
+    // Bonus por responder avaliações (diferenciador)
+    if (myResponseRate > 0.8) reviewScore = Math.min(100, reviewScore + 10);
+    else if (myResponseRate > 0.5) reviewScore = Math.min(100, reviewScore + 5);
+  } else {
+    // Sem concorrentes: usa thresholds absolutos (código original)
+    if (myReviews >= 50 && myRating >= 4.5) reviewScore = 100;
+    else if (myReviews >= 50) reviewScore = 80;
+    else if (myReviews >= 20 && myRating >= 4.0) reviewScore = 60;
+    else if (myReviews >= 20) reviewScore = 45;
+    else if (myReviews >= 5) reviewScore = 25;
+    else if (myReviews > 0) reviewScore = 10;
+  }
 
   // Engajamento social (IG ou LinkedIn)
   let engagementScore = 0;
@@ -302,15 +347,20 @@ export function calculateCompositeInfluence(
   );
 
   const igProfile = instagram.profile.dataAvailable ? instagram.profile : null;
+  const mapsCompetitors = google.mapsPresence?.mapsCompetitors || [];
 
   // 3 dimensões
   const d1 = scoreD1_reach(igProfile, linkedinPresent || false, ct);
-  const d2 = scoreD2_discovery(google.serpPositions, google.mapsPresence, aiVisibility || null);
-  const d3 = scoreD3_credibility(google.mapsPresence, hasWebsite, igProfile, linkedinPresent || false, ct);
+  const d2 = scoreD2_discovery(google.serpPositions, google.mapsPresence, aiVisibility || null, mapsCompetitors);
+  const d3 = scoreD3_credibility(google.mapsPresence, hasWebsite, igProfile, linkedinPresent || false, ct, mapsCompetitors);
 
-  const totalInfluence = Math.round(
+  const rawInfluence = Math.round(
     d1 * weights.d1 + d2 * weights.d2 + d3 * weights.d3
   );
+
+  // Cap realista: negócio local raramente captura mais de 35% da demanda ativa
+  // Usa raiz quadrada para comprimir scores altos sem achatar os baixos
+  const totalInfluence = Math.round(Math.sqrt(rawInfluence / 100) * 40);
 
   // Breakdown: mantém nomes de campo para compat, mas semantica mudou:
   // d1_discovery → Alcance, d2_credibility → Descoberta, d3_reach → Credibilidade
@@ -323,7 +373,7 @@ export function calculateCompositeInfluence(
     d4_ai_visibility: Math.round(d2), // alias de d2 (AI merged)
   };
 
-  console.log(`[Influence 3D] Alcance=${breakdown.d1_discovery} Descoberta=${breakdown.d2_credibility} Credibilidade=${breakdown.d3_reach} → Total=${totalInfluence}% (${ct} weights: d1=${weights.d1} d2=${weights.d2} d3=${weights.d3})`);
+  console.log(`[Influence 3D] Raw=${rawInfluence}% → Realistic=${totalInfluence}% | Concorrentes Maps: ${mapsCompetitors.length} | Alcance=${Math.round(d1)} Descoberta=${Math.round(d2)} Credibilidade=${Math.round(d3)}`);
 
   // Backward-compat: old-style scores
   const googleScore = google.ctrShare;

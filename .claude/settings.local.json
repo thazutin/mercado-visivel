@@ -44,7 +44,12 @@
       "Bash(printf \"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\")",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''''STATUS:'''', ''''OK'''' if ''''lead_id'''' in d else ''''ERRO''''\\); print\\(''''LEAD:'''', d.get\\(''''lead_id'''',''''''''\\)\\); print\\(''''REASON:'''', d.get\\(''''reason'''',''''''''\\)\\)\")",
       "Bash(vercel --prod)",
-      "Bash(node -e \":*)"
+      "Bash(node -e \":*)",
+      "Bash(INTERNAL_API_SECRET=\"6a70a743-043e-42cc-b286-ba0acc7375e8\" npx tsx scripts/reprocess-lead.ts)",
+      "Bash(npm info:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(INTERNAL_API_SECRET=\"6a70a743-043e-42cc-b286-ba0acc7375e8\" npx tsx scripts/reprocess-lead.ts 27838d45-b8df-4961-a3f5-11adf7cd4ba5)",
+      "Bash(npx tsx -e \":*)"
     ]
   }
 }

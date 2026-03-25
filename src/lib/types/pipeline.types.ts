@@ -161,6 +161,15 @@ export interface MapsPresence {
   businessName?: string | null;       // Nome real do negócio no Google Maps
   rating?: number;
   reviewCount?: number;
+  photoCount?: number;                // número de fotos no perfil
+  ownerResponseRate?: number;         // % de avaliações com resposta do dono (0-1)
+  ownerResponseCount?: number;        // quantas respostas o dono deu
+  reviewsAnalyzed?: number;           // quantas avaliações foram analisadas (max 5 da API)
+  topReviews?: Array<{               // últimas avaliações para contexto
+    rating: number;
+    hasOwnerResponse: boolean;
+    snippet?: string;
+  }>;
   categories?: string[];
   inLocalPack: boolean;               // Aparece no local pack?
   localPackPosition?: number;
@@ -168,6 +177,25 @@ export interface MapsPresence {
   website?: string;
   phone?: string;
   openNow?: boolean;
+  mapsCompetitors?: Array<{
+    name: string;
+    rating?: number;
+    reviewCount?: number;
+    photoCount?: number;
+    categories?: string[];
+    website?: string;
+  }>;
+}
+
+export interface MapsCompetitor {
+  name: string;
+  placeId?: string;
+  rating?: number;
+  reviewCount?: number;
+  photoCount?: number;
+  categories?: string[];
+  website?: string;
+  distanceMeters?: number;
 }
 
 // 4a+ — Organic presence (DataForSEO SERP)

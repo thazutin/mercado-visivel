@@ -205,7 +205,7 @@ export function createApifyMapsScraper(config: ApifyConfig) {
         headers: {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': apiKey,
-          'X-Goog-FieldMask': 'places.id,places.displayName,places.rating,places.userRatingCount,places.types,places.photos',
+          'X-Goog-FieldMask': 'places.id,places.displayName,places.rating,places.userRatingCount,places.types,places.photos,places.reviews',
         },
         body: JSON.stringify({
           textQuery: `${businessName} ${region}`,
@@ -239,7 +239,7 @@ export function createApifyMapsScraper(config: ApifyConfig) {
         method: 'GET',
         headers: {
           'X-Goog-Api-Key': apiKey,
-          'X-Goog-FieldMask': 'displayName,rating,userRatingCount,types,photos,websiteUri,nationalPhoneNumber,regularOpeningHours',
+          'X-Goog-FieldMask': 'displayName,rating,userRatingCount,types,photos,websiteUri,nationalPhoneNumber,regularOpeningHours,reviews',
         },
       });
 
@@ -252,11 +252,26 @@ export function createApifyMapsScraper(config: ApifyConfig) {
 
       const source = details || match;
 
+      // Analisa reviews para owner response rate
+      const reviews = source.reviews || [];
+      const ownerResponseCount = reviews.filter((r: any) => r.authorAttribution && r.ownerResponse).length;
+      const ownerResponseRate = reviews.length > 0 ? ownerResponseCount / reviews.length : null;
+      const topReviews = reviews.slice(0, 3).map((r: any) => ({
+        rating: r.rating || 0,
+        hasOwnerResponse: !!r.ownerResponse,
+        snippet: r.text?.text?.slice(0, 100) || '',
+      }));
+
       const presence: MapsPresence = {
         found: true,
         businessName: source.displayName?.text || null,
         rating: source.rating,
         reviewCount: source.userRatingCount,
+        photoCount: source.photos?.length || 0,
+        ownerResponseRate: ownerResponseRate,
+        ownerResponseCount: ownerResponseCount,
+        reviewsAnalyzed: reviews.length,
+        topReviews: topReviews,
         categories: source.types || [],
         inLocalPack: true,
         localPackPosition: 1,
@@ -264,15 +279,15 @@ export function createApifyMapsScraper(config: ApifyConfig) {
         website: details?.websiteUri,
         phone: details?.nationalPhoneNumber,
         openNow: details?.regularOpeningHours?.openNow,
+        mapsCompetitors: places.slice(1).map((c: any) => ({
+          name: c.displayName?.text || '',
+          rating: c.rating || null,
+          reviewCount: c.userRatingCount || null,
+          photoCount: c.photos?.length || 0,
+          categories: c.types?.slice(0, 3) || [],
+          website: c.websiteUri || null,
+        })),
       };
-
-      // Adiciona dados brutos dos concorrentes no Maps (para Competition Index)
-      (presence as any)._mapsCompetitors = places.map((p: any) => ({
-        name: p.displayName?.text || '',
-        website: p.websiteUri || details?.websiteUri || '',
-        rating: p.rating,
-        reviewCount: p.userRatingCount,
-      }));
 
       if (config.cache) {
         await setCache(config.cache, cacheKey, 'google_places', presence, 14);
@@ -302,7 +317,7 @@ export function createMapsCompetitionSearch(config: ApifyConfig) {
         headers: {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': apiKey,
-          'X-Goog-FieldMask': 'places.id,places.displayName,places.rating,places.userRatingCount,places.websiteUri',
+          'X-Goog-FieldMask': 'places.id,places.displayName,places.rating,places.userRatingCount,places.types,places.photos,places.websiteUri',
         },
         body: JSON.stringify({
           textQuery: `${product} ${region}`,
@@ -325,6 +340,8 @@ export function createMapsCompetitionSearch(config: ApifyConfig) {
         website: p.websiteUri || '',
         rating: p.rating,
         reviewCount: p.userRatingCount,
+        photoCount: p.photos?.length || 0,
+        categories: p.types?.slice(0, 3) || [],
       }));
     } catch (err) {
       console.error('[MapsCompetition] Error:', err);

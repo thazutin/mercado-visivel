@@ -729,6 +729,75 @@ Responda APENAS em JSON, sem markdown:
       sourcesUnavailable.push("instagram");
     }
 
+    // Auto-discovery via websites dos concorrentes do Maps (mais preciso por proximidade)
+    // Roda APENAS se temos concorrentes do Maps com website
+    const mapsWebsites = mapsPresence?.mapsCompetitors
+      ?.filter((c) => c.website && c.website.length > 5)
+      ?.slice(0, 4)
+      ?.map((c) => c.website!) || [];
+
+    if (mapsWebsites.length > 0 && instagramHandles.length <= 3) {
+      try {
+        console.log(`[Pipeline] Buscando Instagram nos sites dos concorrentes Maps (${mapsWebsites.length} sites)...`);
+
+        const igFromWebsites = await withTimeout(
+          Promise.all(
+            mapsWebsites.map(async (website: string) => {
+              try {
+                const url = website.startsWith('http') ? website : `https://${website}`;
+                const res = await fetch(url, {
+                  signal: AbortSignal.timeout(5000),
+                  headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
+                });
+                if (!res.ok) return null;
+                const html = await res.text();
+                // Extrai handle do Instagram do HTML
+                const igMatch = html.match(/instagram\.com\/([a-zA-Z0-9_.]{2,30})[\/\"\'<\s]/);
+                if (igMatch && igMatch[1]) {
+                  const handle = igMatch[1].toLowerCase();
+                  // Filtra páginas do sistema Instagram
+                  if (!['explore', 'p', 'reel', 'reels', 'stories', 'accounts', 'direct', 'share'].includes(handle)) {
+                    return handle;
+                  }
+                }
+                return null;
+              } catch {
+                return null;
+              }
+            })
+          ),
+          10_000,
+          'Instagram from Maps websites',
+        );
+
+        const discoveredFromMaps = igFromWebsites
+          .filter((h): h is string => h !== null)
+          .filter(h => h !== businessHandle.toLowerCase())
+          .filter(h => !instagramHandles.includes(h));
+
+        if (discoveredFromMaps.length > 0) {
+          // Scrape os novos handles descobertos
+          console.log(`[Pipeline] Scraping ${discoveredFromMaps.length} new Instagram handles from Maps websites: [${discoveredFromMaps.join(', ')}]`);
+          try {
+            const instagramScraper2 = createApifyInstagramScraper(apifyConfig);
+            const extraProfiles = await withTimeout(
+              instagramScraper2(discoveredFromMaps),
+              30_000,
+              'Instagram (Maps discovery)',
+            );
+            instagramProfiles.push(...extraProfiles);
+            instagramHandles.push(...discoveredFromMaps);
+            sourcesUsed.push('maps_website_instagram_discovery');
+            console.log(`[Pipeline] Instagram via Maps websites: [${discoveredFromMaps.join(', ')}] — ${extraProfiles.length} profiles scraped`);
+          } catch (err) {
+            console.warn('[Pipeline] Instagram scrape for Maps-discovered handles failed:', (err as Error).message);
+          }
+        }
+      } catch (err) {
+        console.warn('[Pipeline] Instagram from Maps websites falhou:', (err as Error).message);
+      }
+    }
+
     // Collect organic results (index 4, only if organic promise was added)
     const organicIdx = promiseLabels.indexOf("organic");
     if (organicIdx >= 0) {
