@@ -184,6 +184,7 @@ export function createApifyMapsScraper(config: ApifyConfig) {
   return async function runMapsScraper(
     businessName: string,
     region: string,
+    radiusMeters?: number,
   ): Promise<MapsPresence> {
     const cacheKey = `maps:${businessName}:${region}`;
     if (config.cache) {
@@ -210,6 +211,7 @@ export function createApifyMapsScraper(config: ApifyConfig) {
           textQuery: `${businessName} ${region}`,
           languageCode: 'pt-BR',
           maxResultCount: 5,
+          ...(radiusMeters ? { locationBias: { circle: { radius: radiusMeters } } } : {}),
         }),
       });
 
@@ -799,6 +801,7 @@ export function createGoogleAdsKPClient(config: GoogleAdsConfig) {
   return async function getKeywordVolumes(
     terms: string[],
     region: string,
+    locationCode?: number,
   ): Promise<TermVolumeData[]> {
     const cacheKey = `kp:${terms.sort().join('+')}:${region}`;
     if (config.cache) {
@@ -822,7 +825,14 @@ export function createGoogleAdsKPClient(config: GoogleAdsConfig) {
     // Step 2: Call KeywordPlanService → GenerateKeywordHistoricalMetrics
     // API: https://developers.google.com/google-ads/api/reference/rpc/v17/KeywordPlanIdeaService
     const apiUrl = `https://googleads.googleapis.com/v17/customers/${config.customerId}:generateKeywordHistoricalMetrics`;
-    
+
+    const resolvedGeoTarget = locationCode
+      ? `geoTargetConstants/${locationCode}`
+      : extractLocationCodeFromRegion(region)
+        ? `geoTargetConstants/${extractLocationCodeFromRegion(region)}`
+        : 'geoTargetConstants/2076';
+    console.log(`[GoogleAdsKP] geo-target: ${resolvedGeoTarget} para região "${region}"`);
+
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
@@ -832,7 +842,7 @@ export function createGoogleAdsKPClient(config: GoogleAdsConfig) {
       },
       body: JSON.stringify({
         keywords: terms,
-        geoTargetConstants: ['geoTargetConstants/2076'],  // Brasil — ajustar por região
+        geoTargetConstants: [resolvedGeoTarget],
         keywordPlanNetwork: 'GOOGLE_SEARCH',
         language: 'languageConstants/1014',  // Português
       }),
@@ -908,7 +918,7 @@ export function createGoogleAdsKPClient(config: GoogleAdsConfig) {
 // Geo-targeting: usa módulo centralizado de localização
 import { UF_LOCATION_CODES, BRAZIL_LOCATION_CODE, getCityLocationCode } from './dataforseo-locations';
 
-function extractLocationCodeFromRegion(region: string): number {
+export function extractLocationCodeFromRegion(region: string): number {
   // 1. Tenta cidade específica
   const cityMatch = getCityLocationCode(region);
   if (cityMatch) {

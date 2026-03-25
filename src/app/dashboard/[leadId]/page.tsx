@@ -57,13 +57,39 @@ export default async function DashboardPage({ params }: { params: { leadId: stri
     .single();
 
   // Load checklist
-  const { data: checklist } = await supabase
+  let { data: checklist } = await supabase
     .from("checklists")
     .select("*")
     .eq("lead_id", leadId)
     .order("created_at", { ascending: false })
     .limit(1)
     .single();
+
+  // Fallback: se não tem checklist, converte plan_tasks para formato de checklist
+  if (!checklist) {
+    const { data: planTasks } = await supabase
+      .from("plan_tasks")
+      .select("*")
+      .eq("lead_id", leadId)
+      .order("week", { ascending: true });
+
+    if (planTasks && planTasks.length > 0) {
+      checklist = {
+        id: null,
+        lead_id: leadId,
+        generated_at: null,
+        created_at: null,
+        items: planTasks.map((task: any) => ({
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          completed: task.completed,
+          channel: task.channel,
+          week: task.week,
+        })),
+      };
+    }
+  }
 
   return (
     <DashboardClient

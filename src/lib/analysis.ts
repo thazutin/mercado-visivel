@@ -26,6 +26,7 @@ import {
   createPerplexityAIVisibilityChecker,
   createDataForSEOOrganicChecker,
   createMapsCompetitionSearch,
+  extractLocationCodeFromRegion,
 } from "./pipeline/external-services";
 import { calcularIndiceSaturacao, type CompetitionIndex } from "./pipeline/competition-index";
 import { buscarContratacoesPNCP, type PNCPResumo } from "./pipeline/pncp";
@@ -165,6 +166,7 @@ const PIPELINE_VERSION = "momento1-v2.1-block2";
 async function fetchTermVolumes(
   terms: string[],
   region: string,
+  radiusKm: number = 5,
 ): Promise<{ volumes: TermVolumeData[]; source: string; geoLevel?: string; geoLabel?: string }> {
 
   // --- 1. Google Ads Keyword Planner ---
@@ -184,7 +186,8 @@ async function fetchTermVolumes(
         developerToken: process.env.GOOGLE_ADS_DEVELOPER_TOKEN,
         customerId: process.env.GOOGLE_ADS_CUSTOMER_ID,
       });
-      const volumes = await kpClient(terms, region);
+      const locationCode = extractLocationCodeFromRegion(region);
+      const volumes = await kpClient(terms, region, locationCode);
       const withData = volumes.filter(v => v.monthlyVolume > 0).length;
       if (withData > 0) {
         console.log(`[Analysis] Google Ads KP: ${withData}/${volumes.length} termos com volume`);
@@ -529,6 +532,23 @@ Responda APENAS em JSON, sem markdown:
   let instagramProfiles: InstagramProfile[] = [];
   let organicPresence: OrganicPresence | null = null;
 
+  // ── Calcula raio dinâmico ANTES das chamadas paralelas ──
+  const isNacional = /brasil.*nacional|nacional|todo o brasil/i.test(input.region);
+  let resolvedRadiusKm = 5; // default médio
+  let precomputedAudiencia: AudienciaEstimada | null = null;
+  try {
+    precomputedAudiencia = await fetchAudienciaEstimada(
+      extractedCity, extractedState, isNacional,
+      pipelineLat ?? undefined, pipelineLng ?? undefined, input.product,
+    );
+    if (precomputedAudiencia?.raioKm) {
+      resolvedRadiusKm = precomputedAudiencia.raioKm;
+    }
+    console.log(`[Pipeline] Raio dinâmico: ${resolvedRadiusKm}km para "${input.product}"`);
+  } catch (err) {
+    console.warn('[Pipeline] fetchAudienciaEstimada preview falhou, usando raio default 5km:', (err as Error).message);
+  }
+
   // Build all parallel promises
   const allTermStrings = step1.terms.map(t => t.term);
   const parallelPromises: Promise<any>[] = [];
@@ -538,7 +558,7 @@ Responda APENAS em JSON, sem markdown:
   console.log(`[pipeline] município usado em Volumes (DataForSEO):`, extractedCity);
   parallelPromises.push(
     withTimeout(
-      fetchTermVolumes(allTermStrings, resolvedRegion),
+      fetchTermVolumes(allTermStrings, resolvedRegion, resolvedRadiusKm),
       30_000,
       "Volumes",
     )
@@ -583,7 +603,7 @@ Responda APENAS em JSON, sem markdown:
           console.log('[Maps] started');
           try {
             console.log(`[pipeline] município usado em Maps:`, extractedCity);
-            const r = await mapsScraper(input.businessName || input.product, resolvedRegion);
+            const r = await mapsScraper(input.businessName || input.product, resolvedRegion, resolvedRadiusKm * 1000);
             sourcesUsed.push("apify_maps");
             console.log(`[Maps] completed in ${((Date.now() - t0) / 1000).toFixed(1)}s — found=${r.found}, rating=${r.rating}`);
             return r;
@@ -920,21 +940,12 @@ Responda APENAS em JSON, sem markdown:
   }
 
   // =========================================================================
-  // AUDIÊNCIA ESTIMADA (IBGE + Claude Haiku) — roda em paralelo com AI Visibility
+  // AUDIÊNCIA ESTIMADA — reutiliza precomputedAudiencia (calculado antes dos scrapers)
   // =========================================================================
-  const isNacional = /brasil.*nacional|nacional|todo o brasil/i.test(input.region);
-
   console.log(`[pipeline] município usado em Audiência (IBGE):`, extractedCity);
   const audienciaPromise = (async (): Promise<{ estimada: AudienciaEstimada | null; target: AudienciaTarget | null }> => {
     try {
-      const estimada = await fetchAudienciaEstimada(
-        extractedCity,
-        extractedState,
-        isNacional,
-        pipelineLat,
-        pipelineLng,
-        input.product,
-      );
+      const estimada = precomputedAudiencia;
       if (!estimada) return { estimada: null, target: null };
 
       const target = await inferirTargetAudiencia(

@@ -109,7 +109,7 @@ Responda APENAS em JSON válido. Sem markdown, sem texto antes ou depois.
 
     return { items: parsed.items || [] }
   } catch (err) {
-    console.error('[step6-checklist] Erro:', err)
-    return { items: [] }
+    console.error('[step6-checklist] Falha crítica:', err)
+    throw err
   }
 }
