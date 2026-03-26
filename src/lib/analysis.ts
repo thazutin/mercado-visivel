@@ -1221,8 +1221,12 @@ Responda APENAS em JSON, sem markdown:
     // Receita que o negócio compete hoje (pela influência atual)
     const receitaAtual = Math.round(buscasNoTarget * taxaConversao * ticketMedio * (influencePercent / 100));
 
-    // Meta conservadora: dobrar influência, cap 80%
-    const influenciaMeta = Math.min(influencePercent * 2, 80);
+    // Calcula influência meta somando impacto dos levers disponíveis
+    const levers = (step4.influence as any).breakdown?.levers || [];
+    const totalLeverImpact = levers.reduce((sum: number, l: any) => sum + (l.impact || 0), 0);
+    // Cap realista: máximo +30pts de melhoria, teto de 80%
+    const influenciaMeta = Math.min(influencePercent + Math.min(totalLeverImpact, 30), 80);
+    console.log(`[Pipeline] Influência meta: ${influencePercent}% + ${totalLeverImpact}pts levers = ${influenciaMeta}%`);
     const receitaPotencial = Math.round(buscasNoTarget * taxaConversao * ticketMedio * (influenciaMeta / 100));
 
     const gapMensal = receitaPotencial - receitaAtual;

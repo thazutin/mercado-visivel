@@ -541,6 +541,13 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 4px", lineHeight: 1.5 }}>
                   @{igData.handle}: {igData.followers.toLocaleString("pt-BR")} seguidores · {(igData.avgViews || igData.avgLikes || 0).toLocaleString("pt-BR")} alcance médio · {(igData.engagementRate * 100).toFixed(1)}% engajamento · {igData.postsLast30d} posts/30d
                 </p>
+                {igData.followers > 0 && (igData.avgViews || 0) === 0 && (igData.avgLikes || 0) === 0 && (
+                  <p style={{ fontSize: 11, color: V.amber, margin: "4px 0 8px", lineHeight: 1.5,
+                    background: V.amberWash, padding: "6px 10px", borderRadius: 6 }}>
+                    ⚠️ Dados de alcance e engajamento não disponíveis — perfil pode estar com restrições de privacidade.
+                    O score de Alcance considera apenas os seguidores detectados.
+                  </p>
+                )}
                 {(igData.recentPostsCount ?? 0) > 0 ? (
                   <p style={{ fontSize: 11, color: V.teal, margin: "0 0 8px", fontWeight: 500 }}>
                     {igData.recentPostsCount} {igData.recentPostsCount === 1 ? "post" : "posts"} nos últimos 15 dias · {(igData.recentAvgReach || 0).toLocaleString("pt-BR")} alcance médio recente

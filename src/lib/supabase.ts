@@ -70,7 +70,11 @@ export async function updateLeadStatus(id: string, status: Lead["status"]) {
 }
 
 export async function insertDiagnosis(result: Omit<DiagnosisResult, "id" | "created_at">) {
-  const { data, error } = await supabase
+  const adminClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+  const { data, error } = await adminClient
     .from("diagnoses")
     .insert(result)
     .select()

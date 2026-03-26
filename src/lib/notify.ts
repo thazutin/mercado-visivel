@@ -137,8 +137,16 @@ export async function notifyDiagnosisReady(opts: {
   region: string;
   influencePercent: number;
   searchVolume?: number;
+  projecaoFinanceira?: {
+    mercadoTotal: number;
+    receitaAtual: number;
+    receitaPotencial: number;
+    gapMensal: number;
+    ticketMedio: number;
+    taxaConversao: number;
+  } | null;
 }): Promise<void> {
-  const { email, whatsapp, leadId, product, region, influencePercent, searchVolume } = opts;
+  const { email, whatsapp, leadId, product, region, influencePercent, searchVolume, projecaoFinanceira } = opts;
   console.log(`[NOTIFY] iniciando email/whatsapp para email=${email}, phone=${whatsapp}, leadId=${leadId}`);
   const url = `${BASE_URL}/resultado/${leadId}`;
   const shortRegion = region.split(",")[0].trim();
@@ -153,7 +161,7 @@ export async function notifyDiagnosisReady(opts: {
     sendEmail({
       to: email,
       subject: `${(opts as any).name || product} — seu diagnóstico está pronto`,
-      html: diagnosisEmailHtml({ product, shortRegion, influencePercent, searchVolume, url }),
+      html: diagnosisEmailHtml({ product, shortRegion, influencePercent, searchVolume, url, projecaoFinanceira }),
     }),
   ]);
 
@@ -354,8 +362,16 @@ function diagnosisEmailHtml(opts: {
   influencePercent: number;
   searchVolume?: number;
   url: string;
+  projecaoFinanceira?: {
+    mercadoTotal: number;
+    receitaAtual: number;
+    receitaPotencial: number;
+    gapMensal: number;
+    ticketMedio: number;
+    taxaConversao: number;
+  } | null;
 }): string {
-  const { product, shortRegion, influencePercent, searchVolume, url } = opts;
+  const { product, shortRegion, influencePercent, searchVolume, url, projecaoFinanceira } = opts;
   const influenceColor = influencePercent === 0 ? "#D9534F" : influencePercent < 20 ? "#CF8523" : "#2D9B83";
   const formattedVolume = searchVolume ? searchVolume.toLocaleString("pt-BR") : null;
 
@@ -396,6 +412,42 @@ function diagnosisEmailHtml(opts: {
       </div>
       ` : ""}
     </div>
+    ${projecaoFinanceira && projecaoFinanceira.gapMensal > 0 ? `
+    <div style="background:#161618;border-radius:12px;padding:20px 16px;margin:0 0 24px;">
+      <div style="font-size:10px;color:#6E6E78;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px;font-family:monospace;">
+        O que está em jogo
+      </div>
+      <div style="text-align:center;margin-bottom:16px;">
+        <div style="font-size:32px;font-weight:700;color:#E6A445;line-height:1;margin-bottom:6px;">
+          R$${Math.round(projecaoFinanceira.gapMensal / 1000)}k/mês
+        </div>
+        <div style="font-size:12px;color:#C8C8D0;">
+          que você poderia estar capturando com as ações certas
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;background:#232326;border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-size:18px;font-weight:700;color:#C8C8D0;line-height:1;margin-bottom:4px;">
+            R$${Math.round(projecaoFinanceira.receitaAtual / 1000)}k
+          </div>
+          <div style="font-size:10px;color:#6E6E78;">você compete hoje</div>
+        </div>
+        <div style="flex:1;background:#232326;border-radius:8px;padding:12px;text-align:center;border:1px solid rgba(207,133,35,0.3);">
+          <div style="font-size:18px;font-weight:700;color:#E6A445;line-height:1;margin-bottom:4px;">
+            R$${Math.round(projecaoFinanceira.receitaPotencial / 1000)}k
+          </div>
+          <div style="font-size:10px;color:#6E6E78;">poderia competir</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid #3A3A40;">
+        <div style="font-size:11px;color:#6E6E78;text-align:center;">
+          Ticket estimado: R$${projecaoFinanceira.ticketMedio} ·
+          Conversão: ${(projecaoFinanceira.taxaConversao * 100).toFixed(0)}% ·
+          Mercado total: R$${Math.round(projecaoFinanceira.mercadoTotal / 1000)}k/mês
+        </div>
+      </div>
+    </div>
+    ` : ''}
     <div style="background:#FEFAF3;border-left:3px solid #CF8523;padding:14px 16px;border-radius:0 8px 8px 0;margin:0 0 24px;">
       <p style="font-size:13px;color:#3A3A40;margin:0;line-height:1.6;">
         Seu diagnóstico está pronto — veja <strong>onde você está perdendo clientes</strong> e a prévia do seu plano de ação.

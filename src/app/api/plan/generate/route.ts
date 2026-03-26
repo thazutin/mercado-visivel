@@ -51,6 +51,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Lead not found" }, { status: 404 });
     }
 
+    let raw: any = {};
+    let diagnosisId: string | null = null;
+
     const { data: diagnosis } = await supabase
       .from("diagnoses")
       .select("*")
@@ -59,11 +62,19 @@ export async function POST(req: NextRequest) {
       .limit(1)
       .single();
 
-    if (!diagnosis) {
-      return NextResponse.json({ error: "Diagnosis not found" }, { status: 404 });
+    if (diagnosis) {
+      raw = diagnosis.raw_data || {};
+      diagnosisId = diagnosis.id;
+      console.log(`[PlanGen] Diagnosis found in diagnoses table: ${diagnosisId}`);
+    } else {
+      // Fallback: usar diagnosis_display da tabela leads (quando insert em diagnoses falhou silenciosamente)
+      console.warn(`[PlanGen] Diagnosis not in diagnoses table — falling back to leads.diagnosis_display`);
+      if (!lead.diagnosis_display) {
+        return NextResponse.json({ error: "Diagnosis not found" }, { status: 404 });
+      }
+      raw = lead.raw_data || lead.diagnosis_display || {};
+      console.log(`[PlanGen] Fallback raw keys: ${Object.keys(raw).join(', ')}`);
     }
-
-    const raw = diagnosis.raw_data || {};
 
     // 2. Generate in 2 calls: blocks + weekly plan (avoids token truncation)
     const model = "claude-sonnet-4-5-20250929";
@@ -205,6 +216,11 @@ function buildContext(lead: any, raw: any): string {
       ? `@${igHandle} — dados não coletados`
       : 'sem presença identificada';
 
+  const igDataUnavailable = hasIgHandle && igFollowers > 0 && igPosts30d === 0 && igEngagement === 0;
+  const igPrivacyNote = igDataUnavailable
+    ? '\n  ⚠️ IMPORTANTE: Perfil existe com seguidores mas sem dados de engajamento — pode ser perfil com restrições. NÃO assuma inatividade. Trate como "dados de conteúdo não disponíveis".'
+    : '';
+
   // Concorrentes — top 3 do SERP + Instagram
   const serpCompetitors = serpPositions
     .filter((sp: any) => sp.position && sp.position <= 10 && sp.domain !== lead.site)
@@ -249,7 +265,7 @@ Instagram: ${hasIgData ? `✅ ${igStatus}` : hasIgHandle ? `⚠️ ${igStatus}` 
 ${hasIgData ? `  → ${igFollowers} seguidores · ${igPosts30d} posts/mês · ${(igEngagement * 100).toFixed(1)}% engajamento
   → Benchmark: perfis ativos do setor postam 3-5x/semana e têm engajamento >3%`
 : hasIgHandle ? '  → Perfil existe mas sem dados de engajamento coletados'
-: '  → Sem presença no Instagram — oportunidade ou decisão estratégica a avaliar'}
+: '  → Sem presença no Instagram — oportunidade ou decisão estratégica a avaliar'}${igPrivacyNote}
 
 MERCADO:
 Volume total: ${raw.volumes?.totalMonthlyVolume || 0} buscas/mês

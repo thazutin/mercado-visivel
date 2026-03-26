@@ -179,6 +179,7 @@ export async function POST(req: NextRequest) {
         region: formData.region,
         influencePercent: Math.round(pipelineResult.influence.influence.totalInfluence),
         searchVolume: pipelineResult.volumes.totalMonthlyVolume || 0,
+        projecaoFinanceira: (pipelineResult as any).projecaoFinanceira || null,
       });
       console.log("[Diagnose] notify completed");
     } catch (err) {

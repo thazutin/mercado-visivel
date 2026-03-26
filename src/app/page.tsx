@@ -606,22 +606,33 @@ export default function Home() {
             <p style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.ash, margin: "0 0 10px" }}>
               Exemplo de conteúdo gerado
             </p>
-            <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "16px 14px" }}>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 100, background: "rgba(225,48,108,0.08)", fontSize: 11, fontWeight: 500, color: "#E1306C", marginBottom: 10 }}>
-                📸 Instagram Feed
-              </div>
-              <p style={{ fontSize: 12, color: V.zinc, lineHeight: 1.7, margin: "0 0 10px" }}>
-                Você sabia que 3.200 pessoas buscam por serviços como o nosso todo mês em São Paulo?
-                A maioria não encontra porque poucos negócios locais aparecem no Google.
-                Estamos aqui, prontos pra atender você. 📍 Av. Paulista
-              </p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
-                {["#negóciolocal", "#SãoPaulo", "#estética"].map((tag) => (
-                  <span key={tag} style={{ fontSize: 10, color: V.teal, background: V.tealWash, padding: "2px 8px", borderRadius: 6 }}>{tag}</span>
-                ))}
-              </div>
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.cloud, padding: "3px 8px", borderRadius: 6 }}>Gerado pela Virô</span>
+            <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, overflow: "hidden" }}>
+              <div style={{ padding: "16px 14px" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 100, background: "rgba(225,48,108,0.08)", fontSize: 11, fontWeight: 500, color: "#E1306C", marginBottom: 10 }}>
+                  📸 Instagram Feed
+                </div>
+                {/* Simulação do card tipográfico gerado */}
+                <div style={{ background: "#2D9B83", borderRadius: 10, padding: "20px 16px", marginBottom: 10, aspectRatio: "1/1", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                  <span style={{ fontFamily: V.mono, fontSize: 9, color: "rgba(255,255,255,0.6)", letterSpacing: "0.04em", textTransform: "uppercase" as const }}>
+                    Clínica de Estética · Av. Paulista
+                  </span>
+                  <div>
+                    <p style={{ fontFamily: V.display, fontSize: 22, fontWeight: 700, color: "#FEFEFF", lineHeight: 1.2, margin: "0 0 8px", letterSpacing: "-0.02em" }}>
+                      3.200 pessoas buscam estética em SP todo mês. Você aparece para elas?
+                    </p>
+                    <span style={{ fontFamily: V.mono, fontSize: 9, color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em", textTransform: "uppercase" as const }}>
+                      São Paulo · Estética
+                    </span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
+                  {["#negóciolocal", "#SãoPaulo", "#estética"].map((tag) => (
+                    <span key={tag} style={{ fontSize: 10, color: V.teal, background: V.tealWash, padding: "2px 8px", borderRadius: 6 }}>{tag}</span>
+                  ))}
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                  <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.cloud, padding: "3px 8px", borderRadius: 6 }}>Gerado pela Virô</span>
+                </div>
               </div>
             </div>
           </div>
@@ -646,7 +657,7 @@ export default function Home() {
             { icon: "🔍", title: "A Virô analisa seu mercado", text: "Cruzamos Google, Instagram, Maps, IBGE e IA em tempo real." },
             { icon: "📊", title: "Você recebe o relatório grátis", text: "Score de influência, volume de buscas e concorrentes mapeados." },
             { icon: "🔓", title: "Desbloqueie o Diagnóstico Completo — R$497", text: "Diagnóstico por canal, plano de ação, sazonalidade e amostra de conteúdos. Disponível no painel em até 15 minutos." },
-            { icon: "🔄", title: "Assine para conteúdos toda semana — R$99/mês", text: "4 posts + 3 briefings toda sexta. Seu time ou agência executa, você acompanha no painel." },
+            { icon: "🔄", title: "Assine para conteúdos toda semana — R$99/mês", text: "Você recebe toda sexta-feira 4 posts prontos para copiar e colar + 3 briefings para compartilhar com time ou agência." },
           ].map((step, i) => (
             <div key={i} style={{ background: V.white, borderRadius: 14, padding: "20px 20px", border: `1px solid ${V.fog}`, display: "flex", gap: 16, alignItems: "flex-start" }}>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
