@@ -619,90 +619,103 @@ export default function Home() {
 
               {/* Card tipográfico editorial */}
               <div style={{ margin: "0 14px", borderRadius: 12, overflow: "hidden",
-                aspectRatio: "1/1", position: "relative", background: "#0A0A0A" }}>
+                aspectRatio: "1/1", position: "relative",
+                background: "linear-gradient(160deg, #1A1A1A 0%, #2D1A0E 100%)" }}>
 
-                {/* Elemento decorativo — linha diagonal */}
+                {/* Faixa de acento superior */}
                 <div style={{
-                  position: "absolute", top: 0, right: 0,
-                  width: "45%", height: "100%",
-                  background: "linear-gradient(135deg, #FF3366 0%, #FF6B35 100%)",
-                  clipPath: "polygon(30% 0%, 100% 0%, 100% 100%, 0% 100%)",
+                  position: "absolute", top: 0, left: 0, right: 0, height: 3,
+                  background: "linear-gradient(90deg, #FF3366, #FF6B35)",
                 }} />
 
-                {/* Logo/nome da marca */}
+                {/* Logo + nome */}
                 <div style={{
-                  position: "absolute", top: 20, left: 20,
+                  position: "absolute", top: 18, left: 20,
                   display: "flex", alignItems: "center", gap: 8,
                 }}>
                   <div style={{
-                    width: 28, height: 28, borderRadius: 6,
-                    background: "#FF3366", display: "flex",
-                    alignItems: "center", justifyContent: "center",
+                    width: 26, height: 26, borderRadius: 6,
+                    background: "#FF3366",
+                    display: "flex", alignItems: "center", justifyContent: "center",
                   }}>
-                    <span style={{ fontSize: 12, fontWeight: 900, color: "#FEFEFF", fontFamily: "'Satoshi', sans-serif" }}>E</span>
+                    <span style={{ fontSize: 11, fontWeight: 900, color: "#FEFEFF",
+                      fontFamily: "'Satoshi', sans-serif" }}>E</span>
                   </div>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "#FEFEFF",
-                    letterSpacing: "0.12em", textTransform: "uppercase" as const,
-                    fontFamily: "'JetBrains Mono', monospace" }}>
-                    ESTÉTICA PAULISTA
-                  </span>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "#FEFEFF",
+                      letterSpacing: "0.1em", textTransform: "uppercase" as const,
+                      fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>
+                      ESTÉTICA PAULISTA
+                    </div>
+                    <div style={{ fontSize: 9, color: "rgba(255,255,255,0.4)",
+                      fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>
+                      Av. Paulista, 1.200 · SP
+                    </div>
+                  </div>
                 </div>
 
-                {/* Número de destaque */}
+                {/* Métrica central */}
                 <div style={{
-                  position: "absolute", top: 60, left: 20, right: "50%",
+                  position: "absolute", top: "50%", left: "50%",
+                  transform: "translate(-50%, -60%)",
+                  textAlign: "center", width: "80%",
                 }}>
                   <div style={{
-                    fontSize: "clamp(48px, 10vw, 64px)", fontWeight: 900,
-                    color: "#FEFEFF", lineHeight: 1, letterSpacing: "-0.04em",
+                    fontSize: 72, fontWeight: 900, color: "#FEFEFF",
+                    lineHeight: 1, letterSpacing: "-0.04em",
                     fontFamily: "'Satoshi', sans-serif",
                   }}>
-                    3.200
+                    847
                   </div>
                   <div style={{
-                    fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.5)",
-                    letterSpacing: "0.1em", textTransform: "uppercase" as const,
-                    fontFamily: "'JetBrains Mono', monospace", marginTop: 4,
+                    fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.5)",
+                    letterSpacing: "0.12em", textTransform: "uppercase" as const,
+                    fontFamily: "'JetBrains Mono', monospace", marginTop: 6,
                   }}>
-                    BUSCAS / MÊS
+                    ATENDIMENTOS EM MARÇO
                   </div>
+                  <div style={{
+                    width: 32, height: 2,
+                    background: "linear-gradient(90deg, #FF3366, #FF6B35)",
+                    borderRadius: 1, margin: "12px auto 0",
+                  }} />
                 </div>
 
-                {/* Headline */}
+                {/* Linha de rodapé */}
                 <div style={{
                   position: "absolute", bottom: 20, left: 20, right: 20,
                 }}>
                   <p style={{
-                    fontSize: 15, fontWeight: 800, color: "#FEFEFF",
-                    lineHeight: 1.25, margin: "0 0 8px",
-                    letterSpacing: "-0.02em", fontFamily: "'Satoshi', sans-serif",
+                    fontSize: 13, fontWeight: 700, color: "#FEFEFF",
+                    lineHeight: 1.3, margin: "0 0 10px",
+                    letterSpacing: "-0.01em", fontFamily: "'Satoshi', sans-serif",
                   }}>
-                    Você aparece para quem busca estética na Paulista?
+                    Cada cliente aqui saiu melhor do que entrou.
+                    Você é o próximo?
                   </p>
-                  <div style={{
-                    display: "inline-block", background: "#FF3366",
-                    padding: "4px 10px", borderRadius: 4,
-                    fontSize: 9, fontWeight: 700, color: "#FEFEFF",
-                    letterSpacing: "0.08em", textTransform: "uppercase" as const,
-                    fontFamily: "'JetBrains Mono', monospace",
-                  }}>
-                    Av. Paulista · São Paulo
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%",
+                      background: "#FF3366", flexShrink: 0 }} />
+                    <span style={{ fontSize: 9, color: "rgba(255,255,255,0.5)",
+                      fontFamily: "'JetBrains Mono', monospace",
+                      letterSpacing: "0.06em", textTransform: "uppercase" as const }}>
+                      AGENDAMENTOS ABERTOS · LINK NA BIO
+                    </span>
                   </div>
                 </div>
+
               </div>
 
               {/* Legenda */}
               <div style={{ padding: "12px 14px 0" }}>
                 <p style={{ fontSize: 12, color: V.zinc, lineHeight: 1.7, margin: "0 0 8px" }}>
-                  Toda semana, 3.200 pessoas buscam por estética aqui na Paulista.
-                  A maioria vai para quem aparece primeiro — não necessariamente para quem é melhor.
-                  Estamos aqui, e estamos prontos. 📍
+                  Março foi nosso melhor mês — 847 atendimentos e cada um deles com cuidado real. Obrigada a cada cliente que confiou na gente. Agendamentos para abril já abertos. 🖤
                 </p>
               </div>
 
               {/* Hashtags */}
               <div style={{ padding: "0 14px 10px", display: "flex", flexWrap: "wrap", gap: 4 }}>
-                {["#estéticapaulista", "#SãoPaulo", "#belezaSP", "#clínicadeestética"].map((tag) => (
+                {["#estéticapaulista", "#cuidadocomavida", "#SãoPaulo", "#agendamentosabertos"].map((tag) => (
                   <span key={tag} style={{ fontSize: 10, color: V.teal, background: V.tealWash,
                     padding: "2px 8px", borderRadius: 6 }}>{tag}</span>
                 ))}
@@ -724,7 +737,7 @@ export default function Home() {
                   </span>
                 </div>
                 <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
-                  <strong style={{ color: V.night }}>Por que este conteúdo:</strong> dados reais do seu mercado aumentam autoridade e geram curiosidade — quem não sabia que havia tanta busca vai querer saber mais.
+                  <strong style={{ color: V.night }}>Por que este conteúdo:</strong> prova social com número real gera confiança e urgência — quem está considerando agendar vê movimento e decide.
                 </p>
               </div>
 
