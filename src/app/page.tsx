@@ -607,33 +607,135 @@ export default function Home() {
               Exemplo de conteúdo gerado
             </p>
             <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, overflow: "hidden" }}>
-              <div style={{ padding: "16px 14px" }}>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 100, background: "rgba(225,48,108,0.08)", fontSize: 11, fontWeight: 500, color: "#E1306C", marginBottom: 10 }}>
+
+              {/* Channel badge */}
+              <div style={{ padding: "12px 14px 0" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px",
+                  borderRadius: 100, background: "rgba(225,48,108,0.08)", fontSize: 11,
+                  fontWeight: 500, color: "#E1306C", marginBottom: 10 }}>
                   📸 Instagram Feed
                 </div>
-                {/* Simulação do card tipográfico gerado */}
-                <div style={{ background: "#2D9B83", borderRadius: 10, padding: "20px 16px", marginBottom: 10, aspectRatio: "1/1", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                  <span style={{ fontFamily: V.mono, fontSize: 9, color: "rgba(255,255,255,0.6)", letterSpacing: "0.04em", textTransform: "uppercase" as const }}>
-                    Clínica de Estética · Av. Paulista
+              </div>
+
+              {/* Card tipográfico editorial */}
+              <div style={{ margin: "0 14px", borderRadius: 12, overflow: "hidden",
+                aspectRatio: "1/1", position: "relative", background: "#0A0A0A" }}>
+
+                {/* Elemento decorativo — linha diagonal */}
+                <div style={{
+                  position: "absolute", top: 0, right: 0,
+                  width: "45%", height: "100%",
+                  background: "linear-gradient(135deg, #FF3366 0%, #FF6B35 100%)",
+                  clipPath: "polygon(30% 0%, 100% 0%, 100% 100%, 0% 100%)",
+                }} />
+
+                {/* Logo/nome da marca */}
+                <div style={{
+                  position: "absolute", top: 20, left: 20,
+                  display: "flex", alignItems: "center", gap: 8,
+                }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 6,
+                    background: "#FF3366", display: "flex",
+                    alignItems: "center", justifyContent: "center",
+                  }}>
+                    <span style={{ fontSize: 12, fontWeight: 900, color: "#FEFEFF", fontFamily: "'Satoshi', sans-serif" }}>E</span>
+                  </div>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#FEFEFF",
+                    letterSpacing: "0.12em", textTransform: "uppercase" as const,
+                    fontFamily: "'JetBrains Mono', monospace" }}>
+                    ESTÉTICA PAULISTA
                   </span>
-                  <div>
-                    <p style={{ fontFamily: V.display, fontSize: 22, fontWeight: 700, color: "#FEFEFF", lineHeight: 1.2, margin: "0 0 8px", letterSpacing: "-0.02em" }}>
-                      3.200 pessoas buscam estética em SP todo mês. Você aparece para elas?
-                    </p>
-                    <span style={{ fontFamily: V.mono, fontSize: 9, color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em", textTransform: "uppercase" as const }}>
-                      São Paulo · Estética
-                    </span>
+                </div>
+
+                {/* Número de destaque */}
+                <div style={{
+                  position: "absolute", top: 60, left: 20, right: "50%",
+                }}>
+                  <div style={{
+                    fontSize: "clamp(48px, 10vw, 64px)", fontWeight: 900,
+                    color: "#FEFEFF", lineHeight: 1, letterSpacing: "-0.04em",
+                    fontFamily: "'Satoshi', sans-serif",
+                  }}>
+                    3.200
+                  </div>
+                  <div style={{
+                    fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.5)",
+                    letterSpacing: "0.1em", textTransform: "uppercase" as const,
+                    fontFamily: "'JetBrains Mono', monospace", marginTop: 4,
+                  }}>
+                    BUSCAS / MÊS
                   </div>
                 </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
-                  {["#negóciolocal", "#SãoPaulo", "#estética"].map((tag) => (
-                    <span key={tag} style={{ fontSize: 10, color: V.teal, background: V.tealWash, padding: "2px 8px", borderRadius: 6 }}>{tag}</span>
-                  ))}
-                </div>
-                <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                  <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.cloud, padding: "3px 8px", borderRadius: 6 }}>Gerado pela Virô</span>
+
+                {/* Headline */}
+                <div style={{
+                  position: "absolute", bottom: 20, left: 20, right: 20,
+                }}>
+                  <p style={{
+                    fontSize: 15, fontWeight: 800, color: "#FEFEFF",
+                    lineHeight: 1.25, margin: "0 0 8px",
+                    letterSpacing: "-0.02em", fontFamily: "'Satoshi', sans-serif",
+                  }}>
+                    Você aparece para quem busca estética na Paulista?
+                  </p>
+                  <div style={{
+                    display: "inline-block", background: "#FF3366",
+                    padding: "4px 10px", borderRadius: 4,
+                    fontSize: 9, fontWeight: 700, color: "#FEFEFF",
+                    letterSpacing: "0.08em", textTransform: "uppercase" as const,
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}>
+                    Av. Paulista · São Paulo
+                  </div>
                 </div>
               </div>
+
+              {/* Legenda */}
+              <div style={{ padding: "12px 14px 0" }}>
+                <p style={{ fontSize: 12, color: V.zinc, lineHeight: 1.7, margin: "0 0 8px" }}>
+                  Toda semana, 3.200 pessoas buscam por estética aqui na Paulista.
+                  A maioria vai para quem aparece primeiro — não necessariamente para quem é melhor.
+                  Estamos aqui, e estamos prontos. 📍
+                </p>
+              </div>
+
+              {/* Hashtags */}
+              <div style={{ padding: "0 14px 10px", display: "flex", flexWrap: "wrap", gap: 4 }}>
+                {["#estéticapaulista", "#SãoPaulo", "#belezaSP", "#clínicadeestética"].map((tag) => (
+                  <span key={tag} style={{ fontSize: 10, color: V.teal, background: V.tealWash,
+                    padding: "2px 8px", borderRadius: 6 }}>{tag}</span>
+                ))}
+              </div>
+
+              {/* Meta: horário + dica */}
+              <div style={{ margin: "0 14px 14px", padding: "10px 12px",
+                background: V.cloud, borderRadius: 8,
+                borderLeft: `3px solid ${V.amber}` }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: V.amber,
+                    textTransform: "uppercase" as const, letterSpacing: "0.04em",
+                    fontFamily: V.mono }}>
+                    Melhor horário
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: V.night,
+                    fontFamily: V.mono }}>
+                    Ter–Qui · 19h–21h
+                  </span>
+                </div>
+                <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
+                  <strong style={{ color: V.night }}>Por que este conteúdo:</strong> dados reais do seu mercado aumentam autoridade e geram curiosidade — quem não sabia que havia tanta busca vai querer saber mais.
+                </p>
+              </div>
+
+              {/* Footer */}
+              <div style={{ padding: "0 14px 12px", display: "flex", justifyContent: "flex-end" }}>
+                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
+                  background: V.cloud, padding: "3px 8px", borderRadius: 6 }}>
+                  Gerado pela Virô
+                </span>
+              </div>
+
             </div>
           </div>
 
