@@ -1,4 +1,3 @@
-// DEPRECATED — substituído por /api/cron/weekly-contents em 2026-03-23
 // ============================================================================
 // Virô — Weekly Cron Job
 // Runs every Monday at 7am BRT (10:00 UTC).
@@ -49,7 +48,7 @@ export async function GET(req: NextRequest) {
   const { data: activeLeads, error } = await supabase
     .from("leads")
     .select("*")
-    .eq("status", "paid")
+    .eq("subscription_status", "active")
     .lt("weeks_active", 12)
     .not("plan_status", "eq", "error");
 
@@ -242,6 +241,18 @@ async function processLeadWeekly(supabase: any, lead: any): Promise<void> {
     },
     { onConflict: "lead_id,week_number" }
   );
+
+  // ─── Salva score atual na tabela diagnoses para histórico ───
+  try {
+    await supabase
+      .from("diagnoses")
+      .update({ influence_percent: rescrapeResult.influenceScore })
+      .eq("lead_id", lead.id)
+      .order("created_at", { ascending: false })
+      .limit(1);
+  } catch (err) {
+    console.warn(`[Cron] Score update failed (non-fatal):`, (err as Error).message);
+  }
 
   // ─── Send email ───
   try {

@@ -5,6 +5,12 @@ import InstantValueScreen from "@/components/InstantValueScreen";
 import { ChecklistTab } from "@/components/dashboard/ChecklistTab";
 import { LockedTab } from "@/components/dashboard/LockedTab";
 
+function fmtBRL(n: number): string {
+  if (n >= 1_000_000) return `R$${(n / 1_000_000).toFixed(1).replace('.', ',')}M`;
+  if (n >= 1_000) return `R$${Math.round(n / 1_000)}k`;
+  return `R$${n.toLocaleString('pt-BR')}`;
+}
+
 const V = {
   night: "#161618", graphite: "#232326", slate: "#3A3A40",
   zinc: "#6E6E78", ash: "#9E9EA8", fog: "#EAEAEE",
@@ -111,6 +117,182 @@ function MacroContextBlock({ macroContext }: { macroContext: any }) {
       <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 4 }}>Contexto</div>
       <div style={{ fontSize: 14, fontWeight: 600, color: V.night, marginBottom: 8 }}>Cenário atual do mercado</div>
       <p style={{ fontSize: 13, color: isPlaceholder ? V.ash : V.zinc, margin: 0, lineHeight: 1.6 }}>{isPlaceholder ? placeholder : summary}</p>
+    </div>
+  );
+}
+
+// ─── Influence Chart ─────────────────────────────────────────────────
+function InfluenceChart({ snapshots, currentScore, product }: {
+  snapshots: any[];
+  currentScore: number;
+  product: string;
+}) {
+  const points = [
+    { label: 'Início', score: currentScore, week: 0 },
+    ...snapshots
+      .sort((a: any, b: any) => a.week_number - b.week_number)
+      .map((s: any) => ({
+        label: `Sem ${s.week_number}`,
+        score: s.data?.influence?.influence?.totalInfluence ?? s.data?.influenceScore ?? null,
+        week: s.week_number,
+      }))
+      .filter((p: any) => p.score !== null),
+  ];
+
+  if (points.length <= 1) return null;
+
+  const maxScore = Math.max(...points.map((p: any) => p.score), 40);
+  const minScore = Math.max(0, Math.min(...points.map((p: any) => p.score)) - 5);
+  const range = maxScore - minScore || 1;
+
+  const W = 300, H = 100, PAD = 20;
+  const xStep = (W - PAD * 2) / (points.length - 1);
+
+  const toX = (i: number) => PAD + i * xStep;
+  const toY = (score: number) => H - PAD - ((score - minScore) / range) * (H - PAD * 2);
+
+  const pathD = points.map((p: any, i: number) =>
+    `${i === 0 ? 'M' : 'L'} ${toX(i).toFixed(1)} ${toY(p.score).toFixed(1)}`
+  ).join(' ');
+
+  const lastPoint = points[points.length - 1];
+  const firstPoint = points[0];
+  const improved = lastPoint.score > firstPoint.score;
+
+  return (
+    <div style={{ background: V.white, borderRadius: 12, padding: "16px 18px",
+      border: `1px solid ${V.fog}`, marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Evolução da influência</div>
+          <div style={{ fontSize: 11, color: V.ash, marginTop: 2 }}>{product}</div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontSize: 20, fontWeight: 700,
+            color: improved ? V.teal : V.coral }}>
+            {improved ? '+' : ''}{(lastPoint.score - firstPoint.score).toFixed(0)}pp
+          </div>
+          <div style={{ fontSize: 10, color: V.ash }}>desde o início</div>
+        </div>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: 80, overflow: "visible" }}>
+        {[0, 0.5, 1].map(t => (
+          <line key={t}
+            x1={PAD} y1={toY(minScore + t * range)}
+            x2={W - PAD} y2={toY(minScore + t * range)}
+            stroke={V.fog} strokeWidth="1" />
+        ))}
+        <path d={pathD} fill="none"
+          stroke={improved ? V.teal : V.coral} strokeWidth="2"
+          strokeLinecap="round" strokeLinejoin="round" />
+        {points.map((p: any, i: number) => (
+          <circle key={i} cx={toX(i)} cy={toY(p.score)} r="3"
+            fill={i === points.length - 1 ? (improved ? V.teal : V.coral) : V.white}
+            stroke={improved ? V.teal : V.coral} strokeWidth="2" />
+        ))}
+        {points.map((p: any, i: number) => (
+          <text key={i} x={toX(i)} y={H - 2}
+            textAnchor="middle" fontSize="8" fill={V.ash}>
+            {p.label}
+          </text>
+        ))}
+      </svg>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+        <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>
+          {firstPoint.score}% início
+        </span>
+        <span style={{ fontFamily: V.mono, fontSize: 10,
+          color: improved ? V.teal : V.coral, fontWeight: 600 }}>
+          {lastPoint.score}% agora
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Projeção Financeira ─────────────────────────────────────────────
+function ProjecaoCard({ projecao }: { projecao: any }) {
+  if (!projecao || projecao.gapMensal <= 0) return null;
+  return (
+    <div style={{ background: V.night, borderRadius: 14, padding: "20px", marginBottom: 16 }}>
+      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em",
+        textTransform: "uppercase", marginBottom: 12 }}>
+        O que está em jogo
+      </div>
+      <div style={{ textAlign: "center", marginBottom: 16 }}>
+        <div style={{ fontFamily: "'Satoshi', sans-serif", fontSize: 32, fontWeight: 700,
+          color: "#E6A445", letterSpacing: "-0.03em", lineHeight: 1 }}>
+          {fmtBRL(projecao.gapMensal)}/mês
+        </div>
+        <p style={{ fontSize: 12, color: "#C8C8D0", margin: "6px 0 0" }}>
+          potencial adicional com as ações do plano
+        </p>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+        <div style={{ background: "#232326", borderRadius: 8, padding: "10px", textAlign: "center" }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#C8C8D0" }}>{fmtBRL(projecao.receitaAtual)}</div>
+          <div style={{ fontSize: 10, color: "#6E6E78", marginTop: 2 }}>você compete hoje ({projecao.influenciaAtual}%)</div>
+        </div>
+        <div style={{ background: "#232326", borderRadius: 8, padding: "10px", textAlign: "center",
+          border: "1px solid rgba(207,133,35,0.3)" }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#E6A445" }}>{fmtBRL(projecao.receitaPotencial)}</div>
+          <div style={{ fontSize: 10, color: "#6E6E78", marginTop: 2 }}>poderia competir ({projecao.influenciaMeta}%)</div>
+        </div>
+      </div>
+      <div style={{ borderTop: "1px solid #3A3A40", paddingTop: 10, fontSize: 11, color: "#6E6E78", textAlign: "center" }}>
+        Ticket estimado: {fmtBRL(projecao.ticketMedio)} · Conversão: {(projecao.taxaConversao * 100).toFixed(0)}%
+        {projecao.ticketRationale && (
+          <div style={{ marginTop: 4, fontSize: 10, fontStyle: "italic", color: "#3A3A40" }}>
+            {projecao.ticketRationale}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Levers Card ─────────────────────────────────────────────────────
+function LeversCard({ levers }: { levers: any[] }) {
+  if (!levers || levers.length === 0) return null;
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: V.night, marginBottom: 10 }}>
+        O que move seu score de influência
+      </div>
+      {levers.map((lever: any, i: number) => {
+        const dimColor = lever.dimension === 'alcance' ? '#8B5CF6'
+          : lever.dimension === 'descoberta' ? '#2D9B83' : '#CF8523';
+        const dimLabel = lever.dimension === 'alcance' ? 'Alcance'
+          : lever.dimension === 'descoberta' ? 'Descoberta' : 'Credibilidade';
+        return (
+          <div key={i} style={{ padding: "12px 14px", marginBottom: 8, borderRadius: 10,
+            background: V.cloud, border: `1px solid ${V.fog}` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              <div style={{ display: "flex", gap: 6 }}>
+                <span style={{ fontFamily: V.mono, fontSize: 9, padding: "2px 7px", borderRadius: 100,
+                  background: `${dimColor}15`, color: dimColor, fontWeight: 600 }}>{dimLabel}</span>
+                <span style={{ fontFamily: V.mono, fontSize: 9, padding: "2px 7px", borderRadius: 100,
+                  background: V.fog, color: V.ash }}>{lever.horizon}</span>
+              </div>
+              <span style={{ fontFamily: V.mono, fontSize: 11, fontWeight: 700, color: '#2D9B83' }}>
+                +{lever.impact}pts
+              </span>
+            </div>
+            <p style={{ fontSize: 13, fontWeight: 600, color: V.night, margin: "0 0 4px", lineHeight: 1.4 }}>
+              {lever.action}
+            </p>
+            {lever.currentValue && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" as const }}>
+                <span style={{ fontSize: 11, color: V.ash, fontFamily: V.mono }}>{lever.currentValue}</span>
+                {lever.targetValue && <>
+                  <span style={{ fontSize: 10, color: V.ash }}>→</span>
+                  <span style={{ fontSize: 11, color: '#2D9B83', fontFamily: V.mono }}>{lever.targetValue}</span>
+                </>}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -296,6 +478,14 @@ function ContentsSection({ leadId, tier }: { leadId: string; tier: Tier }) {
 export default function DashboardClient({ lead, plan, diagnosis, tier, checklist }: Props) {
   const [tab, setTab] = useState<TabKey>("diagnostico");
   const [expandedBlock, setExpandedBlock] = useState<string | null>(null);
+  const [snapshots, setSnapshots] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch(`/api/snapshots?leadId=${lead.id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.snapshots) setSnapshots(data.snapshots); })
+      .catch(() => {});
+  }, [lead.id]);
 
   const blocks = plan?.content?.blocks || plan?.blocks || [];
   const planReady = lead.plan_status === "ready";
@@ -374,6 +564,13 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
               ) : (
                 <div>
                   <MacroContextBlock macroContext={diagnosis?.macro_context} />
+                  <InfluenceChart
+                    snapshots={snapshots}
+                    currentScore={lead.diagnosis_display?.influencePercent || 0}
+                    product={lead.product}
+                  />
+                  <ProjecaoCard projecao={lead.diagnosis_display?.projecaoFinanceira} />
+                  <LeversCard levers={lead.diagnosis_display?.influenceBreakdown?.levers || []} />
                   {blocks.map((block: any, i: number) => {
                     const isDemandBlock = block.id === "demand_map";
                     const isExpanded = expandedBlock === block.id;
@@ -429,7 +626,55 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
               )}
             </Section>
 
-            {/* 2.2 Conteúdos semanais */}
+            {/* 2.2 Plano 12 semanas */}
+            {tier !== "free" && planReady && (
+              <Section title="Plano 12 semanas">
+                {(() => {
+                  const weeklyPlan = plan?.content?.weeklyPlan || plan?.weeklyPlan || [];
+                  if (weeklyPlan.length === 0) return (
+                    <p style={{ fontSize: 13, color: V.ash }}>Plano semanal não disponível.</p>
+                  );
+                  const categoryColors: Record<string, string> = {
+                    presence: '#2D9B83', content: '#E1306C',
+                    authority: '#CF8523', engagement: '#8B5CF6',
+                  };
+                  return (
+                    <div>
+                      {weeklyPlan.map((week: any) => (
+                        <div key={week.week} style={{ padding: "14px 16px", marginBottom: 8,
+                          borderRadius: 10, background: V.cloud, border: `1px solid ${V.fog}` }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                              <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 700,
+                                color: V.white, background: V.night, width: 22, height: 22,
+                                borderRadius: "50%", display: "inline-flex", alignItems: "center",
+                                justifyContent: "center" }}>{week.week}</span>
+                              <span style={{ fontSize: 14, fontWeight: 600, color: V.night }}>{week.title}</span>
+                            </div>
+                            <span style={{ fontFamily: V.mono, fontSize: 9, padding: "2px 8px",
+                              borderRadius: 100, fontWeight: 600,
+                              background: `${categoryColors[week.category] || V.ash}15`,
+                              color: categoryColors[week.category] || V.ash }}>
+                              {week.category}
+                            </span>
+                          </div>
+                          <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 6px", lineHeight: 1.6 }}>
+                            {week.mainAction}
+                          </p>
+                          {week.kpi && (
+                            <p style={{ fontSize: 11, color: V.ash, margin: 0, fontFamily: V.mono }}>
+                              Meta: {week.kpi}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </Section>
+            )}
+
+            {/* 2.3 Conteúdos semanais */}
             <Section title="Conteúdos semanais">
               {tier === "free" ? (
                 <LockedTab lockLevel={1} ctaLabel="Desbloqueie com o Diagnóstico Completo" ctaUrl="#" leadId={lead.id} />
