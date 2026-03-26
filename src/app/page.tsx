@@ -488,6 +488,39 @@ export default function Home() {
               Seu mercado em números
             </p>
 
+            {/* Mockup — Hero Financeiro */}
+            <div style={{
+              background: V.night, borderRadius: 12, padding: "20px 14px",
+              textAlign: "center", marginBottom: 8,
+            }}>
+              <p style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em",
+                textTransform: "uppercase" as const, color: "#6E6E78", margin: "0 0 12px" }}>
+                O que está em jogo no seu mercado
+              </p>
+              <div style={{ fontFamily: "'Satoshi', sans-serif", fontSize: 28, fontWeight: 700,
+                color: "#E6A445", letterSpacing: "-0.03em", lineHeight: 1 }}>
+                R$4.800/mês
+              </div>
+              <p style={{ fontSize: 11, color: "#C8C8D0", margin: "6px 0 16px" }}>
+                que você poderia estar capturando com as ações certas
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <div style={{ background: "#232326", borderRadius: 8, padding: "10px" }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: "#C8C8D0" }}>R$960</div>
+                  <p style={{ fontSize: 10, color: "#6E6E78", margin: "3px 0 0", lineHeight: 1.3 }}>
+                    você compete hoje<br/>(18% de influência)
+                  </p>
+                </div>
+                <div style={{ background: "#232326", borderRadius: 8, padding: "10px",
+                  border: "1px solid rgba(207,133,35,0.3)" }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: "#E6A445" }}>R$5.760</div>
+                  <p style={{ fontSize: 10, color: "#6E6E78", margin: "3px 0 0", lineHeight: 1.3 }}>
+                    poderia competir<br/>(36% de influência)
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Card 1 — Mercado Endereçável */}
             <div style={{ background: V.white, borderRadius: 12, padding: "18px 14px", textAlign: "center", border: `1px solid ${V.fog}`, marginBottom: 8 }}>
               <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
@@ -657,10 +690,10 @@ export default function Home() {
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 32 }}>
           {[
-            { title: "Demanda total", desc: "Volume de buscas mensais no seu mercado" },
-            { title: "Demanda ativa", desc: "Buscas com intenção de compra imediata" },
-            { title: "Concorrência", desc: "Negócios disputando os mesmos clientes" },
-            { title: "Sua visibilidade", desc: "Percentual da demanda que você captura hoje" },
+            { title: "Gap financeiro", desc: "Quanto você está deixando na mesa todo mês" },
+            { title: "Demanda ativa", desc: "Buscas com intenção de compra no seu raio" },
+            { title: "Concorrência", desc: "Quem disputa os mesmos clientes" },
+            { title: "Sua influência", desc: "Percentual do mercado que você captura hoje" },
           ].map((item, i) => (
             <div key={i} style={{ padding: "14px 16px", borderRadius: 12, border: `1px solid ${V.teal}30`, background: V.cloud, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
               <div style={{ flex: 1 }}>

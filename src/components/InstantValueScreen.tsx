@@ -23,7 +23,20 @@ interface Results {
   marketLow: number; marketHigh: number; influencePercent: number;
   source: string; confidence: string; gapHeadline?: string;
   termGeneration?: { count: number };
-  influenceBreakdown?: { google: number; instagram: number; web: number | null };
+  influenceBreakdown?: {
+    google: number;
+    instagram: number;
+    web: number | null;
+    levers?: Array<{
+      dimension: 'alcance' | 'descoberta' | 'credibilidade';
+      action: string;
+      impact: number;
+      effort: 'baixo' | 'médio' | 'alto';
+      horizon: '1-2 semanas' | '1-2 meses' | '3-6 meses';
+      currentValue?: string;
+      targetValue?: string;
+    }>;
+  };
   maps?: { found: boolean; rating: number | null; reviewCount: number | null; categories: string[]; inLocalPack: boolean; photos: number };
   instagram?: { handle: string; followers: number; engagementRate: number; postsLast30d: number; avgLikes: number; avgViews: number; recentPostsCount?: number; recentAvgReach?: number; dataAvailable: boolean };
   competitorInstagram?: { handle: string; followers: number; engagementRate: number; postsLast30d: number; avgLikes?: number; avgViews?: number }[];
@@ -53,6 +66,19 @@ interface Results {
     orgaosUnicos: number; periodoConsultado: string;
     contratacoes: { objeto: string; orgaoEntidade: string; valorEstimado: number; modalidade: string }[];
   } | null;
+  projecaoFinanceira?: {
+    mercadoTotal: number;
+    receitaAtual: number;
+    receitaPotencial: number;
+    gapMensal: number;
+    influenciaAtual: number;
+    influenciaMeta: number;
+    ticketMedio: number;
+    taxaConversao: number;
+    ticketRationale: string;
+    buscasNoTarget: number;
+    audienciaTarget: number;
+  } | null;
 }
 interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; leadId?: string; hideCTA?: boolean; hideWorkRoutes?: boolean; }
 
@@ -65,6 +91,12 @@ function fmtPop(n: number): string {
   }
   if (n >= 1_000) return `${Math.round(n / 1_000)} mil`;
   return n.toLocaleString("pt-BR");
+}
+
+function fmtBRL(n: number): string {
+  if (n >= 1_000_000) return `R$${(n / 1_000_000).toFixed(1).replace('.', ',')}M`;
+  if (n >= 1_000) return `R$${Math.round(n / 1_000)}k`;
+  return `R$${n.toLocaleString('pt-BR')}`;
 }
 
 function inferIntent(term: string, isB2B?: boolean): { label: string; color: string } {
@@ -133,11 +165,15 @@ export default function InstantValueScreen({ product, region, results, onCheckou
   const serpData = results.serpSummary;
   const igData = results.instagram;
   const breakdown = results.influenceBreakdown;
+  const levers = breakdown?.levers || [];
+  const hasLevers = levers.length > 0;
   const competitors = results.competitorInstagram || [];
   const shortRegion = region.split(",")[0].trim();
   const aud = results.audiencia;
   const hasAudiencia = aud && aud.audienciaTarget > 0;
   const hasInfluence = results.influencePercent > 0;
+  const proj = results.projecaoFinanceira;
+  const hasProj = proj && proj.gapMensal > 0 && proj.mercadoTotal > 0;
   const ci = results.competitionIndex;
   const hasCi = ci && (ci.totalSearchVolume > 0 || ci.totalCompetitors > 0);
   const isB2B = results.clientType === 'b2b';
@@ -163,6 +199,69 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           </div>
           <p style={{ fontSize: 13, color: V.ash, margin: 0 }}>{product} · {shortRegion}</p>
         </div>
+
+        {/* ═══ HERO FINANCEIRO ═══ */}
+        {hasProj && (
+          <div style={{ marginBottom: 20 }}>
+            <div style={{
+              background: V.night, borderRadius: 14, padding: "24px 20px",
+              border: `1px solid ${V.slate}`,
+            }}>
+              <p style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em",
+                textTransform: "uppercase" as const, color: V.ash, margin: "0 0 16px" }}>
+                O que está em jogo no seu mercado
+              </p>
+              {/* Linha principal: gap */}
+              <div style={{ textAlign: "center", marginBottom: 20 }}>
+                <div style={{ fontFamily: V.display, fontSize: "clamp(32px, 7vw, 48px)",
+                  fontWeight: 700, color: V.amber, letterSpacing: "-0.03em", lineHeight: 1 }}>
+                  {fmtBRL(proj!.gapMensal)}/mês
+                </div>
+                <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>
+                  que você poderia estar capturando com as ações certas
+                </p>
+              </div>
+              {/* Grade comparativa */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+                <div style={{ background: V.graphite, borderRadius: 10, padding: "12px 14px", textAlign: "center" }}>
+                  <div style={{ fontFamily: V.display, fontSize: 20, fontWeight: 700,
+                    color: V.mist, letterSpacing: "-0.02em" }}>
+                    {fmtBRL(proj!.receitaAtual)}
+                  </div>
+                  <p style={{ fontSize: 11, color: V.ash, margin: "4px 0 0", lineHeight: 1.3 }}>
+                    você compete hoje<br/>
+                    <span style={{ color: V.zinc }}>({proj!.influenciaAtual}% de influência)</span>
+                  </p>
+                </div>
+                <div style={{ background: V.graphite, borderRadius: 10, padding: "12px 14px",
+                  textAlign: "center", border: `1px solid ${V.amber}40` }}>
+                  <div style={{ fontFamily: V.display, fontSize: 20, fontWeight: 700,
+                    color: V.amberSoft, letterSpacing: "-0.02em" }}>
+                    {fmtBRL(proj!.receitaPotencial)}
+                  </div>
+                  <p style={{ fontSize: 11, color: V.ash, margin: "4px 0 0", lineHeight: 1.3 }}>
+                    poderia competir<br/>
+                    <span style={{ color: V.zinc }}>({proj!.influenciaMeta}% de influência)</span>
+                  </p>
+                </div>
+              </div>
+              {/* Contexto */}
+              <div style={{ borderTop: `1px solid ${V.slate}`, paddingTop: 12 }}>
+                <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.6 }}>
+                  Mercado total no seu raio: <strong style={{ color: V.mist }}>{fmtBRL(proj!.mercadoTotal)}/mês</strong>
+                  {" "}· Ticket estimado: <strong style={{ color: V.mist }}>{fmtBRL(proj!.ticketMedio)}</strong>
+                  {" "}· Conversão: <strong style={{ color: V.mist }}>{(proj!.taxaConversao * 100).toFixed(0)}%</strong>
+                </p>
+                {proj!.ticketRationale && (
+                  <p style={{ fontSize: 10, color: V.ash, margin: "6px 0 0", fontStyle: "italic",
+                    lineHeight: 1.5 }}>
+                    {proj!.ticketRationale}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ═══ SECTION 1: "Seu mercado em números" ═══ */}
         <p style={{ fontSize: 11, fontFamily: V.mono, color: V.ash, letterSpacing: "0.06em", textTransform: "uppercase" as const, margin: "0 0 12px" }}>
@@ -418,8 +517,8 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             <p style={{ fontSize: 14, color: V.night, margin: 0, lineHeight: 1.6 }}>
               {results.influencePercent === 0
                 ? `Quando alguém busca ${product} em ${shortRegion}, você não aparece. Enquanto isso, seus concorrentes recebem esses clientes.`
-                : results.influencePercent < 15
-                ? `Você não aparece para ${100 - results.influencePercent}% dos potenciais compradores. Há espaço para crescer — o plano de ação mostra o que fazer agora.`
+                : hasLevers
+                ? `Você não aparece para ${100 - results.influencePercent}% dos potenciais compradores. ${levers.length} ações identificadas para mudar isso — veja abaixo em "Capacidade de influência".`
                 : results.influencePercent < 40
                 ? `Você não aparece para ${100 - results.influencePercent}% dos potenciais compradores. Há espaço para crescer — o plano de ação mostra o que fazer agora.`
                 : `Você aparece para ${results.influencePercent}% das buscas — posição forte. O plano de ação mostra o que fazer agora para manter essa vantagem.`}
@@ -531,6 +630,89 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               {igData?.dataAvailable ? ` Engajamento Instagram: ${(igData.engagementRate * 100).toFixed(1)}%.` : ""}
             </p>
           </div>
+
+          {/* ── Alavancas de influência ── */}
+          {hasLevers && (
+            <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${V.fog}` }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: V.night, margin: "0 0 12px" }}>
+                O que move seu score
+              </p>
+              {levers.map((lever: any, i: number) => {
+                const dimColor = lever.dimension === 'alcance' ? '#8B5CF6'
+                  : lever.dimension === 'descoberta' ? V.teal
+                  : V.amber;
+                const dimLabel = lever.dimension === 'alcance' ? 'Alcance'
+                  : lever.dimension === 'descoberta' ? 'Descoberta'
+                  : 'Credibilidade';
+                const effortColor = lever.effort === 'baixo' ? V.teal
+                  : lever.effort === 'médio' ? V.amber
+                  : V.coral;
+                return (
+                  <div key={i} style={{
+                    padding: "12px 14px", marginBottom: 8, borderRadius: 10,
+                    background: V.cloud, border: `1px solid ${V.fog}`,
+                  }}>
+                    {/* Header: dimensão + impacto */}
+                    <div style={{ display: "flex", justifyContent: "space-between",
+                      alignItems: "center", marginBottom: 6 }}>
+                      <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" as const }}>
+                        <span style={{
+                          fontFamily: V.mono, fontSize: 9, padding: "2px 7px",
+                          borderRadius: 100, fontWeight: 600,
+                          background: `${dimColor}15`, color: dimColor,
+                        }}>
+                          {dimLabel}
+                        </span>
+                        <span style={{
+                          fontFamily: V.mono, fontSize: 9, padding: "2px 7px",
+                          borderRadius: 100, background: `${effortColor}15`, color: effortColor,
+                        }}>
+                          {lever.effort === 'baixo' ? 'Fácil' : lever.effort === 'médio' ? 'Médio' : 'Complexo'}
+                        </span>
+                        <span style={{
+                          fontFamily: V.mono, fontSize: 9, color: V.ash,
+                          padding: "2px 7px", borderRadius: 100, background: V.fog,
+                        }}>
+                          {lever.horizon}
+                        </span>
+                      </div>
+                      <span style={{
+                        fontFamily: V.mono, fontSize: 11, fontWeight: 700,
+                        color: V.teal,
+                      }}>
+                        +{lever.impact}pts
+                      </span>
+                    </div>
+                    {/* Ação */}
+                    <p style={{ fontSize: 13, fontWeight: 600, color: V.night,
+                      margin: "0 0 6px", lineHeight: 1.4 }}>
+                      {lever.action}
+                    </p>
+                    {/* Situação atual → meta */}
+                    {lever.currentValue && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" as const }}>
+                        <span style={{ fontSize: 11, color: V.ash, fontFamily: V.mono }}>
+                          {lever.currentValue}
+                        </span>
+                        {lever.targetValue && (
+                          <>
+                            <span style={{ fontSize: 10, color: V.ash }}>→</span>
+                            <span style={{ fontSize: 11, color: V.teal, fontFamily: V.mono }}>
+                              {lever.targetValue}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0",
+                fontFamily: V.mono, textAlign: "center" as const }}>
+                Impacto estimado sobre o score de influência total
+              </p>
+            </div>
+          )}
         </Expandable>
         </div>
 

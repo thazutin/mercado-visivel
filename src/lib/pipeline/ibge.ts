@@ -429,81 +429,120 @@ async function getMunicipioInfo(city: string, state: string): Promise<MunicipioI
   };
 }
 
-/**
- * Busca municípios vizinhos usando a microrregião do IBGE como proxy de proximidade.
- * Municípios na mesma microrregião são geograficamente próximos.
- * Retorna IDs dos vizinhos (excluindo o principal) para buscar população.
- */
-async function getMunicipiosVizinhosPorMicrorregiao(
-  municipioId: number,
-  uf: string,
-): Promise<number[]> {
+async function fetchWorldPopRadius(lat: number, lng: number, raioKm: number): Promise<number | null> {
+  // WorldPop API: população num raio circular em torno de lat/lng
+  // Documentação: https://api.worldpop.org/v1/services/stats
   try {
-    // Busca todos municípios da UF
-    const res = await fetch(
-      `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`,
-    );
-    if (!res.ok) return [];
-    const municipios = await res.json();
+    const geojson = JSON.stringify({
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [lng, lat]  // WorldPop usa [lng, lat]
+      },
+      properties: { radius: raioKm }
+    });
 
-    // Encontra a microrregião do município principal
-    const principal = municipios.find((m: any) => Number(m.id) === municipioId);
-    if (!principal?.microrregiao?.id) {
-      console.warn(`[IBGE Vizinhos] Microrregião não encontrada para id=${municipioId}`);
-      return [];
+    const url = `https://api.worldpop.org/v1/services/stats?dataset=wpgp&year=2020&geojson=${encodeURIComponent(geojson)}&runasync=false`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) {
+      console.warn(`[WorldPop] HTTP ${res.status}`);
+      return null;
     }
-    const microId = principal.microrregiao.id;
-    const microNome = principal.microrregiao.nome;
-
-    // Filtra municípios na mesma microrregião
-    const vizinhos = municipios
-      .filter((m: any) => m.microrregiao?.id === microId && Number(m.id) !== municipioId)
-      .map((m: any) => Number(m.id));
-
-    console.log(`[IBGE Vizinhos] Microrregião "${microNome}" (id=${microId}): ${vizinhos.length} vizinhos encontrados`);
-    return vizinhos;
+    const data = await res.json();
+    // Resposta: { status: "200", data: { total_population: 12345.67 } }
+    const pop = data?.data?.total_population;
+    if (typeof pop === 'number' && pop > 0) {
+      console.log(`[WorldPop] lat=${lat}, lng=${lng}, raio=${raioKm}km → pop=${Math.round(pop)}`);
+      return Math.round(pop);
+    }
+    console.warn('[WorldPop] Resposta sem total_population:', JSON.stringify(data).slice(0, 200));
+    return null;
   } catch (err) {
-    console.warn('[IBGE Vizinhos] Erro:', (err as Error).message);
-    return [];
+    console.warn('[WorldPop] Erro:', (err as Error).message);
+    return null;
   }
 }
 
-async function getPopulacaoTotal(municipioIds: number[]): Promise<number> {
-  if (municipioIds.length === 0) return 0;
+async function inferirTargetAudiencia(
+  businessCategory: string,
+  populacaoRaio: number,
+  ticketMedio?: number,
+): Promise<{ percentualMin: number; percentualMax: number; percentualBase: number; rationale: string; targetProfile: string }> {
+  try {
+    const { default: Anthropic } = await import('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-  // Batch em grupos de 50 (limite prático da API IBGE)
-  let total = 0;
-  for (let i = 0; i < municipioIds.length; i += 50) {
-    const batch = municipioIds.slice(i, i + 50);
-    const idsStr = batch.join('|');
-    let batchTotal = 0;
+    const ticketContext = ticketMedio
+      ? `Ticket médio do negócio: R$${ticketMedio}. Use isso para calibrar o corte de renda — ticket alto = público menor e mais selecionado.`
+      : '';
 
-    // Tenta estimativas (6579) primeiro, depois censo (1301)
-    const endpoints = [
-      ...['2024', '2023', '2022'].map(ano => `https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/${ano}/variaveis/9324?localidades=N6[${idsStr}]`),
-      `https://servicodados.ibge.gov.br/api/v3/agregados/1301/periodos/2022/variaveis/93?localidades=N6[${idsStr}]`,
-    ];
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 400,
+      temperature: 0.1,
+      messages: [{
+        role: 'user',
+        content: `Para o negócio "${businessCategory}" no Brasil, estime o percentual da população total que é público-alvo real (pode pagar e tem necessidade).
 
-    for (const url of endpoints) {
-      try {
-        const res = await fetch(url);
-        if (!res.ok) continue;
-        const data = await res.json();
-        const series = data?.[0]?.resultados?.[0]?.series || [];
-        for (const s of series) {
-          const valores = Object.values(s.serie) as string[];
-          batchTotal += parseInt(valores[valores.length - 1], 10) || 0;
-        }
-        if (batchTotal > 0) break;
-      } catch {
-        continue;
-      }
-    }
-    total += batchTotal;
+${ticketContext}
+
+Considere: faixa etária relevante, poder aquisitivo necessário, frequência de necessidade do serviço/produto.
+Seja conservador — é melhor subestimar do que inflar.
+
+Responda APENAS em JSON:
+{
+  "percentualMin": 0.03,
+  "percentualMax": 0.09,
+  "percentualBase": 0.06,
+  "targetProfile": "descrição do perfil em 1 frase",
+  "rationale": "por que estes percentuais (2 frases)"
+}`
+      }],
+    });
+
+    const text = response.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
+    const parsed = JSON.parse(text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
+    console.log(`[Target] ${businessCategory}: ${parsed.percentualMin*100}%-${parsed.percentualMax*100}% (base ${parsed.percentualBase*100}%)`);
+    return parsed;
+  } catch (err) {
+    console.warn('[Target] Inferência falhou, usando fallback conservador:', (err as Error).message);
+    return { percentualMin: 0.05, percentualMax: 0.15, percentualBase: 0.08, rationale: 'Estimativa conservadora padrão', targetProfile: 'Público-alvo do negócio' };
   }
-  return total;
 }
 
+async function inferirFinanceiro(
+  businessCategory: string,
+  region: string,
+): Promise<{ ticketMedio: number; taxaConversao: number; ticketRationale: string }> {
+  try {
+    const { default: Anthropic } = await import('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 300,
+      temperature: 0.1,
+      messages: [{
+        role: 'user',
+        content: `Para o negócio "${businessCategory}" em ${region.split(',')[0]}, Brasil, estime:
+1. Ticket médio mensal por cliente (valor que um cliente paga por mês ou por compra recorrente)
+2. Taxa de conversão típica (% de pessoas que buscam e efetivamente compram/contratam)
+
+Use benchmarks reais do mercado brasileiro. Seja conservador.
+
+Responda APENAS em JSON:
+{
+  "ticketMedio": 450,
+  "taxaConversao": 0.03,
+  "ticketRationale": "mensalidade típica de escola infantil particular em SP: R$2.000-4.000, usando R$2.500 como base conservadora. Conversão 3% típica para serviços educacionais locais."
+}`
+      }],
+    });
+    const text = response.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
+    return JSON.parse(text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
+  } catch {
+    return { ticketMedio: 500, taxaConversao: 0.03, ticketRationale: 'Estimativa conservadora padrão' };
+  }
+}
 
 // Capitais e cidades grandes com população conhecida (fallback quando IBGE está fora)
 const POPULACAO_CONHECIDA: Record<string, { pop: number; densidade: DensityLevel }> = {
@@ -619,33 +658,69 @@ export async function fetchAudienciaEstimada(
     const raioKm = calculateDynamicRadius(densidade, businessCategory || '');
     console.log(`[pipeline] raio calculado: ${raioKm}km para "${businessCategory || 'genérico'}" em ${densidade}`);
 
-    // 3. População do raio — soma município principal + vizinhos na mesma microrregião
-    const populacaoMunicipio = info.populacao; // município principal sem vizinhos
-    let populacaoRaio = info.populacao;
-    try {
-      const vizinhosIds = await getMunicipiosVizinhosPorMicrorregiao(info.id, info.uf);
-      if (vizinhosIds.length > 0) {
-        const popVizinhos = await getPopulacaoTotal(vizinhosIds);
-        if (popVizinhos > 0) {
-          populacaoRaio += popVizinhos;
-          console.log(`[IBGE Audiência] +${vizinhosIds.length} vizinhos: pop extra=${popVizinhos}, total raio=${populacaoRaio}`);
-        }
+    // 3. População do raio — WorldPop API para população real no raio
+    let populacaoRaio = 0;
+    let populacaoSource = 'ibge_municipal';
+
+    // Usa lat/lng do form (passado como param) ou do geocoding do município
+    const resolvedLat = (lat && lat !== 0) ? lat : info.lat;
+    const resolvedLng = (lng && lng !== 0) ? lng : info.lng;
+
+    if (resolvedLat && resolvedLng && resolvedLat !== 0 && resolvedLng !== 0) {
+      const worldPopResult = await fetchWorldPopRadius(resolvedLat, resolvedLng, raioKm);
+      if (worldPopResult && worldPopResult > 0) {
+        populacaoRaio = worldPopResult;
+        populacaoSource = 'worldpop';
+        console.log(`[IBGE Audiência] WorldPop: ${populacaoRaio} pessoas no raio de ${raioKm}km`);
       }
-    } catch (err) {
-      console.warn('[IBGE Audiência] Vizinhos falhou, usando só município principal:', (err as Error).message);
     }
 
-    console.log(`[IBGE Audiência] ${info.nome}: pop=${info.populacao} (IBGE ${info.ibgeAno}), densidade=${densidade}, raio=${raioKm}km, popRaio=${populacaoRaio}`);
-    console.log(`[IBGE VERIFICAÇÃO] Resumo: município=${info.nome}/${info.uf}, id=${info.id}, pop=${info.populacao}, area=${info.areaKm2}km², densidade_hab_km2=${info.densidadeHabKm2.toFixed(0)}, lat=${info.lat}, lng=${info.lng}, raio=${raioKm}km, popRaio=${populacaoRaio}, ibgeAno=${info.ibgeAno}`);
+    // Fallback: proporção de área (melhor que município inteiro)
+    if (populacaoRaio === 0) {
+      if (info.areaKm2 > 0) {
+        const areaRaio = Math.PI * raioKm * raioKm;
+        const proporcao = Math.min(areaRaio / info.areaKm2, 1);
+        populacaoRaio = Math.round(info.populacao * proporcao);
+        populacaoSource = 'ibge_area_prop';
+        console.log(`[IBGE Audiência] Fallback proporção área: ${populacaoRaio} (raio=${areaRaio.toFixed(1)}km², município=${info.areaKm2}km²)`);
+      } else {
+        // Último fallback: município inteiro (comportamento antigo)
+        populacaoRaio = info.populacao;
+        populacaoSource = 'ibge_municipal_full';
+      }
+    }
+
+    // Inferir target demográfico + financeiro via Claude (em paralelo)
+    const [targetInferido, financeiro] = await Promise.all([
+      inferirTargetAudiencia(businessCategory || '', populacaoRaio, undefined),
+      inferirFinanceiro(businessCategory || '', city),
+    ]);
+    const audienciaTarget = Math.round(populacaoRaio * targetInferido.percentualBase);
+    const audienciaTargetMin = Math.round(populacaoRaio * targetInferido.percentualMin);
+    const audienciaTargetMax = Math.round(populacaoRaio * targetInferido.percentualMax);
+
+    console.log(`[IBGE Audiência] Target: ${audienciaTargetMin}-${audienciaTargetMax} (base ${audienciaTarget}) | perfil: ${targetInferido.targetProfile}`);
+    console.log(`[IBGE Audiência] Financeiro: ticket=R$${financeiro.ticketMedio}, conversão=${(financeiro.taxaConversao*100).toFixed(1)}%`);
+    console.log(`[IBGE Audiência] ${info.nome}: pop=${info.populacao} (IBGE ${info.ibgeAno}), densidade=${densidade}, raio=${raioKm}km, popRaio=${populacaoRaio} (${populacaoSource})`);
+    console.log(`[IBGE VERIFICAÇÃO] Resumo: município=${info.nome}/${info.uf}, id=${info.id}, pop=${info.populacao}, area=${info.areaKm2}km², densidade_hab_km2=${info.densidadeHabKm2.toFixed(0)}, lat=${info.lat}, lng=${info.lng}, raio=${raioKm}km, popRaio=${populacaoRaio}, ibgeAno=${info.ibgeAno}, source=${populacaoSource}`);
 
     return {
       populacaoRaio,
-      populacaoMunicipio,
+      populacaoMunicipio: info.populacao,
       raioKm,
       densidade,
       municipioNome: info.nome,
       municipioId: info.id,
       ibgeAno: info.ibgeAno,
+      audienciaTarget,
+      audienciaTargetMin,
+      audienciaTargetMax,
+      targetProfile: targetInferido.targetProfile,
+      targetRationale: targetInferido.rationale,
+      populacaoSource,
+      ticketMedio: financeiro.ticketMedio,
+      taxaConversao: financeiro.taxaConversao,
+      ticketRationale: financeiro.ticketRationale,
     };
   } catch (err) {
     if ((err as Error).name === 'AbortError') {

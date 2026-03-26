@@ -417,10 +417,183 @@ export function calculateCompositeInfluence(
     breakdown,
   };
 
+  const levers = generateInfluenceLevers(
+    igProfile,
+    google.mapsPresence,
+    google.serpPositions,
+    hasWebsite,
+    aiVisibility || null,
+    ct,
+    mapsCompetitors,
+  );
+  (breakdown as any).levers = levers;
+  console.log(`[Influence 3D] Levers gerados: ${levers.length} alavancas`);
+
   return {
     influence,
     processingTimeMs: Date.now() - startTime,
     sourcesUsed,
     sourcesUnavailable,
   };
+}
+
+// ─── Influence Levers — Ações acionáveis por dimensão ────────────────────────
+
+export interface InfluenceLever {
+  dimension: 'alcance' | 'descoberta' | 'credibilidade';
+  action: string;
+  impact: number;
+  effort: 'baixo' | 'médio' | 'alto';
+  horizon: '1-2 semanas' | '1-2 meses' | '3-6 meses';
+  currentValue?: string;
+  targetValue?: string;
+}
+
+export function generateInfluenceLevers(
+  igProfile: InstagramProfile | null,
+  mapsPresence: MapsPresence | null,
+  serpPositions: SerpPosition[],
+  hasWebsite: boolean,
+  aiVisibility: { score: number; likelyMentioned: boolean } | null,
+  clientType: 'b2c' | 'b2b' | 'b2g',
+  mapsCompetitors: Array<{ rating?: number; reviewCount?: number; photoCount?: number }>,
+): InfluenceLever[] {
+  const levers: InfluenceLever[] = [];
+  const weights = WEIGHTS[clientType] || WEIGHTS.b2c;
+
+  // ── ALCANCE (D1) ──────────────────────────────────────────────────────────
+
+  if (!igProfile?.dataAvailable || igProfile.followers === 0) {
+    levers.push({
+      dimension: 'alcance',
+      action: 'Criar e configurar perfil profissional no Instagram',
+      impact: Math.round(weights.d1 * 15),
+      effort: 'baixo',
+      horizon: '1-2 semanas',
+      currentValue: 'Sem perfil detectado',
+      targetValue: 'Perfil ativo com bio, link e categoria',
+    });
+  } else if ((igProfile.recentPostsCount ?? 0) === 0) {
+    levers.push({
+      dimension: 'alcance',
+      action: 'Retomar postagens — mínimo 2x por semana por 30 dias',
+      impact: Math.round(weights.d1 * 12),
+      effort: 'médio',
+      horizon: '1-2 meses',
+      currentValue: '0 posts nos últimos 15 dias (perfil inativo)',
+      targetValue: '8+ posts/mês com alcance recente',
+    });
+  } else {
+    const reachRate = igProfile.reachAbsolute > 0 && igProfile.followers > 0
+      ? igProfile.reachAbsolute / igProfile.followers : 0;
+    if (reachRate < 0.08) {
+      levers.push({
+        dimension: 'alcance',
+        action: 'Aumentar frequência de Reels — formato com maior alcance orgânico',
+        impact: Math.round(weights.d1 * 8),
+        effort: 'médio',
+        horizon: '1-2 meses',
+        currentValue: `Alcance médio: ${(reachRate * 100).toFixed(0)}% dos seguidores`,
+        targetValue: 'Alcance acima de 8% dos seguidores',
+      });
+    }
+  }
+
+  // ── DESCOBERTA (D2) ───────────────────────────────────────────────────────
+
+  const rankedTerms = serpPositions.filter(sp => sp.position && sp.position <= 10).length;
+
+  if (!mapsPresence?.found) {
+    levers.push({
+      dimension: 'descoberta',
+      action: 'Criar e verificar perfil no Google Meu Negócio',
+      impact: Math.round(weights.d2 * 18),
+      effort: 'baixo',
+      horizon: '1-2 semanas',
+      currentValue: 'Negócio não encontrado no Google Maps',
+      targetValue: 'Perfil verificado com fotos, horário e categoria',
+    });
+  } else if (!mapsPresence.inLocalPack) {
+    const myReviewsD2 = mapsPresence.reviewCount || 0;
+    const avgCompetitorReviews = mapsCompetitors.length > 0
+      ? mapsCompetitors.reduce((s, c) => s + (c.reviewCount || 0), 0) / mapsCompetitors.length : 0;
+    levers.push({
+      dimension: 'descoberta',
+      action: 'Aumentar avaliações no Google Maps — solicitar ativamente após cada atendimento',
+      impact: Math.round(weights.d2 * 12),
+      effort: 'médio',
+      horizon: '1-2 meses',
+      currentValue: `${myReviewsD2} avaliações (concorrentes: média ${Math.round(avgCompetitorReviews)})`,
+      targetValue: 'Entrar no pacote local (top 3 no Maps)',
+    });
+  }
+
+  if (rankedTerms === 0 && !hasWebsite) {
+    levers.push({
+      dimension: 'descoberta',
+      action: 'Criar página no Google Sites ou site simples com palavras-chave locais',
+      impact: Math.round(weights.d2 * 8),
+      effort: 'médio',
+      horizon: '1-2 meses',
+      currentValue: 'Sem site — invisível para buscas orgânicas',
+      targetValue: 'Página indexada com nome, serviço e cidade',
+    });
+  }
+
+  if (!aiVisibility?.likelyMentioned) {
+    levers.push({
+      dimension: 'descoberta',
+      action: 'Adicionar descrição detalhada no Google Meu Negócio e responder avaliações — melhora visibilidade em IA',
+      impact: Math.round(weights.d2 * 5),
+      effort: 'baixo',
+      horizon: '1-2 semanas',
+      currentValue: 'Negócio não aparece em buscas de IA (ChatGPT, Perplexity)',
+      targetValue: 'Mencionado como opção local em respostas de IA',
+    });
+  }
+
+  // ── CREDIBILIDADE (D3) ────────────────────────────────────────────────────
+
+  const myReviews = mapsPresence?.reviewCount || 0;
+  const myPhotos = mapsPresence?.photoCount || 0;
+  const maxCompetitorPhotos = mapsCompetitors.length > 0
+    ? Math.max(...mapsCompetitors.map(c => c.photoCount || 0)) : 0;
+
+  if (myReviews < 20) {
+    levers.push({
+      dimension: 'credibilidade',
+      action: 'Pedir avaliação para clientes satisfeitos via WhatsApp após cada atendimento',
+      impact: Math.round(weights.d3 * 10),
+      effort: 'baixo',
+      horizon: '1-2 meses',
+      currentValue: `${myReviews} avaliações no Google`,
+      targetValue: '20+ avaliações com nota ≥ 4.5',
+    });
+  } else if ((mapsPresence?.ownerResponseRate || 0) < 0.5) {
+    levers.push({
+      dimension: 'credibilidade',
+      action: 'Responder todas as avaliações do Google Maps — aumenta confiança e ranking',
+      impact: Math.round(weights.d3 * 5),
+      effort: 'baixo',
+      horizon: '1-2 semanas',
+      currentValue: `Responde ${Math.round((mapsPresence?.ownerResponseRate || 0) * 100)}% das avaliações`,
+      targetValue: 'Resposta em 100% das avaliações',
+    });
+  }
+
+  if (myPhotos < 10 && maxCompetitorPhotos > myPhotos) {
+    levers.push({
+      dimension: 'credibilidade',
+      action: 'Adicionar fotos reais do espaço, equipe e serviços no Google Maps',
+      impact: Math.round(weights.d3 * 6),
+      effort: 'baixo',
+      horizon: '1-2 semanas',
+      currentValue: `${myPhotos} fotos (concorrente líder: ${maxCompetitorPhotos} fotos)`,
+      targetValue: '20+ fotos de qualidade',
+    });
+  }
+
+  return levers
+    .sort((a, b) => b.impact - a.impact)
+    .slice(0, 6);
 }

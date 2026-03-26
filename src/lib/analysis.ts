@@ -1193,6 +1193,58 @@ Responda APENAS em JSON, sem markdown:
   }
 
   // =========================================================================
+  // PROJEÇÃO FINANCEIRA
+  // =========================================================================
+  let projecaoFinanceira: any = null;
+  if (audienciaResult.estimada) {
+    const est = audienciaResult.estimada;
+    const totalVolume = step2.totalMonthlyVolume || 0;
+    const influencePercent = step4.influence.totalInfluence || 0;
+    const ticketMedio = est.ticketMedio || 500;
+    const taxaConversao = est.taxaConversao || 0.03;
+    const audienciaTarget = est.audienciaTarget || 0;
+    const populacaoMunicipio = est.populacaoMunicipio || est.populacaoRaio || 1;
+    const populacaoRaio = est.populacaoRaio || 0;
+
+    // Demanda ativa no raio = volume de buscas geo-ajustado para o target
+    const fatorGeo = populacaoRaio > 0 && populacaoMunicipio > 0
+      ? Math.min(populacaoRaio / populacaoMunicipio, 1)
+      : 1;
+    const buscasNoRaio = Math.round(totalVolume * fatorGeo);
+    const buscasNoTarget = audienciaTarget > 0 && populacaoRaio > 0
+      ? Math.round(buscasNoRaio * (audienciaTarget / populacaoRaio))
+      : buscasNoRaio;
+
+    // Mercado total disponível no raio
+    const mercadoTotal = Math.round(audienciaTarget * taxaConversao * ticketMedio);
+
+    // Receita que o negócio compete hoje (pela influência atual)
+    const receitaAtual = Math.round(buscasNoTarget * taxaConversao * ticketMedio * (influencePercent / 100));
+
+    // Meta conservadora: dobrar influência, cap 80%
+    const influenciaMeta = Math.min(influencePercent * 2, 80);
+    const receitaPotencial = Math.round(buscasNoTarget * taxaConversao * ticketMedio * (influenciaMeta / 100));
+
+    const gapMensal = receitaPotencial - receitaAtual;
+
+    projecaoFinanceira = {
+      mercadoTotal,
+      receitaAtual,
+      receitaPotencial,
+      gapMensal,
+      influenciaAtual: Math.round(influencePercent),
+      influenciaMeta: Math.round(influenciaMeta),
+      ticketMedio,
+      taxaConversao,
+      ticketRationale: est.ticketRationale || '',
+      buscasNoTarget,
+      audienciaTarget,
+    };
+
+    console.log(`[Pipeline] Projeção: mercado=R$${mercadoTotal}, atual=R$${receitaAtual}, potencial=R$${receitaPotencial}, gap=R$${gapMensal}`);
+  }
+
+  // =========================================================================
   // ASSEMBLE RESULT + determine confidence
   // =========================================================================
   const totalProcessingTimeMs = Date.now() - pipelineStart;
@@ -1232,6 +1284,8 @@ Responda APENAS em JSON, sem markdown:
       factors: aiVisibility.factors,
       competitorMentions: aiVisibility.competitorMentions,
     } : null,
+    // @ts-ignore
+    projecaoFinanceira,
   };
 
   console.log(

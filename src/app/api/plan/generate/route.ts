@@ -277,7 +277,35 @@ CONCORRENTES NO INSTAGRAM:
 ${igCompetitors || "Nenhum concorrente identificado"}
 
 GAPS IDENTIFICADOS: ${gaps.headlineInsight || "N/A"}
-${(gaps.gaps || []).slice(0, 3).map((g: any) => `- ${g.title}`).join("\n")}`;
+${(gaps.gaps || []).slice(0, 3).map((g: any) => `- ${g.title}`).join("\n")}
+
+${(() => {
+  const influenceBreakdown = raw.influence?.influence?.breakdown || {};
+  const levers = influenceBreakdown.levers || [];
+  const leversContext = levers.length > 0
+    ? levers.map((l: any, i: number) =>
+        `${i + 1}. [${l.dimension.toUpperCase()}] ${l.action} (+${l.impact}pts)
+     Situação atual: ${l.currentValue || 'não medido'}
+     Meta: ${l.targetValue || 'não definida'}
+     Esforço: ${l.effort} · Prazo: ${l.horizon}`
+      ).join('\n')
+    : 'Levers não calculados';
+
+  const totalInfluence = raw.influence?.influence?.totalInfluence || 0;
+  const influenceBreakdownText = levers.length > 0
+    ? `Alcance: ${influenceBreakdown.d1_discovery || 0}pts · Descoberta: ${influenceBreakdown.d2_credibility || 0}pts · Credibilidade: ${influenceBreakdown.d3_reach || 0}pts`
+    : '';
+
+  return `SCORE DE INFLUÊNCIA: ${totalInfluence}% da demanda capturada
+${influenceBreakdownText}
+
+ALAVANCAS IDENTIFICADAS (ordenadas por impacto no score):
+${leversContext}
+
+INSTRUÇÃO: O plano deve começar pelas alavancas de maior impacto, mas não se limitar a elas.
+Se há oportunidades claras de crescimento não capturadas pelas alavancas (ex: sazonalidade,
+novos canais, indicações, parcerias locais), inclua-as como ações complementares.`;
+})()}`;
 }
 
 function buildBlocksPrompt(context: string): string {
@@ -312,13 +340,17 @@ REGRAS DE CONTEÚDO (obrigatório):
   Identifique onde o negócio está à frente e onde está atrás — com números.
   NUNCA invente concorrentes. Se não há dados, diga explicitamente "não foi possível identificar concorrentes diretos".
   Termine com: qual é o concorrente mais perigoso e por quê (baseado em dados).
-- Bloco "action_plan": máximo 3 ações. Cada ação OBRIGATORIAMENTE tem:
+- Bloco "action_plan": máximo 3 ações. Use as ALAVANCAS DO SCORE como ponto de partida
+  obrigatório — comece pela de maior impacto. Para cada ação:
     * ESTADO ATUAL: o número real hoje (ex: "você tem 3 avaliações e 2 fotos")
     * META CONCRETA: onde deve chegar (ex: "meta: 30 avaliações em 60 dias")
-    * SISTEMA: como criar um processo que se auto-alimenta (não apenas "peça avaliações")
+    * SISTEMA: como criar um processo replicável, não uma ação pontual
+    * Se o negócio já tem algo (ex: programa de indicação), evolua-o com métricas
+      (ex: "caso já tenha: adicione X para aumentar 10% ao mês")
+    * NUNCA presuma que o negócio não tem algo — sugira evoluir o que existe
     * NUNCA repita o mesmo objetivo em ações diferentes
-    * Priorize pela maior alavancagem: o que muda mais resultado com menos esforço
-  As 3 ações devem ser baseadas no GAP real — se tem 3 avaliações, a ação é "conseguir mais avaliações"; se não tem fotos, a ação é "adicionar fotos". NUNCA recomende algo que o negócio já tem em abundância.
+  Após as 3 ações das alavancas, adicione (se relevante): 1 ação complementar que
+  não está nos levers mas representa oportunidade clara para este negócio específico.
 - Bloco "demand_map": cite os termos reais com volumes reais. Ex: "2.400 pessoas buscam 'dentista Vila Madalena' por mês".
 - Gere APENAS o JSON.`;
 }
@@ -327,6 +359,15 @@ function buildWeeklyPrompt(context: string): string {
   return `Você é um consultor de mercado local que fala de forma simples e direta.
 
 ${context}
+
+ORIENTAÇÃO ESTRATÉGICA:
+As semanas 1-4 devem atacar OBRIGATORIAMENTE as alavancas de maior impacto no score
+de influência (listadas no contexto acima). Cada semana deve conectar a ação ao ganho
+esperado no score. Ex: "Ao conseguir 20 avaliações, seu score de Credibilidade sobe
+de X para Y, o que aumenta sua influência de Z% para W%."
+
+Semanas 5-12 podem incluir ações além das alavancas — sazonalidade, parcerias,
+indicações, novos canais — desde que conectadas à realidade do negócio.
 
 Gere um plano de 12 semanas para este negócio. Retorne APENAS um array JSON com 12 objetos:
 [
@@ -345,11 +386,12 @@ REGRAS DE CONTEÚDO:
 - Semanas 9-12: dobrar no que funcionou
 - Cite dados reais do diagnóstico como fundamento
 
-REGRA ANTI-GENÉRICO:
-- Se Maps já está cadastrado com >50 avaliações: NÃO recomende "cadastrar no Google Meu Negócio"
-- Se Instagram tem >500 seguidores: NÃO recomende "criar perfil no Instagram"
-- Cada semana deve atacar um gap REAL identificado no diagnóstico acima
-- Semanas 1-4 devem atacar o gap mais crítico primeiro (o que tem menor pontuação no diagnóstico)
+REGRA DE PROGRESSÃO:
+- Se o lever diz "criar perfil no Maps" → semana 1 é criar, semana 3 é otimizar
+- Se o lever diz "aumentar avaliações" → semana 1 é criar o sistema, semanas 2-4 é executar
+- Se o negócio JÁ TEM algo que um lever sugere criar → pule para a etapa de evolução
+  (ex: "caso já tenha programa de indicação: adicione recompensa para indicador, meta: +10% indicações/mês")
+- Nunca presuma ausência — sempre use "caso não tenha / caso já tenha" para ações de criação
 
 REGRAS DE NÃO-REDUNDÂNCIA (crítico):
 - Cada semana deve ter objetivo ÚNICO e diferente das outras

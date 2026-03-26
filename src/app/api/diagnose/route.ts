@@ -115,7 +115,11 @@ export async function POST(req: NextRequest) {
         raw_data: pipelineResult,
         confidence_level: pipelineResult.confidenceLevel,
         audiencia: pipelineResult.audiencia || null,
-        influence_breakdown: (pipelineResult.influence?.influence as any)?.breakdown || null,
+        influence_breakdown: {
+          ...(pipelineResult.influence?.influence as any)?.breakdown,
+          levers: (pipelineResult.influence?.influence as any)?.breakdown?.levers || [],
+        },
+        projecao_financeira: (pipelineResult as any).projecaoFinanceira || null,
       });
     } catch (err) {
       console.error("[Diagnose] insertDiagnosis failed:", err);
@@ -339,6 +343,7 @@ function buildDisplayData(result: any) {
     clientType: result.clientType || 'b2c',
     volumeGeo: result.volumeGeo || null,
     pncp: result.pncp || null,
+    projecaoFinanceira: (result as any).projecaoFinanceira || null,
     termGeneration: {
       count: result.terms.termCount,
       model: result.terms.generationModel,

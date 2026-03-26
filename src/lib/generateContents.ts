@@ -26,6 +26,7 @@ export interface LeadContext {
   search_volume?: number
   influence_score?: number
   competitors?: string | string[] | null
+  levers?: Array<{ dimension: string; action: string; impact: number }>
 }
 
 export interface GeneratedPost {
@@ -107,6 +108,14 @@ REGRAS OBRIGATÓRIAS:
 - Cada post deve ter um objetivo de negócio claro: atrair novo cliente / converter quem já conhece / fidelizar quem já comprou
 - NUNCA gere post genérico de "dica do dia" sem conexão com o negócio real
 - O "hook" deve ser a primeira frase que para o scroll — baseada no que o público-alvo REAL se preocupa
+
+${lead.levers && lead.levers.length > 0
+  ? `ORIENTAÇÃO ESTRATÉGICA (baseada no score de influência):
+As principais lacunas deste negócio são:
+${lead.levers.slice(0, 3).map((l: any) => `- ${l.dimension}: ${l.action}`).join('\n')}
+Os conteúdos devem endereçar indiretamente essas lacunas — ex: se a lacuna é "poucos
+avaliações no Maps", gere um post que incentive clientes a deixar avaliação.`
+  : ''}
 
 Gere um post para cada canal abaixo:
 ${Object.entries(CHANNEL_SPECS)
@@ -203,14 +212,16 @@ export async function triggerContentGeneration(leadId: string): Promise<void> {
 
   console.log('[generateContents] Lead encontrado:', lead.name, '| produto:', lead.product, '| região:', lead.region)
 
-  // Busca diagnóstico mais recente para volume e score
+  // Busca diagnóstico mais recente para volume, score e levers
   const { data: diagnosis } = await getSupabaseAdmin()
     .from('diagnoses')
-    .select('total_volume, influence_percent')
+    .select('total_volume, influence_percent, influence_breakdown')
     .eq('lead_id', leadId)
     .order('created_at', { ascending: false })
     .limit(1)
     .single()
+
+  const levers = (diagnosis?.influence_breakdown as any)?.levers || [];
 
   const leadContext: LeadContext = {
     id: lead.id,
@@ -220,6 +231,7 @@ export async function triggerContentGeneration(leadId: string): Promise<void> {
     search_volume: diagnosis?.total_volume ?? undefined,
     influence_score: diagnosis?.influence_percent ?? undefined,
     competitors: lead.competitors,
+    levers: levers.slice(0, 3),
   }
 
   console.log('[generateContents] Gerando posts...')

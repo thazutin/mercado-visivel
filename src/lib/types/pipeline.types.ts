@@ -434,6 +434,15 @@ export interface AudienciaEstimada {
   municipioNome: string;
   municipioId: number;
   ibgeAno?: number;
+  audienciaTarget?: number;
+  audienciaTargetMin?: number;
+  audienciaTargetMax?: number;
+  targetProfile?: string;
+  targetRationale?: string;
+  populacaoSource?: string;
+  ticketMedio?: number;
+  taxaConversao?: number;
+  ticketRationale?: string;
 }
 
 export interface AudienciaTarget {
