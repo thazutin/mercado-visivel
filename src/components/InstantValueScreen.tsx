@@ -222,75 +222,98 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 O que está em jogo
               </p>
 
-              {/* CAMADA 1 — Captura imediata */}
-              <div style={{ marginBottom: 16, paddingBottom: 16,
-                borderBottom: `1px solid ${V.slate}` }}>
-                <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
-                  letterSpacing: "0.05em", textTransform: "uppercase" as const, marginBottom: 8 }}>
-                  Captura imediata · buscas ativas no seu raio
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8,
-                  marginBottom: 8 }}>
-                  <div style={{ background: V.graphite, borderRadius: 8, padding: "10px 12px" }}>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: V.mist }}>
-                      {fmtBRL(proj!.receitaAtual)}/mês
+              {/* Lógica de priorização: destacar camada com maior impacto */}
+              {(() => {
+                const gapPequeno = (proj!.clientesGap || 0) === 0 || (proj!.gapCaptura || 0) < 500;
+                const destacarFamilias = gapPequeno && (proj!.familiasGap || 0) > 0;
+
+                const camada1 = (
+                  <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: `1px solid ${V.slate}` }}>
+                    <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
+                      letterSpacing: "0.05em", textTransform: "uppercase" as const, marginBottom: 8 }}>
+                      Captura imediata · buscas ativas no seu raio
                     </div>
-                    <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>
-                      você compete hoje ({proj!.influenciaAtual}%)
-                    </div>
-                  </div>
-                  <div style={{ background: V.graphite, borderRadius: 8, padding: "10px 12px",
-                    border: `1px solid ${V.amber}40` }}>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: V.amberSoft }}>
-                      {fmtBRL(proj!.receitaPotencial)}/mês
-                    </div>
-                    <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>
-                      com o plano ({proj!.influenciaMeta}%)
-                    </div>
-                  </div>
-                </div>
-                {proj!.clientesGap > 0 && (
-                  <div style={{ fontSize: 12, color: V.mist, textAlign: "center", marginTop: 6 }}>
-                    {proj!.gapCaptura < 500 ? (
-                      <>
-                        <strong style={{ color: V.amberSoft }}>+{proj!.clientesGap} cliente{proj!.clientesGap !== 1 ? 's' : ''}/mês</strong>
-                        {' '}via buscas ativas — a maior alavanca é gerar demanda com conteúdo e posicionamento
-                      </>
+                    {destacarFamilias ? (
+                      <div style={{ fontSize: 12, color: V.ash }}>
+                        Via buscas ativas: {fmtBRL(proj!.receitaAtual)}/mês hoje → {fmtBRL(proj!.receitaPotencial)}/mês com plano
+                      </div>
                     ) : (
-                      <>+{proj!.clientesGap} cliente{proj!.clientesGap !== 1 ? 's' : ''}/mês
-                      {' '}via buscas ativas · {fmtBRL(proj!.gapCaptura)} incremental</>
+                      <>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+                          <div style={{ background: V.graphite, borderRadius: 8, padding: "10px 12px" }}>
+                            <div style={{ fontSize: 18, fontWeight: 700, color: V.mist }}>
+                              {fmtBRL(proj!.receitaAtual)}/mês
+                            </div>
+                            <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>
+                              você compete hoje ({proj!.influenciaAtual}%)
+                            </div>
+                          </div>
+                          <div style={{ background: V.graphite, borderRadius: 8, padding: "10px 12px",
+                            border: `1px solid ${V.amber}40` }}>
+                            <div style={{ fontSize: 18, fontWeight: 700, color: V.amberSoft }}>
+                              {fmtBRL(proj!.receitaPotencial)}/mês
+                            </div>
+                            <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>
+                              com o plano ({proj!.influenciaMeta}%)
+                            </div>
+                          </div>
+                        </div>
+                        {proj!.clientesGap > 0 && (
+                          <div style={{ fontSize: 12, color: V.mist, textAlign: "center", marginTop: 6 }}>
+                            +{proj!.clientesGap} cliente{proj!.clientesGap !== 1 ? 's' : ''}/mês
+                            {' '}via buscas ativas · {fmtBRL(proj!.gapCaptura)} incremental
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
-                )}
-              </div>
+                );
 
-              {/* CAMADA 2 — Mercado alcançável */}
-              <div style={{ marginBottom: 16, paddingBottom: 16,
-                borderBottom: `1px solid ${V.slate}` }}>
-                <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
-                  letterSpacing: "0.05em", textTransform: "uppercase" as const, marginBottom: 8 }}>
-                  Mercado alcançável · {audienciaLabel} no raio de {results.audiencia?.raioKm || 3}km
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between",
-                  alignItems: "center" }}>
-                  <div>
-                    <span style={{ fontSize: 22, fontWeight: 700, color: V.teal }}>
-                      +{(proj!.familiasGap ?? 0).toLocaleString('pt-BR')}
-                    </span>
-                    <span style={{ fontSize: 12, color: V.ash, marginLeft: 6 }}>
-                      {audienciaLabel} adicionais com o plano
-                    </span>
+                const camada2 = (
+                  <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: `1px solid ${V.slate}` }}>
+                    <div style={{ fontFamily: V.mono, fontSize: 9, color: destacarFamilias ? V.teal : V.ash,
+                      letterSpacing: "0.05em", textTransform: "uppercase" as const, marginBottom: 8 }}>
+                      Mercado alcançável · {audienciaLabel} no raio de {results.audiencia?.raioKm || 3}km
+                    </div>
+                    {destacarFamilias ? (
+                      <>
+                        <div style={{ marginBottom: 6 }}>
+                          <span style={{ fontSize: 32, fontWeight: 700, color: V.teal }}>
+                            +{(proj!.familiasGap ?? 0).toLocaleString('pt-BR')}
+                          </span>
+                          <span style={{ fontSize: 13, color: V.mist, marginLeft: 8 }}>
+                            {audienciaLabel} adicionais
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 12, color: V.ash, marginBottom: 6 }}>
+                          pessoas adicionais que passam a considerar você com o plano
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <span style={{ fontSize: 22, fontWeight: 700, color: V.teal }}>
+                            +{(proj!.familiasGap ?? 0).toLocaleString('pt-BR')}
+                          </span>
+                          <span style={{ fontSize: 12, color: V.ash, marginLeft: 6 }}>
+                            {audienciaLabel} adicionais com o plano
+                          </span>
+                        </div>
+                        <div style={{ textAlign: "right" as const, fontSize: 10, color: V.ash }}>
+                          <div>{(proj!.familiasAtual ?? 0).toLocaleString('pt-BR')} hoje</div>
+                          <div style={{ color: V.teal }}>{(proj!.familiasPotencial ?? 0).toLocaleString('pt-BR')} com plano</div>
+                        </div>
+                      </div>
+                    )}
+                    <div style={{ fontSize: 10, color: V.zinc, marginTop: destacarFamilias ? 0 : 6 }}>
+                      Mercado total no raio: {proj!.audienciaTarget.toLocaleString('pt-BR')} {audienciaLabel} ·
+                      potencial {fmtBRL(proj!.mercadoTotal)}/mês
+                    </div>
                   </div>
-                  <div style={{ textAlign: "right" as const, fontSize: 10, color: V.ash }}>
-                    <div>{(proj!.familiasAtual ?? 0).toLocaleString('pt-BR')} hoje</div>
-                    <div style={{ color: V.teal }}>{(proj!.familiasPotencial ?? 0).toLocaleString('pt-BR')} com plano</div>
-                  </div>
-                </div>
-                <div style={{ fontSize: 10, color: V.zinc, marginTop: 6 }}>
-                  Mercado total no raio: {proj!.audienciaTarget.toLocaleString('pt-BR')} {audienciaLabel} ·
-                  potencial {fmtBRL(proj!.mercadoTotal)}/mês
-                </div>
-              </div>
+                );
+
+                return destacarFamilias ? <>{camada2}{camada1}</> : <>{camada1}{camada2}</>;
+              })()}
 
               {/* CAMADA 3 — Risco competitivo */}
               {proj!.posicaoLider && proj!.nomeLider && (
