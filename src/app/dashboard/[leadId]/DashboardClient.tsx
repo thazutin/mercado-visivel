@@ -451,6 +451,96 @@ function ProjecaoCard({ projecao }: { projecao: any }) {
   if (!projecao) return null;
   const gapCaptura = projecao.gapCaptura ?? projecao.gapMensal ?? 0;
   if (gapCaptura <= 0 && projecao.mercadoTotal <= 0) return null;
+
+  const gapPequeno = (projecao.clientesGap || 0) === 0 || (projecao.gapCaptura || 0) < 500;
+  const destacarFamilias = gapPequeno && (projecao.familiasGap || 0) > 0;
+
+  const camada1 = (
+    <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid #3A3A40" }}>
+      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
+        letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 8 }}>
+        Captura imediata · buscas ativas no seu raio
+      </div>
+      {destacarFamilias ? (
+        <div style={{ fontSize: 12, color: "#9E9EA8" }}>
+          Via buscas ativas: {fmtBRL(projecao.receitaAtual)}/mês hoje → {fmtBRL(projecao.receitaPotencial)}/mês com plano
+        </div>
+      ) : (
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+            <div style={{ background: "#232326", borderRadius: 8, padding: "10px 12px" }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: "#C8C8D0" }}>
+                {fmtBRL(projecao.receitaAtual)}/mês
+              </div>
+              <div style={{ fontSize: 10, color: "#6E6E78", marginTop: 2 }}>
+                você compete hoje ({projecao.influenciaAtual}%)
+              </div>
+            </div>
+            <div style={{ background: "#232326", borderRadius: 8, padding: "10px 12px",
+              border: "1px solid rgba(207,133,35,0.3)" }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: "#E6A445" }}>
+                {fmtBRL(projecao.receitaPotencial)}/mês
+              </div>
+              <div style={{ fontSize: 10, color: "#6E6E78", marginTop: 2 }}>
+                com o plano ({projecao.influenciaMeta}%)
+              </div>
+            </div>
+          </div>
+          {(projecao.clientesGap ?? 0) > 0 && (
+            <div style={{ fontSize: 12, color: "#C8C8D0", textAlign: "center" }}>
+              +{projecao.clientesGap} cliente{projecao.clientesGap !== 1 ? 's' : ''}/mês
+              via buscas ativas · {fmtBRL(gapCaptura)} incremental
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+
+  const camada2 = projecao.audienciaTarget > 0 ? (
+    <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid #3A3A40" }}>
+      <div style={{ fontFamily: V.mono, fontSize: 9,
+        color: destacarFamilias ? "#2D9B83" : V.ash,
+        letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 8 }}>
+        Mercado alcançável
+      </div>
+      {destacarFamilias ? (
+        <>
+          <div style={{ marginBottom: 6 }}>
+            <span style={{ fontSize: 32, fontWeight: 700, color: "#2D9B83" }}>
+              +{(projecao.familiasGap ?? 0).toLocaleString('pt-BR')}
+            </span>
+            <span style={{ fontSize: 13, color: "#C8C8D0", marginLeft: 8 }}>
+              pessoas adicionais
+            </span>
+          </div>
+          <div style={{ fontSize: 12, color: "#9E9EA8", marginBottom: 6 }}>
+            pessoas adicionais que passam a considerar você com o plano
+          </div>
+        </>
+      ) : (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <span style={{ fontSize: 22, fontWeight: 700, color: "#2D9B83" }}>
+              +{(projecao.familiasGap ?? 0).toLocaleString('pt-BR')}
+            </span>
+            <span style={{ fontSize: 12, color: V.ash, marginLeft: 6 }}>
+              pessoas adicionais com o plano
+            </span>
+          </div>
+          <div style={{ textAlign: "right", fontSize: 10, color: V.ash }}>
+            <div>{(projecao.familiasAtual ?? 0).toLocaleString('pt-BR')} hoje</div>
+            <div style={{ color: "#2D9B83" }}>{(projecao.familiasPotencial ?? 0).toLocaleString('pt-BR')} com plano</div>
+          </div>
+        </div>
+      )}
+      <div style={{ fontSize: 10, color: "#6E6E78", marginTop: destacarFamilias ? 0 : 6 }}>
+        Mercado total: {projecao.audienciaTarget.toLocaleString('pt-BR')} pessoas ·
+        potencial {fmtBRL(projecao.mercadoTotal)}/mês
+      </div>
+    </div>
+  ) : null;
+
   return (
     <div style={{ background: V.night, borderRadius: 14, padding: "20px", marginBottom: 16 }}>
       <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em",
@@ -458,64 +548,7 @@ function ProjecaoCard({ projecao }: { projecao: any }) {
         O que está em jogo
       </div>
 
-      <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid #3A3A40" }}>
-        <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
-          letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 8 }}>
-          Captura imediata · buscas ativas no seu raio
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
-          <div style={{ background: "#232326", borderRadius: 8, padding: "10px 12px" }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: "#C8C8D0" }}>
-              {fmtBRL(projecao.receitaAtual)}/mês
-            </div>
-            <div style={{ fontSize: 10, color: "#6E6E78", marginTop: 2 }}>
-              você compete hoje ({projecao.influenciaAtual}%)
-            </div>
-          </div>
-          <div style={{ background: "#232326", borderRadius: 8, padding: "10px 12px",
-            border: "1px solid rgba(207,133,35,0.3)" }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: "#E6A445" }}>
-              {fmtBRL(projecao.receitaPotencial)}/mês
-            </div>
-            <div style={{ fontSize: 10, color: "#6E6E78", marginTop: 2 }}>
-              com o plano ({projecao.influenciaMeta}%)
-            </div>
-          </div>
-        </div>
-        {(projecao.clientesGap ?? 0) > 0 && (
-          <div style={{ fontSize: 12, color: "#C8C8D0", textAlign: "center" }}>
-            +{projecao.clientesGap} cliente{projecao.clientesGap !== 1 ? 's' : ''}/mês
-            via buscas ativas · {fmtBRL(gapCaptura)} incremental
-          </div>
-        )}
-      </div>
-
-      {projecao.audienciaTarget > 0 && (
-        <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid #3A3A40" }}>
-          <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
-            letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 8 }}>
-            Mercado alcançável
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <span style={{ fontSize: 22, fontWeight: 700, color: "#2D9B83" }}>
-                +{(projecao.familiasGap ?? 0).toLocaleString('pt-BR')}
-              </span>
-              <span style={{ fontSize: 12, color: V.ash, marginLeft: 6 }}>
-                pessoas adicionais com o plano
-              </span>
-            </div>
-            <div style={{ textAlign: "right", fontSize: 10, color: V.ash }}>
-              <div>{(projecao.familiasAtual ?? 0).toLocaleString('pt-BR')} hoje</div>
-              <div style={{ color: "#2D9B83" }}>{(projecao.familiasPotencial ?? 0).toLocaleString('pt-BR')} com plano</div>
-            </div>
-          </div>
-          <div style={{ fontSize: 10, color: "#6E6E78", marginTop: 6 }}>
-            Mercado total: {projecao.audienciaTarget.toLocaleString('pt-BR')} pessoas ·
-            potencial {fmtBRL(projecao.mercadoTotal)}/mês
-          </div>
-        </div>
-      )}
+      {destacarFamilias ? <>{camada2}{camada1}</> : <>{camada1}{camada2}</>}
 
       {projecao.posicaoLider && projecao.nomeLider && (
         <div style={{ marginBottom: 14 }}>

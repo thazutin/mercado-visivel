@@ -20,7 +20,7 @@ type TabKey = "resultado" | "diagnostico" | "checklist" | "conteudos";
 const TABS: { key: TabKey; label: string; locked: false | 1 | 2 }[] = [
   { key: "resultado", label: "Diagnóstico inicial", locked: false },
   { key: "diagnostico", label: "Diagnóstico completo", locked: 1 },
-  { key: "checklist", label: "Plano de Ação", locked: 1 },
+  { key: "checklist", label: "Itens Estruturantes", locked: 1 },
   { key: "conteudos", label: "Conteúdos semanais", locked: 2 },
 ];
 
