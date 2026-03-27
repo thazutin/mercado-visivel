@@ -351,7 +351,12 @@ function buildDisplayData(result: any) {
       hasAds: serpPositions.some((sp: any) => sp.serpFeatures?.includes("ads")),
     },
     aiVisibility: result.aiVisibility || null,
-    audiencia: result.audiencia || null,
+    audiencia: result.audiencia ? {
+      ...result.audiencia,
+      benchmarkNacionalCompetidores: result.audiencia.benchmarkNacionalCompetidores
+        || (result as any).precomputedAudiencia?.benchmarkNacionalCompetidores
+        || null,
+    } : null,
     competitionIndex: result.competitionIndex || null,
     clientType: result.clientType || 'b2c',
     volumeGeo: result.volumeGeo || null,

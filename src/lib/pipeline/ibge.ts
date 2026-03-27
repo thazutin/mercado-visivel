@@ -664,10 +664,16 @@ export async function fetchAudienciaEstimada(
         temperature: 0,
         messages: [{
           role: 'user',
-          content: `Para o segmento "${businessCategory || 'negócio'}" no Brasil, estime quantos players digitais ativos competem nacionalmente (empresas com site + presença digital).
+          content: `Para o segmento "${businessCategory || 'negócio'}" no Brasil, estime quantas empresas competem digitalmente de forma nacional (têm site ativo, presença no Google, investem em marketing digital).
 
-Responda APENAS em JSON:
-{"totalCompetidores": 200, "descricao": "mercado com muitos players digitais estabelecidos"}`,
+Considere:
+- Agências, consultorias e serviços digitais B2B: geralmente 500-2000 players
+- Treinamentos corporativos, RH, tecnologia: geralmente 300-1000 players
+- Indústria, distribuição, logística: geralmente 200-800 players
+- Nichos muito específicos: geralmente 100-400 players
+
+Responda APENAS em JSON sem explicação:
+{"totalCompetidores": 500, "descricao": "descrição curta do mercado"}`,
         }],
       });
       const text = response.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');

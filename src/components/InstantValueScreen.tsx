@@ -190,6 +190,8 @@ export default function InstantValueScreen({ product, region, results, onCheckou
   const hasCi = ci && (ci.totalSearchVolume > 0 || ci.totalCompetitors > 0);
   const isB2B = results.clientType === 'b2b';
   const isB2G = results.clientType === 'b2g';
+  const isNacional = /brasil|nacional/i.test(results.audiencia?.municipioNome || '');
+  const isB2BNacional = isB2B && isNacional;
   const audienciaLabel = isB2G ? 'órgãos públicos potenciais' : isB2B ? 'empresas no seu mercado' : 'pessoas no seu mercado';
   const audienciaUnit = isB2G ? 'órgãos' : isB2B ? 'empresas' : 'pessoas';
 
@@ -362,12 +364,12 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               }}>
                 {results.influencePercent}%
               </div>
-              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>é sua posição competitiva no mercado local</p>
+              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>{isB2BNacional ? "é sua posição competitiva no mercado digital nacional" : "é sua posição competitiva no mercado local"}</p>
             </div>
           ) : (
             <div style={{ background: V.night, borderRadius: "14px 14px 0 0", padding: "28px 18px", textAlign: "center", border: `1px solid ${V.slate}`, borderBottom: "none" }}>
               <div style={{ fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, color: V.coral, letterSpacing: "-0.03em", lineHeight: 1 }}>0%</div>
-              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>é sua posição competitiva no mercado local</p>
+              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>{isB2BNacional ? "é sua posição competitiva no mercado digital nacional" : "é sua posição competitiva no mercado local"}</p>
               <p style={{ fontSize: 11, color: V.coral, margin: "4px 0 0" }}>Invisível no mercado</p>
             </div>
           )}
@@ -375,7 +377,9 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           {/* Context */}
           <div style={{ background: results.influencePercent === 0 ? V.coralWash : V.amberWash, padding: "14px 18px", border: `1px solid ${V.fog}`, borderTop: "none", borderRadius: "0 0 14px 14px" }}>
             <p style={{ fontSize: 14, color: V.night, margin: 0, lineHeight: 1.6 }}>
-              {results.influencePercent === 0
+              {isB2BNacional
+                ? `${results.influencePercent}% da atenção digital no mercado nacional de ${product}. Em um mercado com centenas de players ativos, os itens estruturantes mostram como aumentar essa posição.`
+                : results.influencePercent === 0
                 ? `Seu negócio não está na disputa. Quando alguém decide contratar ${product} em ${shortRegion}, os concorrentes aparecem — você não.`
                 : results.influencePercent < 40
                 ? `${100 - results.influencePercent}% das decisões de compra ainda vão para concorrentes. Os itens estruturantes mostram o que muda isso.`

@@ -387,15 +387,22 @@ function diagnosisEmailHtml(opts: {
     || (projecaoFinanceira?.gapCaptura || 0) < 500;
   const destacarFamilias = gapPequeno && (projecaoFinanceira?.familiasGap || 0) > 0;
 
+  const isNacional = /brasil|nacional/i.test(shortRegion || '');
+  const isB2BNacional = isB2B && isNacional;
+
   // Dynamic headline based on influence
-  const headline = influencePercent === 0
+  const headline = isB2BNacional
+    ? `Você disputa ${influencePercent}% da atenção digital no mercado nacional de ${product}.`
+    : influencePercent === 0
     ? `Seu negócio não aparece para nenhum cliente em potencial em ${shortRegion}.`
     : influencePercent < 20
     ? `Você disputa por apenas ${influencePercent}% das decisões de compra em ${shortRegion}.`
     : `Você já disputa ${influencePercent}% do mercado em ${shortRegion} — mas pode mais.`;
 
   // Dynamic insight
-  const insight = influencePercent === 0
+  const insight = isB2BNacional
+    ? `No mercado nacional de ${product}, centenas de empresas competem pela mesma atenção. Com ${influencePercent}% de posição competitiva digital, há espaço real para crescer — os itens estruturantes mostram por onde começar.`
+    : influencePercent === 0
     ? `Quando alguém em ${shortRegion} decide contratar ${product}, seu negócio não está na disputa. Os concorrentes capturam esses clientes sem que você saiba.`
     : influencePercent < 20
     ? `A cada 100 decisões de compra de ${product} em ${shortRegion}, você disputa apenas ${influencePercent}. As outras ${100 - influencePercent} vão para concorrentes — não porque são melhores, porque estão mais bem posicionados.`
