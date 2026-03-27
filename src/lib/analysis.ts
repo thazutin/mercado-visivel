@@ -121,24 +121,35 @@ function extractCityFromAddressString(region: string): string {
 }
 
 async function extractCity(region: string): Promise<string> {
+  // Early return para diagnósticos nacionais
+  if (/^brasil/i.test(region.trim()) || region.trim().toLowerCase() === 'brasil (nacional)') {
+    return 'Brasil';
+  }
+
   try {
     const claude = getClaudeClient();
     const res = await claude.createMessage({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 50,
+      max_tokens: 20,
+      temperature: 0,
+      system: "Você extrai nomes de municípios brasileiros. Responda APENAS com o nome do município, sem pontuação, sem explicação. Exemplos: 'São Paulo', 'Mauá', 'Belo Horizonte'. Máximo 3 palavras.",
       messages: [{
         role: 'user',
-        content: `Extraia apenas o nome do MUNICÍPIO (cidade) desta string de endereço brasileiro. Ignore nomes de ruas/bairros. Responda somente com o nome da cidade. Exemplo: "R. Jundiaí, 407 - Matriz, Mauá - SP" → "Mauá", "Av. Paulista, 1000 - Bela Vista, São Paulo - SP" → "São Paulo". Região: ${region}`,
+        content: `Município desta string de endereço: "${region}"`,
       }],
     });
     const text = (res.content as any[]).filter((c: any) => c.type === 'text').map((c: any) => c.text).join('').trim();
-    if (text) {
-      console.log(`[geocode] município resolvido (Claude Haiku): ${text}`);
-      return text;
+
+    // Validação: resposta inválida se muito longa ou contém padrões conversacionais
+    const isInvalid = !text || text.length > 50 || /[!?]|Pronto|Envie|endereço|extraia/i.test(text);
+    if (isInvalid) {
+      const fallback = extractCityFromAddressString(region);
+      console.warn(`[geocode] Claude retornou resposta inválida ("${(text || '').slice(0, 40)}") — usando fallback: "${fallback}"`);
+      return fallback;
     }
-    const fallback = extractCityFromAddressString(region);
-    console.log(`[geocode] município resolvido (fallback regex): ${fallback}`);
-    return fallback;
+
+    console.log(`[geocode] município resolvido (Claude Haiku): ${text}`);
+    return text;
   } catch {
     const fallback = extractCityFromAddressString(region);
     console.log(`[geocode] município resolvido (fallback regex, após erro): ${fallback}`);
