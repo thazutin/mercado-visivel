@@ -383,6 +383,10 @@ function diagnosisEmailHtml(opts: {
   const influenceColor = influencePercent === 0 ? "#D9534F" : influencePercent < 20 ? "#CF8523" : "#2D9B83";
   const formattedVolume = searchVolume ? searchVolume.toLocaleString("pt-BR") : null;
 
+  const gapPequeno = (projecaoFinanceira?.clientesGap || 0) === 0
+    || (projecaoFinanceira?.gapCaptura || 0) < 500;
+  const destacarFamilias = gapPequeno && (projecaoFinanceira?.familiasGap || 0) > 0;
+
   // Dynamic headline based on influence
   const headline = influencePercent === 0
     ? `Seu negócio não aparece para nenhum cliente em potencial em ${shortRegion}.`
@@ -420,11 +424,27 @@ function diagnosisEmailHtml(opts: {
       </div>
       ` : ""}
     </div>
-    ${projecaoFinanceira && (projecaoFinanceira.gapCaptura ?? projecaoFinanceira.gapMensal ?? 0) >= 0 ? `
+    ${projecaoFinanceira && (
+      (projecaoFinanceira.gapCaptura || 0) > 0 ||
+      (projecaoFinanceira.familiasGap || 0) > 0
+    ) ? `
     <div style="background:#161618;border-radius:12px;padding:20px;margin:0 0 24px;">
       <div style="font-size:10px;color:#6E6E78;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:14px;font-family:monospace;">
         O que está em jogo
       </div>
+      ${destacarFamilias ? `
+      <div style="text-align:center;padding:12px 0;">
+        <div style="font-size:32px;font-weight:700;color:#2D9B83;">
+          +${(projecaoFinanceira.familiasGap ?? 0).toLocaleString('pt-BR')}
+        </div>
+        <div style="font-size:12px;color:#9E9EA8;margin-top:4px;">
+          ${isB2B ? 'empresas' : 'pessoas'} adicionais que passam a considerar você com o plano
+        </div>
+      </div>
+      <div style="text-align:center;font-size:11px;color:#6E6E78;padding:8px 0;border-top:1px solid #3A3A40;">
+        Via buscas ativas: R$${Math.round((projecaoFinanceira.receitaAtual || 0) / 1000)}k/mês hoje → R$${Math.round((projecaoFinanceira.receitaPotencial || 0) / 1000)}k/mês com o plano
+      </div>
+      ` : `
       <div style="display:flex;gap:10px;margin-bottom:12px;">
         <div style="flex:1;background:#232326;border-radius:8px;padding:12px;text-align:center;">
           <div style="font-size:20px;font-weight:700;color:#C8C8D0;">
@@ -443,10 +463,7 @@ function diagnosisEmailHtml(opts: {
       <div style="text-align:center;font-size:12px;color:#C8C8D0;margin-bottom:10px;">
         +${projecaoFinanceira.clientesGap} cliente${projecaoFinanceira.clientesGap !== 1 ? 's' : ''}/mês via buscas ativas
       </div>` : ''}
-      ${(projecaoFinanceira.familiasGap ?? 0) > 0 ? `
-      <div style="text-align:center;font-size:12px;color:#2D9B83;">
-        +${(projecaoFinanceira.familiasGap ?? 0).toLocaleString('pt-BR')} ${isB2B ? 'empresas' : 'pessoas'} adicionais passam a considerar você
-      </div>` : ''}
+      `}
       <div style="margin-top:10px;padding-top:10px;border-top:1px solid #3A3A40;font-size:10px;color:#6E6E78;text-align:center;">
         Ticket estimado: R$${projecaoFinanceira.ticketMedio} · Conversão: ${(projecaoFinanceira.taxaConversao * 100).toFixed(0)}%
       </div>
@@ -454,7 +471,7 @@ function diagnosisEmailHtml(opts: {
     ` : ''}
     <div style="background:#FEFAF3;border-left:3px solid #CF8523;padding:14px 16px;border-radius:0 8px 8px 0;margin:0 0 24px;">
       <p style="font-size:13px;color:#3A3A40;margin:0;line-height:1.6;">
-        Seu diagnóstico está pronto — veja <strong>onde você está perdendo clientes</strong> e a prévia do seu plano de ação.
+        Ver onde você está perdendo clientes e os <strong>primeiros passos</strong>.
       </p>
     </div>
     <div style="text-align:center;margin:0 0 28px;">
