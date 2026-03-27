@@ -1255,14 +1255,27 @@ Responda APENAS em JSON, sem markdown:
           mapsCompetitors[0])
       : null;
 
-    const posicaoLider = melhorConcorrente
-      ? Math.min(80, Math.round((melhorConcorrente.reviewCount || 0) /
-          Math.max(step4.influence?.rawGoogle?.mapsPresence?.reviewCount || 1, 1) * influencePercent * 1.5))
-      : null;
+    // Estima posição competitiva do líder baseada em avaliações relativas
+    // Lógica: se concorrente tem mais avaliações, provavelmente tem mais visibilidade
+    const myReviews = step4.influence?.rawGoogle?.mapsPresence?.reviewCount || 0;
+    const posicaoLider = melhorConcorrente && (melhorConcorrente.reviewCount || 0) > myReviews
+      ? Math.min(80, Math.round(
+          influencePercent * ((melhorConcorrente.reviewCount || 1) / Math.max(myReviews, 1)) * 0.8
+        ))
+      : null; // null quando concorrente não é claramente maior
 
     const receitaLider = posicaoLider
       ? Math.round(buscasNoRaio * taxaConversao * ticketMedio * (posicaoLider / 100))
       : null;
+
+    // Só mostrar risco quando líder disputa MAIS que você
+    const nomeLider = posicaoLider && receitaLider && receitaLider > receitaAtual
+      ? melhorConcorrente?.name || null
+      : null;
+
+    // Resetar posicaoLider e receitaLider se não há risco real
+    const posicaoLiderFinal = nomeLider ? posicaoLider : null;
+    const receitaLiderFinal = nomeLider ? receitaLider : null;
 
     projecaoFinanceira = {
       // Camada 1 — Captura
@@ -1280,9 +1293,9 @@ Responda APENAS em JSON, sem markdown:
       familiasGap,
       mercadoTotal: Math.round(audienciaTarget * taxaConversao * ticketMedio),
       // Camada 3 — Risco competitivo
-      posicaoLider,
-      receitaLider,
-      nomeLider: melhorConcorrente?.name || null,
+      posicaoLider: posicaoLiderFinal,
+      receitaLider: receitaLiderFinal,
+      nomeLider,
       // Meta e parâmetros
       influenciaAtual: Math.round(influencePercent),
       influenciaMeta: Math.round(influenciaMeta),

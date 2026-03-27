@@ -305,7 +305,16 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 fontSize: 10, color: V.ash, lineHeight: 1.6 }}>
                 Ticket estimado: {fmtBRL(proj!.ticketMedio)} · Conversão: {(proj!.taxaConversao * 100).toFixed(0)}%
                 {proj!.ticketRationale && (
-                  <div style={{ marginTop: 4, fontStyle: "italic" }}>{proj!.ticketRationale}</div>
+                  <details style={{ marginTop: 4 }}>
+                    <summary style={{ fontSize: 10, color: V.ash, cursor: "pointer",
+                      listStyle: "none", display: "flex", alignItems: "center", gap: 4 }}>
+                      <span>▸ Como calculamos</span>
+                    </summary>
+                    <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0",
+                      fontStyle: "italic", lineHeight: 1.5 }}>
+                      {proj!.ticketRationale}
+                    </p>
+                  </details>
                 )}
               </div>
             </div>
@@ -337,12 +346,12 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           <div style={{ background: results.influencePercent === 0 ? V.coralWash : V.amberWash, padding: "14px 18px", border: `1px solid ${V.fog}`, borderTop: "none", borderRadius: "0 0 14px 14px" }}>
             <p style={{ fontSize: 14, color: V.night, margin: 0, lineHeight: 1.6 }}>
               {results.influencePercent === 0
-                ? `Quando alguém busca ${product} em ${shortRegion}, você não aparece. Enquanto isso, seus concorrentes recebem esses clientes.`
+                ? `Quando alguém em ${shortRegion} decide contratar ${product}, seu negócio não está na disputa. Os concorrentes capturam esses clientes sem que você saiba.`
                 : hasLevers
-                ? `Você não aparece para ${100 - results.influencePercent}% dos potenciais compradores. ${levers.length} ações identificadas para mudar isso — veja abaixo em "Posição Competitiva".`
+                ? `Você disputa ${results.influencePercent}% das decisões de compra em ${shortRegion}. ${levers.length} ações identificadas para aumentar essa posição — veja em "Posição Competitiva".`
                 : results.influencePercent < 40
-                ? `Sua posição competitiva cobre ${results.influencePercent}% do mercado. Há espaço para crescer — o plano de ação mostra o que fazer agora.`
-                : `Posição competitiva de ${results.influencePercent}% — acima da média local. O plano de ação mostra como manter essa vantagem.`}
+                ? `Você disputa ${results.influencePercent}% das decisões de compra em ${shortRegion}. Os itens estruturantes mostram o que fazer primeiro.`
+                : `Você disputa ${results.influencePercent}% das decisões de compra em ${shortRegion} — posição forte. Os itens estruturantes mostram como manter e ampliar.`}
             </p>
           </div>
         </div>
@@ -946,7 +955,12 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           </div>
           <div style={{ fontFamily: V.display, fontSize: 32, fontWeight: 700, marginBottom: 16 }}>R$ 497</div>
 
-          {["Diagnóstico completo por canal (Google, Instagram, Maps, IA)", "Plano de ação com as ações de maior impacto", "Análise de sazonalidade e contexto do seu mercado", "Amostra de conteúdos prontos para publicar"].map((d, i) => (
+          {[
+            "Diagnóstico completo por canal (Google, Instagram, Maps, IA)",
+            "Itens estruturantes — o básico que precisa estar no lugar",
+            "Relatório setorial do seu mercado com dados reais",
+            "Posts prontos para publicar conectados ao contexto da semana",
+          ].map((d, i) => (
             <div key={i} style={{ display: "flex", gap: 10, marginBottom: 8, alignItems: "center" }}>
               <span style={{ color: V.amber, fontSize: 12 }}>✓</span>
               <span style={{ fontSize: 13, color: V.mist }}>{d}</span>
