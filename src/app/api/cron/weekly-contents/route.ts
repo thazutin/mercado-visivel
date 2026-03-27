@@ -7,8 +7,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { triggerContentGeneration } from "@/lib/generateContents";
+import { triggerContentGenerationWithContext } from "@/lib/generateContents";
 import { notifyWeeklyContents } from "@/lib/notify";
+import { generateRelatorioSetorial } from "@/lib/pipeline/relatorio-setorial";
 
 function getSupabase() {
   return createClient(
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
   // ─── 1. Get all active subscribers ───
   const { data: subscribers, error } = await supabase
     .from("leads")
-    .select("id, email, name")
+    .select("id, email, name, product, region, client_type")
     .eq("subscription_status", "active");
 
   if (error) {
@@ -56,15 +57,54 @@ export async function GET(req: NextRequest) {
   // ─── 2. Process each lead sequentially ───
   for (const lead of subscribers) {
     try {
-      // Generate new contents
-      await triggerContentGeneration(lead.id);
+      // 1. Gerar relatório setorial da semana
+      let relatorioSetorial = null;
+      try {
+        console.log(`[Cron/Contents] Gerando relatório setorial para lead ${lead.id}...`);
+        relatorioSetorial = await generateRelatorioSetorial(
+          lead.product || '',
+          lead.region || '',
+          lead.client_type || 'b2c',
+        );
+        console.log(`[Cron/Contents] Relatório setorial OK: "${relatorioSetorial?.destaque?.slice(0, 60)}"`);
+
+        // Salvar relatório setorial no plano (atualiza semanalmente)
+        const supabase = getSupabase();
+        const { data: existingPlan } = await supabase
+          .from("plans")
+          .select("id, content")
+          .eq("lead_id", lead.id)
+          .eq("status", "ready")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (existingPlan) {
+          await supabase
+            .from("plans")
+            .update({
+              content: {
+                ...existingPlan.content,
+                relatorioSetorial,
+                relatorioSetorialUpdatedAt: new Date().toISOString(),
+              }
+            })
+            .eq("id", existingPlan.id);
+          console.log(`[Cron/Contents] Relatório setorial salvo no plano ${existingPlan.id}`);
+        }
+      } catch (err) {
+        console.error(`[Cron/Contents] Relatório setorial falhou (non-fatal):`, (err as Error).message);
+      }
+
+      // 2. Gerar conteúdos com contexto setorial
+      await triggerContentGenerationWithContext(lead.id, relatorioSetorial);
       console.log(`[Cron/Contents] Contents generated for lead ${lead.id}`);
 
-      // Notify by email
+      // 3. Notificar
       await notifyWeeklyContents({
         leadId: lead.id,
         email: lead.email,
-        name: lead.name || "",
+        name: lead.name || '',
       });
       console.log(`[Cron/Contents] Email sent to ${lead.email}`);
 

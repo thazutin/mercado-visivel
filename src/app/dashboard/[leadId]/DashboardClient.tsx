@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import InstantValueScreen from "@/components/InstantValueScreen";
-import { ChecklistTab } from "@/components/dashboard/ChecklistTab";
 import { LockedTab } from "@/components/dashboard/LockedTab";
 
 function fmtBRL(n: number): string {
@@ -16,11 +15,12 @@ const V = {
   zinc: "#6E6E78", ash: "#9E9EA8", fog: "#EAEAEE",
   cloud: "#F4F4F7", white: "#FEFEFF", amber: "#CF8523",
   teal: "#2D9B83", coral: "#D9534F", coralWash: "rgba(217,83,79,0.08)",
+  mist: "#C8C8D0", amberWash: "rgba(207,133,35,0.08)",
   display: "'Satoshi', 'General Sans', -apple-system, sans-serif",
   mono: "'JetBrains Mono', 'SF Mono', monospace",
 };
 
-type TabKey = "diagnostico" | "plano";
+type TabKey = "diagnostico" | "estruturantes" | "semana";
 type Tier = "free" | "paid" | "subscriber";
 
 interface Props {
@@ -33,7 +33,8 @@ interface Props {
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "diagnostico", label: "Diagnóstico" },
-  { key: "plano", label: "Plano de Ação" },
+  { key: "estruturantes", label: "Itens Estruturantes" },
+  { key: "semana", label: "Esta Semana" },
 ];
 
 // ─── Accordion Section ───────────────────────────────────────────────
@@ -117,6 +118,241 @@ function MacroContextBlock({ macroContext }: { macroContext: any }) {
       <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 4 }}>Contexto</div>
       <div style={{ fontSize: 14, fontWeight: 600, color: V.night, marginBottom: 8 }}>Cenário atual do mercado</div>
       <p style={{ fontSize: 13, color: isPlaceholder ? V.ash : V.zinc, margin: 0, lineHeight: 1.6 }}>{isPlaceholder ? placeholder : summary}</p>
+    </div>
+  );
+}
+
+// ─── Relatório Setorial ──────────────────────────────────────────────
+function RelatorioSetorialBlock({ relatorio }: { relatorio: any }) {
+  if (!relatorio || !relatorio.destaque) return null;
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ background: V.night, borderRadius: 12, padding: "16px 18px", marginBottom: 10 }}>
+        <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber,
+          letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 8 }}>
+          Contexto do mercado · {relatorio.data_ref || ''}
+        </div>
+        <p style={{ fontSize: 14, fontWeight: 600, color: V.white,
+          margin: "0 0 12px", lineHeight: 1.4 }}>
+          {relatorio.destaque}
+        </p>
+        {relatorio.oportunidade_da_semana && (
+          <div style={{ background: "rgba(207,133,35,0.12)", borderRadius: 8,
+            padding: "10px 12px", borderLeft: `3px solid ${V.amber}` }}>
+            <div style={{ fontSize: 10, fontWeight: 600, color: V.amber,
+              textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>
+              Oportunidade desta semana
+            </div>
+            <p style={{ fontSize: 13, color: V.mist, margin: 0, lineHeight: 1.5 }}>
+              {relatorio.oportunidade_da_semana}
+            </p>
+          </div>
+        )}
+      </div>
+      {relatorio.tendencias && relatorio.tendencias.length > 0 && (
+        <div>
+          {relatorio.tendencias.slice(0, 3).map((t: any, i: number) => (
+            <div key={i} style={{ background: V.white, borderRadius: 10,
+              border: `1px solid ${V.fog}`, padding: "12px 14px", marginBottom: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between",
+                alignItems: "center", marginBottom: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>
+                  {t.titulo}
+                </span>
+                <span style={{
+                  fontFamily: V.mono, fontSize: 9, padding: "2px 7px",
+                  borderRadius: 100, fontWeight: 600,
+                  background: t.relevancia === 'alta' ? "rgba(45,155,131,0.12)" : V.fog,
+                  color: t.relevancia === 'alta' ? V.teal : V.ash,
+                }}>
+                  {t.relevancia}
+                </span>
+              </div>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px", lineHeight: 1.5 }}>
+                {t.descricao}
+              </p>
+              {t.acao_sugerida && (
+                <p style={{ fontSize: 11, color: V.teal, margin: 0, fontWeight: 500 }}>
+                  → {t.acao_sugerida}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {relatorio.contexto_competitivo && (
+        <div style={{ background: V.cloud, borderRadius: 10, padding: "12px 14px",
+          border: `1px solid ${V.fog}` }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: V.zinc,
+            textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>
+            Contexto competitivo
+          </div>
+          <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
+            {relatorio.contexto_competitivo}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Itens Estruturantes Tab ─────────────────────────────────────────
+function ItensEstruturantesTab({ leadId, planReady, plan }: {
+  leadId: string; planReady: boolean; plan: any;
+}) {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/checklists?leadId=${leadId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.items) setItems(data.items);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [leadId]);
+
+  const toggleItem = async (itemId: string, completed: boolean) => {
+    await fetch('/api/checklists', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: itemId, completed }),
+    });
+    setItems(prev => prev.map(i => i.id === itemId ? { ...i, completed } : i));
+  };
+
+  if (!planReady) return <Spinner text="Gerando itens estruturantes..." />;
+  if (loading) return <Spinner text="Carregando..." />;
+
+  const summary = plan?.content?.itensEstrurantesSummary || '';
+  const dimColors: Record<string, string> = {
+    descoberta: V.teal,
+    credibilidade: V.amber,
+    presenca: '#8B5CF6',
+    reputacao: '#E1306C',
+  };
+  const dimLabels: Record<string, string> = {
+    descoberta: 'Descoberta',
+    credibilidade: 'Credibilidade',
+    presenca: 'Presença',
+    reputacao: 'Reputação',
+  };
+
+  const completed = items.filter(i => i.completed).length;
+  const total = items.length;
+
+  return (
+    <div>
+      {summary && (
+        <div style={{ background: V.amberWash, borderRadius: 10, padding: "12px 14px",
+          marginBottom: 16, borderLeft: `3px solid ${V.amber}` }}>
+          <p style={{ fontSize: 13, color: V.night, margin: 0, lineHeight: 1.5 }}>
+            {summary}
+          </p>
+        </div>
+      )}
+      {total > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between",
+            marginBottom: 6, fontSize: 12, color: V.zinc }}>
+            <span>{completed} de {total} itens concluídos</span>
+            <span style={{ fontWeight: 600, color: V.teal }}>
+              {Math.round((completed / total) * 100)}%
+            </span>
+          </div>
+          <div style={{ height: 6, background: V.fog, borderRadius: 3, overflow: "hidden" }}>
+            <div style={{
+              height: "100%", borderRadius: 3, background: V.teal,
+              width: `${Math.round((completed / total) * 100)}%`,
+              transition: "width 0.3s ease",
+            }} />
+          </div>
+        </div>
+      )}
+      {items.length === 0 ? (
+        <p style={{ fontSize: 13, color: V.ash, textAlign: "center", padding: "24px 0" }}>
+          Nenhum item estruturante gerado ainda.
+        </p>
+      ) : (
+        items.sort((a, b) => (a.order_index || 0) - (b.order_index || 0)).map((item: any) => {
+          const dimColor = dimColors[item.dimensao] || V.ash;
+          const dimLabel = dimLabels[item.dimensao] || item.dimensao;
+          return (
+            <div key={item.id} style={{
+              background: item.completed ? "rgba(45,155,131,0.04)" : V.white,
+              borderRadius: 12, border: `1px solid ${item.completed ? V.teal + '40' : V.fog}`,
+              padding: "14px 16px", marginBottom: 10,
+              opacity: item.completed ? 0.7 : 1,
+            }}>
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <button
+                  onClick={() => toggleItem(item.id, !item.completed)}
+                  style={{
+                    width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+                    border: `2px solid ${item.completed ? V.teal : V.fog}`,
+                    background: item.completed ? V.teal : V.white,
+                    cursor: "pointer", display: "flex", alignItems: "center",
+                    justifyContent: "center", marginTop: 1,
+                  }}
+                >
+                  {item.completed && (
+                    <span style={{ color: V.white, fontSize: 12, fontWeight: 700 }}>✓</span>
+                  )}
+                </button>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center",
+                    marginBottom: 6, flexWrap: "wrap" as const }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: V.night,
+                      textDecoration: item.completed ? "line-through" : "none" }}>
+                      {item.title}
+                    </span>
+                    <span style={{
+                      fontFamily: V.mono, fontSize: 9, padding: "2px 6px",
+                      borderRadius: 100, background: `${dimColor}15`, color: dimColor,
+                      fontWeight: 600,
+                    }}>
+                      {dimLabel}
+                    </span>
+                    <span style={{
+                      fontFamily: V.mono, fontSize: 9, padding: "2px 6px",
+                      borderRadius: 100, background: V.fog, color: V.ash,
+                    }}>
+                      {item.deadline || item.prazo}
+                    </span>
+                  </div>
+                  {item.description && (
+                    <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px",
+                      lineHeight: 1.5 }}>
+                      {item.description}
+                    </p>
+                  )}
+                  {item.action && !item.completed && (
+                    <div style={{ background: V.cloud, borderRadius: 8,
+                      padding: "8px 10px", marginBottom: 6 }}>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: V.zinc,
+                        textTransform: "uppercase", letterSpacing: "0.04em",
+                        marginBottom: 4 }}>
+                        Como fazer
+                      </div>
+                      <p style={{ fontSize: 12, color: V.night, margin: 0,
+                        lineHeight: 1.5 }}>
+                        {item.action}
+                      </p>
+                    </div>
+                  )}
+                  {item.verification && !item.completed && (
+                    <p style={{ fontSize: 11, color: V.teal, margin: 0,
+                      fontWeight: 500 }}>
+                      ✓ Verificar: {item.verification}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })
+      )}
     </div>
   );
 }
@@ -222,7 +458,6 @@ function ProjecaoCard({ projecao }: { projecao: any }) {
         O que está em jogo
       </div>
 
-      {/* CAMADA 1 — Captura imediata */}
       <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid #3A3A40" }}>
         <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
           letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 8 }}>
@@ -255,7 +490,6 @@ function ProjecaoCard({ projecao }: { projecao: any }) {
         )}
       </div>
 
-      {/* CAMADA 2 — Mercado alcançável */}
       {projecao.audienciaTarget > 0 && (
         <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid #3A3A40" }}>
           <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
@@ -283,7 +517,6 @@ function ProjecaoCard({ projecao }: { projecao: any }) {
         </div>
       )}
 
-      {/* CAMADA 3 — Risco competitivo */}
       {projecao.posicaoLider && projecao.nomeLider && (
         <div style={{ marginBottom: 14 }}>
           <div style={{ fontFamily: V.mono, fontSize: 9, color: "#E05252",
@@ -298,7 +531,6 @@ function ProjecaoCard({ projecao }: { projecao: any }) {
         </div>
       )}
 
-      {/* Contexto de cálculo */}
       <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid #3A3A40",
         fontSize: 10, color: V.ash, lineHeight: 1.6, textAlign: "center" }}>
         Ticket estimado: {fmtBRL(projecao.ticketMedio)} · Conversão: {(projecao.taxaConversao * 100).toFixed(0)}%
@@ -437,7 +669,7 @@ function ContentCard({ c, leadId }: { c: any; leadId: string }) {
   );
 }
 
-// ─── Contents Section (inline, replaces ContentsTab) ─────────────────
+// ─── Contents Section ────────────────────────────────────────────────
 function ContentsSection({ leadId, tier }: { leadId: string; tier: Tier }) {
   const [contents, setContents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -479,7 +711,6 @@ function ContentsSection({ leadId, tier }: { leadId: string; tier: Tier }) {
     return <p style={{ fontSize: 13, color: V.ash, textAlign: "center", padding: "24px 0" }}>Nenhum conteúdo gerado ainda.</p>;
   }
 
-  // For paid (non-subscriber), show week 1 + upsell
   if (tier === "paid") {
     return (
       <div>
@@ -489,8 +720,7 @@ function ContentsSection({ leadId, tier }: { leadId: string; tier: Tier }) {
         {contents.map((c: any) => <ContentCard key={c.id} c={c} leadId={leadId} />)}
         <div style={{
           background: "rgba(45,155,131,0.06)", border: "1px solid rgba(45,155,131,0.15)",
-          borderRadius: 12, padding: "18px 20px", marginTop: 8,
-          textAlign: "center",
+          borderRadius: 12, padding: "18px 20px", marginTop: 8, textAlign: "center",
         }}>
           <p style={{ fontSize: 14, fontWeight: 600, color: V.night, marginBottom: 4 }}>
             Próximos conteúdos disponíveis toda sexta-feira para assinantes
@@ -515,7 +745,6 @@ function ContentsSection({ leadId, tier }: { leadId: string; tier: Tier }) {
     );
   }
 
-  // Subscriber: group by created_at week (simplified: just show all)
   const nextFriday = new Date();
   nextFriday.setDate(nextFriday.getDate() + ((5 - nextFriday.getDay() + 7) % 7 || 7));
   const nextFridayStr = nextFriday.toLocaleDateString("pt-BR", { day: "numeric", month: "long" });
@@ -538,7 +767,6 @@ function ContentsSection({ leadId, tier }: { leadId: string; tier: Tier }) {
 // ═══════════════════════════════════════════════════════════════════════
 export default function DashboardClient({ lead, plan, diagnosis, tier, checklist }: Props) {
   const [tab, setTab] = useState<TabKey>("diagnostico");
-  const [expandedBlock, setExpandedBlock] = useState<string | null>(null);
   const [snapshots, setSnapshots] = useState<any[]>([]);
 
   useEffect(() => {
@@ -548,7 +776,6 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
       .catch(() => {});
   }, [lead.id]);
 
-  const blocks = plan?.content?.blocks || plan?.blocks || [];
   const planReady = lead.plan_status === "ready";
 
   return (
@@ -576,7 +803,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
             borderRadius: 12, padding: "14px 18px", marginBottom: 16,
             fontSize: 13, color: V.amber, fontWeight: 500, lineHeight: 1.5,
           }}>
-            ✓ Pagamento confirmado — diagnóstico completo e plano de ação ficam prontos em até 15 minutos.
+            ✓ Pagamento confirmado — diagnóstico completo e itens estruturantes ficam prontos em até 15 minutos.
           </div>
         )}
 
@@ -584,10 +811,10 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
         <div style={{ display: "flex", gap: 4, marginBottom: 20, position: "sticky", top: 0, zIndex: 10, background: V.cloud, padding: "12px 0", marginLeft: -4, marginRight: -4, paddingLeft: 4, paddingRight: 4 }}>
           {TABS.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)} style={{
-              flex: 1, padding: "10px", borderRadius: 8, border: "none", cursor: "pointer",
+              flex: 1, padding: "10px 4px", borderRadius: 8, border: "none", cursor: "pointer",
               background: tab === t.key ? V.night : V.white,
               color: tab === t.key ? V.white : V.zinc,
-              fontSize: 13, fontWeight: 500, transition: "all 0.15s",
+              fontSize: 12, fontWeight: 500, transition: "all 0.15s",
             }}>
               {t.label}
             </button>
@@ -597,7 +824,6 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
         {/* ═══ TAB: DIAGNÓSTICO ═══ */}
         {tab === "diagnostico" && (
           <div>
-            {/* 1.1 Diagnóstico Inicial */}
             <Section title="Diagnóstico inicial">
               {lead.diagnosis_display ? (
                 <InstantValueScreen
@@ -614,14 +840,11 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
               )}
             </Section>
 
-            {/* 1.2 Diagnóstico Completo — open if generating (spinner) */}
             <Section title="Diagnóstico completo" defaultOpen={tier !== "free" && !planReady}>
               {tier === "free" ? (
                 <LockedTab lockLevel={1} ctaLabel="Desbloquear por R$497" ctaUrl="#" leadId={lead.id} />
               ) : !planReady ? (
                 <Spinner text="Gerando diagnóstico completo..." />
-              ) : blocks.length === 0 ? (
-                <p style={{ fontSize: 13, color: V.ash }}>Nenhum bloco disponível.</p>
               ) : (
                 <div>
                   <MacroContextBlock macroContext={diagnosis?.macro_context} />
@@ -632,117 +855,42 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
                   />
                   <ProjecaoCard projecao={lead.diagnosis_display?.projecaoFinanceira} />
                   <LeversCard levers={lead.diagnosis_display?.influenceBreakdown?.levers || []} />
-                  {blocks.map((block: any, i: number) => {
-                    const isDemandBlock = block.id === "demand_map";
-                    const isExpanded = expandedBlock === block.id;
-                    return (
-                      <div key={block.id || i} style={{ background: V.cloud, borderRadius: 12, marginBottom: 10, overflow: "hidden" }}>
-                        <button onClick={() => setExpandedBlock(isExpanded ? null : block.id)} style={{
-                          width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center",
-                          padding: "14px 18px", border: "none", background: "transparent", cursor: "pointer", textAlign: "left",
-                        }}>
-                          <div>
-                            <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 3 }}>Bloco {i + 1}</div>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: V.night }}>{block.title}</div>
-                          </div>
-                          <span style={{ fontSize: 16, color: V.ash, transition: "transform 0.2s", transform: isExpanded ? "rotate(180deg)" : "rotate(0)" }}>▾</span>
-                        </button>
-                        {isExpanded && (
-                          <div style={{ padding: "0 18px 18px" }}>
-                            <div style={{ fontSize: 13, color: V.zinc, lineHeight: 1.8 }}
-                              dangerouslySetInnerHTML={{
-                                __html: (block.content || "")
-                                  .replace(/\n/g, "<br/>")
-                                  .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-                                  .replace(/## (.*?)(<br\/>)/g, "<h3 style='font-size:15px;font-weight:600;color:#161618;margin:14px 0 6px'>$1</h3>")
-                              }}
-                            />
-                            {isDemandBlock && (
-                              <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${V.fog}` }}>
-                                <SeasonalityBlock seasonality={diagnosis?.seasonality} />
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
                 </div>
               )}
             </Section>
           </div>
         )}
 
-        {/* ═══ TAB: PLANO DE AÇÃO ═══ */}
-        {tab === "plano" && (
+        {/* ═══ TAB: ITENS ESTRUTURANTES ═══ */}
+        {tab === "estruturantes" && (
           <div>
-            {/* 2.1 Itens estruturantes */}
-            <Section title="Itens estruturantes">
-              {tier === "free" ? (
-                <LockedTab lockLevel={1} ctaLabel="Desbloquear por R$497" ctaUrl="#" leadId={lead.id} />
-              ) : !planReady ? (
-                <Spinner text="Gerando plano de ação..." />
-              ) : (
-                <ChecklistTab leadId={lead.id} checklist={checklist} />
-              )}
-            </Section>
-
-            {/* 2.2 Plano 12 semanas */}
-            {tier !== "free" && planReady && (
-              <Section title="Plano 12 semanas">
-                {(() => {
-                  const weeklyPlan = plan?.content?.weeklyPlan || plan?.weeklyPlan || [];
-                  if (weeklyPlan.length === 0) return (
-                    <p style={{ fontSize: 13, color: V.ash }}>Plano semanal não disponível.</p>
-                  );
-                  const categoryColors: Record<string, string> = {
-                    presence: '#2D9B83', content: '#E1306C',
-                    authority: '#CF8523', engagement: '#8B5CF6',
-                  };
-                  return (
-                    <div>
-                      {weeklyPlan.map((week: any) => (
-                        <div key={week.week} style={{ padding: "14px 16px", marginBottom: 8,
-                          borderRadius: 10, background: V.cloud, border: `1px solid ${V.fog}` }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                              <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 700,
-                                color: V.white, background: V.night, width: 22, height: 22,
-                                borderRadius: "50%", display: "inline-flex", alignItems: "center",
-                                justifyContent: "center" }}>{week.week}</span>
-                              <span style={{ fontSize: 14, fontWeight: 600, color: V.night }}>{week.title}</span>
-                            </div>
-                            <span style={{ fontFamily: V.mono, fontSize: 9, padding: "2px 8px",
-                              borderRadius: 100, fontWeight: 600,
-                              background: `${categoryColors[week.category] || V.ash}15`,
-                              color: categoryColors[week.category] || V.ash }}>
-                              {week.category}
-                            </span>
-                          </div>
-                          <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 6px", lineHeight: 1.6 }}>
-                            {week.mainAction}
-                          </p>
-                          {week.kpi && (
-                            <p style={{ fontSize: 11, color: V.ash, margin: 0, fontFamily: V.mono }}>
-                              Meta: {week.kpi}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </Section>
+            {tier === "free" ? (
+              <LockedTab lockLevel={1} ctaLabel="Desbloquear por R$497" ctaUrl="#" leadId={lead.id} />
+            ) : (
+              <ItensEstruturantesTab
+                leadId={lead.id}
+                planReady={planReady}
+                plan={plan}
+              />
             )}
+          </div>
+        )}
 
-            {/* 2.3 Conteúdos semanais */}
-            <Section title="Conteúdos semanais">
-              {tier === "free" ? (
-                <LockedTab lockLevel={1} ctaLabel="Desbloqueie com o Diagnóstico Completo" ctaUrl="#" leadId={lead.id} />
-              ) : (
-                <ContentsSection leadId={lead.id} tier={tier} />
-              )}
-            </Section>
+        {/* ═══ TAB: ESTA SEMANA ═══ */}
+        {tab === "semana" && (
+          <div>
+            {tier === "free" ? (
+              <LockedTab lockLevel={1} ctaLabel="Desbloquear por R$497" ctaUrl="#" leadId={lead.id} />
+            ) : !planReady ? (
+              <Spinner text="Preparando conteúdo da semana..." />
+            ) : (
+              <div>
+                <RelatorioSetorialBlock relatorio={plan?.content?.relatorioSetorial} />
+                <Section title="Posts desta semana" defaultOpen={true}>
+                  <ContentsSection leadId={lead.id} tier={tier} />
+                </Section>
+              </div>
+            )}
           </div>
         )}
 

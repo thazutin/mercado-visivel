@@ -72,7 +72,8 @@ const CHANNEL_SPECS: Record<string, { label: string; spec: string }> = {
 export async function generateContentsForLead(
   lead: LeadContext,
   tone = 'próximo e informal',
-  objective = 'atrair novos clientes'
+  objective = 'atrair novos clientes',
+  relatorioContext?: { destaque: string; oportunidade_da_semana: string } | null,
 ): Promise<GenerateResult> {
   const competitors =
     Array.isArray(lead.competitors)
@@ -108,6 +109,14 @@ REGRAS OBRIGATÓRIAS:
 - Cada post deve ter um objetivo de negócio claro: atrair novo cliente / converter quem já conhece / fidelizar quem já comprou
 - NUNCA gere post genérico de "dica do dia" sem conexão com o negócio real
 - O "hook" deve ser a primeira frase que para o scroll — baseada no que o público-alvo REAL se preocupa
+
+${relatorioContext ? `
+CONTEXTO DO MERCADO ESTA SEMANA:
+${relatorioContext.destaque}
+Oportunidade: ${relatorioContext.oportunidade_da_semana}
+Os posts desta semana devem ser conectados a este contexto —
+não posts genéricos, posts que fazem sentido AGORA dado o momento do mercado.
+` : ''}
 
 ${lead.levers && lead.levers.length > 0
   ? `ORIENTAÇÃO ESTRATÉGICA (baseada no score de influência):
@@ -281,6 +290,7 @@ export async function triggerContentGeneration(leadId: string): Promise<void> {
   try {
     const { generateProductionBriefs } = await import('./generateProductionBriefs')
 
+
     const { data: diagData } = await getSupabaseAdmin()
       .from('diagnoses')
       .select('raw_data')
@@ -305,4 +315,89 @@ export async function triggerContentGeneration(leadId: string): Promise<void> {
   } catch (briefErr) {
     console.error('[ContentGen] Production briefs falhou (non-fatal):', (briefErr as Error).message)
   }
+}
+
+// ─── Disparo com contexto setorial (chamado pelo cron semanal) ────────────────
+
+export async function triggerContentGenerationWithContext(
+  leadId: string,
+  relatorioSetorial: any,
+): Promise<void> {
+  console.log('[generateContents] Buscando lead (with context):', leadId)
+
+  const { data: lead, error: leadError } = await getSupabaseAdmin()
+    .from('leads')
+    .select('id, name, product, region, competitors, site, instagram, differentiator')
+    .eq('id', leadId)
+    .single()
+
+  if (leadError || !lead) {
+    console.error('[generateContents] Lead não encontrado:', leadId, leadError?.message)
+    return
+  }
+
+  const { data: diagnosis } = await getSupabaseAdmin()
+    .from('diagnoses')
+    .select('total_volume, influence_percent, influence_breakdown')
+    .eq('lead_id', leadId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  const levers = (diagnosis?.influence_breakdown as any)?.levers || []
+
+  const leadContext: LeadContext = {
+    id: lead.id,
+    name: lead.name || lead.product,
+    segment: lead.product,
+    location: lead.region,
+    search_volume: diagnosis?.total_volume ?? undefined,
+    influence_score: diagnosis?.influence_percent ?? undefined,
+    competitors: lead.competitors,
+    levers: levers.slice(0, 3),
+  }
+
+  const relatorioContext = relatorioSetorial ? {
+    destaque: relatorioSetorial.destaque,
+    oportunidade_da_semana: relatorioSetorial.oportunidade_da_semana,
+  } : null
+
+  console.log('[generateContents] Gerando posts com contexto setorial...')
+
+  const result = await generateContentsForLead(
+    leadContext,
+    'próximo e informal',
+    'atrair novos clientes',
+    relatorioContext,
+  )
+
+  console.log('[generateContents] Posts gerados:', result.posts.length)
+
+  // Gera imagens para posts de Instagram (em paralelo)
+  const instagramChannels = ['instagram_feed', 'instagram_stories']
+  const imagePromises = result.posts.map(async (post) => {
+    if (!instagramChannels.includes(post.channel_key)) return
+    try {
+      const { generatePostImage } = await import('./generateImage')
+      const imageUrl = await generatePostImage({
+        business_name: leadContext.name,
+        segment: leadContext.segment,
+        location: leadContext.location,
+        post_content: post.content,
+        channel: post.channel,
+        site: lead.site || undefined,
+        instagram: lead.instagram || undefined,
+        differentiator: lead.differentiator || undefined,
+        post_objective: post.strategic_intent?.split(/[—–-]/)?.[0]?.trim() || undefined,
+      })
+      if (imageUrl) post.image_url = imageUrl
+    } catch (err) {
+      console.warn(`[generateContents] Imagem falhou para ${post.channel_key}:`, (err as Error).message)
+    }
+  })
+  await Promise.all(imagePromises)
+
+  await saveGeneratedContents(leadId, result, 'próximo e informal', 'atrair novos clientes')
+
+  console.log(`[generateContents] ${result.posts.length} posts salvos para lead ${leadId}`)
 }
