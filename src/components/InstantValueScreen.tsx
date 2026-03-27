@@ -249,10 +249,17 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                     </div>
                   </div>
                 </div>
-                {(proj!.clientesGap ?? 0) > 0 && (
-                  <div style={{ fontSize: 12, color: V.mist, textAlign: "center" }}>
-                    +{proj!.clientesGap} cliente{proj!.clientesGap !== 1 ? 's' : ''}/mês
-                    via buscas ativas · {fmtBRL(proj!.gapCaptura)} incremental
+                {proj!.clientesGap > 0 && (
+                  <div style={{ fontSize: 12, color: V.mist, textAlign: "center", marginTop: 6 }}>
+                    {proj!.gapCaptura < 500 ? (
+                      <>
+                        <strong style={{ color: V.amberSoft }}>+{proj!.clientesGap} cliente{proj!.clientesGap !== 1 ? 's' : ''}/mês</strong>
+                        {' '}via buscas ativas — a maior alavanca é gerar demanda com conteúdo e posicionamento
+                      </>
+                    ) : (
+                      <>+{proj!.clientesGap} cliente{proj!.clientesGap !== 1 ? 's' : ''}/mês
+                      {' '}via buscas ativas · {fmtBRL(proj!.gapCaptura)} incremental</>
+                    )}
                   </div>
                 )}
               </div>
@@ -346,12 +353,10 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           <div style={{ background: results.influencePercent === 0 ? V.coralWash : V.amberWash, padding: "14px 18px", border: `1px solid ${V.fog}`, borderTop: "none", borderRadius: "0 0 14px 14px" }}>
             <p style={{ fontSize: 14, color: V.night, margin: 0, lineHeight: 1.6 }}>
               {results.influencePercent === 0
-                ? `Quando alguém em ${shortRegion} decide contratar ${product}, seu negócio não está na disputa. Os concorrentes capturam esses clientes sem que você saiba.`
-                : hasLevers
-                ? `Você disputa ${results.influencePercent}% das decisões de compra em ${shortRegion}. ${levers.length} ações identificadas para aumentar essa posição — veja em "Posição Competitiva".`
+                ? `Seu negócio não está na disputa. Quando alguém decide contratar ${product} em ${shortRegion}, os concorrentes aparecem — você não.`
                 : results.influencePercent < 40
-                ? `Você disputa ${results.influencePercent}% das decisões de compra em ${shortRegion}. Os itens estruturantes mostram o que fazer primeiro.`
-                : `Você disputa ${results.influencePercent}% das decisões de compra em ${shortRegion} — posição forte. Os itens estruturantes mostram como manter e ampliar.`}
+                ? `${100 - results.influencePercent}% das decisões de compra ainda vão para concorrentes. Os itens estruturantes mostram o que muda isso.`
+                : `Posição forte. Os itens estruturantes mostram como manter e ampliar.`}
             </p>
           </div>
         </div>
@@ -786,15 +791,20 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         {!hideWorkRoutes && results.workRoutes && results.workRoutes.length > 0 && (
           <div style={{ marginBottom: 12 }}>
             <div style={{ fontSize: 11, fontFamily: V.mono, color: V.ash, letterSpacing: "0.06em", textTransform: "uppercase" as const, margin: "20px 0 12px" }}>
-              Prévia do seu Plano de Ação
+              Primeiros Passos
             </div>
             {results.gapHeadline && (
               <p style={{ fontSize: 13, color: V.night, margin: "0 0 12px", fontWeight: 500, lineHeight: 1.5 }}>{results.gapHeadline}</p>
             )}
             {(() => {
               const sorted = [...results.workRoutes].sort((a: any, b: any) => a.priority - b.priority);
-              return sorted.slice(0, 5).map((route: any, i: number) => {
+              const lockedStubs = [
+                { title: "Otimizar presença no Google Maps", rationale: "Fotos, horário, categoria e primeiras avaliações respondidas.", horizon: "curto prazo" },
+                { title: "Ativar Instagram com consistência", rationale: "2 posts por semana por 30 dias — frequência antes de qualidade.", horizon: "curto prazo" },
+              ];
+              return sorted.slice(0, 3).map((route: any, i: number) => {
                 const isLocked = i > 0;
+                const displayRoute = isLocked ? { ...route, ...lockedStubs[i - 1] } : route;
                 return (
                   <div key={i} style={{
                     padding: "12px", marginBottom: 8, borderRadius: 8,
@@ -805,13 +815,13 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                     position: "relative",
                   }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 600, color: i === 0 ? V.amber : V.zinc, background: i === 0 ? "rgba(207,133,35,0.15)" : V.fog, width: 20, height: 20, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{route.priority}</span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{route.title}</span>
-                      <Chip color={route.horizon === "curto prazo" ? V.teal : route.horizon === "longo prazo" ? V.coral : V.amber}>
-                        {route.horizon === "curto prazo" ? "1–4 semanas" : route.horizon === "médio prazo" ? "1–3 meses" : route.horizon === "longo prazo" ? "3–6 meses" : route.horizon}
+                      <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 600, color: i === 0 ? V.amber : V.zinc, background: i === 0 ? "rgba(207,133,35,0.15)" : V.fog, width: 20, height: 20, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{i + 1}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{displayRoute.title}</span>
+                      <Chip color={displayRoute.horizon === "curto prazo" ? V.teal : displayRoute.horizon === "longo prazo" ? V.coral : V.amber}>
+                        {displayRoute.horizon === "curto prazo" ? "1–4 semanas" : displayRoute.horizon === "médio prazo" ? "1–3 meses" : displayRoute.horizon === "longo prazo" ? "3–6 meses" : displayRoute.horizon}
                       </Chip>
                     </div>
-                    <p style={{ fontSize: 12, color: V.zinc, margin: "4px 0 0", lineHeight: 1.5, paddingLeft: 28 }}>{route.rationale}</p>
+                    <p style={{ fontSize: 12, color: V.zinc, margin: "4px 0 0", lineHeight: 1.5, paddingLeft: 28 }}>{displayRoute.rationale}</p>
                   </div>
                 );
               });

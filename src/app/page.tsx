@@ -379,7 +379,7 @@ export default function Home() {
             Qual é sua <span style={{ color: V.amber }}>posição competitiva</span> no mercado local?
           </h1>
           <p style={{ fontSize: 15, color: V.ash, lineHeight: 1.6, margin: 0 }}>
-            Virô mapeia em tempo real quanto do seu mercado você disputa hoje — e o que fazer para disputar mais.
+            Em 60 segundos você sabe quanto do seu mercado disputa hoje — e o que fazer para disputar mais.
           </p>
         </div>
       </div>
@@ -549,21 +549,26 @@ export default function Home() {
               </span>
             </div>
 
-            {/* Separator */}
-            <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "12px 0 10px" }}>
-              <div style={{ flex: 1, height: 1, background: V.fog }} />
-              <span style={{ fontSize: 9, fontFamily: V.mono, color: V.ash, letterSpacing: "0.04em", textTransform: "uppercase" as const, whiteSpace: "nowrap" as const }}>
-                A variável que você controla
-              </span>
-              <div style={{ flex: 1, height: 1, background: V.fog }} />
-            </div>
-
-            {/* Card 4 — Influência Digital (highlighted) */}
-            <div style={{ background: V.night, borderRadius: 12, padding: "22px 14px", textAlign: "center", marginBottom: 0 }}>
-              <div style={{ fontFamily: V.display, fontSize: 32, fontWeight: 700, color: V.amberSoft, letterSpacing: "-0.03em", lineHeight: 1 }}>
-                18%
+            {/* Card 4 — O que está em jogo */}
+            <div style={{ background: "#161618", borderRadius: 12, padding: "20px 14px", marginBottom: 8 }}>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "#6E6E78",
+                letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 12 }}>
+                O que está em jogo
               </div>
-              <p style={{ fontSize: 11, color: V.mist, margin: "6px 0 0" }}>é sua posição competitiva no mercado local</p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+                <div style={{ background: "#232326", borderRadius: 8, padding: "10px 12px", textAlign: "center" }}>
+                  <div style={{ fontFamily: "'Satoshi', sans-serif", fontSize: 18, fontWeight: 700, color: "#C8C8D0" }}>R$960/mês</div>
+                  <div style={{ fontSize: 10, color: "#6E6E78", marginTop: 2 }}>você disputa hoje (18%)</div>
+                </div>
+                <div style={{ background: "#232326", borderRadius: 8, padding: "10px 12px", textAlign: "center",
+                  border: "1px solid rgba(207,133,35,0.3)" }}>
+                  <div style={{ fontFamily: "'Satoshi', sans-serif", fontSize: 18, fontWeight: 700, color: "#E6A445" }}>R$5.760/mês</div>
+                  <div style={{ fontSize: 10, color: "#6E6E78", marginTop: 2 }}>poderia disputar (36%)</div>
+                </div>
+              </div>
+              <div style={{ textAlign: "center", fontSize: 11, color: "#9E9EA8" }}>
+                +2 clientes/mês · 18 mil pessoas no raio · 3.200 buscas/mês
+              </div>
             </div>
           </div>
 
@@ -770,8 +775,8 @@ export default function Home() {
           {[
             { icon: "📋", title: "Você informa seu negócio", text: "Nome, segmento e endereço. Leva menos de 1 minuto." },
             { icon: "🔍", title: "A Virô analisa seu mercado", text: "Cruzamos Google, Instagram, Maps, IBGE e IA em tempo real." },
-            { icon: "📊", title: "Você recebe o relatório grátis", text: "Score de influência, volume de buscas e concorrentes mapeados." },
-            { icon: "🔓", title: "Desbloqueie o Diagnóstico Completo — R$497", text: "Diagnóstico por canal, plano de ação, sazonalidade e amostra de conteúdos. Disponível no painel em até 15 minutos." },
+            { icon: "📊", title: "Você recebe o relatório grátis", text: "Sua posição competitiva, quem disputa com você e quanto está em jogo." },
+            { icon: "🔓", title: "Desbloqueie o Diagnóstico Completo — R$497", text: "Itens estruturantes, relatório setorial do seu mercado e posts conectados ao contexto da semana. Disponível em até 15 minutos." },
             { icon: "🔄", title: "Assine para conteúdos toda semana — R$99/mês", text: "Você recebe toda sexta-feira 4 posts prontos para copiar e colar + 3 briefings para compartilhar com time ou agência." },
           ].map((step, i) => (
             <div key={i} style={{ background: V.white, borderRadius: 14, padding: "20px 20px", border: `1px solid ${V.fog}`, display: "flex", gap: 16, alignItems: "flex-start" }}>
@@ -838,7 +843,8 @@ export default function Home() {
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 32 }}>
           {[
             { title: "Diagnóstico completo", desc: "Por canal: Google, Instagram, Maps e IA" },
-            { title: "Plano de ação", desc: "Ações prioritárias com prazo de execução" },
+            { title: "Itens estruturantes", desc: "O básico que precisa estar no lugar — checklist dinâmica baseada no seu diagnóstico" },
+            { title: "Relatório setorial", desc: "Tendências do seu mercado com dados reais desta semana" },
             { title: "Amostra de conteúdos", desc: "4 posts prontos para publicar" },
           ].map((item, i) => (
             <div key={i} style={{ padding: "14px 16px", borderRadius: 12, border: `2px solid ${V.amber}`, background: V.white, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
@@ -910,7 +916,7 @@ export default function Home() {
         </h2>
         {[
           { q: "O relatório inicial é mesmo gratuito?", a: "Sim, 100% gratuito. Você preenche o formulário, a Virô analisa seu mercado em tempo real e entrega o relatório sem precisar criar conta ou inserir cartão." },
-          { q: "O que está incluído no Diagnóstico Completo?", a: "O Diagnóstico Completo (R$497, pagamento único) inclui: diagnóstico detalhado por canal (Google, Instagram, Maps e IA), plano de ação com as ações de maior impacto ordenadas por prioridade, análise de sazonalidade do seu mercado e uma amostra de conteúdos prontos para publicar. Tudo fica disponível no seu painel em até 15 minutos após o pagamento." },
+          { q: "O que está incluído no Diagnóstico Completo?", a: "O Diagnóstico Completo (R$497, pagamento único) inclui: diagnóstico detalhado por canal (Google, Instagram, Maps e IA), itens estruturantes — uma checklist dinâmica com o básico que precisa estar no lugar baseada nos gaps do seu negócio, relatório setorial com tendências reais do seu mercado, e posts prontos para publicar conectados ao contexto da semana. Tudo fica disponível no painel em até 15 minutos após o pagamento." },
           { q: "Quanto tempo leva para receber o diagnóstico?", a: "O relatório inicial fica pronto em até 1 minuto após você preencher o formulário. O Diagnóstico Completo fica disponível no painel em até 15 minutos após a confirmação do pagamento." },
           { q: "Como acesso meu painel depois de pagar?", a: "Após o pagamento, você recebe um email com o link de acesso direto ao painel. O login é feito com o mesmo email usado no cadastro — sem senha, via link mágico." },
           { q: "O que são os Conteúdos Semanais?", a: "São 4 posts prontos para publicar (Instagram ou LinkedIn, dependendo do perfil do seu negócio) e 3 briefings para sua equipe ou agência executarem — gerados toda sexta-feira com base no contexto atual do seu mercado. Disponível por R$99/mês após a contratação do Diagnóstico Completo." },
