@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
           ...(pipelineResult.influence?.influence as any)?.breakdown,
           levers: (pipelineResult.influence?.influence as any)?.breakdown?.levers || [],
         },
-        projecao_financeira: (pipelineResult as any).projecaoFinanceira || null,
+        projecao_financeira: sanitizeProjecao((pipelineResult as any).projecaoFinanceira),
       });
     } catch (err) {
       console.error("[Diagnose] insertDiagnosis failed:", err);
@@ -179,7 +179,7 @@ export async function POST(req: NextRequest) {
         region: formData.region,
         influencePercent: Math.round(pipelineResult.influence.influence.totalInfluence),
         searchVolume: pipelineResult.volumes.totalMonthlyVolume || 0,
-        projecaoFinanceira: (pipelineResult as any).projecaoFinanceira || null,
+        projecaoFinanceira: sanitizeProjecao((pipelineResult as any).projecaoFinanceira),
       });
       console.log("[Diagnose] notify completed");
     } catch (err) {
@@ -252,6 +252,15 @@ export async function GET(req: NextRequest) {
   }
 }
 
+// ─── helpers ─────────────────────────────────────────────────────────────────
+
+function sanitizeProjecao(projecao: any): any {
+  if (!projecao) return null;
+  // Se mercadoTotal e receitaAtual ambos zero, é bug de cálculo — não mostrar
+  if (projecao.mercadoTotal === 0 && projecao.receitaAtual === 0) return null;
+  return projecao;
+}
+
 // ─── buildDisplayData ────────────────────────────────────────────────────────
 
 function buildDisplayData(result: any) {
@@ -280,7 +289,10 @@ function buildDisplayData(result: any) {
 
   return {
     terms,
-    totalVolume: result.volumes.totalMonthlyVolume,
+    // Usa volume geo-ajustado se disponível (weightedSearchVolume do market-sizing)
+    // Fallback: totalMonthlyVolume bruto
+    totalVolume: (result.marketSizing?.sizing as any)?.weightedSearchVolume
+      || result.volumes.totalMonthlyVolume,
     avgCpc: 0,
     marketLow: sizing.marketPotential.low,
     marketHigh: sizing.marketPotential.high,
@@ -344,7 +356,7 @@ function buildDisplayData(result: any) {
     clientType: result.clientType || 'b2c',
     volumeGeo: result.volumeGeo || null,
     pncp: result.pncp || null,
-    projecaoFinanceira: (result as any).projecaoFinanceira || null,
+    projecaoFinanceira: sanitizeProjecao((result as any).projecaoFinanceira),
     termGeneration: {
       count: result.terms.termCount,
       model: result.terms.generationModel,

@@ -207,13 +207,33 @@ function calculateDynamicRadius(
 
   const segmentMultiplier = (category: string): number => {
     const lower = category.toLowerCase();
-    // Alimentação — raio pequeno
-    if (/restaurante|lanchonete|padaria|café|cafeteria|bar|pizzaria|hamburguer|sushi|kilo|comida/.test(lower)) return 0.5;
-    // Serviços técnicos/profissionais — raio maior
-    if (/arquitet|advogad|contábil|contador|engenhei|consultor|designer|developer/.test(lower)) return 2;
-    // B2B/B2G — raio amplo
-    if (/indústria|distribuidora|atacado|fornecedor|logística|transporte/.test(lower)) return 3;
-    // Saúde, beleza, varejo — padrão
+
+    // ── Deslocamento diário / rotina (vai todo dia ou toda semana) ──
+    // Raio funcional: 20min deslocamento. very_high(1km)×3=3km, high(3km)×3=9km
+    if (/escola|educa|creche|berçário|bercario|infantil|colégio|colegio|academia|ginástica|ginastica|pilates|yoga|natação|natacao|crossfit|musculação|musculacao/.test(lower)) return 3;
+
+    // ── Alimentação (vai a pé, muito local) ──
+    if (/restaurante|lanchonete|padaria|café|cafe|cafeteria|bar|pizzaria|hamburguer|sushi|kilo|comida|marmita|bistrô|bistro/.test(lower)) return 0.5;
+
+    // ── Saúde recorrente (mensal/quinzenal) ──
+    if (/fisioterapia|psicolog|nutricion|fonoaudiolog|terapia|clínica|clinica|reabilitação|reabilitacao/.test(lower)) return 2;
+
+    // ── Beleza e estética (mensal, tolerância média) ──
+    if (/salão|salao|barbearia|cabeleireir|estética|estetica|manicure|pedicure|sobrancelha|depilação|depilacao|spa|massagem|estudio de beleza/.test(lower)) return 1.5;
+
+    // ── Saúde ocasional (trimestral/semestral) ──
+    if (/dentist|ortodont|oftalmo|dermatolog|ortopedi|cardiolog|hospital|urgência|urgencia|pronto.socorro/.test(lower)) return 1.5;
+
+    // ── Varejo / serviços do dia a dia ──
+    if (/farmácia|farmacia|mercado|supermercado|hortifruti|açougue|acougue|lavanderia|sapataria|conserto|reparo|dedetiz/.test(lower)) return 1;
+
+    // ── Serviços técnicos/profissionais (vai 1x, não importa distância) ──
+    if (/arquitet|advogad|contábil|contabil|contador|engenhei|consultor|designer|developer|programad|marketing|fotograf|videomaker/.test(lower)) return 2;
+
+    // ── B2B/B2G — raio amplo (regional/nacional) ──
+    if (/indústria|industria|distribuidora|atacado|fornecedor|logística|logistica|transporte|importadora|exportadora|treinamento corporativo|consultoria empresarial/.test(lower)) return 4;
+
+    // Padrão: serviços locais genéricos
     return 1;
   };
 

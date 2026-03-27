@@ -1213,7 +1213,7 @@ Responda APENAS em JSON, sem markdown:
     const influencePercent = step4.influence.totalInfluence || 0;
     const ticketMedio = est.ticketMedio || 500;
     const taxaConversao = est.taxaConversao || 0.03;
-    const audienciaTarget = est.audienciaTarget || 0;
+    const audienciaTarget = est.audienciaTarget || est.populacaoRaio || 0;
     const populacaoMunicipio = est.populacaoMunicipio || est.populacaoRaio || 1;
     const populacaoRaio = est.populacaoRaio || 0;
 
@@ -1254,6 +1254,7 @@ Responda APENAS em JSON, sem markdown:
       ticketRationale: est.ticketRationale || '',
       buscasNoTarget,
       audienciaTarget,
+      geoAdjustedVolume: buscasNoRaio,
     };
 
     console.log(`[Pipeline] Projeção: mercado=R$${mercadoTotal}, atual=R$${receitaAtual}, potencial=R$${receitaPotencial}, gap=R$${gapMensal}`);
