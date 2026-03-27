@@ -1221,16 +1221,6 @@ Responda APENAS em JSON, sem markdown:
     const fatorGeo = populacaoRaio > 0 && populacaoMunicipio > 0
       ? Math.min(populacaoRaio / populacaoMunicipio, 1)
       : 1;
-    const buscasNoRaio = Math.round(totalVolume * fatorGeo);
-    const buscasNoTarget = audienciaTarget > 0 && populacaoRaio > 0
-      ? Math.round(buscasNoRaio * (audienciaTarget / populacaoRaio))
-      : buscasNoRaio;
-
-    // Mercado total disponível no raio
-    const mercadoTotal = Math.round(audienciaTarget * taxaConversao * ticketMedio);
-
-    // Receita que o negócio compete hoje (pela influência atual)
-    const receitaAtual = Math.round(buscasNoTarget * taxaConversao * ticketMedio * (influencePercent / 100));
 
     // Calcula influência meta somando impacto dos levers disponíveis
     const levers = (step4.influence as any).breakdown?.levers || [];
@@ -1238,26 +1228,70 @@ Responda APENAS em JSON, sem markdown:
     // Cap realista: máximo +30pts de melhoria, teto de 80%
     const influenciaMeta = Math.min(influencePercent + Math.min(totalLeverImpact, 30), 80);
     console.log(`[Pipeline] Influência meta: ${influencePercent}% + ${totalLeverImpact}pts levers = ${influenciaMeta}%`);
-    const receitaPotencial = Math.round(buscasNoTarget * taxaConversao * ticketMedio * (influenciaMeta / 100));
 
-    const gapMensal = receitaPotencial - receitaAtual;
+    // CAMADA 1 — Captura imediata (buscas ativas no raio)
+    const buscasNoRaio = Math.round(totalVolume * fatorGeo);
+    const receitaAtual = Math.round(buscasNoRaio * taxaConversao * ticketMedio * (influencePercent / 100));
+    const receitaPotencial = Math.round(buscasNoRaio * taxaConversao * ticketMedio * (influenciaMeta / 100));
+    const gapCaptura = receitaPotencial - receitaAtual;
+    const clientesAtual = Math.round(buscasNoRaio * taxaConversao * (influencePercent / 100));
+    const clientesPotencial = Math.round(buscasNoRaio * taxaConversao * (influenciaMeta / 100));
+    const clientesGap = clientesPotencial - clientesAtual;
+
+    // CAMADA 2 — Mercado alcançável (audiência física no raio)
+    const familiasAtual = Math.round(audienciaTarget * (influencePercent / 100));
+    const familiasPotencial = Math.round(audienciaTarget * (influenciaMeta / 100));
+    const familiasGap = familiasPotencial - familiasAtual;
+
+    // CAMADA 3 — Risco competitivo (comparação com líder)
+    const mapsCompetitors = step4.influence?.rawGoogle?.mapsPresence?.mapsCompetitors || [];
+    const melhorConcorrente = mapsCompetitors.length > 0
+      ? mapsCompetitors.reduce((best: any, c: any) =>
+          (c.reviewCount || 0) > (best.reviewCount || 0) ? c : best,
+          mapsCompetitors[0])
+      : null;
+
+    const posicaoLider = melhorConcorrente
+      ? Math.min(80, Math.round((melhorConcorrente.reviewCount || 0) /
+          Math.max(step4.influence?.rawGoogle?.mapsPresence?.reviewCount || 1, 1) * influencePercent * 1.5))
+      : null;
+
+    const receitaLider = posicaoLider
+      ? Math.round(buscasNoRaio * taxaConversao * ticketMedio * (posicaoLider / 100))
+      : null;
 
     projecaoFinanceira = {
-      mercadoTotal,
+      // Camada 1 — Captura
+      buscasNoRaio,
       receitaAtual,
       receitaPotencial,
-      gapMensal,
+      gapCaptura,
+      clientesAtual,
+      clientesPotencial,
+      clientesGap,
+      // Camada 2 — Mercado alcançável
+      audienciaTarget,
+      familiasAtual,
+      familiasPotencial,
+      familiasGap,
+      mercadoTotal: Math.round(audienciaTarget * taxaConversao * ticketMedio),
+      // Camada 3 — Risco competitivo
+      posicaoLider,
+      receitaLider,
+      nomeLider: melhorConcorrente?.name || null,
+      // Meta e parâmetros
       influenciaAtual: Math.round(influencePercent),
       influenciaMeta: Math.round(influenciaMeta),
       ticketMedio,
       taxaConversao,
       ticketRationale: est.ticketRationale || '',
-      buscasNoTarget,
-      audienciaTarget,
       geoAdjustedVolume: buscasNoRaio,
+      // Compat
+      gapMensal: gapCaptura,
+      buscasNoTarget: buscasNoRaio,
     };
 
-    console.log(`[Pipeline] Projeção: mercado=R$${mercadoTotal}, atual=R$${receitaAtual}, potencial=R$${receitaPotencial}, gap=R$${gapMensal}`);
+    console.log(`[Pipeline] Projeção 3 camadas: captura=+R$${gapCaptura}(+${clientesGap} clientes) | famílias=+${familiasGap} | líder=${posicaoLider ? posicaoLider+'%' : 'N/A'}`);
   }
 
   // =========================================================================

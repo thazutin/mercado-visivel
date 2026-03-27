@@ -142,9 +142,13 @@ export async function notifyDiagnosisReady(opts: {
     receitaAtual: number;
     receitaPotencial: number;
     gapMensal: number;
+    gapCaptura?: number;
     ticketMedio: number;
     taxaConversao: number;
+    clientesGap?: number;
+    familiasGap?: number;
   } | null;
+  isB2B?: boolean;
 }): Promise<void> {
   const { email, whatsapp, leadId, product, region, influencePercent, searchVolume, projecaoFinanceira } = opts;
   console.log(`[NOTIFY] iniciando email/whatsapp para email=${email}, phone=${whatsapp}, leadId=${leadId}`);
@@ -161,7 +165,7 @@ export async function notifyDiagnosisReady(opts: {
     sendEmail({
       to: email,
       subject: `${(opts as any).name || product} — seu diagnóstico está pronto`,
-      html: diagnosisEmailHtml({ product, shortRegion, influencePercent, searchVolume, url, projecaoFinanceira }),
+      html: diagnosisEmailHtml({ product, shortRegion, influencePercent, searchVolume, url, projecaoFinanceira, isB2B: (opts as any).isB2B ?? false }),
     }),
   ]);
 
@@ -367,27 +371,31 @@ function diagnosisEmailHtml(opts: {
     receitaAtual: number;
     receitaPotencial: number;
     gapMensal: number;
+    gapCaptura?: number;
     ticketMedio: number;
     taxaConversao: number;
+    clientesGap?: number;
+    familiasGap?: number;
   } | null;
+  isB2B?: boolean;
 }): string {
-  const { product, shortRegion, influencePercent, searchVolume, url, projecaoFinanceira } = opts;
+  const { product, shortRegion, influencePercent, searchVolume, url, projecaoFinanceira, isB2B = false } = opts;
   const influenceColor = influencePercent === 0 ? "#D9534F" : influencePercent < 20 ? "#CF8523" : "#2D9B83";
   const formattedVolume = searchVolume ? searchVolume.toLocaleString("pt-BR") : null;
 
   // Dynamic headline based on influence
   const headline = influencePercent === 0
-    ? `Seu negócio está invisível em ${shortRegion}.`
+    ? `Seu negócio não aparece para nenhum cliente em potencial em ${shortRegion}.`
     : influencePercent < 20
-    ? `Você captura apenas ${influencePercent}% do mercado digital em ${shortRegion}.`
-    : `Você já captura ${influencePercent}% do mercado — mas pode mais.`;
+    ? `Você disputa por apenas ${influencePercent}% das decisões de compra em ${shortRegion}.`
+    : `Você já disputa ${influencePercent}% do mercado em ${shortRegion} — mas pode mais.`;
 
   // Dynamic insight
   const insight = influencePercent === 0
-    ? `Quando alguém busca "${product}" em ${shortRegion}, seu negócio não aparece. Enquanto isso, seus concorrentes capturam esses clientes sem que você saiba.`
+    ? `Quando alguém em ${shortRegion} decide contratar ${product}, seu negócio não está na disputa. Os concorrentes capturam esses clientes sem que você saiba.`
     : influencePercent < 20
-    ? `A cada 100 pessoas que buscam "${product}" em ${shortRegion}, ${100 - influencePercent} vão para concorrentes. Não porque são melhores — porque são mais visíveis.`
-    : `Boa posição, mas ${100 - influencePercent}% do mercado ainda vai para concorrentes. O diagnóstico mostra onde proteger e onde atacar.`;
+    ? `A cada 100 decisões de compra de ${product} em ${shortRegion}, você disputa apenas ${influencePercent}. As outras ${100 - influencePercent} vão para concorrentes — não porque são melhores, porque estão mais bem posicionados.`
+    : `Boa posição, mas ${100 - influencePercent}% das decisões ainda vão para concorrentes. O diagnóstico mostra onde você está forte e onde atacar.`;
 
   return emailShell(`
     <h1 style="font-size:22px;color:#161618;margin:0 0 12px;line-height:1.3;">
@@ -412,39 +420,35 @@ function diagnosisEmailHtml(opts: {
       </div>
       ` : ""}
     </div>
-    ${projecaoFinanceira && projecaoFinanceira.gapMensal > 0 ? `
-    <div style="background:#161618;border-radius:12px;padding:20px 16px;margin:0 0 24px;">
-      <div style="font-size:10px;color:#6E6E78;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px;font-family:monospace;">
+    ${projecaoFinanceira && (projecaoFinanceira.gapCaptura ?? projecaoFinanceira.gapMensal ?? 0) >= 0 ? `
+    <div style="background:#161618;border-radius:12px;padding:20px;margin:0 0 24px;">
+      <div style="font-size:10px;color:#6E6E78;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:14px;font-family:monospace;">
         O que está em jogo
       </div>
-      <div style="text-align:center;margin-bottom:16px;">
-        <div style="font-size:32px;font-weight:700;color:#E6A445;line-height:1;margin-bottom:6px;">
-          R$${Math.round(projecaoFinanceira.gapMensal / 1000)}k/mês
-        </div>
-        <div style="font-size:12px;color:#C8C8D0;">
-          que você poderia estar capturando com as ações certas
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;">
+      <div style="display:flex;gap:10px;margin-bottom:12px;">
         <div style="flex:1;background:#232326;border-radius:8px;padding:12px;text-align:center;">
-          <div style="font-size:18px;font-weight:700;color:#C8C8D0;line-height:1;margin-bottom:4px;">
-            R$${Math.round(projecaoFinanceira.receitaAtual / 1000)}k
+          <div style="font-size:20px;font-weight:700;color:#C8C8D0;">
+            R$${Math.round(projecaoFinanceira.receitaAtual / 1000)}k/mês
           </div>
-          <div style="font-size:10px;color:#6E6E78;">você compete hoje</div>
+          <div style="font-size:10px;color:#6E6E78;margin-top:4px;">você disputa hoje</div>
         </div>
         <div style="flex:1;background:#232326;border-radius:8px;padding:12px;text-align:center;border:1px solid rgba(207,133,35,0.3);">
-          <div style="font-size:18px;font-weight:700;color:#E6A445;line-height:1;margin-bottom:4px;">
-            R$${Math.round(projecaoFinanceira.receitaPotencial / 1000)}k
+          <div style="font-size:20px;font-weight:700;color:#E6A445;">
+            R$${Math.round(projecaoFinanceira.receitaPotencial / 1000)}k/mês
           </div>
-          <div style="font-size:10px;color:#6E6E78;">poderia competir</div>
+          <div style="font-size:10px;color:#6E6E78;margin-top:4px;">com o plano</div>
         </div>
       </div>
-      <div style="margin-top:12px;padding-top:12px;border-top:1px solid #3A3A40;">
-        <div style="font-size:11px;color:#6E6E78;text-align:center;">
-          Ticket estimado: R$${projecaoFinanceira.ticketMedio} ·
-          Conversão: ${(projecaoFinanceira.taxaConversao * 100).toFixed(0)}% ·
-          Mercado total: R$${Math.round(projecaoFinanceira.mercadoTotal / 1000)}k/mês
-        </div>
+      ${(projecaoFinanceira.clientesGap ?? 0) > 0 ? `
+      <div style="text-align:center;font-size:12px;color:#C8C8D0;margin-bottom:10px;">
+        +${projecaoFinanceira.clientesGap} cliente${projecaoFinanceira.clientesGap !== 1 ? 's' : ''}/mês via buscas ativas
+      </div>` : ''}
+      ${(projecaoFinanceira.familiasGap ?? 0) > 0 ? `
+      <div style="text-align:center;font-size:12px;color:#2D9B83;">
+        +${(projecaoFinanceira.familiasGap ?? 0).toLocaleString('pt-BR')} ${isB2B ? 'empresas' : 'pessoas'} adicionais passam a considerar você
+      </div>` : ''}
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid #3A3A40;font-size:10px;color:#6E6E78;text-align:center;">
+        Ticket estimado: R$${projecaoFinanceira.ticketMedio} · Conversão: ${(projecaoFinanceira.taxaConversao * 100).toFixed(0)}%
       </div>
     </div>
     ` : ''}

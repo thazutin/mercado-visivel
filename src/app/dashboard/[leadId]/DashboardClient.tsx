@@ -212,37 +212,98 @@ function InfluenceChart({ snapshots, currentScore, product }: {
 
 // ─── Projeção Financeira ─────────────────────────────────────────────
 function ProjecaoCard({ projecao }: { projecao: any }) {
-  if (!projecao || projecao.gapMensal <= 0) return null;
+  if (!projecao) return null;
+  const gapCaptura = projecao.gapCaptura ?? projecao.gapMensal ?? 0;
+  if (gapCaptura <= 0 && projecao.mercadoTotal <= 0) return null;
   return (
     <div style={{ background: V.night, borderRadius: 14, padding: "20px", marginBottom: 16 }}>
       <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em",
-        textTransform: "uppercase", marginBottom: 12 }}>
+        textTransform: "uppercase", marginBottom: 16 }}>
         O que está em jogo
       </div>
-      <div style={{ textAlign: "center", marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Satoshi', sans-serif", fontSize: 32, fontWeight: 700,
-          color: "#E6A445", letterSpacing: "-0.03em", lineHeight: 1 }}>
-          {fmtBRL(projecao.gapMensal)}/mês
+
+      {/* CAMADA 1 — Captura imediata */}
+      <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid #3A3A40" }}>
+        <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
+          letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 8 }}>
+          Captura imediata · buscas ativas no seu raio
         </div>
-        <p style={{ fontSize: 12, color: "#C8C8D0", margin: "6px 0 0" }}>
-          potencial adicional com as ações do plano
-        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+          <div style={{ background: "#232326", borderRadius: 8, padding: "10px 12px" }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#C8C8D0" }}>
+              {fmtBRL(projecao.receitaAtual)}/mês
+            </div>
+            <div style={{ fontSize: 10, color: "#6E6E78", marginTop: 2 }}>
+              você compete hoje ({projecao.influenciaAtual}%)
+            </div>
+          </div>
+          <div style={{ background: "#232326", borderRadius: 8, padding: "10px 12px",
+            border: "1px solid rgba(207,133,35,0.3)" }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#E6A445" }}>
+              {fmtBRL(projecao.receitaPotencial)}/mês
+            </div>
+            <div style={{ fontSize: 10, color: "#6E6E78", marginTop: 2 }}>
+              com o plano ({projecao.influenciaMeta}%)
+            </div>
+          </div>
+        </div>
+        {(projecao.clientesGap ?? 0) > 0 && (
+          <div style={{ fontSize: 12, color: "#C8C8D0", textAlign: "center" }}>
+            +{projecao.clientesGap} cliente{projecao.clientesGap !== 1 ? 's' : ''}/mês
+            via buscas ativas · {fmtBRL(gapCaptura)} incremental
+          </div>
+        )}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
-        <div style={{ background: "#232326", borderRadius: 8, padding: "10px", textAlign: "center" }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: "#C8C8D0" }}>{fmtBRL(projecao.receitaAtual)}</div>
-          <div style={{ fontSize: 10, color: "#6E6E78", marginTop: 2 }}>você compete hoje ({projecao.influenciaAtual}%)</div>
+
+      {/* CAMADA 2 — Mercado alcançável */}
+      {projecao.audienciaTarget > 0 && (
+        <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid #3A3A40" }}>
+          <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
+            letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 8 }}>
+            Mercado alcançável
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <span style={{ fontSize: 22, fontWeight: 700, color: "#2D9B83" }}>
+                +{(projecao.familiasGap ?? 0).toLocaleString('pt-BR')}
+              </span>
+              <span style={{ fontSize: 12, color: V.ash, marginLeft: 6 }}>
+                pessoas adicionais com o plano
+              </span>
+            </div>
+            <div style={{ textAlign: "right", fontSize: 10, color: V.ash }}>
+              <div>{(projecao.familiasAtual ?? 0).toLocaleString('pt-BR')} hoje</div>
+              <div style={{ color: "#2D9B83" }}>{(projecao.familiasPotencial ?? 0).toLocaleString('pt-BR')} com plano</div>
+            </div>
+          </div>
+          <div style={{ fontSize: 10, color: "#6E6E78", marginTop: 6 }}>
+            Mercado total: {projecao.audienciaTarget.toLocaleString('pt-BR')} pessoas ·
+            potencial {fmtBRL(projecao.mercadoTotal)}/mês
+          </div>
         </div>
-        <div style={{ background: "#232326", borderRadius: 8, padding: "10px", textAlign: "center",
-          border: "1px solid rgba(207,133,35,0.3)" }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: "#E6A445" }}>{fmtBRL(projecao.receitaPotencial)}</div>
-          <div style={{ fontSize: 10, color: "#6E6E78", marginTop: 2 }}>poderia competir ({projecao.influenciaMeta}%)</div>
+      )}
+
+      {/* CAMADA 3 — Risco competitivo */}
+      {projecao.posicaoLider && projecao.nomeLider && (
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontFamily: V.mono, fontSize: 9, color: "#E05252",
+            letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 8 }}>
+            Risco competitivo
+          </div>
+          <div style={{ fontSize: 12, color: "#C8C8D0", lineHeight: 1.6 }}>
+            <strong style={{ color: "#E05252" }}>{projecao.nomeLider}</strong> disputa{' '}
+            {fmtBRL(projecao.receitaLider)}/mês vs seus {fmtBRL(projecao.receitaAtual)}/mês.
+            {' '}Se continuar crescendo enquanto você não age, o gap aumenta.
+          </div>
         </div>
-      </div>
-      <div style={{ borderTop: "1px solid #3A3A40", paddingTop: 10, fontSize: 11, color: "#6E6E78", textAlign: "center" }}>
+      )}
+
+      {/* Contexto de cálculo */}
+      <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid #3A3A40",
+        fontSize: 10, color: V.ash, lineHeight: 1.6, textAlign: "center" }}>
         Ticket estimado: {fmtBRL(projecao.ticketMedio)} · Conversão: {(projecao.taxaConversao * 100).toFixed(0)}%
         {projecao.ticketRationale && (
-          <div style={{ marginTop: 4, fontSize: 10, fontStyle: "italic", color: "#3A3A40" }}>
+          <div style={{ marginTop: 4, fontStyle: "italic", color: "#3A3A40" }}>
             {projecao.ticketRationale}
           </div>
         )}

@@ -296,6 +296,29 @@ GAPS IDENTIFICADOS: ${gaps.headlineInsight || "N/A"}
 ${(gaps.gaps || []).slice(0, 3).map((g: any) => `- ${g.title}`).join("\n")}
 
 ${(() => {
+  const bd = raw.influence?.influence?.breakdown || {};
+  const d1 = bd.d1_descoberta ?? bd.d1_discovery ?? 0;
+  const d2 = bd.d2_credibilidade ?? bd.d2_credibility ?? 0;
+  const d3 = bd.d3_presenca ?? bd.d3_reach ?? 0;
+  const d4 = bd.d4_reputacao ?? 0;
+  const minVal = Math.min(d1, d2, d3, d4);
+  const weakest = minVal === d1 ? 'Descoberta' : minVal === d2 ? 'Credibilidade' : minVal === d3 ? 'Presença' : 'Reputação';
+  return `POSIÇÃO COMPETITIVA LOCAL: ${raw.influence?.influence?.totalInfluence || 0}%
+Descoberta (aparece quando buscam): ${d1}/100
+Credibilidade (convence quem encontra): ${d2}/100
+Presença (mantém relacionamento): ${d3}/100
+Reputação (base te recomenda): ${d4}/100
+
+DIMENSÃO MAIS FRACA: ${weakest} (${minVal}/100) — prioridade máxima no plano
+
+HIERARQUIA DE AÇÃO (respeitar esta ordem):
+Nível 1 — Básico bem feito (semanas 1-4): Maps completo, avaliações iniciais, site básico → move Descoberta + Credibilidade
+Nível 2 — Visibilidade ativa (semanas 5-8): conteúdo consistente, SEO local → move Descoberta + Presença
+Nível 3 — Sistema de reputação (semanas 9-12): coleta sistemática avaliações, respostas, referral → move Reputação
+Nível 4 — Liderança (recorrência): autoridade, geração de demanda → move Presença + Reputação`;
+})()}
+
+${(() => {
   const influenceBreakdown = raw.influence?.influence?.breakdown || {};
   const levers = influenceBreakdown.levers || [];
   const leversContext = levers.length > 0
@@ -365,6 +388,9 @@ REGRAS DE CONTEÚDO (obrigatório):
       (ex: "caso já tenha: adicione X para aumentar 10% ao mês")
     * NUNCA presuma que o negócio não tem algo — sugira evoluir o que existe
     * NUNCA repita o mesmo objetivo em ações diferentes
+  As 3 ações devem atacar a DIMENSÃO MAIS FRACA primeiro.
+  Cada ação deve indicar qual dimensão move e o ganho esperado em pontos.
+  Use linguagem de hierarquia: "isso é o básico que precisa estar no lugar antes de qualquer outra coisa".
   Após as 3 ações das alavancas, adicione (se relevante): 1 ação complementar que
   não está nos levers mas representa oportunidade clara para este negócio específico.
 - Bloco "demand_map": cite os termos reais com volumes reais. Ex: "2.400 pessoas buscam 'dentista Vila Madalena' por mês".
@@ -384,6 +410,12 @@ de X para Y, o que aumenta sua influência de Z% para W%."
 
 Semanas 5-12 podem incluir ações além das alavancas — sazonalidade, parcerias,
 indicações, novos canais — desde que conectadas à realidade do negócio.
+
+HIERARQUIA OBRIGATÓRIA (seguir rigorosamente):
+- Semanas 1-4 OBRIGATORIAMENTE atacam o Nível 1 da hierarquia (básico bem feito)
+- Semanas 5-8 avançam para Nível 2 apenas se Nível 1 estiver endereçado
+- Semanas 9-12 focam em Nível 3 (reputação e referral)
+- Cada semana deve mencionar qual dimensão está movendo (Descoberta, Credibilidade, Presença ou Reputação)
 
 Gere um plano de 12 semanas para este negócio. Retorne APENAS um array JSON com 12 objetos:
 [

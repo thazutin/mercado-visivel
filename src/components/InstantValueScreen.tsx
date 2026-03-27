@@ -67,17 +67,29 @@ interface Results {
     contratacoes: { objeto: string; orgaoEntidade: string; valorEstimado: number; modalidade: string }[];
   } | null;
   projecaoFinanceira?: {
-    mercadoTotal: number;
+    buscasNoRaio: number;
     receitaAtual: number;
     receitaPotencial: number;
-    gapMensal: number;
+    gapCaptura: number;
+    clientesAtual: number;
+    clientesPotencial: number;
+    clientesGap: number;
+    audienciaTarget: number;
+    familiasAtual: number;
+    familiasPotencial: number;
+    familiasGap: number;
+    mercadoTotal: number;
+    posicaoLider: number | null;
+    receitaLider: number | null;
+    nomeLider: string | null;
     influenciaAtual: number;
     influenciaMeta: number;
     ticketMedio: number;
     taxaConversao: number;
     ticketRationale: string;
-    buscasNoTarget: number;
-    audienciaTarget: number;
+    geoAdjustedVolume: number;
+    gapMensal?: number;
+    buscasNoTarget?: number;
   } | null;
 }
 interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; leadId?: string; hideCTA?: boolean; hideWorkRoutes?: boolean; }
@@ -173,7 +185,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
   const hasAudiencia = aud && aud.audienciaTarget > 0;
   const hasInfluence = results.influencePercent > 0;
   const proj = results.projecaoFinanceira;
-  const hasProj = proj && proj.gapMensal > 0 && proj.mercadoTotal > 0;
+  const hasProj = proj && (proj.gapCaptura > 0 || (proj.gapMensal && proj.gapMensal > 0)) && proj.mercadoTotal > 0;
   const ci = results.competitionIndex;
   const hasCi = ci && (ci.totalSearchVolume > 0 || ci.totalCompetitors > 0);
   const isB2B = results.clientType === 'b2b';
@@ -200,68 +212,140 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           <p style={{ fontSize: 13, color: V.ash, margin: 0 }}>{product} · {shortRegion}</p>
         </div>
 
-        {/* ═══ HERO FINANCEIRO ═══ */}
+        {/* ═══ HERO FINANCEIRO — 3 CAMADAS ═══ */}
         {hasProj && (
           <div style={{ marginBottom: 20 }}>
-            <div style={{
-              background: V.night, borderRadius: 14, padding: "24px 20px",
-              border: `1px solid ${V.slate}`,
-            }}>
+            <div style={{ background: V.night, borderRadius: 14, padding: "20px",
+              border: `1px solid ${V.slate}` }}>
               <p style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em",
                 textTransform: "uppercase" as const, color: V.ash, margin: "0 0 16px" }}>
-                O que está em jogo no seu mercado
+                O que está em jogo
               </p>
-              {/* Linha principal: gap */}
-              <div style={{ textAlign: "center", marginBottom: 20 }}>
-                <div style={{ fontFamily: V.display, fontSize: "clamp(32px, 7vw, 48px)",
-                  fontWeight: 700, color: V.amber, letterSpacing: "-0.03em", lineHeight: 1 }}>
-                  {fmtBRL(proj!.gapMensal)}/mês
+
+              {/* CAMADA 1 — Captura imediata */}
+              <div style={{ marginBottom: 16, paddingBottom: 16,
+                borderBottom: `1px solid ${V.slate}` }}>
+                <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
+                  letterSpacing: "0.05em", textTransform: "uppercase" as const, marginBottom: 8 }}>
+                  Captura imediata · buscas ativas no seu raio
                 </div>
-                <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>
-                  que você poderia estar capturando com as ações certas
-                </p>
-              </div>
-              {/* Grade comparativa */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
-                <div style={{ background: V.graphite, borderRadius: 10, padding: "12px 14px", textAlign: "center" }}>
-                  <div style={{ fontFamily: V.display, fontSize: 20, fontWeight: 700,
-                    color: V.mist, letterSpacing: "-0.02em" }}>
-                    {fmtBRL(proj!.receitaAtual)}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8,
+                  marginBottom: 8 }}>
+                  <div style={{ background: V.graphite, borderRadius: 8, padding: "10px 12px" }}>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: V.mist }}>
+                      {fmtBRL(proj!.receitaAtual)}/mês
+                    </div>
+                    <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>
+                      você compete hoje ({proj!.influenciaAtual}%)
+                    </div>
                   </div>
-                  <p style={{ fontSize: 11, color: V.ash, margin: "4px 0 0", lineHeight: 1.3 }}>
-                    você compete hoje<br/>
-                    <span style={{ color: V.zinc }}>({proj!.influenciaAtual}% de influência)</span>
-                  </p>
-                </div>
-                <div style={{ background: V.graphite, borderRadius: 10, padding: "12px 14px",
-                  textAlign: "center", border: `1px solid ${V.amber}40` }}>
-                  <div style={{ fontFamily: V.display, fontSize: 20, fontWeight: 700,
-                    color: V.amberSoft, letterSpacing: "-0.02em" }}>
-                    {fmtBRL(proj!.receitaPotencial)}
+                  <div style={{ background: V.graphite, borderRadius: 8, padding: "10px 12px",
+                    border: `1px solid ${V.amber}40` }}>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: V.amberSoft }}>
+                      {fmtBRL(proj!.receitaPotencial)}/mês
+                    </div>
+                    <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>
+                      com o plano ({proj!.influenciaMeta}%)
+                    </div>
                   </div>
-                  <p style={{ fontSize: 11, color: V.ash, margin: "4px 0 0", lineHeight: 1.3 }}>
-                    poderia competir<br/>
-                    <span style={{ color: V.zinc }}>({proj!.influenciaMeta}% de influência)</span>
-                  </p>
+                </div>
+                {(proj!.clientesGap ?? 0) > 0 && (
+                  <div style={{ fontSize: 12, color: V.mist, textAlign: "center" }}>
+                    +{proj!.clientesGap} cliente{proj!.clientesGap !== 1 ? 's' : ''}/mês
+                    via buscas ativas · {fmtBRL(proj!.gapCaptura)} incremental
+                  </div>
+                )}
+              </div>
+
+              {/* CAMADA 2 — Mercado alcançável */}
+              <div style={{ marginBottom: 16, paddingBottom: 16,
+                borderBottom: `1px solid ${V.slate}` }}>
+                <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
+                  letterSpacing: "0.05em", textTransform: "uppercase" as const, marginBottom: 8 }}>
+                  Mercado alcançável · {audienciaLabel} no raio de {results.audiencia?.raioKm || 3}km
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between",
+                  alignItems: "center" }}>
+                  <div>
+                    <span style={{ fontSize: 22, fontWeight: 700, color: V.teal }}>
+                      +{(proj!.familiasGap ?? 0).toLocaleString('pt-BR')}
+                    </span>
+                    <span style={{ fontSize: 12, color: V.ash, marginLeft: 6 }}>
+                      {audienciaLabel} adicionais com o plano
+                    </span>
+                  </div>
+                  <div style={{ textAlign: "right" as const, fontSize: 10, color: V.ash }}>
+                    <div>{(proj!.familiasAtual ?? 0).toLocaleString('pt-BR')} hoje</div>
+                    <div style={{ color: V.teal }}>{(proj!.familiasPotencial ?? 0).toLocaleString('pt-BR')} com plano</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 10, color: V.zinc, marginTop: 6 }}>
+                  Mercado total no raio: {proj!.audienciaTarget.toLocaleString('pt-BR')} {audienciaLabel} ·
+                  potencial {fmtBRL(proj!.mercadoTotal)}/mês
                 </div>
               </div>
-              {/* Contexto */}
-              <div style={{ borderTop: `1px solid ${V.slate}`, paddingTop: 12 }}>
-                <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.6 }}>
-                  Mercado total no seu raio: <strong style={{ color: V.mist }}>{fmtBRL(proj!.mercadoTotal)}/mês</strong>
-                  {" "}· Ticket estimado: <strong style={{ color: V.mist }}>{fmtBRL(proj!.ticketMedio)}</strong>
-                  {" "}· Conversão: <strong style={{ color: V.mist }}>{(proj!.taxaConversao * 100).toFixed(0)}%</strong>
-                </p>
+
+              {/* CAMADA 3 — Risco competitivo */}
+              {proj!.posicaoLider && proj!.nomeLider && (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontFamily: V.mono, fontSize: 9, color: V.coral,
+                    letterSpacing: "0.05em", textTransform: "uppercase" as const, marginBottom: 8 }}>
+                    Risco competitivo
+                  </div>
+                  <div style={{ fontSize: 12, color: V.mist, lineHeight: 1.6 }}>
+                    <strong style={{ color: V.coral }}>{proj!.nomeLider}</strong> disputa{' '}
+                    {fmtBRL(proj!.receitaLider!)}/mês vs seus {fmtBRL(proj!.receitaAtual)}/mês.
+                    {' '}Se continuar crescendo enquanto você não age, o gap aumenta.
+                  </div>
+                </div>
+              )}
+
+              {/* Contexto de cálculo */}
+              <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${V.slate}`,
+                fontSize: 10, color: V.ash, lineHeight: 1.6 }}>
+                Ticket estimado: {fmtBRL(proj!.ticketMedio)} · Conversão: {(proj!.taxaConversao * 100).toFixed(0)}%
                 {proj!.ticketRationale && (
-                  <p style={{ fontSize: 10, color: V.ash, margin: "6px 0 0", fontStyle: "italic",
-                    lineHeight: 1.5 }}>
-                    {proj!.ticketRationale}
-                  </p>
+                  <div style={{ marginTop: 4, fontStyle: "italic" }}>{proj!.ticketRationale}</div>
                 )}
               </div>
             </div>
           </div>
         )}
+
+        {/* ═══ POSIÇÃO COMPETITIVA (hero + expandable) ═══ */}
+        <div style={{ marginBottom: 12 }}>
+          {/* Influence card */}
+          {hasInfluence ? (
+            <div style={{ background: V.night, borderRadius: "14px 14px 0 0", padding: "28px 18px", textAlign: "center", border: `1px solid ${V.slate}`, borderBottom: "none" }}>
+              <div style={{
+                fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1,
+                color: results.influencePercent < 20 ? V.amberSoft : V.teal,
+              }}>
+                {results.influencePercent}%
+              </div>
+              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>é sua posição competitiva no mercado local</p>
+            </div>
+          ) : (
+            <div style={{ background: V.night, borderRadius: "14px 14px 0 0", padding: "28px 18px", textAlign: "center", border: `1px solid ${V.slate}`, borderBottom: "none" }}>
+              <div style={{ fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, color: V.coral, letterSpacing: "-0.03em", lineHeight: 1 }}>0%</div>
+              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>é sua posição competitiva no mercado local</p>
+              <p style={{ fontSize: 11, color: V.coral, margin: "4px 0 0" }}>Invisível no mercado</p>
+            </div>
+          )}
+
+          {/* Context */}
+          <div style={{ background: results.influencePercent === 0 ? V.coralWash : V.amberWash, padding: "14px 18px", border: `1px solid ${V.fog}`, borderTop: "none", borderRadius: "0 0 14px 14px" }}>
+            <p style={{ fontSize: 14, color: V.night, margin: 0, lineHeight: 1.6 }}>
+              {results.influencePercent === 0
+                ? `Quando alguém busca ${product} em ${shortRegion}, você não aparece. Enquanto isso, seus concorrentes recebem esses clientes.`
+                : hasLevers
+                ? `Você não aparece para ${100 - results.influencePercent}% dos potenciais compradores. ${levers.length} ações identificadas para mudar isso — veja abaixo em "Posição Competitiva".`
+                : results.influencePercent < 40
+                ? `Sua posição competitiva cobre ${results.influencePercent}% do mercado. Há espaço para crescer — o plano de ação mostra o que fazer agora.`
+                : `Posição competitiva de ${results.influencePercent}% — acima da média local. O plano de ação mostra como manter essa vantagem.`}
+            </p>
+          </div>
+        </div>
 
         {/* ═══ SECTION 1: "Seu mercado em números" ═══ */}
         <p style={{ fontSize: 11, fontFamily: V.mono, color: V.ash, letterSpacing: "0.06em", textTransform: "uppercase" as const, margin: "0 0 12px" }}>
@@ -482,70 +566,68 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             </Expandable>
         </div>
 
-        {/* ── 4. Influência Digital (indicador principal) ── */}
+        {/* ── Posição Competitiva (detalhes expandable) ── */}
         <div style={{ marginBottom: 4 }}>
-          {/* Separator */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0 16px" }}>
-            <div style={{ flex: 1, height: 1, background: V.fog }} />
-            <span style={{ fontSize: 11, fontFamily: V.mono, color: V.ash, letterSpacing: "0.04em", textTransform: "uppercase" as const, whiteSpace: "nowrap" as const }}>
-              A variável que você controla
-            </span>
-            <div style={{ flex: 1, height: 1, background: V.fog }} />
+          <Expandable title="Posição Competitiva" icon="📊">
+          <p style={{ fontSize: 12, color: V.ash, margin: "0 0 12px", lineHeight: 1.5 }}>
+            Probabilidade de ser escolhido quando alguém no seu raio decide contratar.
+          </p>
+
+          {/* D1 — Descoberta (SERP + Maps + AI) */}
+          <div style={{ padding: "10px 0", borderBottom: `1px solid ${V.fog}` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Descoberta</span>
+              <span style={{ fontFamily: V.mono, fontSize: 12, color: V.night }}>{breakdown?.d1_descoberta ?? breakdown?.d1_discovery ?? 0}%</span>
+            </div>
+            <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
+              {serpData?.termsRanked === 0
+                ? `Não aparece no top 10 para nenhum dos ${serpData?.termsScraped || 0} termos.`
+                : serpData ? `Aparece para ${serpData.termsRanked} de ${serpData.termsScraped} termos.` : "SERP não disponível."}
+              {results.maps?.found ? ` Maps: ★ ${results.maps.rating || "—"} (${results.maps.reviewCount || 0} avaliações).` : " Maps: não encontrado."}
+            </p>
+            {results.aiVisibility && (
+              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.5 }}>
+                {(() => {
+                  const aiDimFactor = results.aiVisibility!.factors?.find(
+                    (f: any) => f.status === 'positive' && f.factor.startsWith('Aparece em buscas de IA')
+                  );
+                  if (aiDimFactor) return `AI: ${aiDimFactor.factor}. Score ${results.aiVisibility!.score}/100.`;
+                  if (results.aiVisibility!.likelyMentioned) return `AI: Seu negócio provavelmente é mencionado em respostas de AI. Score ${results.aiVisibility!.score}/100.`;
+                  return `AI: Não aparece em nenhuma busca de IA na região. ${results.aiVisibility!.summary}`;
+                })()}
+              </p>
+            )}
           </div>
 
-          {/* Influence card */}
-          {hasInfluence ? (
-            <div style={{ background: V.night, borderRadius: "14px 14px 0 0", padding: "28px 18px", textAlign: "center", border: `1px solid ${V.slate}`, borderBottom: "none" }}>
-              <div style={{
-                fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1,
-                color: results.influencePercent < 20 ? V.amberSoft : V.teal,
-              }}>
-                {results.influencePercent}%
-              </div>
-              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>da demanda é o pedaço que você disputa para capturar</p>
+          {/* D2 — Credibilidade (avaliações + engajamento + site) */}
+          <div style={{ padding: "10px 0", borderBottom: `1px solid ${V.fog}` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Credibilidade</span>
+              <span style={{ fontFamily: V.mono, fontSize: 12, color: V.night }}>{breakdown?.d2_credibilidade ?? breakdown?.d2_credibility ?? 0}%</span>
             </div>
-          ) : (
-            <div style={{ background: V.night, borderRadius: "14px 14px 0 0", padding: "28px 18px", textAlign: "center", border: `1px solid ${V.slate}`, borderBottom: "none" }}>
-              <div style={{ fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, color: V.coral, letterSpacing: "-0.03em", lineHeight: 1 }}>0%</div>
-              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>da demanda é o pedaço que você disputa para capturar</p>
-              <p style={{ fontSize: 11, color: V.coral, margin: "4px 0 0" }}>Invisível no mercado</p>
-            </div>
-          )}
-
-          {/* Context */}
-          <div style={{ background: results.influencePercent === 0 ? V.coralWash : V.amberWash, padding: "14px 18px", border: `1px solid ${V.fog}`, borderTop: "none", borderBottom: "none" }}>
-            <p style={{ fontSize: 14, color: V.night, margin: 0, lineHeight: 1.6 }}>
-              {results.influencePercent === 0
-                ? `Quando alguém busca ${product} em ${shortRegion}, você não aparece. Enquanto isso, seus concorrentes recebem esses clientes.`
-                : hasLevers
-                ? `Você não aparece para ${100 - results.influencePercent}% dos potenciais compradores. ${levers.length} ações identificadas para mudar isso — veja abaixo em "Capacidade de influência".`
-                : results.influencePercent < 40
-                ? `Você não aparece para ${100 - results.influencePercent}% dos potenciais compradores. Há espaço para crescer — o plano de ação mostra o que fazer agora.`
-                : `Você aparece para ${results.influencePercent}% das buscas — posição forte. O plano de ação mostra o que fazer agora para manter essa vantagem.`}
+            <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
+              {results.maps?.found
+                ? `Google Maps: ★ ${results.maps.rating || "—"} (${results.maps.reviewCount || 0} avaliações) · ${results.maps.photos || 0} fotos.`
+                : "Google Maps: perfil não encontrado."}
+              {igData?.dataAvailable ? ` Engajamento Instagram: ${(igData.engagementRate * 100).toFixed(1)}%.` : ""}
             </p>
           </div>
 
-          <Expandable title="Capacidade de influência" icon="📊">
-          <p style={{ fontSize: 12, color: V.ash, margin: "0 0 12px", lineHeight: 1.5 }}>
-            Como seu negócio aparece para quem busca o que você faz na sua região.
-          </p>
-
-          {/* Alcance — Instagram/LinkedIn reach */}
+          {/* D3 — Presença (Instagram + conteúdo) */}
           <div style={{ padding: "10px 0", borderBottom: `1px solid ${V.fog}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Alcance</span>
-              <span style={{ fontFamily: V.mono, fontSize: 12, color: V.night }}>{breakdown?.instagram || 0}%</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Presença</span>
+              <span style={{ fontFamily: V.mono, fontSize: 12, color: V.night }}>{breakdown?.d3_presenca ?? breakdown?.d3_reach ?? 0}%</span>
             </div>
             {igData?.dataAvailable ? (
               <>
                 <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 4px", lineHeight: 1.5 }}>
-                  @{igData.handle}: {igData.followers.toLocaleString("pt-BR")} seguidores · {(igData.avgViews || igData.avgLikes || 0).toLocaleString("pt-BR")} alcance médio · {(igData.engagementRate * 100).toFixed(1)}% engajamento · {igData.postsLast30d} posts/30d
+                  @{igData.handle}: {igData.postsLast30d} posts/30d · {igData.followers.toLocaleString("pt-BR")} seguidores · {(igData.engagementRate * 100).toFixed(1)}% engajamento
                 </p>
                 {igData.followers > 0 && (igData.avgViews || 0) === 0 && (igData.avgLikes || 0) === 0 && (
                   <p style={{ fontSize: 11, color: V.amber, margin: "4px 0 8px", lineHeight: 1.5,
                     background: V.amberWash, padding: "6px 10px", borderRadius: 6 }}>
                     ⚠️ Dados de alcance e engajamento não disponíveis — perfil pode estar com restrições de privacidade.
-                    O score de Alcance considera apenas os seguidores detectados.
                   </p>
                 )}
                 {(igData.recentPostsCount ?? 0) > 0 ? (
@@ -585,56 +667,22 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                     ))}
                   </div>
                 )}
-                {competitors.length === 0 && (
-                  <p style={{ fontSize: 11, color: V.ash, margin: "4px 0 0" }}>
-                    Sem concorrentes para comparar nesta análise. O diagnóstico completo inclui comparativo.
-                  </p>
-                )}
               </>
             ) : (
               <p style={{ fontSize: 12, color: V.zinc, margin: 0 }}>Perfil não informado ou dados não coletados.</p>
             )}
           </div>
 
-          {/* Descoberta — Google + AI presence */}
-          <div style={{ padding: "10px 0", borderBottom: `1px solid ${V.fog}` }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Descoberta</span>
-              <span style={{ fontFamily: V.mono, fontSize: 12, color: V.night }}>{breakdown?.google || 0}%</span>
-            </div>
-            <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
-              {serpData?.termsRanked === 0
-                ? `Não aparece no top 10 para nenhum dos ${serpData?.termsScraped || 0} termos.`
-                : serpData ? `Aparece para ${serpData.termsRanked} de ${serpData.termsScraped} termos.` : "SERP não disponível."}
-              {results.maps?.found ? ` Maps: ★ ${results.maps.rating || "—"} (${results.maps.reviewCount || 0} avaliações).` : " Maps: não encontrado."}
-            </p>
-            {results.aiVisibility && (
-              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.5 }}>
-                {(() => {
-                  const aiDimFactor = results.aiVisibility!.factors?.find(
-                    (f: any) => f.status === 'positive' && f.factor.startsWith('Aparece em buscas de IA')
-                  );
-                  if (aiDimFactor) return `AI: ${aiDimFactor.factor}. Score ${results.aiVisibility!.score}/100.`;
-                  if (results.aiVisibility!.likelyMentioned) return `AI: Seu negócio provavelmente é mencionado em respostas de AI. Score ${results.aiVisibility!.score}/100.`;
-                  return `AI: Não aparece em nenhuma busca de IA na região. ${results.aiVisibility!.summary}`;
-                })()}
-              </p>
-            )}
-          </div>
-
-          {/* Credibilidade — Engagement and reviews */}
+          {/* D4 — Reputação (avaliações + respostas) */}
           <div style={{ padding: "10px 0" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Credibilidade</span>
-              {(results as any).influenceBreakdown4D && (
-                <span style={{ fontFamily: V.mono, fontSize: 12, color: V.night }}>{(results as any).influenceBreakdown4D.d2_credibility}%</span>
-              )}
+              <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Reputação</span>
+              <span style={{ fontFamily: V.mono, fontSize: 12, color: V.night }}>{breakdown?.d4_reputacao ?? 0}%</span>
             </div>
             <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
               {results.maps?.found
-                ? `Google Maps: ★ ${results.maps.rating || "—"} (${results.maps.reviewCount || 0} avaliações) · ${results.maps.photos || 0} fotos.`
-                : "Google Maps: perfil não encontrado."}
-              {igData?.dataAvailable ? ` Engajamento Instagram: ${(igData.engagementRate * 100).toFixed(1)}%.` : ""}
+                ? `${results.maps.reviewCount || 0} avaliações · ★ ${results.maps.rating || "—"} · ${Math.round((results.maps.ownerResponseRate || 0) * 100)}% respondidas`
+                : "Google Maps: perfil não encontrado — sem dados de reputação."}
             </p>
           </div>
 
@@ -645,12 +693,14 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 O que move seu score
               </p>
               {levers.map((lever: any, i: number) => {
-                const dimColor = lever.dimension === 'alcance' ? '#8B5CF6'
-                  : lever.dimension === 'descoberta' ? V.teal
-                  : V.amber;
-                const dimLabel = lever.dimension === 'alcance' ? 'Alcance'
-                  : lever.dimension === 'descoberta' ? 'Descoberta'
-                  : 'Credibilidade';
+                const dimColor = lever.dimension === 'descoberta' ? V.teal
+                  : lever.dimension === 'credibilidade' ? V.amber
+                  : lever.dimension === 'presenca' ? '#8B5CF6'
+                  : '#E05252';
+                const dimLabel = lever.dimension === 'descoberta' ? 'Descoberta'
+                  : lever.dimension === 'credibilidade' ? 'Credibilidade'
+                  : lever.dimension === 'presenca' ? 'Presença'
+                  : 'Reputação';
                 const effortColor = lever.effort === 'baixo' ? V.teal
                   : lever.effort === 'médio' ? V.amber
                   : V.coral;
@@ -716,7 +766,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               })}
               <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0",
                 fontFamily: V.mono, textAlign: "center" as const }}>
-                Impacto estimado sobre o score de influência total
+                Impacto estimado sobre a posição competitiva
               </p>
             </div>
           )}
@@ -821,10 +871,10 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           </div>
           <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 12px", lineHeight: 1.6 }}>
             {isB2G
-              ? "O score de influência digital usa 4 dimensões — Descoberta (SERP + Maps), Credibilidade (avaliações + site), Alcance Social e Visibilidade em IA — para medir quanto do mercado público você captura. O dimensionamento cruza volume de busca (Google Ads/DataForSEO), IBGE e PNCP para estimar o mercado disponível. Dados coletados em tempo real."
+              ? "A Posição Competitiva usa 4 dimensões — Descoberta (SERP + Maps + AI), Credibilidade (avaliações + site), Presença (conteúdo + redes) e Reputação (volume e qualidade de avaliações) — para medir a probabilidade de ser escolhido. O dimensionamento cruza volume de busca (Google Ads/DataForSEO), IBGE e PNCP para estimar o mercado disponível. Dados coletados em tempo real."
               : isB2B
-              ? "O score de influência digital usa 4 dimensões — Descoberta (SERP + Maps), Credibilidade (avaliações + site), Alcance Social (Instagram + LinkedIn) e Visibilidade em IA — para medir quanto do mercado local você captura. O dimensionamento cruza volume de busca (Google Ads/DataForSEO) com dados IBGE para estimar a demanda. Dados coletados em tempo real."
-              : "O score de influência digital usa 4 dimensões — Descoberta (SERP + Maps), Credibilidade (avaliações + site), Alcance Social (Instagram) e Visibilidade em IA — para medir quanto do mercado local você captura. O dimensionamento cruza volume de busca (Google Ads/DataForSEO) com dados IBGE para estimar a demanda total. Todos os dados são coletados em tempo real no momento do diagnóstico."}
+              ? "A Posição Competitiva usa 4 dimensões — Descoberta (SERP + Maps + AI), Credibilidade (avaliações + site), Presença (Instagram + LinkedIn) e Reputação (avaliações + respostas) — para medir a probabilidade de ser escolhido. O dimensionamento cruza volume de busca (Google Ads/DataForSEO) com dados IBGE para estimar a demanda. Dados coletados em tempo real."
+              : "A Posição Competitiva usa 4 dimensões — Descoberta (SERP + Maps + AI), Credibilidade (avaliações + site), Presença (Instagram + conteúdo) e Reputação (avaliações + respostas) — para medir a probabilidade de ser escolhido no mercado local. O dimensionamento cruza volume de busca (Google Ads/DataForSEO) com dados IBGE para estimar a demanda total. Todos os dados são coletados em tempo real."}
           </p>
           {results.pipeline?.durationMs && (
             <p style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, marginTop: 8 }}>{(results.pipeline.durationMs / 1000).toFixed(1)}s · {results.pipeline.version}</p>

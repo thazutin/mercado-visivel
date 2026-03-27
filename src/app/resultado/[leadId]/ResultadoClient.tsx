@@ -72,6 +72,20 @@ export default function ResultadoClient({ product, region, leadId, results }: Pr
     return () => clearTimeout(timer);
   }, [planReady, leadId]);
 
+  // Recarrega ao voltar do background (iOS Safari restaura sessão stale)
+  useEffect(() => {
+    let hiddenAt: number | null = null;
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        hiddenAt = Date.now();
+      } else if (hiddenAt && Date.now() - hiddenAt > 60_000) {
+        window.location.reload();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   if (showPostPayment) {
     return <PostPaymentScreen product={product} region={region} />;
   }

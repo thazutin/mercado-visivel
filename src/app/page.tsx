@@ -376,10 +376,10 @@ export default function Home() {
             fontFamily: V.display, fontSize: "clamp(28px, 5vw, 38px)", fontWeight: 700,
             color: V.white, letterSpacing: "-0.03em", margin: "24px 0 16px", lineHeight: 1.2,
           }}>
-            Saiba o que fazer agora para <span style={{ color: V.amber }}>vender mais</span>
+            Qual é sua <span style={{ color: V.amber }}>posição competitiva</span> no mercado local?
           </h1>
           <p style={{ fontSize: 15, color: V.ash, lineHeight: 1.6, margin: 0 }}>
-            {t.heroSubShort}
+            Virô mapeia em tempo real quanto do seu mercado você disputa hoje — e o que fazer para disputar mais.
           </p>
         </div>
       </div>
@@ -563,7 +563,7 @@ export default function Home() {
               <div style={{ fontFamily: V.display, fontSize: 32, fontWeight: 700, color: V.amberSoft, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 18%
               </div>
-              <p style={{ fontSize: 11, color: V.mist, margin: "6px 0 0" }}>da demanda é o pedaço que você disputa para capturar</p>
+              <p style={{ fontSize: 11, color: V.mist, margin: "6px 0 0" }}>é sua posição competitiva no mercado local</p>
             </div>
           </div>
 
@@ -819,7 +819,7 @@ export default function Home() {
             { title: "Gap financeiro", desc: "Quanto você está deixando na mesa todo mês" },
             { title: "Demanda ativa", desc: "Buscas com intenção de compra no seu raio" },
             { title: "Concorrência", desc: "Quem disputa os mesmos clientes" },
-            { title: "Sua influência", desc: "Percentual do mercado que você captura hoje" },
+            { title: "Posição Competitiva", desc: "Quanto do seu mercado você disputa hoje — e o que move esse número" },
           ].map((item, i) => (
             <div key={i} style={{ padding: "14px 16px", borderRadius: 12, border: `1px solid ${V.teal}30`, background: V.cloud, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
               <div style={{ flex: 1 }}>
@@ -896,8 +896,8 @@ export default function Home() {
         </div>
         <div style={{ background: V.cloud, borderRadius: 12, padding: "20px", border: `1px solid ${V.fog}` }}>
           <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.7, margin: 0 }}>
-            <strong style={{ color: V.night }}>Medimos 3 coisas:</strong>{" "}
-            como as pessoas encontram negócios como o seu (Descoberta), se seu negócio alcança essas pessoas (Alcance), e se passa confiança para quem encontra (Credibilidade).
+            <strong style={{ color: V.night }}>Medimos 4 dimensões:</strong>{" "}
+            Descoberta (aparece quando buscam), Credibilidade (convence quem encontra), Presença (mantém relacionamento com quem já conhece) e Reputação (sua base te recomenda). Tudo relativizado contra seus concorrentes reais no raio.
           </p>
         </div>
       </Section>
