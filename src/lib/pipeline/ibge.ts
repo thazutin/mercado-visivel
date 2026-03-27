@@ -652,12 +652,38 @@ export async function fetchAudienciaEstimada(
 ): Promise<AudienciaEstimada | null> {
   console.log(`[IBGE Audiência] START: city="${city}", state="${state}", nacional=${nacional}, lat=${lat}, lng=${lng}`);
   if (nacional) {
+    // Para nacional, inferir benchmark competitivo via Claude
+    // Mercado nacional tem muito mais concorrentes — penaliza relativização
+    let benchmarkNacional = { totalCompetidores: 50, descricao: 'mercado nacional competitivo' };
+    try {
+      const { default: Anthropic } = await import('@anthropic-ai/sdk');
+      const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+      const response = await client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 200,
+        temperature: 0,
+        messages: [{
+          role: 'user',
+          content: `Para o segmento "${businessCategory || 'negócio'}" no Brasil, estime quantos players digitais ativos competem nacionalmente (empresas com site + presença digital).
+
+Responda APENAS em JSON:
+{"totalCompetidores": 200, "descricao": "mercado com muitos players digitais estabelecidos"}`,
+        }],
+      });
+      const text = response.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
+      benchmarkNacional = JSON.parse(text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
+    } catch { /* usa fallback */ }
+
+    console.log(`[IBGE Nacional] benchmark: ${benchmarkNacional.totalCompetidores} competidores — ${benchmarkNacional.descricao}`);
+
     return {
       populacaoRaio: POPULACAO_BRASIL,
       raioKm: null,
       densidade: 'nacional',
       municipioNome: 'Brasil',
       municipioId: 0,
+      benchmarkNacionalCompetidores: benchmarkNacional.totalCompetidores,
+      benchmarkNacionalDescricao: benchmarkNacional.descricao,
     };
   }
 

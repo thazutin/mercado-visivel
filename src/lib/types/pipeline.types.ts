@@ -437,6 +437,8 @@ export interface AudienciaEstimada {
   audienciaTarget?: number;
   audienciaTargetMin?: number;
   audienciaTargetMax?: number;
+  benchmarkNacionalCompetidores?: number;
+  benchmarkNacionalDescricao?: string;
   targetProfile?: string;
   targetRationale?: string;
   populacaoSource?: string;

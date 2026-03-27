@@ -398,6 +398,8 @@ export function calculateCompositeInfluence(
   clientType?: 'b2c' | 'b2b' | 'b2g',
   linkedinPresent?: boolean,
   aiVisibility?: { score: number; likelyMentioned: boolean } | null,
+  isNacional?: boolean,
+  benchmarkNacionalCompetidores?: number,
 ): Step4Output {
   const startTime = Date.now();
   const ct = clientType || 'b2c';
@@ -444,8 +446,22 @@ export function calculateCompositeInfluence(
     ct,
   );
 
+  // Penalização nacional: mercado nacional tem muito mais concorrentes
+  // Score deve refletir que é muito mais difícil se destacar nacionalmente
+  let d1Final = d1, d2Final = d2, d3Final = d3, d4Final = d4;
+  if (isNacional) {
+    // 50 competidores = 50% do score local, 200 = 25%, 500+ = 15%
+    const totalComp = benchmarkNacionalCompetidores || 100;
+    const penaltyFactor = Math.max(0.15, Math.min(0.7, 10 / Math.sqrt(totalComp)));
+    d1Final = Math.round(d1 * penaltyFactor);
+    d2Final = Math.round(d2 * penaltyFactor);
+    d3Final = Math.round(d3 * penaltyFactor);
+    d4Final = Math.round(d4 * penaltyFactor);
+    console.log(`[PosComp Nacional] Penalização: ${(penaltyFactor * 100).toFixed(0)}% (${totalComp} competidores nacionais)`);
+  }
+
   const rawInfluence = Math.round(
-    d1 * weights.d1 + d2 * weights.d2 + d3 * weights.d3 + d4 * weights.d4
+    d1Final * weights.d1 + d2Final * weights.d2 + d3Final * weights.d3 + d4Final * weights.d4
   );
 
   // Cap realista com raiz quadrada
@@ -453,15 +469,15 @@ export function calculateCompositeInfluence(
 
   const breakdown: InfluenceBreakdown = {
     total: totalInfluence,
-    d1_descoberta: Math.round(d1),
-    d2_credibilidade: Math.round(d2),
-    d3_presenca: Math.round(d3),
-    d4_reputacao: Math.round(d4),
+    d1_descoberta: Math.round(d1Final),
+    d2_credibilidade: Math.round(d2Final),
+    d3_presenca: Math.round(d3Final),
+    d4_reputacao: Math.round(d4Final),
     // Compat fields (mantém para não quebrar outros componentes)
-    d1_discovery: Math.round(d1),
-    d2_credibility: Math.round(d2),
-    d3_reach: Math.round(d3),
-    d4_ai_visibility: Math.round(d1), // AI está dentro de D1 agora
+    d1_discovery: Math.round(d1Final),
+    d2_credibility: Math.round(d2Final),
+    d3_reach: Math.round(d3Final),
+    d4_ai_visibility: Math.round(d1Final), // AI está dentro de D1 agora
   };
 
   console.log(`[PosComp 4D] Raw=${rawInfluence}% → Realistic=${totalInfluence}% | D1_Descoberta=${Math.round(d1)} D2_Credibilidade=${Math.round(d2)} D3_Presença=${Math.round(d3)} D4_Reputação=${Math.round(d4)} | Concorrentes: ${mapsCompetitors.length}`);

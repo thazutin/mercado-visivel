@@ -1096,6 +1096,8 @@ Responda APENAS em JSON, sem markdown:
   // =========================================================================
   // STEP 4 — Composite Influence (4D model — needs aiVisibility)
   // =========================================================================
+  const benchmarkComp = precomputedAudiencia?.benchmarkNacionalCompetidores;
+
   step4 = calculateCompositeInfluence(
     googleInfluence,
     instagramInfluence,
@@ -1104,6 +1106,8 @@ Responda APENAS em JSON, sem markdown:
     inferredClientType,
     linkedinPresent,
     aiVisibility ? { score: aiVisibility.score, likelyMentioned: aiVisibility.likelyMentioned } : null,
+    isNacional,
+    benchmarkComp,
   );
   console.log(`[Pipeline] Step 4 OK: influence ${step4.influence.totalInfluence}%`);
 
