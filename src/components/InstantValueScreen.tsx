@@ -224,14 +224,14 @@ export default function InstantValueScreen({ product, region, results, onCheckou
     : { text: "✅ Presença ativa", bg: V.tealWash, color: V.teal };
 
   const pilar1Acoes = isB2B
-    ? ["Site com SEO para termos do setor", "LinkedIn Company Page ativo", "Aparece em buscas de IA para o segmento", "DataForSEO: palavras-chave com volume real"]
-    : ["Google Meu Negócio verificado e otimizado", "Site com SEO local (cidade + serviço nas meta tags)", "Aparece em buscas de IA (ChatGPT, Perplexity)", "Palavras-chave locais no Instagram e WhatsApp Business"];
+    ? ["Otimizar LinkedIn Company Page com palavras-chave do setor e localização", "Criar página de serviços com SEO para termos B2B específicos do segmento", "Aparecer em buscas de IA: publicar conteúdo técnico que responde perguntas do decisor", "Listar empresa em diretórios setoriais que indexam bem no Google"]
+    : ["Criar ou otimizar perfil no Google Meu Negócio com categoria, horário e fotos reais", "Adicionar cidade + serviço nas meta tags do site (ex: 'clínica de estética em Pinheiros')", "Configurar WhatsApp Business com palavras-chave do segmento na bio", "Aparecer em buscas de IA: descrição detalhada no Maps + responder avaliações"];
   const pilar2Acoes = isB2B
-    ? ["Cases reais no site e LinkedIn", "Depoimentos de clientes verificados", "Conteúdo técnico que demonstra autoridade", "Newsletter ou série de posts de posicionamento"]
-    : ["20+ avaliações no Google com respostas do dono", "Fotos reais do espaço, equipe e serviços", "Bio do Instagram com proposta de valor e CTA", "Frequência de postagem: mínimo 2x/semana"];
+    ? ["Publicar 2-3 cases reais com resultados mensuráveis no site e LinkedIn", "Solicitar depoimento em vídeo de 3 clientes satisfeitos esta semana", "Criar página 'Sobre' com time, metodologia e diferenciais concretos", "Newsletter mensal com insight do setor — demonstra autoridade antes da venda"]
+    : ["Pedir avaliação para os últimos 20 clientes via mensagem no WhatsApp esta semana", "Adicionar 10+ fotos reais do espaço, equipe e resultado de serviços no Maps", "Reescrever bio do Instagram com proposta de valor clara e CTA direto", "Responder 100% das avaliações do Google — aumenta ranking e confiança"];
   const pilar3Acoes = isB2B
-    ? ["Artigos em portais do setor", "Menções em newsletters de nicho", "Parcerias com players que indexam bem em AI", "Participação em eventos e podcasts do segmento"]
-    : ["Conteúdo que responde perguntas reais dos clientes", "Menções em portais e páginas do segmento", "Colaborações com outros negócios locais", "Presença em grupos e comunidades locais"];
+    ? ["Publicar artigo técnico em portal do setor (1x/mês)", "Identificar newsletters de nicho onde decisores estão e pedir menção", "Participar de podcast ou evento do segmento como convidado", "Fazer parceria com players complementares que aparecem em buscas de IA"]
+    : ["Criar 2 posts/semana respondendo perguntas reais que clientes fazem", "Pedir menção a parceiros locais (outros negócios complementares no raio)", "Identificar portais do setor que indexam bem no ChatGPT e pedir presença", "Colaborar com criadores de conteúdo locais do mesmo segmento"];
 
   return (
     <div style={{ minHeight: "100vh", background: V.cloud, padding: "48px 20px", opacity: show ? 1 : 0, transition: "opacity 0.5s ease" }}>
@@ -503,205 +503,61 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               <p style={{ fontSize: 11, color: V.coral, margin: "4px 0 0" }}>Invisível no mercado</p>
             </div>
           )}
-          <Expandable title="Posição Competitiva" icon="📊">
-          <p style={{ fontSize: 12, color: V.ash, margin: "0 0 12px", lineHeight: 1.5 }}>
-            Probabilidade de ser escolhido quando alguém no seu raio decide contratar.
-          </p>
+          <Expandable title="Sua Posição — 3 Pilares" icon="📊">
+          {(() => {
+            const bd = results.influenceBreakdown4D || results.influenceBreakdown;
+            const d1 = (bd as any)?.d1_descoberta ?? (bd as any)?.d1_discovery ?? 0;
+            const d2 = (bd as any)?.d2_credibilidade ?? (bd as any)?.d2_credibility ?? 0;
+            const d3 = (bd as any)?.d3_presenca ?? (bd as any)?.d3_reach ?? 0;
+            const d4 = (bd as any)?.d4_reputacao ?? 0;
 
-          {/* D1 — Descoberta */}
-          <div style={{ padding: "10px 0", borderBottom: `1px solid ${V.fog}` }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Descoberta</span>
-              <span style={{ fontFamily: V.mono, fontSize: 12, color: V.night }}>{(breakdown as any)?.d1_descoberta ?? (breakdown as any)?.d1_discovery ?? 0}%</span>
-            </div>
-            <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
-              {serpData?.termsRanked === 0
-                ? `Não aparece no top 10 para nenhum dos ${serpData?.termsScraped || 0} termos.`
-                : serpData ? `Aparece para ${serpData.termsRanked} de ${serpData.termsScraped} termos.` : "SERP não disponível."}
-              {results.maps?.found ? ` Maps: ★ ${results.maps.rating || "—"} (${results.maps.reviewCount || 0} avaliações).` : " Maps: não encontrado."}
-            </p>
-            {results.aiVisibility && (
-              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.5 }}>
-                {(() => {
-                  const aiDimFactor = results.aiVisibility!.factors?.find(
-                    (f: any) => f.status === 'positive' && f.factor.startsWith('Aparece em buscas de IA')
-                  );
-                  if (aiDimFactor) return `AI: ${aiDimFactor.factor}. Score ${results.aiVisibility!.score}/100.`;
-                  if (results.aiVisibility!.likelyMentioned) return `AI: Seu negócio provavelmente é mencionado em respostas de AI. Score ${results.aiVisibility!.score}/100.`;
-                  return `AI: Não aparece em nenhuma busca de IA na região. ${results.aiVisibility!.summary}`;
-                })()}
-              </p>
-            )}
-          </div>
+            const pilaresScore = [
+              {
+                icon: "🔍", label: "Seja Encontrável",
+                score: Math.round(d1), color: V.teal,
+                detail: results.maps?.found
+                  ? `Maps: ★ ${results.maps.rating} (${results.maps.reviewCount} avaliações)`
+                  : "Não encontrado no Google Maps",
+              },
+              {
+                icon: "⭐", label: "Construa Credibilidade",
+                score: Math.round((d2 + d4) / 2), color: V.amber,
+                detail: results.maps?.reviewCount
+                  ? `${results.maps.reviewCount} avaliações · ★ ${results.maps.rating}`
+                  : "Sem avaliações detectadas",
+              },
+              {
+                icon: "📣", label: "Participe da Cultura",
+                score: Math.round(d3), color: "#8B5CF6",
+                detail: results.instagram?.handle
+                  ? `@${results.instagram.handle} · ${results.instagram.followers?.toLocaleString('pt-BR')} seguidores`
+                  : "Presença digital não detectada",
+              },
+            ];
 
-          {/* D2 — Credibilidade */}
-          <div style={{ padding: "10px 0", borderBottom: `1px solid ${V.fog}` }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Credibilidade</span>
-              <span style={{ fontFamily: V.mono, fontSize: 12, color: V.night }}>{(breakdown as any)?.d2_credibilidade ?? (breakdown as any)?.d2_credibility ?? 0}%</span>
-            </div>
-            <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
-              {results.maps?.found
-                ? `Google Maps: ★ ${results.maps.rating || "—"} (${results.maps.reviewCount || 0} avaliações) · ${results.maps.photos || 0} fotos.`
-                : "Google Maps: perfil não encontrado."}
-              {igData?.dataAvailable ? ` Engajamento Instagram: ${(igData.engagementRate * 100).toFixed(1)}%.` : ""}
-            </p>
-          </div>
-
-          {/* D3 — Presença */}
-          <div style={{ padding: "10px 0", borderBottom: `1px solid ${V.fog}` }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Presença</span>
-              <span style={{ fontFamily: V.mono, fontSize: 12, color: V.night }}>{(breakdown as any)?.d3_presenca ?? (breakdown as any)?.d3_reach ?? 0}%</span>
-            </div>
-            {igData?.dataAvailable ? (
-              <>
-                <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 4px", lineHeight: 1.5 }}>
-                  @{igData.handle}: {igData.postsLast30d} posts/30d · {igData.followers.toLocaleString("pt-BR")} seguidores · {(igData.engagementRate * 100).toFixed(1)}% engajamento
+            return (
+              <div>
+                <p style={{ fontSize: 12, color: V.ash, margin: "0 0 16px", lineHeight: 1.5 }}>
+                  Probabilidade de ser escolhido quando alguém no seu raio decide contratar.
                 </p>
-                {igData.followers > 0 && (igData.avgViews || 0) === 0 && (igData.avgLikes || 0) === 0 && (
-                  <p style={{ fontSize: 11, color: V.amber, margin: "4px 0 8px", lineHeight: 1.5,
-                    background: V.amberWash, padding: "6px 10px", borderRadius: 6 }}>
-                    ⚠️ Dados de alcance e engajamento não disponíveis — perfil pode estar com restrições de privacidade.
-                  </p>
-                )}
-                {(igData.recentPostsCount ?? 0) > 0 ? (
-                  <p style={{ fontSize: 11, color: V.teal, margin: "0 0 8px", fontWeight: 500 }}>
-                    {igData.recentPostsCount} {igData.recentPostsCount === 1 ? "post" : "posts"} nos últimos 15 dias · {(igData.recentAvgReach || 0).toLocaleString("pt-BR")} alcance médio recente
-                  </p>
-                ) : (
-                  <p style={{
-                    fontSize: 11, color: V.amber, margin: "0 0 8px", fontWeight: 600,
-                    background: V.amberWash, display: "inline-block", padding: "3px 8px", borderRadius: 4,
-                  }}>
-                    Perfil inativo — 0 posts nos últimos 15 dias
-                  </p>
-                )}
-                {competitors.length > 0 && (
-                  <div style={{ background: V.cloud, borderRadius: 8, padding: "10px 12px", marginTop: 4 }}>
-                    <p style={{ fontSize: 10, color: V.ash, margin: "0 0 6px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>Comparativo</p>
-                    <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 11, borderBottom: `1px solid ${V.fog}` }}>
-                      <span style={{ color: V.ash, width: "30%" }}>Perfil</span>
-                      <span style={{ color: V.ash, width: "20%", textAlign: "right" }}>Seguidores</span>
-                      <span style={{ color: V.ash, width: "25%", textAlign: "right" }}>Alcance</span>
-                      <span style={{ color: V.ash, width: "25%", textAlign: "right" }}>Engaj.</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontSize: 12, background: V.amberWash, borderRadius: 4, paddingLeft: 4, paddingRight: 4, marginTop: 2 }}>
-                      <span style={{ color: V.amber, fontWeight: 600, width: "30%" }}>@{igData.handle}</span>
-                      <span style={{ color: V.night, width: "20%", textAlign: "right" }}>{igData.followers.toLocaleString("pt-BR")}</span>
-                      <span style={{ color: V.night, width: "25%", textAlign: "right" }}>{(igData.avgViews || igData.avgLikes || 0).toLocaleString("pt-BR")}</span>
-                      <span style={{ color: V.night, width: "25%", textAlign: "right" }}>{(igData.engagementRate * 100).toFixed(1)}%</span>
-                    </div>
-                    {competitors.map((c, i) => (
-                      <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 4px", fontSize: 12, borderBottom: i < competitors.length - 1 ? `1px solid ${V.fog}` : "none" }}>
-                        <span style={{ color: V.zinc, width: "30%" }}>@{c.handle}</span>
-                        <span style={{ color: V.zinc, width: "20%", textAlign: "right" }}>{c.followers.toLocaleString("pt-BR")}</span>
-                        <span style={{ color: V.zinc, width: "25%", textAlign: "right" }}>{((c as any).avgViews || (c as any).avgLikes || Math.round(c.followers * 0.1)).toLocaleString("pt-BR")}</span>
-                        <span style={{ color: V.zinc, width: "25%", textAlign: "right" }}>{(c.engagementRate * 100).toFixed(1)}%</span>
+                {pilaresScore.map((p, i) => (
+                  <div key={i} style={{ marginBottom: 12 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontSize: 14 }}>{p.icon}</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{p.label}</span>
                       </div>
-                    ))}
+                      <span style={{ fontSize: 16, fontWeight: 800, color: p.color }}>{p.score}</span>
+                    </div>
+                    <div style={{ height: 4, background: V.fog, borderRadius: 2, overflow: "hidden", marginBottom: 6 }}>
+                      <div style={{ height: "100%", background: p.color, borderRadius: 2, width: `${p.score}%`, transition: "width 0.6s ease" }} />
+                    </div>
+                    <div style={{ fontSize: 11, color: V.ash }}>{p.detail}</div>
                   </div>
-                )}
-              </>
-            ) : (
-              <p style={{ fontSize: 12, color: V.zinc, margin: 0 }}>Perfil não informado ou dados não coletados.</p>
-            )}
-          </div>
-
-          {/* D4 — Reputação */}
-          <div style={{ padding: "10px 0" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Reputação</span>
-              <span style={{ fontFamily: V.mono, fontSize: 12, color: V.night }}>{(breakdown as any)?.d4_reputacao ?? 0}%</span>
-            </div>
-            <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
-              {results.maps?.found
-                ? `${results.maps.reviewCount || 0} avaliações · ★ ${results.maps.rating || "—"} · ${Math.round(((results.maps as any).ownerResponseRate || 0) * 100)}% respondidas`
-                : "Google Maps: perfil não encontrado — sem dados de reputação."}
-            </p>
-          </div>
-
-          {/* Alavancas */}
-          {hasLevers && (
-            <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${V.fog}` }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: V.night, margin: "0 0 12px" }}>
-                O que move seu score
-              </p>
-              {levers.map((lever: any, i: number) => {
-                const dimColor = lever.dimension === 'descoberta' ? V.teal
-                  : lever.dimension === 'credibilidade' ? V.amber
-                  : lever.dimension === 'presenca' ? '#8B5CF6'
-                  : '#E05252';
-                const dimLabel = lever.dimension === 'descoberta' ? 'Descoberta'
-                  : lever.dimension === 'credibilidade' ? 'Credibilidade'
-                  : lever.dimension === 'presenca' ? 'Presença'
-                  : 'Reputação';
-                const effortColor = lever.effort === 'baixo' ? V.teal
-                  : lever.effort === 'médio' ? V.amber
-                  : V.coral;
-                return (
-                  <div key={i} style={{
-                    padding: "12px 14px", marginBottom: 8, borderRadius: 10,
-                    background: V.cloud, border: `1px solid ${V.fog}`,
-                  }}>
-                    <div style={{ display: "flex", justifyContent: "space-between",
-                      alignItems: "center", marginBottom: 6 }}>
-                      <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" as const }}>
-                        <span style={{
-                          fontFamily: V.mono, fontSize: 9, padding: "2px 7px",
-                          borderRadius: 100, fontWeight: 600,
-                          background: `${dimColor}15`, color: dimColor,
-                        }}>
-                          {dimLabel}
-                        </span>
-                        <span style={{
-                          fontFamily: V.mono, fontSize: 9, padding: "2px 7px",
-                          borderRadius: 100, background: `${effortColor}15`, color: effortColor,
-                        }}>
-                          {lever.effort === 'baixo' ? 'Fácil' : lever.effort === 'médio' ? 'Médio' : 'Complexo'}
-                        </span>
-                        <span style={{
-                          fontFamily: V.mono, fontSize: 9, color: V.ash,
-                          padding: "2px 7px", borderRadius: 100, background: V.fog,
-                        }}>
-                          {lever.horizon}
-                        </span>
-                      </div>
-                      <span style={{
-                        fontFamily: V.mono, fontSize: 11, fontWeight: 700,
-                        color: V.teal,
-                      }}>
-                        +{lever.impact}pts
-                      </span>
-                    </div>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: V.night,
-                      margin: "0 0 6px", lineHeight: 1.4 }}>
-                      {lever.action}
-                    </p>
-                    {lever.currentValue && (
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" as const }}>
-                        <span style={{ fontSize: 11, color: V.ash, fontFamily: V.mono }}>
-                          {lever.currentValue}
-                        </span>
-                        {lever.targetValue && (
-                          <>
-                            <span style={{ fontSize: 10, color: V.ash }}>→</span>
-                            <span style={{ fontSize: 11, color: V.teal, fontFamily: V.mono }}>
-                              {lever.targetValue}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-              <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0",
-                fontFamily: V.mono, textAlign: "center" as const }}>
-                Impacto estimado sobre a posição competitiva
-              </p>
-            </div>
-          )}
+                ))}
+              </div>
+            );
+          })()}
         </Expandable>
         </div>
 

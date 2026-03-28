@@ -20,7 +20,7 @@ type TabKey = "resultado" | "diagnostico" | "checklist" | "conteudos";
 const TABS: { key: TabKey; label: string; locked: false | 1 | 2 }[] = [
   { key: "resultado", label: "Diagnóstico inicial", locked: false },
   { key: "diagnostico", label: "Diagnóstico completo", locked: 1 },
-  { key: "checklist", label: "Itens Estruturantes", locked: 1 },
+  { key: "checklist", label: "Seu Plano", locked: 1 },
   { key: "conteudos", label: "Conteúdos semanais", locked: 2 },
 ];
 
@@ -37,6 +37,19 @@ export default function ResultadoClient({ product, region, leadId, results }: Pr
   const router = useRouter();
   const [showPostPayment, setShowPostPayment] = useState(false);
   const [planReady, setPlanReady] = useState(false);
+  const [statusMsg, setStatusMsg] = useState(0);
+
+  // Cicla mensagens de status a cada 3s
+  useEffect(() => {
+    const interval = setInterval(() => setStatusMsg(prev => (prev + 1) % 3), 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const statusMessages = [
+    "Buscando concorrentes no seu raio...",
+    "Analisando demanda ativa no Google...",
+    "Calculando sua posição competitiva...",
+  ];
 
   // Detecta retorno do Stripe com ?paid=true
   useEffect(() => {
@@ -87,7 +100,39 @@ export default function ResultadoClient({ product, region, leadId, results }: Pr
   }, []);
 
   if (showPostPayment) {
-    return <PostPaymentScreen product={product} region={region} />;
+    if (planReady) {
+      return (
+        <div style={{ minHeight: "100vh", background: V.cloud, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 20px" }}>
+          <div style={{ textAlign: "center", maxWidth: 400 }}>
+            <div style={{ fontSize: 32, marginBottom: 16 }}>✓</div>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: V.night, margin: "0 0 8px" }}>Seu plano está pronto</h2>
+            <p style={{ fontSize: 14, color: V.ash, margin: 0 }}>Abrindo seu painel...</p>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div style={{ minHeight: "100vh", background: V.cloud, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 20px" }}>
+        <div style={{ textAlign: "center", maxWidth: 400 }}>
+          <div style={{
+            background: "rgba(207,133,35,0.08)", border: "1px solid rgba(207,133,35,0.2)",
+            borderRadius: 12, padding: "16px 20px", marginBottom: 20,
+            fontSize: 14, color: V.amber, fontWeight: 600, lineHeight: 1.5,
+          }}>
+            ✓ Pagamento confirmado — estamos gerando seu plano personalizado
+          </div>
+          <p style={{ fontSize: 13, color: V.zinc, margin: "0 0 16px", lineHeight: 1.6 }}>
+            Seus itens estruturantes, relatório setorial e posts estarão prontos em até 15 minutos.
+          </p>
+          <div style={{
+            width: 28, height: 28, border: `3px solid ${V.fog}`,
+            borderTopColor: V.amber, borderRadius: "50%",
+            animation: "spin 0.8s linear infinite", margin: "0 auto 12px",
+          }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      </div>
+    );
   }
 
   const shortRegion = region.split(",")[0].trim();

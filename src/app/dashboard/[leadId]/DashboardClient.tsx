@@ -33,7 +33,7 @@ interface Props {
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "diagnostico", label: "Diagnóstico" },
-  { key: "estruturantes", label: "Itens Estruturantes" },
+  { key: "estruturantes", label: "Seu Plano" },
   { key: "semana", label: "Esta Semana" },
 ];
 
@@ -222,7 +222,7 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
     setItems(prev => prev.map(i => i.id === itemId ? { ...i, completed } : i));
   };
 
-  if (!planReady) return <Spinner text="Gerando itens estruturantes..." />;
+  if (!planReady) return <Spinner text="Identificando os itens prioritários para o seu negócio..." />;
   if (loading) return <Spinner text="Carregando..." />;
 
   const summary = plan?.content?.itensEstrurantesSummary || '';
@@ -1007,7 +1007,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
             borderRadius: 12, padding: "14px 18px", marginBottom: 16,
             fontSize: 13, color: V.amber, fontWeight: 500, lineHeight: 1.5,
           }}>
-            ✓ Pagamento confirmado — diagnóstico completo e itens estruturantes ficam prontos em até 15 minutos.
+            ✓ Pagamento confirmado — estamos gerando seu plano personalizado. Itens estruturantes, relatório setorial e posts prontos em até 15 minutos.
           </div>
         )}
 
@@ -1048,7 +1048,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
               {tier === "free" ? (
                 <LockedTab lockLevel={1} ctaLabel="Desbloquear por R$497" ctaUrl="#" leadId={lead.id} />
               ) : !planReady ? (
-                <Spinner text="Gerando diagnóstico completo..." />
+                <Spinner text="Analisando seus dados e gerando diagnóstico completo..." />
               ) : (
                 <div>
                   <MacroContextBlock macroContext={diagnosis?.macro_context} />
@@ -1090,7 +1090,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
             {tier === "free" ? (
               <LockedTab lockLevel={1} ctaLabel="Desbloquear por R$497" ctaUrl="#" leadId={lead.id} />
             ) : !planReady ? (
-              <Spinner text="Preparando conteúdo da semana..." />
+              <Spinner text="Buscando tendências do seu mercado e gerando conteúdos..." />
             ) : (
               <div>
                 <RelatorioSetorialBlock relatorio={plan?.content?.relatorioSetorial} />
