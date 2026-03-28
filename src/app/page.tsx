@@ -483,94 +483,117 @@ export default function Home() {
               <span style={{ fontSize: 12, color: V.ash }}>Clínica de estética · Av. Paulista, São Paulo</span>
             </div>
 
-            {/* Section label */}
-            <p style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.ash, margin: "0 0 10px" }}>
-              Seu mercado em números
-            </p>
-
-            {/* Card 1 — Mercado Endereçável */}
-            <div style={{ background: V.white, borderRadius: 12, padding: "18px 14px", textAlign: "center", border: `1px solid ${V.fog}`, marginBottom: 8 }}>
-              <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
-                ~18 mil
+            {/* BLOCO 1 — Oportunidade */}
+            <div style={{ background: "#0A0A0C", borderRadius: 14, padding: "24px 18px",
+              marginBottom: 10, textAlign: "center" }}>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9,
+                color: "#6E6E78", letterSpacing: "0.08em", textTransform: "uppercase" as const,
+                marginBottom: 14 }}>
+                Oportunidade identificada
               </div>
-              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>pessoas que poderiam contratar você no raio de 3km</p>
-              <p style={{ fontSize: 9, color: V.ash, margin: "2px 0 0", fontFamily: V.mono }}>Mercado endereçável · São Paulo · Alta densidade</p>
-            </div>
-
-            {/* Card 2 — Demanda Ativa */}
-            <div style={{ background: V.white, borderRadius: 12, padding: "18px 14px", textAlign: "center", border: `1px solid ${V.fog}`, marginBottom: 8 }}>
-              <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.night, letterSpacing: "-0.03em", lineHeight: 1 }}>
-                3.200
+              <div style={{ fontSize: 56, fontWeight: 900, color: "#2D9B83", lineHeight: 1,
+                fontFamily: "'Satoshi', sans-serif", letterSpacing: "-0.03em", marginBottom: 8 }}>
+                +3.240
               </div>
-              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>buscas/mês que poderiam levar até você</p>
-            </div>
-
-            {/* Card 3 — Concorrência */}
-            <div style={{ background: V.white, borderRadius: 12, padding: "18px 14px", textAlign: "center", border: `1px solid ${V.fog}`, marginBottom: 8 }}>
-              <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.amber, letterSpacing: "-0.03em", lineHeight: 1 }}>
-                12
+              <div style={{ fontSize: 14, color: "#C8C8D0", lineHeight: 1.5,
+                maxWidth: 260, margin: "0 auto 14px" }}>
+                pessoas a mais por mês conhecendo você<br/>
+                <strong style={{ color: "#FEFEFF" }}>sem investimento adicional em mídia</strong>
               </div>
-              <p style={{ fontSize: 11, color: V.zinc, margin: "4px 0 0" }}>negócios disputando atenção com você</p>
-              <span style={{ display: "inline-block", marginTop: 6, fontFamily: V.mono, fontSize: 9, padding: "2px 8px", borderRadius: 100, background: V.amberWash, color: V.amber, fontWeight: 600 }}>
-                Concorrência compatível com a demanda
-              </span>
-            </div>
-
-            {/* Card 4 — O que está em jogo */}
-            <div style={{ background: "#161618", borderRadius: 12, padding: "20px 14px", marginBottom: 8 }}>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "#6E6E78",
-                letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 12 }}>
-                O que está em jogo
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
-                <div style={{ background: "#232326", borderRadius: 8, padding: "10px 12px", textAlign: "center" }}>
-                  <div style={{ fontFamily: "'Satoshi', sans-serif", fontSize: 18, fontWeight: 700, color: "#C8C8D0" }}>R$960/mês</div>
-                  <div style={{ fontSize: 10, color: "#6E6E78", marginTop: 2 }}>você disputa hoje (18%)</div>
-                </div>
-                <div style={{ background: "#232326", borderRadius: 8, padding: "10px 12px", textAlign: "center",
-                  border: "1px solid rgba(207,133,35,0.3)" }}>
-                  <div style={{ fontFamily: "'Satoshi', sans-serif", fontSize: 18, fontWeight: 700, color: "#E6A445" }}>R$5.760/mês</div>
-                  <div style={{ fontSize: 10, color: "#6E6E78", marginTop: 2 }}>poderia disputar (36%)</div>
-                </div>
-              </div>
-              <div style={{ textAlign: "center", fontSize: 11, color: "#9E9EA8" }}>
-                +2 clientes/mês · 18 mil pessoas no raio · 3.200 buscas/mês
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
+                color: "#6E6E78", letterSpacing: "0.04em" }}>
+                Raio de 3km · Av. Paulista, São Paulo
               </div>
             </div>
-          </div>
 
-          {/* Checklist preview */}
-          <div style={{ padding: "14px 18px 0" }}>
-            <p style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.ash, margin: "0 0 10px" }}>
-              Primeiros Passos
-            </p>
-            {/* Item desbloqueado */}
-            <div style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "12px 14px", marginBottom: 6 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ color: V.teal, fontSize: 14, fontWeight: 700, flexShrink: 0 }}>✓</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: V.night, flex: 1 }}>Cadastrar e otimizar perfil no Google Meu Negócio</span>
-              </div>
-              <div style={{ display: "flex", gap: 6, marginTop: 6, marginLeft: 22 }}>
-                <span style={{ fontFamily: V.mono, fontSize: 9, padding: "2px 8px", borderRadius: 100, background: "rgba(217,83,79,0.08)", color: V.coral, fontWeight: 600 }}>Alta prioridade</span>
-                <span style={{ fontFamily: V.mono, fontSize: 9, padding: "2px 8px", borderRadius: 100, background: V.tealWash, color: V.teal }}>1–4 semanas</span>
-              </div>
-              <p style={{ fontSize: 11, color: V.ash, margin: "6px 0 0 22px", lineHeight: 1.5 }}>
-                Passo a passo: acesse business.google.com, adicione fotos, horário, categoria principal e responda às primeiras avaliações.
+            {/* Contexto rápido */}
+            <div style={{ background: "#F5F3EF", borderRadius: 10, padding: "12px 14px",
+              marginBottom: 10, border: "1px solid #E8E4DC" }}>
+              <p style={{ fontSize: 12, color: "#6E6E78", margin: 0, lineHeight: 1.6,
+                textAlign: "center" }}>
+                De <strong style={{ color: "#1A1A1C" }}>18.000 pessoas</strong> no seu mercado,
+                você disputa hoje por <strong style={{ color: "#1A1A1C" }}>18%</strong> — 3.240 pessoas.
+                Com as ações certas, chega a <strong style={{ color: "#2D9B83" }}>36% — 6.480 pessoas</strong>.
               </p>
             </div>
-            {/* Itens bloqueados */}
+
+            {/* BLOCO 2 — Por que essa oportunidade existe */}
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9,
+              color: "#9E9EA8", letterSpacing: "0.08em", textTransform: "uppercase" as const,
+              marginBottom: 8, paddingLeft: 2, marginTop: 4 }}>
+              Por que essa oportunidade existe
+            </div>
+
+            <div style={{ background: "#FFFFFF", borderRadius: 10, padding: "12px 14px",
+              border: "1px solid #E8E4DC", marginBottom: 6,
+              display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 12, color: "#6E6E78" }}>🏙️ Mercado no raio</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#1A1A1C" }}>~18 mil pessoas</span>
+            </div>
+
+            <div style={{ background: "#FFFFFF", borderRadius: 10, padding: "12px 14px",
+              border: "1px solid #E8E4DC", marginBottom: 6,
+              display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 12, color: "#6E6E78" }}>🔍 Demanda ativa</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#1A1A1C" }}>3.200 buscas/mês</span>
+            </div>
+
+            <div style={{ background: "#FFFFFF", borderRadius: 10, padding: "12px 14px",
+              border: "1px solid #E8E4DC", marginBottom: 6,
+              display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 12, color: "#6E6E78" }}>🏪 Concorrência</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#CF8523" }}>12 negócios</span>
+            </div>
+
+            <div style={{ background: "#FFFFFF", borderRadius: 10, padding: "12px 14px",
+              border: "1px solid #E8E4DC", marginBottom: 10,
+              display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 12, color: "#6E6E78" }}>📊 Sua posição</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#2D9B83" }}>18% do mercado</span>
+            </div>
+
+            {/* BLOCO 3 — Como aumentar essa posição */}
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9,
+              color: "#9E9EA8", letterSpacing: "0.08em", textTransform: "uppercase" as const,
+              marginBottom: 8, paddingLeft: 2 }}>
+              Como aumentar essa posição
+            </div>
+
             {[
-              { title: "Otimizar bio do Instagram com palavras-chave locais", desc: "Atualize bio, link e destaques com termos que seus clientes buscam." },
-              { title: "Criar página de serviços com SEO local", desc: "Página com title, meta description e conteúdo estruturado para IA." },
-            ].map((item, i) => (
-              <div key={i} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "12px 14px", marginBottom: 6, filter: "blur(1.5px)", opacity: 0.6 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ color: V.ash, fontSize: 14, flexShrink: 0 }}>○</span>
-                  <span style={{ fontSize: 12, color: V.zinc }}>{item.title}</span>
+              { icon: "🔍", label: "Seja Encontrável", color: "#2D9B83",
+                status: "⚠️ Não encontrado no Google Maps" },
+              { icon: "⭐", label: "Construa Credibilidade", color: "#CF8523",
+                status: "⚠️ Poucas avaliações — prioridade alta" },
+              { icon: "📣", label: "Participe da Cultura", color: "#8B5CF6",
+                status: "⚠️ Presença digital parada" },
+            ].map((pilar, i) => (
+              <div key={i} style={{ background: "#FFFFFF", borderRadius: 10,
+                padding: "10px 14px", border: "1px solid #E8E4DC",
+                marginBottom: 6 }}>
+                <div style={{ display: "flex", justifyContent: "space-between",
+                  alignItems: "center", marginBottom: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#1A1A1C" }}>
+                    {pilar.icon} {pilar.label}
+                  </span>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 9, color: "#FFFFFF", background: "#CF8523",
+                    padding: "2px 7px", borderRadius: 100, fontWeight: 600 }}>
+                    No plano
+                  </span>
                 </div>
-                <p style={{ fontSize: 11, color: V.ash, margin: "4px 0 0 22px", lineHeight: 1.4 }}>{item.desc}</p>
+                <div style={{ fontSize: 11, color: "#CF8523", fontWeight: 500 }}>
+                  {pilar.status}
+                </div>
               </div>
             ))}
+
+            {/* CTA preview */}
+            <div style={{ background: "#F5F3EF", borderRadius: 10, padding: "10px 14px",
+              marginTop: 4, textAlign: "center", border: "1px solid #E8E4DC" }}>
+              <span style={{ fontSize: 11, color: "#6E6E78" }}>
+                🔒 Ver plano personalizado — <strong style={{ color: "#CF8523" }}>Diagnóstico Completo R$497</strong>
+              </span>
+            </div>
           </div>
 
           {/* Content preview */}
