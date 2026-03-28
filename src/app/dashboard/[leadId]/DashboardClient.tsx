@@ -226,21 +226,117 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
   if (loading) return <Spinner text="Carregando..." />;
 
   const summary = plan?.content?.itensEstrurantesSummary || '';
-  const dimColors: Record<string, string> = {
-    descoberta: V.teal,
-    credibilidade: V.amber,
-    presenca: '#8B5CF6',
-    reputacao: '#E1306C',
+
+  const PILAR_MAP: Record<string, { label: string; color: string; icon: string }> = {
+    descoberta: { label: 'Seja Encontrável', color: V.teal, icon: '🔍' },
+    credibilidade: { label: 'Construa Credibilidade', color: V.amber, icon: '⭐' },
+    reputacao: { label: 'Construa Credibilidade', color: V.amber, icon: '⭐' },
+    presenca: { label: 'Participe da Cultura', color: '#8B5CF6', icon: '📣' },
   };
-  const dimLabels: Record<string, string> = {
-    descoberta: 'Descoberta',
-    credibilidade: 'Credibilidade',
-    presenca: 'Presença',
-    reputacao: 'Reputação',
+
+  const sorted = [...items].sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+  const grupos = {
+    encontravel: sorted.filter(i => i.dimensao === 'descoberta'),
+    credibilidade: sorted.filter(i => ['credibilidade', 'reputacao'].includes(i.dimensao)),
+    cultura: sorted.filter(i => i.dimensao === 'presenca'),
   };
+  const ungrouped = sorted.filter(i => !['descoberta', 'credibilidade', 'reputacao', 'presenca'].includes(i.dimensao));
 
   const completed = items.filter(i => i.completed).length;
   const total = items.length;
+
+  const renderItem = (item: any) => {
+    const pilarInfo = PILAR_MAP[item.dimensao] || { label: item.dimensao, color: V.ash, icon: '📋' };
+    return (
+      <div key={item.id} style={{
+        background: item.completed ? "rgba(45,155,131,0.04)" : V.white,
+        borderRadius: 12, border: `1px solid ${item.completed ? V.teal + '40' : V.fog}`,
+        padding: "14px 16px", marginBottom: 10,
+        opacity: item.completed ? 0.7 : 1,
+      }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+          <button
+            onClick={() => toggleItem(item.id, !item.completed)}
+            style={{
+              width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+              border: `2px solid ${item.completed ? V.teal : V.fog}`,
+              background: item.completed ? V.teal : V.white,
+              cursor: "pointer", display: "flex", alignItems: "center",
+              justifyContent: "center", marginTop: 1,
+            }}
+          >
+            {item.completed && (
+              <span style={{ color: V.white, fontSize: 12, fontWeight: 700 }}>✓</span>
+            )}
+          </button>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", gap: 6, alignItems: "center",
+              marginBottom: 6, flexWrap: "wrap" as const }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: V.night,
+                textDecoration: item.completed ? "line-through" : "none" }}>
+                {item.title}
+              </span>
+              <span style={{
+                fontFamily: V.mono, fontSize: 9, padding: "2px 6px",
+                borderRadius: 100, background: V.fog, color: V.ash,
+              }}>
+                {item.deadline || item.prazo}
+              </span>
+            </div>
+            {item.description && (
+              <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px",
+                lineHeight: 1.5 }}>
+                {item.description}
+              </p>
+            )}
+            {item.action && !item.completed && (
+              <div style={{ background: V.cloud, borderRadius: 8,
+                padding: "8px 10px", marginBottom: 6 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: V.zinc,
+                  textTransform: "uppercase", letterSpacing: "0.04em",
+                  marginBottom: 4 }}>
+                  Como fazer
+                </div>
+                <p style={{ fontSize: 12, color: V.night, margin: 0,
+                  lineHeight: 1.5 }}>
+                  {item.action}
+                </p>
+              </div>
+            )}
+            {item.verification && !item.completed && (
+              <p style={{ fontSize: 11, color: V.teal, margin: 0,
+                fontWeight: 500 }}>
+                ✓ Verificar: {item.verification}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderGrupo = (key: string, grupoItems: any[], pilarLabel: string, pilarIcon: string, pilarColor: string) => {
+    if (grupoItems.length === 0) return null;
+    const grupoCompleted = grupoItems.filter(i => i.completed).length;
+    const grupoPct = Math.round((grupoCompleted / grupoItems.length) * 100);
+    return (
+      <div key={key} style={{ marginBottom: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 16 }}>{pilarIcon}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>{pilarLabel}</span>
+          </div>
+          <span style={{ fontFamily: V.mono, fontSize: 11, fontWeight: 600, color: pilarColor }}>
+            {grupoCompleted}/{grupoItems.length}
+          </span>
+        </div>
+        <div style={{ height: 4, background: V.fog, borderRadius: 2, overflow: "hidden", marginBottom: 10 }}>
+          <div style={{ height: "100%", borderRadius: 2, background: pilarColor, width: `${grupoPct}%`, transition: "width 0.3s ease" }} />
+        </div>
+        {grupoItems.map(renderItem)}
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -275,83 +371,12 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
           Nenhum item estruturante gerado ainda.
         </p>
       ) : (
-        items.sort((a, b) => (a.order_index || 0) - (b.order_index || 0)).map((item: any) => {
-          const dimColor = dimColors[item.dimensao] || V.ash;
-          const dimLabel = dimLabels[item.dimensao] || item.dimensao;
-          return (
-            <div key={item.id} style={{
-              background: item.completed ? "rgba(45,155,131,0.04)" : V.white,
-              borderRadius: 12, border: `1px solid ${item.completed ? V.teal + '40' : V.fog}`,
-              padding: "14px 16px", marginBottom: 10,
-              opacity: item.completed ? 0.7 : 1,
-            }}>
-              <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                <button
-                  onClick={() => toggleItem(item.id, !item.completed)}
-                  style={{
-                    width: 22, height: 22, borderRadius: 6, flexShrink: 0,
-                    border: `2px solid ${item.completed ? V.teal : V.fog}`,
-                    background: item.completed ? V.teal : V.white,
-                    cursor: "pointer", display: "flex", alignItems: "center",
-                    justifyContent: "center", marginTop: 1,
-                  }}
-                >
-                  {item.completed && (
-                    <span style={{ color: V.white, fontSize: 12, fontWeight: 700 }}>✓</span>
-                  )}
-                </button>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center",
-                    marginBottom: 6, flexWrap: "wrap" as const }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: V.night,
-                      textDecoration: item.completed ? "line-through" : "none" }}>
-                      {item.title}
-                    </span>
-                    <span style={{
-                      fontFamily: V.mono, fontSize: 9, padding: "2px 6px",
-                      borderRadius: 100, background: `${dimColor}15`, color: dimColor,
-                      fontWeight: 600,
-                    }}>
-                      {dimLabel}
-                    </span>
-                    <span style={{
-                      fontFamily: V.mono, fontSize: 9, padding: "2px 6px",
-                      borderRadius: 100, background: V.fog, color: V.ash,
-                    }}>
-                      {item.deadline || item.prazo}
-                    </span>
-                  </div>
-                  {item.description && (
-                    <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px",
-                      lineHeight: 1.5 }}>
-                      {item.description}
-                    </p>
-                  )}
-                  {item.action && !item.completed && (
-                    <div style={{ background: V.cloud, borderRadius: 8,
-                      padding: "8px 10px", marginBottom: 6 }}>
-                      <div style={{ fontSize: 10, fontWeight: 600, color: V.zinc,
-                        textTransform: "uppercase", letterSpacing: "0.04em",
-                        marginBottom: 4 }}>
-                        Como fazer
-                      </div>
-                      <p style={{ fontSize: 12, color: V.night, margin: 0,
-                        lineHeight: 1.5 }}>
-                        {item.action}
-                      </p>
-                    </div>
-                  )}
-                  {item.verification && !item.completed && (
-                    <p style={{ fontSize: 11, color: V.teal, margin: 0,
-                      fontWeight: 500 }}>
-                      ✓ Verificar: {item.verification}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })
+        <>
+          {renderGrupo('encontravel', grupos.encontravel, 'Seja Encontrável', '🔍', V.teal)}
+          {renderGrupo('credibilidade', grupos.credibilidade, 'Construa Credibilidade', '⭐', V.amber)}
+          {renderGrupo('cultura', grupos.cultura, 'Participe da Cultura', '📣', '#8B5CF6')}
+          {ungrouped.length > 0 && renderGrupo('outros', ungrouped, 'Outros', '📋', V.ash)}
+        </>
       )}
     </div>
   );
@@ -442,6 +467,152 @@ function InfluenceChart({ snapshots, currentScore, product }: {
           {lastPoint.score}% agora
         </span>
       </div>
+    </div>
+  );
+}
+
+// ─── Pilares Score Card ─────────────────────────────────────────────
+function PilaresScoreCard({ breakdown, levers, clientType }: {
+  breakdown: any;
+  levers: any[];
+  clientType?: string;
+}) {
+  if (!breakdown) return null;
+
+  const d1 = breakdown.d1_descoberta ?? breakdown.d1_discovery ?? 0;
+  const d2 = breakdown.d2_credibilidade ?? breakdown.d2_credibility ?? 0;
+  const d3 = breakdown.d3_presenca ?? breakdown.d3_reach ?? 0;
+  const d4 = breakdown.d4_reputacao ?? 0;
+
+  const pilares = [
+    {
+      id: 'encontravel',
+      label: 'Seja Encontrável',
+      icon: '🔍',
+      score: Math.round(d1),
+      color: V.teal,
+      desc: 'Google, Maps, IA, SEO',
+      dimensoes: ['descoberta'],
+    },
+    {
+      id: 'credibilidade',
+      label: 'Construa Credibilidade',
+      icon: '⭐',
+      score: Math.round((d2 + d4) / 2),
+      color: V.amber,
+      desc: 'Reviews, fotos, site, proposta de valor',
+      dimensoes: ['credibilidade', 'reputacao'],
+    },
+    {
+      id: 'cultura',
+      label: 'Participe da Cultura',
+      icon: '📣',
+      score: Math.round(d3),
+      color: '#8B5CF6',
+      desc: 'Conteúdo, menções, alcance, parcerias',
+      dimensoes: ['presenca'],
+    },
+  ];
+
+  const scoreGeral = breakdown.total ?? Math.round(d1 * 0.35 + ((d2 + d4) / 2) * 0.40 + d3 * 0.25);
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      {/* Score geral */}
+      <div style={{ background: V.night, borderRadius: 12,
+        padding: "16px 18px", marginBottom: 10,
+        display: "flex", alignItems: "center",
+        justifyContent: "space-between" }}>
+        <div>
+          <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
+            letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4 }}>
+            Posição Competitiva Local
+          </div>
+          <div style={{ fontSize: 13, color: V.mist }}>
+            Probabilidade de ser escolhido quando alguém decide contratar
+          </div>
+        </div>
+        <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 16 }}>
+          <div style={{ fontSize: 36, fontWeight: 900, color: V.teal,
+            lineHeight: 1, fontFamily: V.display }}>
+            {scoreGeral}%
+          </div>
+        </div>
+      </div>
+
+      {/* 3 pilares */}
+      {pilares.map(pilar => {
+        const pilarLevers = levers.filter(l =>
+          pilar.dimensoes.includes(l.dimension)
+        );
+        return (
+          <div key={pilar.id} style={{
+            background: V.white, borderRadius: 12,
+            border: `1px solid ${V.fog}`,
+            padding: "14px 16px", marginBottom: 8,
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between",
+              alignItems: "center", marginBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 16 }}>{pilar.icon}</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: V.night }}>
+                    {pilar.label}
+                  </div>
+                  <div style={{ fontSize: 11, color: V.ash }}>{pilar.desc}</div>
+                </div>
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 800,
+                color: pilar.color, flexShrink: 0, marginLeft: 12 }}>
+                {pilar.score}
+              </div>
+            </div>
+            <div style={{ height: 4, background: V.fog,
+              borderRadius: 2, overflow: "hidden", marginBottom: 10 }}>
+              <div style={{
+                height: "100%", borderRadius: 2,
+                background: pilar.color,
+                width: `${pilar.score}%`,
+                transition: "width 0.6s ease",
+              }} />
+            </div>
+            {pilarLevers.length > 0 && (
+              <div>
+                {pilarLevers.slice(0, 2).map((lever: any, i: number) => (
+                  <div key={i} style={{
+                    background: V.cloud, borderRadius: 8,
+                    padding: "8px 10px", marginBottom: 6,
+                    borderLeft: `3px solid ${pilar.color}`,
+                  }}>
+                    <div style={{ fontSize: 12, fontWeight: 600,
+                      color: V.night, marginBottom: 2 }}>
+                      {lever.action}
+                    </div>
+                    <div style={{ display: "flex", gap: 8,
+                      alignItems: "center", flexWrap: "wrap" as const }}>
+                      {lever.currentValue && (
+                        <span style={{ fontSize: 10, color: V.ash }}>
+                          Hoje: {lever.currentValue}
+                        </span>
+                      )}
+                      {lever.targetValue && (
+                        <span style={{ fontSize: 10, color: pilar.color,
+                          fontWeight: 600 }}>
+                          → Meta: {lever.targetValue}
+                        </span>
+                      )}
+                      <span style={{ fontSize: 10, color: V.ash,
+                        fontFamily: V.mono }}>
+                        +{lever.impact}pts · {lever.horizon}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -881,13 +1052,17 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
               ) : (
                 <div>
                   <MacroContextBlock macroContext={diagnosis?.macro_context} />
+                  <PilaresScoreCard
+                    breakdown={lead.diagnosis_display?.influenceBreakdown4D || lead.diagnosis_display?.influenceBreakdown}
+                    levers={lead.diagnosis_display?.influenceBreakdown?.levers || lead.diagnosis_display?.influenceBreakdown4D?.levers || []}
+                    clientType={lead.client_type}
+                  />
                   <InfluenceChart
                     snapshots={snapshots}
                     currentScore={lead.diagnosis_display?.influencePercent || 0}
                     product={lead.product}
                   />
                   <ProjecaoCard projecao={lead.diagnosis_display?.projecaoFinanceira} />
-                  <LeversCard levers={lead.diagnosis_display?.influenceBreakdown?.levers || []} />
                 </div>
               )}
             </Section>
@@ -922,6 +1097,27 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
                 <Section title="Posts desta semana" defaultOpen={true}>
                   <ContentsSection leadId={lead.id} tier={tier} />
                 </Section>
+                <div style={{ background: V.night, borderRadius: 12,
+                  padding: "16px 18px", marginTop: 16,
+                  border: `1px solid ${V.slate}` }}>
+                  <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
+                    letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>
+                    Quer ir além?
+                  </div>
+                  <p style={{ fontSize: 13, color: V.mist, margin: "0 0 12px",
+                    lineHeight: 1.6 }}>
+                    Sem ação contínua, a tendência é entropia. Os conteúdos e insights semanais
+                    mantêm seu negócio relevante — mas se quiser acelerar com estratégia
+                    personalizada, fale com a gente.
+                  </p>
+                  <a href="https://wa.me/5511999999999?text=Quero+saber+mais+sobre+consultoria+personalizada"
+                    target="_blank"
+                    style={{ display: "block", background: V.amber, color: V.night,
+                      textAlign: "center", padding: "12px", borderRadius: 8,
+                      fontWeight: 700, fontSize: 13, textDecoration: "none" }}>
+                    Falar sobre consultoria personalizada →
+                  </a>
+                </div>
               </div>
             )}
           </div>
