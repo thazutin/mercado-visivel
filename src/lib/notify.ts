@@ -203,7 +203,7 @@ export async function notifyFullDiagnosisReady(opts: {
 
     sendEmail({
       to: email,
-      subject: `${displayName} — diagnóstico completo e plano de ação prontos`,
+      subject: `${displayName} — seu diagnóstico completo está no painel`,
       html: fullDiagnosisEmailHtml({ product, shortRegion, url: dashboardUrl }),
     }),
   ]);
@@ -492,40 +492,61 @@ function diagnosisEmailHtml(opts: {
   `);
 }
 
-function fullDiagnosisEmailHtml(opts: {
+function fullDiagnosisEmailHtml({
+  product,
+  shortRegion,
+  url,
+}: {
   product: string;
   shortRegion: string;
   url: string;
 }): string {
-  const { url } = opts;
-
   return emailShell(`
-    <h1 style="font-size:22px;color:#161618;margin:0 0 16px;line-height:1.3;">
-      Seu diagnóstico completo está pronto.
-    </h1>
-    <p style="font-size:15px;color:#6E6E78;line-height:1.7;margin:0 0 24px;">
-      Seu diagnóstico completo está pronto — e junto com ele, um plano de ação com as ações de maior impacto para você começar hoje.
+    <div style="background:#0A0A0C;border-radius:16px;padding:28px 24px;margin-bottom:24px;">
+      <p style="font-size:13px;color:#9E9EA8;margin:0 0 8px;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;">
+        Diagnóstico completo pronto
+      </p>
+      <h1 style="font-size:22px;font-weight:700;color:#FEFEFF;margin:0 0 12px;line-height:1.3;">
+        ${product} em ${shortRegion} — tudo no seu painel.
+      </h1>
+      <p style="font-size:14px;color:#9E9EA8;margin:0;line-height:1.6;">
+        Geramos tudo com dados reais do seu mercado. Abra o painel para ver o que encontramos.
+      </p>
+    </div>
+
+    <div style="margin-bottom:24px;">
+      <p style="font-size:11px;color:#6E6E78;letter-spacing:0.06em;text-transform:uppercase;margin:0 0 12px;font-family:monospace;">
+        O que você encontra no painel
+      </p>
+
+      <div style="background:#161618;border-radius:10px;padding:14px 16px;margin-bottom:8px;border-left:3px solid #2D9B83;">
+        <div style="font-size:13px;font-weight:600;color:#FEFEFF;margin-bottom:4px;">Diagnóstico por canal</div>
+        <div style="font-size:12px;color:#6E6E78;line-height:1.5;">Google, Instagram, Maps e IA — onde você está forte e onde está perdendo.</div>
+      </div>
+
+      <div style="background:#161618;border-radius:10px;padding:14px 16px;margin-bottom:8px;border-left:3px solid #CF8523;">
+        <div style="font-size:13px;font-weight:600;color:#FEFEFF;margin-bottom:4px;">Itens estruturantes</div>
+        <div style="font-size:12px;color:#6E6E78;line-height:1.5;">O básico que precisa estar no lugar — checklist baseada nos gaps do seu negócio, ordenada por impacto.</div>
+      </div>
+
+      <div style="background:#161618;border-radius:10px;padding:14px 16px;margin-bottom:8px;border-left:3px solid #8B5CF6;">
+        <div style="font-size:13px;font-weight:600;color:#FEFEFF;margin-bottom:4px;">Relatório setorial</div>
+        <div style="font-size:12px;color:#6E6E78;line-height:1.5;">Tendências reais do mercado de ${product} em ${shortRegion} — o contexto que dá direção às suas ações.</div>
+      </div>
+
+      <div style="background:#161618;border-radius:10px;padding:14px 16px;border-left:3px solid #E1306C;">
+        <div style="font-size:13px;font-weight:600;color:#FEFEFF;margin-bottom:4px;">Posts prontos para publicar</div>
+        <div style="font-size:12px;color:#6E6E78;line-height:1.5;">Conectados ao contexto do seu mercado esta semana — copie, adapte e publique.</div>
+      </div>
+    </div>
+
+    <a href="${url}" style="display:block;background:#FEFEFF;color:#0A0A0C;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:16px;">
+      Acessar meu painel →
+    </a>
+
+    <p style="font-size:11px;color:#6E6E78;text-align:center;margin:0;line-height:1.6;">
+      Seu painel fica disponível por 12 meses.<br/>
+      Conteúdos atualizados toda sexta com o contexto do seu mercado.
     </p>
-    <div style="margin:0 0 20px;">
-      ${[
-        "Diagnóstico completo por canal (Google, Instagram, Maps, IA)",
-        "Plano de ação ordenado por prioridade",
-        "Análise de sazonalidade do seu mercado",
-        "Amostra de conteúdos prontos para publicar",
-      ]
-        .map(
-          (item) => `
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-          <span style="color:#CF8523;font-size:14px;font-weight:700;">→</span>
-          <span style="font-size:14px;color:#3A3A40;">${item}</span>
-        </div>`
-        )
-        .join("")}
-    </div>
-    <div style="text-align:center;margin:0 0 28px;">
-      <a href="${url}" style="background:#161618;color:#FEFEFF;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;display:inline-block;">
-        Acessar meu painel
-      </a>
-    </div>
   `);
 }
