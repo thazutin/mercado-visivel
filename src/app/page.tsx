@@ -376,10 +376,10 @@ export default function Home() {
             fontFamily: V.display, fontSize: "clamp(28px, 5vw, 38px)", fontWeight: 700,
             color: V.white, letterSpacing: "-0.03em", margin: "24px 0 16px", lineHeight: 1.2,
           }}>
-            Qual é sua <span style={{ color: V.amber }}>posição competitiva</span> no mercado local?
+            Mais clientes todo mês <span style={{ color: V.amber }}>sem investir em mídia</span>.
           </h1>
           <p style={{ fontSize: 15, color: V.ash, lineHeight: 1.6, margin: 0 }}>
-            Em 60 segundos você sabe quanto do seu mercado disputa hoje — e o que fazer para disputar mais.
+            Virô descobre quantos clientes passam pelo seu radar sem te ver — e te mostra exatamente o que fazer para mudar isso.
           </p>
         </div>
       </div>
@@ -764,10 +764,10 @@ export default function Home() {
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {[
             { icon: "📋", title: "Você informa seu negócio", text: "Nome, segmento e endereço. Leva menos de 1 minuto." },
-            { icon: "🔍", title: "A Virô analisa seu mercado", text: "Cruzamos Google, Instagram, Maps, IBGE e IA em tempo real." },
-            { icon: "📊", title: "Você recebe o relatório grátis", text: "Sua posição competitiva, quem disputa com você e quanto está em jogo." },
-            { icon: "🔓", title: "Desbloqueie o Diagnóstico Completo — R$497", text: "Itens estruturantes, relatório setorial do seu mercado e posts conectados ao contexto da semana. Disponível em até 15 minutos." },
-            { icon: "🔄", title: "Assine para conteúdos toda semana — R$99/mês", text: "Você recebe toda sexta-feira 4 posts prontos para copiar e colar + 3 briefings para compartilhar com time ou agência." },
+            { icon: "🔍", title: "Virô analisa seu mercado em tempo real", text: "Cruzamos Google, Maps, Instagram, IA e IBGE para mapear sua posição, seus concorrentes e sua oportunidade." },
+            { icon: "📊", title: "Você recebe o diagnóstico grátis", text: "Quantos clientes você pode ter a mais por mês, quem disputa com você e o que está te impedindo de crescer." },
+            { icon: "🔓", title: "Desbloqueie o plano personalizado — R$497", text: "Passo a passo do que fazer em cada pilar: ser encontrável, construir credibilidade e participar da cultura do seu mercado." },
+            { icon: "🔄", title: "Mantenha-se relevante toda semana — R$99/mês", text: "Insights do seu mercado + conteúdos prontos toda sexta. Sem ação contínua, a tendência é entropia." },
           ].map((step, i) => (
             <div key={i} style={{ background: V.white, borderRadius: 14, padding: "20px 20px", border: `1px solid ${V.fog}`, display: "flex", gap: 16, alignItems: "flex-start" }}>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
@@ -791,10 +791,10 @@ export default function Home() {
           Feito para negócios locais
         </h2>
         <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: "0 0 12px" }}>
-          Lojas, clínicas, restaurantes, escritórios, studios e prestadores de serviço. Com ou sem presença digital forte.
+          Lojas, clínicas, escolas, restaurantes, estúdios, consultórios e prestadores de serviço. Com ou sem presença digital hoje.
         </p>
         <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: 0 }}>
-          Se você quer entender como sua empresa aparece hoje, quem disputa atenção com você e onde há oportunidade de crescer — a Virô é para você.
+          Se você quer saber quantos clientes estão te ignorando por falta de visibilidade — e o que fazer para mudar isso sem gastar mais em mídia — a Virô é para você.
         </p>
       </Section>
 
@@ -811,10 +811,10 @@ export default function Home() {
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 32 }}>
           {[
-            { title: "Gap financeiro", desc: "Quanto você está deixando na mesa todo mês" },
-            { title: "Demanda ativa", desc: "Buscas com intenção de compra no seu raio" },
-            { title: "Concorrência", desc: "Quem disputa os mesmos clientes" },
-            { title: "Posição Competitiva", desc: "Quanto do seu mercado você disputa hoje — e o que move esse número" },
+            { title: "Oportunidade", desc: "Quantos clientes a mais você pode ter por mês sem mídia paga" },
+            { title: "Seus números", desc: "Mercado no raio, demanda ativa, concorrência e sua posição atual" },
+            { title: "Como crescer", desc: "Os 3 pilares que determinam sua posição competitiva" },
+            { title: "Primeiros passos", desc: "Uma ação concreta baseada no seu maior gap" },
           ].map((item, i) => (
             <div key={i} style={{ padding: "14px 16px", borderRadius: 12, border: `1px solid ${V.teal}30`, background: V.cloud, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
               <div style={{ flex: 1 }}>
@@ -832,10 +832,10 @@ export default function Home() {
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 32 }}>
           {[
-            { title: "Diagnóstico completo", desc: "Por canal: Google, Instagram, Maps e IA" },
-            { title: "Itens estruturantes", desc: "O básico que precisa estar no lugar — checklist dinâmica baseada no seu diagnóstico" },
-            { title: "Relatório setorial", desc: "Tendências do seu mercado com dados reais desta semana" },
-            { title: "Amostra de conteúdos", desc: "4 posts prontos para publicar" },
+            { title: "Seja Encontrável", desc: "Maps otimizado, SEO local, visibilidade em IA — passo a passo para aparecer quando buscam" },
+            { title: "Construa Credibilidade", desc: "Reviews, fotos, bio, proposta de valor — o que convence quem te encontra" },
+            { title: "Participe da Cultura", desc: "Conteúdo real, parceiros que indexam bem em IA, menções no setor" },
+            { title: "Relatório setorial", desc: "Tendências reais do seu mercado esta semana" },
           ].map((item, i) => (
             <div key={i} style={{ padding: "14px 16px", borderRadius: 12, border: `2px solid ${V.amber}`, background: V.white, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
               <div style={{ flex: 1 }}>
@@ -892,8 +892,8 @@ export default function Home() {
         </div>
         <div style={{ background: V.cloud, borderRadius: 12, padding: "20px", border: `1px solid ${V.fog}` }}>
           <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.7, margin: 0 }}>
-            <strong style={{ color: V.night }}>Medimos 4 dimensões:</strong>{" "}
-            Descoberta (aparece quando buscam), Credibilidade (convence quem encontra), Presença (mantém relacionamento com quem já conhece) e Reputação (sua base te recomenda). Tudo relativizado contra seus concorrentes reais no raio.
+            <strong style={{ color: V.night }}>Medimos 3 pilares:</strong>{" "}
+            Seja Encontrável (aparece quando buscam — Google, Maps, IA), Construa Credibilidade (convence quem encontra — reviews, fotos, site) e Participe da Cultura (mantém relevância — conteúdo, menções, alcance). Tudo relativizado contra seus concorrentes reais no raio.
           </p>
         </div>
       </Section>
@@ -906,10 +906,10 @@ export default function Home() {
         </h2>
         {[
           { q: "O relatório inicial é mesmo gratuito?", a: "Sim, 100% gratuito. Você preenche o formulário, a Virô analisa seu mercado em tempo real e entrega o relatório sem precisar criar conta ou inserir cartão." },
-          { q: "O que está incluído no Diagnóstico Completo?", a: "O Diagnóstico Completo (R$497, pagamento único) inclui: diagnóstico detalhado por canal (Google, Instagram, Maps e IA), itens estruturantes — uma checklist dinâmica com o básico que precisa estar no lugar baseada nos gaps do seu negócio, relatório setorial com tendências reais do seu mercado, e posts prontos para publicar conectados ao contexto da semana. Tudo fica disponível no painel em até 15 minutos após o pagamento." },
+          { q: "O que está incluído no Diagnóstico Completo?", a: "O Diagnóstico Completo (R$497, pagamento único) entrega seu plano personalizado nos 3 pilares: Seja Encontrável (Maps, SEO, IA), Construa Credibilidade (reviews, fotos, posicionamento) e Participe da Cultura (conteúdo, parceiros, menções). Cada pilar tem ações concretas com passo a passo aplicável ao seu negócio específico, um relatório setorial com dados reais desta semana, e posts prontos para publicar. Disponível no painel em até 15 minutos após o pagamento." },
           { q: "Quanto tempo leva para receber o diagnóstico?", a: "O relatório inicial fica pronto em até 1 minuto após você preencher o formulário. O Diagnóstico Completo fica disponível no painel em até 15 minutos após a confirmação do pagamento." },
           { q: "Como acesso meu painel depois de pagar?", a: "Após o pagamento, você recebe um email com o link de acesso direto ao painel. O login é feito com o mesmo email usado no cadastro — sem senha, via link mágico." },
-          { q: "O que são os Conteúdos Semanais?", a: "São 4 posts prontos para publicar (Instagram ou LinkedIn, dependendo do perfil do seu negócio) e 3 briefings para sua equipe ou agência executarem — gerados toda sexta-feira com base no contexto atual do seu mercado. Disponível por R$99/mês após a contratação do Diagnóstico Completo." },
+          { q: "O que são os Conteúdos Semanais?", a: "Toda sexta você recebe: o que mudou no seu mercado esta semana, uma oportunidade específica para agir agora, 4 posts prontos para publicar conectados ao contexto do momento, e 3 briefings completos para compartilhar com time ou agência. A premissa é simples: sem ação contínua, a tendência é entropia." },
           { q: "Posso cancelar a recorrência?", a: "Sim, a qualquer momento direto no painel ou por email. Não há fidelidade nem multa." },
           { q: "Funciona para qualquer negócio?", a: "Funciona para negócios locais com atendimento físico ou regional: lojas, clínicas, restaurantes, escritórios, studios, prestadores de serviço. Se você depende de clientes na sua cidade ou região, a Virô é para você." },
           { q: "Meus dados ficam seguros?", a: "Sim. Seus dados são usados exclusivamente para gerar seu diagnóstico e nunca são compartilhados com terceiros. Veja nossa Política de Privacidade para mais detalhes." },
