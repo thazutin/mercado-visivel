@@ -371,7 +371,7 @@ export default function Home() {
       }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-            <NelsonLogo size={28} />
+            <NelsonLogo size={28} variant="light" />
             <span style={{ fontFamily: V.display, fontSize: 18, fontWeight: 700, color: V.white }}>Virô</span>
           </div>
           <h1 style={{

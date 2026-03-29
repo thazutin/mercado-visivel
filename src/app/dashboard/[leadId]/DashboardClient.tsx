@@ -994,7 +994,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
             background: V.night, display: "inline-flex", alignItems: "center", justifyContent: "center",
             marginBottom: 12,
           }}>
-            <NelsonLogo size={24} />
+            <NelsonLogo size={24} variant="light" />
           </div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: V.night, margin: 0 }}>
             {lead.product} · {lead.region}

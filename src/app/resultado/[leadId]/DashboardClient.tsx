@@ -111,7 +111,7 @@ export default function DashboardClient({ lead, plan, diagnosis, briefings }: Da
               background: C.night, display: "inline-flex",
               alignItems: "center", justifyContent: "center", marginBottom: 20,
             }}>
-              <NelsonLogo size={24} />
+              <NelsonLogo size={24} variant="light" />
             </div>
             <div style={{
               fontFamily: font.display, fontSize: 20, fontWeight: 600,
