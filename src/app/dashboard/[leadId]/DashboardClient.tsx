@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import InstantValueScreen from "@/components/InstantValueScreen";
 import { LockedTab } from "@/components/dashboard/LockedTab";
+import { NelsonLogo } from "@/components/NelsonLogo";
 
 function fmtBRL(n: number): string {
   if (n >= 1_000_000) return `R$${(n / 1_000_000).toFixed(1).replace('.', ',')}M`;
@@ -993,15 +994,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
             background: V.night, display: "inline-flex", alignItems: "center", justifyContent: "center",
             marginBottom: 12,
           }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <ellipse cx="11" cy="14" rx="7" ry="5" fill="#3D2B1A"/>
-              <ellipse cx="13" cy="15" rx="4" ry="3.5" fill="#CF8523"/>
-              <ellipse cx="8" cy="10" rx="4" ry="3.5" fill="#3D2B1A"/>
-              <polygon points="4,10 6,9 6,11" fill="#3D2B1A"/>
-              <circle cx="7" cy="9.5" r="1.2" stroke="#CF8523" strokeWidth="0.8" fill="none"/>
-              <circle cx="9.8" cy="9.5" r="1.2" stroke="#CF8523" strokeWidth="0.8" fill="none"/>
-              <line x1="8.2" y1="9.5" x2="8.6" y2="9.5" stroke="#CF8523" strokeWidth="0.8"/>
-            </svg>
+            <NelsonLogo size={24} />
           </div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: V.night, margin: 0 }}>
             {lead.product} · {lead.region}

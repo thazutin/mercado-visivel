@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import InstantValueScreen from "@/components/InstantValueScreen";
 import PostPaymentScreen from "@/components/PostPaymentScreen";
 import { LockedTab } from "@/components/dashboard/LockedTab";
+import { NelsonLogo } from "@/components/NelsonLogo";
 
 const V = {
   night: "#161618", zinc: "#6E6E78", ash: "#9E9EA8",
@@ -146,20 +147,8 @@ export default function ResultadoClient({ product, region, leadId, results }: Pr
 
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: 12,
-            background: V.night, display: "inline-flex", alignItems: "center", justifyContent: "center",
-            marginBottom: 12,
-          }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <ellipse cx="11" cy="14" rx="7" ry="5" fill="#3D2B1A"/>
-              <ellipse cx="13" cy="15" rx="4" ry="3.5" fill="#CF8523"/>
-              <ellipse cx="8" cy="10" rx="4" ry="3.5" fill="#3D2B1A"/>
-              <polygon points="4,10 6,9 6,11" fill="#3D2B1A"/>
-              <circle cx="7" cy="9.5" r="1.2" stroke="#CF8523" strokeWidth="0.8" fill="none"/>
-              <circle cx="9.8" cy="9.5" r="1.2" stroke="#CF8523" strokeWidth="0.8" fill="none"/>
-              <line x1="8.2" y1="9.5" x2="8.6" y2="9.5" stroke="#CF8523" strokeWidth="0.8"/>
-            </svg>
+          <div style={{ marginBottom: 12 }}>
+            <NelsonLogo size={40} />
           </div>
           <h1 style={{ fontSize: 20, fontWeight: 700, color: V.night, margin: "0 0 4px" }}>
             {product} · {shortRegion}

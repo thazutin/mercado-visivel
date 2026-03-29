@@ -5,8 +5,8 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Virô — Analise a visibilidade do seu negócio no mercado local",
-  description: "Descubra como seu negócio aparece no Google, Instagram e IA. Análise real de demanda, concorrência e posicionamento para negócios locais. Grátis em 60 segundos.",
+  title: "Virô — Seu próximo cliente já está te procurando",
+  description: "Em 60 segundos você vê quantos clientes passam pelo seu radar sem te ver — e o que fazer para ser a escolha óbvia.",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -15,8 +15,8 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "Virô — Analise a visibilidade do seu negócio no mercado local",
-    description: "Descubra como seu negócio aparece no Google, Instagram e IA. Análise gratuita de demanda, concorrência e oportunidades para negócios locais.",
+    title: "Virô — Seu próximo cliente já está te procurando",
+    description: "Em 60 segundos você vê quantos clientes passam pelo seu radar sem te ver — e o que fazer para ser a escolha óbvia.",
     type: "website",
   },
 };

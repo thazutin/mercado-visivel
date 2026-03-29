@@ -5,6 +5,7 @@ import ProcessingScreen from "@/components/ProcessingScreen";
 import InstantValueScreen from "@/components/InstantValueScreen";
 import { initialFormData, type LeadFormData, stepValidation } from "@/lib/schema";
 import { dictionaries, type Locale } from "@/lib/i18n";
+import { NelsonLogo } from "@/components/NelsonLogo";
 
 
 // ─── Design Tokens ─────────────────────────────────────────────────
@@ -369,21 +370,9 @@ export default function Home() {
         opacity: heroVisible ? 1 : 0, transition: "opacity 0.6s ease",
       }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: "rgba(255,255,255,0.08)", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <ellipse cx="11" cy="14" rx="7" ry="5" fill="#3D2B1A"/>
-                <ellipse cx="13" cy="15" rx="4" ry="3.5" fill="#CF8523"/>
-                <ellipse cx="8" cy="10" rx="4" ry="3.5" fill="#3D2B1A"/>
-                <polygon points="4,10 6,9 6,11" fill="#3D2B1A"/>
-                <circle cx="7" cy="9.5" r="1.2" stroke="#CF8523" strokeWidth="0.8" fill="none"/>
-                <circle cx="9.8" cy="9.5" r="1.2" stroke="#CF8523" strokeWidth="0.8" fill="none"/>
-                <line x1="8.2" y1="9.5" x2="8.6" y2="9.5" stroke="#CF8523" strokeWidth="0.8"/>
-              </svg>
-            </div>
-            <span style={{ fontFamily: V.display, fontSize: 24, fontWeight: 700, color: V.white, letterSpacing: "-0.03em" }}>
-              Virô
-            </span>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <NelsonLogo size={28} />
+            <span style={{ fontFamily: V.display, fontSize: 18, fontWeight: 700, color: V.white }}>Virô</span>
           </div>
           <h1 style={{
             fontFamily: V.display, fontSize: "clamp(28px, 5vw, 38px)", fontWeight: 700,
