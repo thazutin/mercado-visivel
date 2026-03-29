@@ -387,11 +387,11 @@ function diagnosisEmailHtml(opts: {
     || (projecaoFinanceira?.gapCaptura || 0) < 500;
   const destacarFamilias = gapPequeno && (projecaoFinanceira?.familiasGap || 0) > 0;
 
-  const isNacional = /brasil|nacional/i.test(shortRegion || '');
-  const isB2BNacional = isB2B && isNacional;
+  const isNacionalAny = /brasil|nacional/i.test(shortRegion || '');
+  const isB2BNacional = isB2B && isNacionalAny;
 
   // Dynamic headline based on influence
-  const headline = isB2BNacional
+  const headline = isNacionalAny
     ? `Você disputa ${influencePercent}% da atenção digital no mercado nacional de ${product}.`
     : influencePercent === 0
     ? `Seu negócio não aparece para nenhum cliente em potencial em ${shortRegion}.`
@@ -400,7 +400,7 @@ function diagnosisEmailHtml(opts: {
     : `Você já disputa ${influencePercent}% do mercado em ${shortRegion} — mas pode mais.`;
 
   // Dynamic insight — voz do Nelson
-  const insight = isB2BNacional
+  const insight = isNacionalAny
     ? `Vasculhei seu mercado. No mercado nacional de ${product}, centenas de empresas competem pela mesma atenção. Com ${influencePercent}% de posição competitiva digital, há espaço real para crescer.`
     : influencePercent === 0
     ? `Vasculhei seu mercado. Seu negócio não está aparecendo quando alguém busca o que você faz em ${shortRegion}. Os concorrentes capturam esses clientes — e você nem fica sabendo.`

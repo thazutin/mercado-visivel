@@ -191,6 +191,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
   const isB2B = results.clientType === 'b2b';
   const isB2G = results.clientType === 'b2g';
   const isNacional = /brasil|nacional/i.test(results.audiencia?.municipioNome || '');
+  const isNacionalAny = isNacional;
   const isB2BNacional = isB2B && isNacional;
   const audienciaLabel = isB2G ? 'órgãos públicos potenciais' : isB2B ? 'empresas no seu mercado' : 'pessoas no seu mercado';
   const audienciaUnit = isB2G ? 'órgãos' : isB2B ? 'empresas' : 'pessoas';
@@ -267,12 +268,16 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               <strong style={{ color: V.white }}>sem investimento adicional em mídia</strong>
             </div>
             <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.04em" }}>
-              {isB2BNacional ? 'Mercado nacional' : `Raio de ${raioKm}km · ${shortRegion}`}
+              {isNacionalAny ? 'Mercado nacional' : `Raio de ${raioKm}km · ${shortRegion}`}
             </div>
           </div>
           <div style={{ background: V.cloud, borderRadius: 10, padding: "12px 16px", border: `1px solid ${V.fog}` }}>
             <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.6, textAlign: "center" }}>
-              {audienciaTotal > 0
+              {isNacionalAny && !isB2B
+                ? `${results.influencePercent}% da atenção digital no mercado nacional de ${product}. Quem vende para o Brasil todo compete com centenas de players — os itens estruturantes mostram como aumentar essa posição.`
+                : isB2BNacional
+                ? `${results.influencePercent}% da atenção digital no mercado nacional de ${product}. Em um mercado com centenas de players ativos, os itens estruturantes mostram como aumentar essa posição.`
+                : audienciaTotal > 0
                 ? `De ${audienciaTotal.toLocaleString('pt-BR')} ${isB2B ? 'empresas' : 'pessoas'} no seu mercado, você disputa hoje por ${results.influencePercent}% — ${familiasAtual.toLocaleString('pt-BR')}. Com as ações certas, chega a ${familiasPotencial.toLocaleString('pt-BR')}.`
                 : `Você disputa ${results.influencePercent}% do seu mercado hoje. Com as ações certas, pode disputar mais.`}
             </p>
@@ -502,12 +507,12 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               }}>
                 {results.influencePercent}%
               </div>
-              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>{isB2BNacional ? "é sua posição competitiva no mercado digital nacional" : "é sua posição competitiva no mercado local"}</p>
+              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>{isNacionalAny ? "é sua posição competitiva no mercado digital nacional" : "é sua posição competitiva no mercado local"}</p>
             </div>
           ) : (
             <div style={{ background: V.night, borderRadius: "14px 14px 0 0", padding: "24px 18px", textAlign: "center", border: `1px solid ${V.slate}`, borderBottom: "none" }}>
               <div style={{ fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, color: V.coral, letterSpacing: "-0.03em", lineHeight: 1 }}>0%</div>
-              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>{isB2BNacional ? "é sua posição competitiva no mercado digital nacional" : "é sua posição competitiva no mercado local"}</p>
+              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>{isNacionalAny ? "é sua posição competitiva no mercado digital nacional" : "é sua posição competitiva no mercado local"}</p>
               <p style={{ fontSize: 11, color: V.coral, margin: "4px 0 0" }}>Invisível no mercado</p>
             </div>
           )}
