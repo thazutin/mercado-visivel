@@ -272,6 +272,13 @@ function buildDisplayData(result: any) {
   const mapsData = influence.rawGoogle?.mapsPresence || null;
   const igData = influence.rawInstagram || null;
 
+  // Se nenhuma fonte encontrou o negócio, score é 0
+  const nenhumDadoReal =
+    !mapsData?.found &&
+    !igData?.profile?.dataAvailable &&
+    serpPositions.filter((sp: any) => sp.position && sp.position <= 20).length === 0;
+  const influencePercentFinal = nenhumDadoReal ? 0 : Math.round(influence.totalInfluence);
+
   const terms = result.terms.terms.slice(0, 10).map((t: any) => {
     const volumeMatch = result.volumes.termVolumes.find((v: any) => v.term === t.term);
     const serpMatch = serpPositions.find(
@@ -296,7 +303,7 @@ function buildDisplayData(result: any) {
     avgCpc: 0,
     marketLow: sizing.marketPotential.low,
     marketHigh: sizing.marketPotential.high,
-    influencePercent: Math.round(influence.totalInfluence),
+    influencePercent: influencePercentFinal,
     source: result.sourcesUsed.join(", "),
     confidence: result.confidenceLevel,
     pipeline: {

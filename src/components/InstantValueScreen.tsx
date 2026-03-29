@@ -202,10 +202,24 @@ export default function InstantValueScreen({ product, region, results, onCheckou
       : `Raio ${aud.raioKm}km`
     : "";
 
+  // Fontes encontradas
+  const fontesEncontradas = [
+    results.maps?.found && { label: 'Google Maps', ok: true,
+      detail: results.maps.rating ? `★ ${results.maps.rating} · ${results.maps.reviewCount} avaliações` : 'encontrado' },
+    results.instagram?.handle && { label: 'Instagram',
+      ok: (results.instagram.followers || 0) > 0,
+      detail: results.instagram.handle ? `@${results.instagram.handle}` : 'encontrado' },
+    (results.serpSummary?.termsRanked || 0) > 0 && { label: 'Google Search', ok: true,
+      detail: `${results.serpSummary!.termsRanked} termos rankeados` },
+    results.aiVisibility?.likelyMentioned && { label: 'IA', ok: true,
+      detail: 'mencionado em buscas de IA' },
+  ].filter(Boolean);
+  const nenhumEncontrado = fontesEncontradas.length === 0 && results.influencePercent === 0;
+
   // Oportunidade calculations
   const familiasAtual = proj?.familiasAtual || Math.round((results.audiencia?.audienciaTarget || 0) * (results.influencePercent / 100));
   const familiasPotencial = proj?.familiasPotencial || Math.round((results.audiencia?.audienciaTarget || 0) * ((results.influencePercent + 6) / 100));
-  const oportunidade = proj?.familiasGap || (familiasPotencial - familiasAtual);
+  const oportunidade = nenhumEncontrado ? 0 : (proj?.familiasGap || (familiasPotencial - familiasAtual));
   const audienciaTotal = results.audiencia?.audienciaTarget || 0;
   const raioKm = results.audiencia?.raioKm || 3;
 
@@ -254,19 +268,62 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           <p style={{ fontSize: 13, color: V.ash, margin: 0 }}>{product} · {shortRegion}</p>
         </div>
 
+        {/* ═══ CONFIRMAÇÃO DE FONTES ═══ */}
+        {nenhumEncontrado ? (
+          <div style={{ background: "#FFF3E0", borderRadius: 10, padding: "12px 16px", marginBottom: 16, border: "1px solid #FFB74D" }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#E65100", marginBottom: 4 }}>
+              ⚠️ Não encontramos seu negócio online
+            </div>
+            <p style={{ fontSize: 12, color: "#BF360C", margin: 0, lineHeight: 1.5 }}>
+              Nenhuma presença digital detectada. O plano de ação foi gerado para quem está começando do zero.
+            </p>
+          </div>
+        ) : fontesEncontradas.length > 0 ? (
+          <div style={{ background: V.cloud, borderRadius: 10, padding: "10px 14px", marginBottom: 16, border: `1px solid ${V.fog}` }}>
+            <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 8 }}>
+              Dados analisados de
+            </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" as const }}>
+              {fontesEncontradas.map((fonte: any, i: number) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 4, background: V.white, borderRadius: 6, padding: "4px 8px", border: `1px solid ${V.fog}` }}>
+                  <span style={{ fontSize: 10, color: V.teal }}>✓</span>
+                  <span style={{ fontSize: 11, color: V.night, fontWeight: 500 }}>{fonte.label}</span>
+                  {fonte.detail && (
+                    <span style={{ fontSize: 10, color: V.ash }}>· {fonte.detail}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         {/* ═══ BLOCO 1 — OPORTUNIDADE ═══ */}
         <div style={{ marginBottom: 24 }}>
           <div style={{ background: V.night, borderRadius: 16, padding: "28px 20px", textAlign: "center", marginBottom: 12 }}>
             <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 16 }}>
               Oportunidade identificada
             </div>
-            <div style={{ fontSize: 64, fontWeight: 900, color: V.teal, lineHeight: 1, fontFamily: V.display, letterSpacing: "-0.03em", marginBottom: 8 }}>
-              +{oportunidade > 0 ? oportunidade.toLocaleString('pt-BR') : '—'}
-            </div>
-            <div style={{ fontSize: 15, color: V.mist, lineHeight: 1.5, maxWidth: 280, margin: "0 auto 16px" }}>
-              {isB2B ? 'empresas' : 'pessoas'} a mais por mês conhecendo você<br/>
-              <strong style={{ color: V.white }}>sem investimento adicional em mídia</strong>
-            </div>
+            {nenhumEncontrado ? (
+              <>
+                <div style={{ fontSize: 32, fontWeight: 900, color: V.ash, lineHeight: 1, fontFamily: V.display, marginBottom: 8 }}>
+                  Começando do zero
+                </div>
+                <div style={{ fontSize: 14, color: V.mist, lineHeight: 1.5, maxWidth: 280, margin: "0 auto 14px" }}>
+                  Seu negócio ainda não tem presença digital detectável.
+                  <strong style={{ color: V.white }}> O plano mostra por onde começar.</strong>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 64, fontWeight: 900, color: V.teal, lineHeight: 1, fontFamily: V.display, letterSpacing: "-0.03em", marginBottom: 8 }}>
+                  +{oportunidade > 0 ? oportunidade.toLocaleString('pt-BR') : '—'}
+                </div>
+                <div style={{ fontSize: 15, color: V.mist, lineHeight: 1.5, maxWidth: 280, margin: "0 auto 16px" }}>
+                  {isB2B ? 'empresas' : 'pessoas'} a mais por mês conhecendo você<br/>
+                  <strong style={{ color: V.white }}>sem investimento adicional em mídia</strong>
+                </div>
+              </>
+            )}
             <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.04em" }}>
               {isNacionalAny ? 'Mercado nacional' : `Raio de ${raioKm}km · ${shortRegion}`}
             </div>
