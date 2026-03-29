@@ -164,7 +164,7 @@ export async function notifyDiagnosisReady(opts: {
 
     sendEmail({
       to: email,
-      subject: `${(opts as any).name || product} — seu diagnóstico está pronto`,
+      subject: `${(opts as any).name || product}, achei o que precisava. Veja o que encontrei.`,
       html: diagnosisEmailHtml({ product, shortRegion, influencePercent, searchVolume, url, projecaoFinanceira, isB2B: (opts as any).isB2B ?? false }),
     }),
   ]);
@@ -203,7 +203,7 @@ export async function notifyFullDiagnosisReady(opts: {
 
     sendEmail({
       to: email,
-      subject: `${displayName} — seu diagnóstico completo está no painel`,
+      subject: `${displayName}, seu plano está pronto. Comece pelo primeiro item.`,
       html: fullDiagnosisEmailHtml({ product, shortRegion, url: dashboardUrl }),
     }),
   ]);
@@ -222,7 +222,7 @@ export async function notifyWeeklyContents(opts: {
 
   await sendEmail({
     to: email,
-    subject: `Seus conteúdos da semana estão prontos — ${firstName}`,
+    subject: `${firstName}, passei pelo seu mercado essa semana. Tem novidade.`,
     html: emailShell(`
       <h1 style="font-size:22px;color:#161618;margin:0 0 16px;line-height:1.3;">
         Seus conteúdos da semana estão prontos.
@@ -256,7 +256,7 @@ export async function notifyUpsell(opts: {
 
   await sendEmail({
     to: email,
-    subject: `${firstName}, seu diagnóstico está funcionando — veja os resultados`,
+    subject: `${firstName}, como está indo? Aqui está seu resumo.`,
     html: emailShell(`
       <h1 style="font-size:22px;color:#161618;margin:0 0 12px;line-height:1.3;">
         8 semanas de dados reais sobre ${product}.
@@ -305,7 +305,7 @@ export async function notifyClosure(opts: {
 
   await sendEmail({
     to: email,
-    subject: `${firstName}, faltam 2 semanas — seu resumo de evolução`,
+    subject: `${firstName}, duas semanas. Veja o que mudou.`,
     html: emailShell(`
       <h1 style="font-size:22px;color:#161618;margin:0 0 12px;line-height:1.3;">
         Faltam 2 semanas. Veja o que mudou.
@@ -399,14 +399,14 @@ function diagnosisEmailHtml(opts: {
     ? `Você disputa por apenas ${influencePercent}% das decisões de compra em ${shortRegion}.`
     : `Você já disputa ${influencePercent}% do mercado em ${shortRegion} — mas pode mais.`;
 
-  // Dynamic insight
+  // Dynamic insight — voz do Nelson
   const insight = isB2BNacional
-    ? `No mercado nacional de ${product}, centenas de empresas competem pela mesma atenção. Com ${influencePercent}% de posição competitiva digital, há espaço real para crescer — os itens estruturantes mostram por onde começar.`
+    ? `Vasculhei seu mercado. No mercado nacional de ${product}, centenas de empresas competem pela mesma atenção. Com ${influencePercent}% de posição competitiva digital, há espaço real para crescer.`
     : influencePercent === 0
-    ? `Quando alguém em ${shortRegion} decide contratar ${product}, seu negócio não está na disputa. Os concorrentes capturam esses clientes sem que você saiba.`
+    ? `Vasculhei seu mercado. Seu negócio não está aparecendo quando alguém busca o que você faz em ${shortRegion}. Os concorrentes capturam esses clientes — e você nem fica sabendo.`
     : influencePercent < 20
-    ? `A cada 100 decisões de compra de ${product} em ${shortRegion}, você disputa apenas ${influencePercent}. As outras ${100 - influencePercent} vão para concorrentes — não porque são melhores, porque estão mais bem posicionados.`
-    : `Boa posição, mas ${100 - influencePercent}% das decisões ainda vão para concorrentes. O diagnóstico mostra onde você está forte e onde atacar.`;
+    ? `Vasculhei seu mercado. A cada 100 decisões de compra de ${product} em ${shortRegion}, você disputa ${influencePercent}. As outras ${100 - influencePercent} vão para quem aparece antes — não necessariamente para quem é melhor.`
+    : `Vasculhei seu mercado. Você já tem uma base sólida — ${influencePercent}% das decisões passam por você. Mas ${100 - influencePercent}% ainda vão para outros. Aqui está onde atacar.`;
 
   return emailShell(`
     <h1 style="font-size:22px;color:#161618;margin:0 0 12px;line-height:1.3;">

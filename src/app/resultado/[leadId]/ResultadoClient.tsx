@@ -105,8 +105,8 @@ export default function ResultadoClient({ product, region, leadId, results }: Pr
         <div style={{ minHeight: "100vh", background: V.cloud, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 20px" }}>
           <div style={{ textAlign: "center", maxWidth: 400 }}>
             <div style={{ fontSize: 32, marginBottom: 16 }}>✓</div>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: V.night, margin: "0 0 8px" }}>Seu plano está pronto</h2>
-            <p style={{ fontSize: 14, color: V.ash, margin: 0 }}>Abrindo seu painel...</p>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: V.night, margin: "0 0 8px" }}>Achei o que precisava.</h2>
+            <p style={{ fontSize: 14, color: V.ash, margin: 0 }}>Abrindo seu painel agora...</p>
           </div>
         </div>
       );
@@ -119,10 +119,10 @@ export default function ResultadoClient({ product, region, leadId, results }: Pr
             borderRadius: 12, padding: "16px 20px", marginBottom: 20,
             fontSize: 14, color: V.amber, fontWeight: 600, lineHeight: 1.5,
           }}>
-            ✓ Pagamento confirmado — estamos gerando seu plano personalizado
+            ✓ Recebi. Estou montando seu plano agora.
           </div>
           <p style={{ fontSize: 13, color: V.zinc, margin: "0 0 16px", lineHeight: 1.6 }}>
-            Seus itens estruturantes, relatório setorial e posts estarão prontos em até 15 minutos.
+            Itens estruturantes, relatório do seu mercado e posts prontos em até 15 minutos.
           </p>
           <div style={{
             width: 28, height: 28, border: `3px solid ${V.fog}`,
@@ -148,7 +148,15 @@ export default function ResultadoClient({ product, region, leadId, results }: Pr
             background: V.night, display: "inline-flex", alignItems: "center", justifyContent: "center",
             marginBottom: 12,
           }}>
-            <span style={{ fontWeight: 700, fontSize: 18, color: V.white }}>V</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="11" cy="14" rx="7" ry="5" fill="#3D2B1A"/>
+              <ellipse cx="13" cy="15" rx="4" ry="3.5" fill="#CF8523"/>
+              <ellipse cx="8" cy="10" rx="4" ry="3.5" fill="#3D2B1A"/>
+              <polygon points="4,10 6,9 6,11" fill="#3D2B1A"/>
+              <circle cx="7" cy="9.5" r="1.2" stroke="#CF8523" strokeWidth="0.8" fill="none"/>
+              <circle cx="9.8" cy="9.5" r="1.2" stroke="#CF8523" strokeWidth="0.8" fill="none"/>
+              <line x1="8.2" y1="9.5" x2="8.6" y2="9.5" stroke="#CF8523" strokeWidth="0.8"/>
+            </svg>
           </div>
           <h1 style={{ fontSize: 20, fontWeight: 700, color: V.night, margin: "0 0 4px" }}>
             {product} · {shortRegion}

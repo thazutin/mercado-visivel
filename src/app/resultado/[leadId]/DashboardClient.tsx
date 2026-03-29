@@ -110,18 +110,26 @@ export default function DashboardClient({ lead, plan, diagnosis, briefings }: Da
               background: C.night, display: "inline-flex",
               alignItems: "center", justifyContent: "center", marginBottom: 20,
             }}>
-              <span style={{ color: C.white, fontFamily: font.display, fontWeight: 700, fontSize: 20 }}>V</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="11" cy="14" rx="7" ry="5" fill="#3D2B1A"/>
+                <ellipse cx="13" cy="15" rx="4" ry="3.5" fill="#CF8523"/>
+                <ellipse cx="8" cy="10" rx="4" ry="3.5" fill="#3D2B1A"/>
+                <polygon points="4,10 6,9 6,11" fill="#3D2B1A"/>
+                <circle cx="7" cy="9.5" r="1.2" stroke="#CF8523" strokeWidth="0.8" fill="none"/>
+                <circle cx="9.8" cy="9.5" r="1.2" stroke="#CF8523" strokeWidth="0.8" fill="none"/>
+                <line x1="8.2" y1="9.5" x2="8.6" y2="9.5" stroke="#CF8523" strokeWidth="0.8"/>
+              </svg>
             </div>
             <div style={{
               fontFamily: font.display, fontSize: 20, fontWeight: 600,
               color: C.night, marginBottom: 8,
             }}>
-              Seu diagnóstico está sendo gerado
+              Estou mapeando seu mercado agora.
             </div>
             <div style={{
               fontFamily: font.body, fontSize: 14, color: C.zinc, marginBottom: 24, maxWidth: 400, margin: "0 auto",
             }}>
-              Estamos cruzando os dados do seu mercado para montar o diagnóstico completo e o plano de 12 semanas. Pode levar alguns minutos.
+              Cruzo Google, Maps, Instagram e IA para montar sua leitura em tempo real.
             </div>
             <div style={{
               width: 200, height: 3, background: C.fog, borderRadius: 2, margin: "24px auto",
@@ -133,7 +141,10 @@ export default function DashboardClient({ lead, plan, diagnosis, briefings }: Da
               }} />
             </div>
             <div style={{ fontFamily: font.mono, fontSize: 11, color: C.ash }}>
-              Você pode sair e voltar — o diagnóstico estará aqui quando ficar pronto.
+              Pode sair e voltar quando quiser — estarei aqui com tudo pronto.
+            </div>
+            <div style={{ fontSize: 11, color: C.ash, marginTop: 16, fontStyle: "italic" }}>
+              — Nelson, da Virô
             </div>
           </div>
         )}
@@ -148,7 +159,7 @@ export default function DashboardClient({ lead, plan, diagnosis, briefings }: Da
               Houve um erro ao gerar seu diagnóstico
             </div>
             <div style={{ fontFamily: font.body, fontSize: 14, color: C.zinc }}>
-              Estamos trabalhando para resolver. Você receberá um email quando estiver pronto.
+              Algo travou aqui. Estou resolvendo — te aviso por email quando terminar.
             </div>
           </div>
         )}

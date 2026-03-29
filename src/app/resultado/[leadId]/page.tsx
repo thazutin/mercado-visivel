@@ -59,7 +59,7 @@ export default async function ResultadoPage({ params }: { params: { leadId: stri
     .order("created_at", { ascending: false }).limit(1).single();
 
   if (!diagnosis) {
-    return <ErrorScreen title="Diagnóstico em processamento" subtitle="Seu diagnóstico ainda está sendo gerado. Tente novamente em alguns instantes." />;
+    return <ErrorScreen title="Estou vasculhando seu mercado." subtitle="Cruzo Google, Maps, Instagram e IA para montar sua leitura. Volto em alguns minutos." />;
   }
 
   const raw = diagnosis.raw_data || {};

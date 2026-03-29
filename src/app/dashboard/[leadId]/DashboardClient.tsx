@@ -222,8 +222,8 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
     setItems(prev => prev.map(i => i.id === itemId ? { ...i, completed } : i));
   };
 
-  if (!planReady) return <Spinner text="Identificando os itens prioritários para o seu negócio..." />;
-  if (loading) return <Spinner text="Carregando..." />;
+  if (!planReady) return <Spinner text="Identificando o que precisa estar no lugar primeiro..." />;
+  if (loading) return <Spinner text="Um segundo..." />;
 
   const summary = plan?.content?.itensEstrurantesSummary || '';
 
@@ -993,7 +993,15 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
             background: V.night, display: "inline-flex", alignItems: "center", justifyContent: "center",
             marginBottom: 12,
           }}>
-            <span style={{ fontFamily: V.display, fontWeight: 700, fontSize: 20, color: V.white }}>V</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="11" cy="14" rx="7" ry="5" fill="#3D2B1A"/>
+              <ellipse cx="13" cy="15" rx="4" ry="3.5" fill="#CF8523"/>
+              <ellipse cx="8" cy="10" rx="4" ry="3.5" fill="#3D2B1A"/>
+              <polygon points="4,10 6,9 6,11" fill="#3D2B1A"/>
+              <circle cx="7" cy="9.5" r="1.2" stroke="#CF8523" strokeWidth="0.8" fill="none"/>
+              <circle cx="9.8" cy="9.5" r="1.2" stroke="#CF8523" strokeWidth="0.8" fill="none"/>
+              <line x1="8.2" y1="9.5" x2="8.6" y2="9.5" stroke="#CF8523" strokeWidth="0.8"/>
+            </svg>
           </div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: V.night, margin: 0 }}>
             {lead.product} · {lead.region}
@@ -1007,7 +1015,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
             borderRadius: 12, padding: "14px 18px", marginBottom: 16,
             fontSize: 13, color: V.amber, fontWeight: 500, lineHeight: 1.5,
           }}>
-            ✓ Pagamento confirmado — estamos gerando seu plano personalizado. Itens estruturantes, relatório setorial e posts prontos em até 15 minutos.
+            ✓ Recebi. Estou montando seu plano agora. Itens estruturantes, relatório do seu mercado e posts prontos em até 15 minutos.
           </div>
         )}
 
@@ -1048,7 +1056,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
               {tier === "free" ? (
                 <LockedTab lockLevel={1} ctaLabel="Desbloquear por R$497" ctaUrl="#" leadId={lead.id} />
               ) : !planReady ? (
-                <Spinner text="Analisando seus dados e gerando diagnóstico completo..." />
+                <Spinner text="Analisando seus dados..." />
               ) : (
                 <div>
                   <MacroContextBlock macroContext={diagnosis?.macro_context} />
@@ -1090,7 +1098,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
             {tier === "free" ? (
               <LockedTab lockLevel={1} ctaLabel="Desbloquear por R$497" ctaUrl="#" leadId={lead.id} />
             ) : !planReady ? (
-              <Spinner text="Buscando tendências do seu mercado e gerando conteúdos..." />
+              <Spinner text="Buscando o que mudou no seu mercado esta semana..." />
             ) : (
               <div>
                 <RelatorioSetorialBlock relatorio={plan?.content?.relatorioSetorial} />
