@@ -486,7 +486,7 @@ export default function Home() {
           {/* Mockup label */}
           <div style={{ background: V.cloud, padding: "10px 18px", borderBottom: `1px solid ${V.fog}`, display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.ash }}>
-              PRÉVIA DO RESULTADO
+              EXEMPLO DE RESULTADO
             </span>
           </div>
 
@@ -506,7 +506,7 @@ export default function Home() {
               </div>
               <div style={{ fontSize: 56, fontWeight: 900, color: "#2D9B83", lineHeight: 1,
                 fontFamily: "'Satoshi', sans-serif", letterSpacing: "-0.03em", marginBottom: 8 }}>
-                +3.240
+                +4.860
               </div>
               <div style={{ fontSize: 14, color: "#C8C8D0", lineHeight: 1.5,
                 maxWidth: 260, margin: "0 auto 14px" }}>
@@ -526,7 +526,7 @@ export default function Home() {
                 textAlign: "center" }}>
                 De <strong style={{ color: "#1A1A1C" }}>18.000 pessoas</strong> no seu mercado,
                 você disputa hoje por <strong style={{ color: "#1A1A1C" }}>18%</strong> — 3.240 pessoas.
-                Com as ações certas, chega a <strong style={{ color: "#2D9B83" }}>36% — 6.480 pessoas</strong>.
+                Com as ações certas, chega a <strong style={{ color: "#2D9B83" }}>45% — 8.100 pessoas</strong>.
               </p>
             </div>
 
@@ -574,11 +574,14 @@ export default function Home() {
 
             {[
               { icon: "🔍", label: "Seja Encontrável", color: "#2D9B83",
-                status: "⚠️ Não encontrado no Google Maps" },
+                status: "⚠️ Não encontrado no Google Maps",
+                acao: "→ Criar perfil no Google Meu Negócio com fotos, horário e categoria" },
               { icon: "⭐", label: "Construa Credibilidade", color: "#CF8523",
-                status: "⚠️ Poucas avaliações — prioridade alta" },
+                status: "⚠️ Poucas avaliações — prioridade alta",
+                acao: "→ Pedir avaliação para os últimos 20 clientes via WhatsApp esta semana" },
               { icon: "📣", label: "Participe da Cultura", color: "#8B5CF6",
-                status: "⚠️ Presença digital parada" },
+                status: "⚠️ Presença digital parada",
+                acao: "→ 2 posts/semana respondendo perguntas reais que clientes fazem" },
             ].map((pilar, i) => (
               <div key={i} style={{ background: "#FFFFFF", borderRadius: 10,
                 padding: "10px 14px", border: "1px solid #E8E4DC",
@@ -597,6 +600,10 @@ export default function Home() {
                 <div style={{ fontSize: 11, color: "#CF8523", fontWeight: 500 }}>
                   {pilar.status}
                 </div>
+                <div style={{ fontSize: 11, color: "#4A4A52", marginTop: 6,
+                  paddingTop: 6, borderTop: "1px solid #E8E4DC" }}>
+                  {pilar.acao}
+                </div>
               </div>
             ))}
 
@@ -612,7 +619,7 @@ export default function Home() {
           {/* Content preview */}
           <div style={{ padding: "14px 18px 0" }}>
             <p style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.ash, margin: "0 0 10px" }}>
-              Exemplo de conteúdo gerado
+              Exemplo de conteúdo — Construa Credibilidade
             </p>
             <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, overflow: "hidden" }}>
 
@@ -673,14 +680,14 @@ export default function Home() {
                     lineHeight: 1, letterSpacing: "-0.04em",
                     fontFamily: "'Satoshi', sans-serif",
                   }}>
-                    847
+                    88
                   </div>
                   <div style={{
                     fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.5)",
                     letterSpacing: "0.12em", textTransform: "uppercase" as const,
                     fontFamily: "'JetBrains Mono', monospace", marginTop: 6,
                   }}>
-                    ATENDIMENTOS EM MARÇO
+                    AVALIAÇÕES NO GOOGLE
                   </div>
                   <div style={{
                     width: 32, height: 2,
@@ -698,8 +705,8 @@ export default function Home() {
                     lineHeight: 1.3, margin: "0 0 10px",
                     letterSpacing: "-0.01em", fontFamily: "'Satoshi', sans-serif",
                   }}>
-                    Cada cliente aqui saiu melhor do que entrou.
-                    Você é o próximo?
+                    88 clientes avaliaram. Média 4.9★.
+                    Obrigada pela confiança.
                   </p>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <div style={{ width: 6, height: 6, borderRadius: "50%",
@@ -707,7 +714,7 @@ export default function Home() {
                     <span style={{ fontSize: 9, color: "rgba(255,255,255,0.5)",
                       fontFamily: "'JetBrains Mono', monospace",
                       letterSpacing: "0.06em", textTransform: "uppercase" as const }}>
-                      AGENDAMENTOS ABERTOS · LINK NA BIO
+                      AV. PAULISTA · SÃO PAULO
                     </span>
                   </div>
                 </div>
@@ -717,35 +724,24 @@ export default function Home() {
               {/* Legenda */}
               <div style={{ padding: "12px 14px 0" }}>
                 <p style={{ fontSize: 12, color: V.zinc, lineHeight: 1.7, margin: "0 0 8px" }}>
-                  Março foi nosso melhor mês — 847 atendimentos e cada um deles com cuidado real. Obrigada a cada cliente que confiou na gente. Agendamentos para abril já abertos. 🖤
+                  Cada avaliação é uma porta aberta para quem ainda não te conhece. 88 clientes disseram que valeu. O próximo pode ser você. ⭐
                 </p>
               </div>
 
               {/* Hashtags */}
               <div style={{ padding: "0 14px 10px", display: "flex", flexWrap: "wrap", gap: 4 }}>
-                {["#estéticapaulista", "#cuidadocomavida", "#SãoPaulo", "#agendamentosabertos"].map((tag) => (
+                {["#estéticapaulista", "#googlereviews", "#clientessatisfeitos", "#SãoPaulo"].map((tag) => (
                   <span key={tag} style={{ fontSize: 10, color: V.teal, background: V.tealWash,
                     padding: "2px 8px", borderRadius: 6 }}>{tag}</span>
                 ))}
               </div>
 
-              {/* Meta: horário + dica */}
+              {/* Meta: dica estratégica */}
               <div style={{ margin: "0 14px 14px", padding: "10px 12px",
                 background: V.cloud, borderRadius: 8,
                 borderLeft: `3px solid ${V.amber}` }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: V.amber,
-                    textTransform: "uppercase" as const, letterSpacing: "0.04em",
-                    fontFamily: V.mono }}>
-                    Melhor horário
-                  </span>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: V.night,
-                    fontFamily: V.mono }}>
-                    Ter–Qui · 19h–21h
-                  </span>
-                </div>
                 <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
-                  <strong style={{ color: V.night }}>Por que este conteúdo:</strong> prova social com número real gera confiança e urgência — quem está considerando agendar vê movimento e decide.
+                  <strong style={{ color: V.night }}>Por que este conteúdo:</strong> transforma suas avaliações do Google em prova social no Instagram — quem busca vê nos dois lugares.
                 </p>
               </div>
 
