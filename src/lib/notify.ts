@@ -540,9 +540,12 @@ function fullDiagnosisEmailHtml({
       </div>
     </div>
 
-    <a href="${url}" style="display:block;background:#FEFEFF;color:#0A0A0C;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:16px;">
+    <a href="${url}" style="display:block;background:#FEFEFF;color:#0A0A0C;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:8px;">
       Acessar meu painel →
     </a>
+    <p style="font-size:11px;color:#6E6E78;text-align:center;margin:0 0 16px;">
+      Este link é seu acesso permanente ao painel. Guarde este email.
+    </p>
 
     <p style="font-size:11px;color:#6E6E78;text-align:center;margin:0;line-height:1.6;">
       Seu painel fica disponível por 12 meses.<br/>

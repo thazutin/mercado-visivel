@@ -14,6 +14,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/resultado(.*)",
+  "/dashboard(.*)",
   "/api/diagnose(.*)",
   "/api/checkout(.*)",
   "/api/webhook(.*)",
