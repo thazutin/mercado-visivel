@@ -8,10 +8,7 @@ export const metadata: Metadata = {
   title: "Virô — Seu próximo cliente já está te procurando",
   description: "Em 60 segundos você vê quantos clientes passam pelo seu radar sem te ver — e o que fazer para ser a escolha óbvia.",
   icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/favicon.svg", type: "image/svg+xml" },
-    ],
+    icon: "/favicon.svg",
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
