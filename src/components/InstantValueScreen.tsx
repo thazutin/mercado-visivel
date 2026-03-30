@@ -263,8 +263,8 @@ export default function InstantValueScreen({ product, region, results, onCheckou
 
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{ marginBottom: 12 }}>
-            <NelsonLogo size={40} />
+          <div style={{ marginBottom: 12, display: "flex", justifyContent: "center" }}>
+            <NelsonLogo size={48} />
           </div>
           <p style={{ fontSize: 13, color: V.ash, margin: 0 }}>{product} · {shortRegion}</p>
         </div>
@@ -675,14 +675,15 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           Como aumentar essa posição
         </div>
 
+        <div style={{ fontSize: 11, color: V.ash, marginBottom: 12, paddingLeft: 4, lineHeight: 1.5 }}>
+          Recomendações gerais para qualquer negócio local. Seu plano personalizado considera os gaps reais do seu negócio.
+        </div>
+
         {/* Pilar 1 — Seja Encontrável */}
         <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "16px", marginBottom: 10 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 18 }}>🔍</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>Seja Encontrável</span>
-            </div>
-            <Chip color={V.teal}>Grátis</Chip>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <span style={{ fontSize: 18 }}>🔍</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>Seja Encontrável</span>
           </div>
           <ul style={{ margin: 0, padding: "0 0 0 16px", listStyle: "disc", color: V.zinc }}>
             {pilar1Acoes.map((acao, i) => (
@@ -696,12 +697,9 @@ export default function InstantValueScreen({ product, region, results, onCheckou
 
         {/* Pilar 2 — Construa Credibilidade */}
         <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "16px", marginBottom: 10 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 18 }}>⭐</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>Construa Credibilidade</span>
-            </div>
-            <Chip color={V.amber}>No plano</Chip>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <span style={{ fontSize: 18 }}>⭐</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>Construa Credibilidade</span>
           </div>
           <ul style={{ margin: 0, padding: "0 0 0 16px", listStyle: "disc", color: V.zinc }}>
             {pilar2Acoes.map((acao, i) => (
@@ -715,12 +713,9 @@ export default function InstantValueScreen({ product, region, results, onCheckou
 
         {/* Pilar 3 — Participe da Cultura */}
         <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "16px", marginBottom: 10 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 18 }}>🌐</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>Participe da Cultura</span>
-            </div>
-            <Chip color={V.amber}>No plano</Chip>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <span style={{ fontSize: 18 }}>🌐</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>Participe da Cultura</span>
           </div>
           <ul style={{ margin: 0, padding: "0 0 0 16px", listStyle: "disc", color: V.zinc }}>
             {pilar3Acoes.map((acao, i) => (
@@ -791,7 +786,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               Por que você precisa disso
             </p>
             <p style={{ fontSize: 13, color: V.mist, margin: 0, lineHeight: 1.5 }}>
-              Você já sabe sua posição. Agora precisa saber exatamente o que fazer — na ordem certa, pelos gaps reais do seu negócio.
+              As recomendações acima funcionam para qualquer negócio. O plano abaixo foi gerado para <strong style={{ color: V.white }}>{product}</strong> em <strong style={{ color: V.white }}>{shortRegion}</strong> especificamente — com os gaps reais do seu mercado, na ordem certa.
             </p>
           </div>
 
@@ -800,10 +795,10 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               O que você recebe
             </p>
             {[
-              "Itens estruturantes — as ações prioritárias pelos seus gaps reais",
+              "Plano de ação personalizado — o básico bem feito, na ordem certa",
               "Diagnóstico completo por canal (Google, Maps, Instagram, IA)",
-              "Relatório setorial do seu mercado com dados atuais",
-              "Posts prontos para publicar conectados ao contexto da semana",
+              "Relatório setorial do seu mercado com dados desta semana",
+              "Posts prontos para publicar conectados ao contexto atual",
             ].map((d, i) => (
               <div key={i} style={{ display: "flex", gap: 10, marginBottom: 6, alignItems: "center" }}>
                 <span style={{ color: V.amber, fontSize: 12 }}>✓</span>

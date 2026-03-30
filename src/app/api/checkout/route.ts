@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
               name: "Virô — Plano de Ação Local",
               description:
                 locale === "pt"
-                  ? "Itens estruturantes do seu mercado + Relatório setorial com dados reais + Posts prontos para publicar"
+                  ? "O básico bem feito do seu mercado + Relatório setorial com dados reais + Posts prontos para publicar"
                   : locale === "es"
                   ? "Ítems estructurantes + Informe sectorial con datos reales + Posts listos para publicar"
                   : "Action items for your market + Sector report with real data + Ready-to-publish posts",

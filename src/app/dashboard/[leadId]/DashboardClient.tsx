@@ -80,6 +80,26 @@ function Section({ title, defaultOpen, children }: { title: string; defaultOpen?
   );
 }
 
+// ─── CopyBlock ──────────────────────────────────────────────────────
+function CopyBlock({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div style={{ background: "#FAF8F5", borderRadius: 8, padding: "8px 10px",
+      marginBottom: 6, borderLeft: `3px solid ${V.amber}` }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+        <span style={{ fontSize: 10, fontWeight: 600, color: V.amber, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          Copy pronto
+        </span>
+        <button onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+          style={{ padding: "2px 8px", borderRadius: 4, border: `1px solid ${V.fog}`, background: copied ? V.teal : V.white, color: copied ? V.white : V.zinc, fontSize: 10, cursor: "pointer" }}>
+          {copied ? "Copiado!" : "Copiar"}
+        </button>
+      </div>
+      <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{text}</p>
+    </div>
+  );
+}
+
 // ─── Spinner ─────────────────────────────────────────────────────────
 function Spinner({ text }: { text: string }) {
   return (
@@ -323,6 +343,9 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
                   {item.action}
                 </p>
               </div>
+            )}
+            {item.copy_pronto && !item.completed && (
+              <CopyBlock text={item.copy_pronto} />
             )}
             {item.verification && !item.completed && (
               <p style={{ fontSize: 11, color: V.teal, margin: 0,
@@ -1036,15 +1059,11 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
 
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{
-            width: 44, height: 44, borderRadius: 14,
-            background: V.night, display: "inline-flex", alignItems: "center", justifyContent: "center",
-            marginBottom: 12,
-          }}>
-            <NelsonLogo size={24} variant="light" />
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+            <NelsonLogo size={48} />
           </div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: V.night, margin: 0 }}>
-            {lead.product} · {formatLocationDisplay(lead.region)}
+            {lead.name || lead.product} · {formatLocationDisplay(lead.region)}
           </h1>
         </div>
 
@@ -1058,7 +1077,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
           }}>
             {pollTimeout
               ? "Está demorando mais que o esperado. Tente recarregar a página ou volte em alguns minutos."
-              : "✓ Recebi. Estou montando seu plano agora. Itens estruturantes, relatório do seu mercado e posts prontos em até 15 minutos."}
+              : "✓ Recebi. Estou montando seu plano agora. O básico bem feito, relatório do seu mercado e posts prontos em até 15 minutos."}
           </div>
         )}
 
@@ -1148,26 +1167,31 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
                 <Section title="Posts desta semana" defaultOpen={true}>
                   <ContentsSection leadId={lead.id} tier={tier} />
                 </Section>
-                <div style={{ background: V.night, borderRadius: 12,
+                <div style={{ background: V.white, borderRadius: 12,
                   padding: "16px 18px", marginTop: 16,
-                  border: `1px solid ${V.slate}` }}>
+                  border: `1px solid ${V.fog}` }}>
                   <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
                     letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>
-                    Quer ir além?
+                    Próximas semanas
                   </div>
-                  <p style={{ fontSize: 13, color: V.mist, margin: "0 0 12px",
+                  <p style={{ fontSize: 13, color: V.night, margin: "0 0 12px",
                     lineHeight: 1.6 }}>
-                    Sem ação contínua, a tendência é entropia. Os conteúdos e insights semanais
-                    mantêm seu negócio relevante — mas se quiser acelerar com estratégia
-                    personalizada, fale com a gente.
+                    Toda sexta-feira: novo contexto de mercado, posts atualizados e briefings conectados ao que está acontecendo no seu setor esta semana.
                   </p>
-                  <a href="https://wa.me/5511999999999?text=Quero+saber+mais+sobre+consultoria+personalizada"
-                    target="_blank"
-                    style={{ display: "block", background: V.amber, color: V.night,
-                      textAlign: "center", padding: "12px", borderRadius: 8,
-                      fontWeight: 700, fontSize: 13, textDecoration: "none" }}>
-                    Falar sobre consultoria personalizada →
-                  </a>
+                  <p style={{ fontSize: 12, color: V.ash, margin: "0 0 12px" }}>
+                    R$ 99/mês · cancele quando quiser
+                  </p>
+                  <button onClick={async () => {
+                    try {
+                      const res = await fetch("/api/checkout/subscription", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: lead.id }) });
+                      const data = await res.json();
+                      if (data.url) window.location.href = data.url;
+                    } catch { /* ignore */ }
+                  }} style={{ display: "block", width: "100%", background: V.amber, color: V.white,
+                    textAlign: "center", padding: "12px", borderRadius: 8, border: "none",
+                    fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                    Assinar atualização semanal
+                  </button>
                 </div>
                 {tier === "subscriber" && (
                   <div style={{ textAlign: "center", marginTop: 12, fontSize: 11, color: V.ash }}>

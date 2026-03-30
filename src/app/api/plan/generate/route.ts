@@ -129,6 +129,7 @@ export async function POST(req: NextRequest) {
         order_index: index,
         completed: false,
         tipo: 'estruturante',
+        copy_pronto: item.copy_pronto || null,
       }));
 
       const { error: checklistError } = await supabase.from("checklists").insert(checklistRows);
@@ -293,6 +294,7 @@ interface ItensEstruturante {
   impacto: string;
   prazo: string;
   concluido: boolean;
+  copy_pronto?: string;
 }
 
 async function generateItensEstruturantes(
@@ -317,26 +319,36 @@ async function generateItensEstruturantes(
   ).join('\n');
 
   const prompt = `Você é um especialista em marketing local para pequenos negócios brasileiros.
-Com base no diagnóstico abaixo, gere os itens estruturantes prioritários — as ações fundamentais que precisam estar no lugar antes de qualquer outra coisa.
+Gere 15-20 atividades do "básico bem feito" para este negócio específico.
+
+Conceito: atividades fundamentais que precisam estar no lugar para os indicadores de posição competitiva avançarem. Não são estratégias avançadas — são o básico que a maioria dos negócios locais ainda não fez direito.
 
 Diagnóstico: ${context}
-
-Dimensão mais fraca: ${dimensaoMaisFraca}
+Pilar mais fraco: ${dimensaoMaisFraca}
 Alavancas: ${leversText}
 
-Regras:
-- Máximo 8 itens, mínimo 4
-- Cada item deve ser específico para os dados reais do negócio (use os números)
-- Ordenados por impacto: o item 1 é o que mais move agora
-- Foque nos gaps reais: se Descoberta é baixa, os primeiros itens devem endereçar isso
-- Use linguagem direta, sem jargão
+Para cada atividade:
+- titulo: ação clara em até 8 palavras
+- descricao: POR QUE isso importa para este negócio (1-2 frases com dados reais)
+- acao: passo a passo específico (2-3 linhas)
+- copy_pronto: texto pronto para copiar e usar (ex: descrição do GMB já escrita, resposta modelo para avaliação, bio do Instagram) — quando aplicável, senão null
+- dimensao: "descoberta" | "credibilidade" | "presenca" | "reputacao"
+- impacto: "alto" | "medio" | "baixo"
+- prazo: "esta semana" | "este mês" | "próximos 3 meses"
+- verificacao: como confirmar que está feito
 
-Retorne APENAS JSON válido:
-{"items":[{"id":"maps_profile","dimensao":"descoberta","titulo":"Título curto (max 10 palavras)","descricao":"Por que importa + como fazer (2-3 frases)","acao":"Passo a passo em 2-3 linhas","verificacao":"Como confirmar que está feito","impacto":"alto","prazo":"esta semana","concluido":false}],"summary":"1 frase resumindo o maior gap"}`;
+Regras:
+- Use os dados reais do diagnóstico (avaliações, fotos, seguidores, buscas)
+- Ordene por impacto: atividade 1 = maior alavanca agora
+- Pelo menos 5 atividades com copy_pronto real e específico
+- Sem jargão — linguagem que um dono de negócio entende
+
+JSON apenas:
+{"items":[{"id":"ex","dimensao":"descoberta","titulo":"...","descricao":"...","acao":"...","copy_pronto":"...ou null","verificacao":"...","impacto":"alto","prazo":"esta semana","concluido":false}],"summary":"1 frase"}`;
 
   const response = await claude.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 2500,
+    max_tokens: 4000,
     temperature: 0.2,
     messages: [{ role: 'user', content: prompt }],
   });

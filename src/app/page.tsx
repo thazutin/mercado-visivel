@@ -370,7 +370,9 @@ export default function Home() {
         opacity: heroVisible ? 1 : 0, transition: "opacity 0.6s ease",
       }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
-          <NelsonLogo size={36} variant="light" />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <NelsonLogo size={48} variant="light" />
+          </div>
           <h1 style={{
             fontFamily: V.display, fontSize: "clamp(28px, 5vw, 38px)", fontWeight: 700,
             color: V.white, letterSpacing: "-0.03em", margin: "24px 0 16px", lineHeight: 1.2,
@@ -378,7 +380,7 @@ export default function Home() {
             Seu próximo cliente já está <span style={{ color: V.amber }}>procurando o que você faz</span>.
           </h1>
           <p style={{ fontSize: 15, color: V.ash, lineHeight: 1.6, margin: 0 }}>
-            Em 60 segundos você vê quantos são, quem mais aparece para eles — e o que fazer para ser a escolha óbvia.
+            Com a Virô você vê quantos são e o que fazer para ser a escolha óbvia — em 60 segundos, grátis.
           </p>
         </div>
       </div>
@@ -894,7 +896,7 @@ export default function Home() {
         </h2>
         {[
           { q: "O diagnóstico gratuito usa dados reais do meu negócio?", a: "Sim. Virô coleta dados do Google Maps, Instagram, volume de buscas locais e dados de população do IBGE em tempo real. Não inventamos nada." },
-          { q: "O que eu recebo com o Plano de Ação?", a: "Itens estruturantes priorizados pelos seus gaps reais, um relatório setorial do seu mercado com dados atuais, e posts prontos para publicar esta semana. Tudo gerado especificamente para o seu negócio." },
+          { q: "O que eu recebo com o Plano de Ação?", a: "O básico bem feito priorizado pelos seus gaps reais, um relatório setorial do seu mercado com dados atuais, e posts prontos para publicar esta semana. Tudo gerado especificamente para o seu negócio." },
           { q: "Em quanto tempo fico com o plano pronto?", a: "O diagnóstico gratuito sai em até 2 minutos. O plano de ação completo fica pronto em até 15 minutos após o pagamento." },
           { q: "E a assinatura mensal — o que inclui?", a: "Atualização semanal do seu mercado toda sexta-feira: novo relatório setorial e novos posts conectados ao contexto da semana. Você pode cancelar quando quiser, direto pelo painel." },
           { q: "Funciona para qualquer tipo de negócio?", a: "Para negócios locais com presença física ou área de atuação definida. Restaurantes, clínicas, academias, escolas, salões, lojas, escritórios de serviço — se você atende pessoas numa região, Virô funciona para você." },
