@@ -241,7 +241,7 @@ export async function notifyWeeklyContents(opts: {
       <h1 style="font-size:22px;color:#161618;margin:0 0 16px;line-height:1.3;">
         Seus conteúdos da semana estão prontos.
       </h1>
-      <p style="font-size:15px;color:#6E6E78;line-height:1.7;margin:0 0 24px;">
+      <p style="font-size:15px;color:#888880;line-height:1.7;margin:0 0 24px;">
         Seus 4 conteúdos desta semana foram gerados e estão no seu painel.
       </p>
       <div style="text-align:center;margin:0 0 28px;">
@@ -249,7 +249,7 @@ export async function notifyWeeklyContents(opts: {
           Acessar agora
         </a>
       </div>
-      <p style="font-size:13px;color:#9E9EA8;line-height:1.6;margin:0;">
+      <p style="font-size:13px;color:#888880;line-height:1.6;margin:0;">
         Copie, adapte e publique — o trabalho de criação já está feito.
       </p>
     `),
@@ -275,11 +275,11 @@ export async function notifyUpsell(opts: {
       <h1 style="font-size:22px;color:#161618;margin:0 0 12px;line-height:1.3;">
         8 semanas de dados reais sobre ${product}.
       </h1>
-      <p style="font-size:15px;color:#6E6E78;line-height:1.7;margin:0 0 20px;">
+      <p style="font-size:15px;color:#888880;line-height:1.7;margin:0 0 20px;">
         ${firstName}, nas últimas 8 semanas monitoramos seu mercado toda segunda-feira.
         Seu painel acumula dados que nenhum concorrente tem — e estamos só na metade.
       </p>
-      <div style="background:#F4F4F7;border-radius:12px;padding:20px;margin:0 0 20px;">
+      <div style="background:#F7F5F2;border-radius:12px;padding:20px;margin:0 0 20px;">
         <p style="font-size:14px;color:#3A3A40;margin:0;line-height:1.7;">
           <strong>O que vem nas próximas 4 semanas:</strong><br/>
           → Análise de tendência com dados acumulados<br/>
@@ -292,7 +292,7 @@ export async function notifyUpsell(opts: {
           Ver meu painel
         </a>
       </div>
-      <p style="font-size:13px;color:#9E9EA8;margin:0;line-height:1.6;">
+      <p style="font-size:13px;color:#888880;margin:0;line-height:1.6;">
         Quer continuar recebendo briefings após as 12 semanas?
         Responda este email e conversamos sobre as opções.
       </p>
@@ -324,18 +324,18 @@ export async function notifyClosure(opts: {
       <h1 style="font-size:22px;color:#161618;margin:0 0 12px;line-height:1.3;">
         Faltam 2 semanas. Veja o que mudou.
       </h1>
-      <p style="font-size:15px;color:#6E6E78;line-height:1.7;margin:0 0 24px;">
+      <p style="font-size:15px;color:#888880;line-height:1.7;margin:0 0 24px;">
         ${firstName}, seu acompanhamento de <strong>${product}</strong> está na reta final.
         Aqui está um resumo da sua evolução:
       </p>
       <div style="display:flex;gap:12px;margin:0 0 24px;">
-        <div style="flex:1;background:#F4F4F7;border-radius:12px;padding:20px 16px;text-align:center;">
-          <div style="font-size:32px;font-weight:700;color:#9E9EA8;line-height:1;margin-bottom:4px;">${scoreInicial}%</div>
-          <div style="font-size:11px;color:#9E9EA8;">Semana 1</div>
+        <div style="flex:1;background:#F7F5F2;border-radius:12px;padding:20px 16px;text-align:center;">
+          <div style="font-size:32px;font-weight:700;color:#888880;line-height:1;margin-bottom:4px;">${scoreInicial}%</div>
+          <div style="font-size:11px;color:#888880;">Semana 1</div>
         </div>
-        <div style="flex:1;background:#F4F4F7;border-radius:12px;padding:20px 16px;text-align:center;">
+        <div style="flex:1;background:#F7F5F2;border-radius:12px;padding:20px 16px;text-align:center;">
           <div style="font-size:32px;font-weight:700;color:#2D9B83;line-height:1;margin-bottom:4px;">${scoreAtual}%</div>
-          <div style="font-size:11px;color:#6E6E78;">Semana 10 (${diffText})</div>
+          <div style="font-size:11px;color:#888880;">Semana 10 (${diffText})</div>
         </div>
       </div>
       <div style="text-align:center;margin:0 0 16px;">
@@ -348,7 +348,7 @@ export async function notifyClosure(opts: {
           Dar feedback sobre o Virô (30 segundos)
         </a>
       </div>
-      <p style="font-size:13px;color:#9E9EA8;margin:0;line-height:1.6;">
+      <p style="font-size:13px;color:#888880;margin:0;line-height:1.6;">
         Quer renovar o acompanhamento? Responda este email.
       </p>
     `),
@@ -359,15 +359,13 @@ export async function notifyClosure(opts: {
 
 function emailShell(content: string): string {
   return `
-    <div style="font-family:-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;background:#FEFEFF;">
+    <div style="font-family:-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;background:#F7F5F2;">
       <div style="text-align:center;margin-bottom:32px;">
-        <div style="width:44px;height:44px;border-radius:14px;background:#161618;display:inline-flex;align-items:center;justify-content:center;">
-          <span style="font-weight:700;font-size:20px;color:#FEFEFF;">V</span>
-        </div>
+        <img src="https://virolocal.com/nelson.svg" alt="Virô" width="44" height="44" style="display:inline-block;" />
       </div>
       ${content}
-      <hr style="border:none;border-top:1px solid #EAEAEE;margin:32px 0;" />
-      <p style="font-size:11px;color:#9E9EA8;text-align:center;margin:0;">
+      <hr style="border:none;border-top:1px solid #E8E4DE;margin:32px 0;" />
+      <p style="font-size:11px;color:#888880;text-align:center;margin:0;">
         Virô · virolocal.com · inteligência de mercado local
       </p>
     </div>
@@ -426,22 +424,22 @@ function diagnosisEmailHtml(opts: {
     <h1 style="font-size:22px;color:#161618;margin:0 0 12px;line-height:1.3;">
       ${headline}
     </h1>
-    <p style="font-size:15px;color:#6E6E78;line-height:1.7;margin:0 0 24px;">
+    <p style="font-size:15px;color:#888880;line-height:1.7;margin:0 0 24px;">
       ${insight}
     </p>
     <div style="display:flex;gap:12px;margin:0 0 24px;">
-      <div style="flex:1;background:#F4F4F7;border-radius:12px;padding:20px 16px;text-align:center;">
+      <div style="flex:1;background:#F7F5F2;border-radius:12px;padding:20px 16px;text-align:center;">
         <div style="font-size:36px;font-weight:700;color:${influenceColor};line-height:1;margin-bottom:6px;">
           ${influencePercent}%
         </div>
-        <div style="font-size:12px;color:#6E6E78;">Influência Digital</div>
+        <div style="font-size:12px;color:#888880;">Influência Digital</div>
       </div>
       ${formattedVolume ? `
-      <div style="flex:1;background:#F4F4F7;border-radius:12px;padding:20px 16px;text-align:center;">
+      <div style="flex:1;background:#F7F5F2;border-radius:12px;padding:20px 16px;text-align:center;">
         <div style="font-size:36px;font-weight:700;color:#161618;line-height:1;margin-bottom:6px;">
           ${formattedVolume}
         </div>
-        <div style="font-size:12px;color:#6E6E78;">Buscas/mês</div>
+        <div style="font-size:12px;color:#888880;">Buscas/mês</div>
       </div>
       ` : ""}
     </div>
@@ -450,7 +448,7 @@ function diagnosisEmailHtml(opts: {
       (projecaoFinanceira.familiasGap || 0) > 0
     ) ? `
     <div style="background:#161618;border-radius:12px;padding:20px;margin:0 0 24px;">
-      <div style="font-size:10px;color:#6E6E78;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:14px;font-family:monospace;">
+      <div style="font-size:10px;color:#888880;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:14px;font-family:monospace;">
         O que está em jogo
       </div>
       ${destacarFamilias ? `
@@ -458,11 +456,11 @@ function diagnosisEmailHtml(opts: {
         <div style="font-size:32px;font-weight:700;color:#2D9B83;">
           +${(projecaoFinanceira.familiasGap ?? 0).toLocaleString('pt-BR')}
         </div>
-        <div style="font-size:12px;color:#9E9EA8;margin-top:4px;">
+        <div style="font-size:12px;color:#888880;margin-top:4px;">
           ${isB2B ? 'empresas' : 'pessoas'} adicionais que passam a considerar você com o plano
         </div>
       </div>
-      <div style="text-align:center;font-size:11px;color:#6E6E78;padding:8px 0;border-top:1px solid #3A3A40;">
+      <div style="text-align:center;font-size:11px;color:#888880;padding:8px 0;border-top:1px solid #3A3A40;">
         Via buscas ativas: R$${Math.round((projecaoFinanceira.receitaAtual || 0) / 1000)}k/mês hoje → R$${Math.round((projecaoFinanceira.receitaPotencial || 0) / 1000)}k/mês com o plano
       </div>
       ` : `
@@ -471,13 +469,13 @@ function diagnosisEmailHtml(opts: {
           <div style="font-size:20px;font-weight:700;color:#C8C8D0;">
             R$${Math.round(projecaoFinanceira.receitaAtual / 1000)}k/mês
           </div>
-          <div style="font-size:10px;color:#6E6E78;margin-top:4px;">você disputa hoje</div>
+          <div style="font-size:10px;color:#888880;margin-top:4px;">você disputa hoje</div>
         </div>
         <div style="flex:1;background:#232326;border-radius:8px;padding:12px;text-align:center;border:1px solid rgba(207,133,35,0.3);">
           <div style="font-size:20px;font-weight:700;color:#E6A445;">
             R$${Math.round(projecaoFinanceira.receitaPotencial / 1000)}k/mês
           </div>
-          <div style="font-size:10px;color:#6E6E78;margin-top:4px;">com o plano</div>
+          <div style="font-size:10px;color:#888880;margin-top:4px;">com o plano</div>
         </div>
       </div>
       ${(projecaoFinanceira.clientesGap ?? 0) > 0 ? `
@@ -485,7 +483,7 @@ function diagnosisEmailHtml(opts: {
         +${projecaoFinanceira.clientesGap} cliente${projecaoFinanceira.clientesGap !== 1 ? 's' : ''}/mês via buscas ativas
       </div>` : ''}
       `}
-      <div style="margin-top:10px;padding-top:10px;border-top:1px solid #3A3A40;font-size:10px;color:#6E6E78;text-align:center;">
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid #3A3A40;font-size:10px;color:#888880;text-align:center;">
         Ticket estimado: R$${projecaoFinanceira.ticketMedio} · Conversão: ${(projecaoFinanceira.taxaConversao * 100).toFixed(0)}%
       </div>
     </div>
@@ -500,7 +498,7 @@ function diagnosisEmailHtml(opts: {
         Ver meu diagnóstico personalizado
       </a>
     </div>
-    <p style="font-size:12px;color:#9E9EA8;line-height:1.6;margin:0;">
+    <p style="font-size:12px;color:#888880;line-height:1.6;margin:0;">
       Dados coletados em tempo real: Google Search, Google Maps, Instagram, IA e IBGE.
     </p>
   `);
@@ -511,15 +509,15 @@ function diagnosisEmailHtmlSimple({ product, shortRegion, url, familiasGap, sear
 }): string {
   const heroMetric = familiasGap > 0
     ? `<div style="font-size:48px;font-weight:900;color:#2D9B83;line-height:1;margin-bottom:8px;">+${familiasGap.toLocaleString('pt-BR')}</div>
-       <div style="font-size:14px;color:#9E9EA8;">pessoas no seu raio que ainda não te consideram</div>`
+       <div style="font-size:14px;color:#888880;">pessoas no seu raio que ainda não te consideram</div>`
     : (searchVolume && searchVolume > 0)
     ? `<div style="font-size:48px;font-weight:900;color:#CF8523;line-height:1;margin-bottom:8px;">${searchVolume.toLocaleString('pt-BR')}</div>
-       <div style="font-size:14px;color:#9E9EA8;">buscas/mês por ${product} em ${shortRegion}</div>`
+       <div style="font-size:14px;color:#888880;">buscas/mês por ${product} em ${shortRegion}</div>`
     : `<div style="font-size:22px;font-weight:700;color:#FEFEFF;line-height:1.3;">Vasculhei seu mercado. Veja o que encontrei.</div>`;
 
   return emailShell(`
     <div style="background:#0A0A0C;border-radius:16px;padding:28px 24px;margin-bottom:24px;text-align:center;">
-      <p style="font-size:11px;color:#6E6E78;margin:0 0 16px;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;">
+      <p style="font-size:11px;color:#888880;margin:0 0 16px;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;">
         Seu diagnóstico está pronto
       </p>
       ${heroMetric}
@@ -527,7 +525,7 @@ function diagnosisEmailHtmlSimple({ product, shortRegion, url, familiasGap, sear
     <a href="${url}" style="display:block;background:#161618;color:#FEFEFF;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:16px;">
       Ver meu diagnóstico →
     </a>
-    <p style="font-size:10px;color:#6E6E78;text-align:center;margin:0;font-style:italic;">
+    <p style="font-size:10px;color:#888880;text-align:center;margin:0;font-style:italic;">
       — Nelson · Virô · virolocal.com
     </p>
   `);
@@ -548,18 +546,18 @@ function fullDiagnosisEmailHtml({
 }): string {
   const heroMetric = (familiasGap && familiasGap > 0)
     ? `<div style="font-size:48px;font-weight:900;color:#2D9B83;line-height:1;margin-bottom:8px;">+${familiasGap.toLocaleString('pt-BR')}</div>
-       <div style="font-size:14px;color:#9E9EA8;margin-bottom:4px;">pessoas adicionais por mês passando a te conhecer</div>
-       <div style="font-size:12px;color:#6E6E78;">com as ações do seu plano</div>`
+       <div style="font-size:14px;color:#888880;margin-bottom:4px;">pessoas adicionais por mês passando a te conhecer</div>
+       <div style="font-size:12px;color:#888880;">com as ações do seu plano</div>`
     : (buscasMensais && buscasMensais > 0)
     ? `<div style="font-size:48px;font-weight:900;color:#CF8523;line-height:1;margin-bottom:8px;">${buscasMensais.toLocaleString('pt-BR')}</div>
-       <div style="font-size:14px;color:#9E9EA8;margin-bottom:4px;">buscas por mês por ${product} em ${shortRegion}</div>
-       <div style="font-size:12px;color:#6E6E78;">Seu plano mostra como capturar mais delas.</div>`
+       <div style="font-size:14px;color:#888880;margin-bottom:4px;">buscas por mês por ${product} em ${shortRegion}</div>
+       <div style="font-size:12px;color:#888880;">Seu plano mostra como capturar mais delas.</div>`
     : `<div style="font-size:22px;font-weight:700;color:#FEFEFF;line-height:1.3;">Seu plano está pronto.</div>
-       <div style="font-size:14px;color:#9E9EA8;margin-top:8px;">Comece pelo primeiro item — é o que mais move agora.</div>`;
+       <div style="font-size:14px;color:#888880;margin-top:8px;">Comece pelo primeiro item — é o que mais move agora.</div>`;
 
   return emailShell(`
     <div style="background:#0A0A0C;border-radius:16px;padding:28px 24px;margin-bottom:24px;text-align:center;">
-      <p style="font-size:11px;color:#6E6E78;margin:0 0 16px;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;">
+      <p style="font-size:11px;color:#888880;margin:0 0 16px;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;">
         Seu plano está pronto
       </p>
       ${heroMetric}
@@ -572,11 +570,11 @@ function fullDiagnosisEmailHtml({
     <a href="${url}" style="display:block;background:#161618;color:#FEFEFF;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:8px;">
       Ver meu plano de ação →
     </a>
-    <p style="font-size:11px;color:#6E6E78;text-align:center;margin:0 0 16px;">
+    <p style="font-size:11px;color:#888880;text-align:center;margin:0 0 16px;">
       Este link é seu acesso permanente ao painel. Guarde este email.
     </p>
 
-    <p style="font-size:10px;color:#6E6E78;text-align:center;margin:0;font-style:italic;">
+    <p style="font-size:10px;color:#888880;text-align:center;margin:0;font-style:italic;">
       — Nelson · Virô · virolocal.com
     </p>
   `);

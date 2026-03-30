@@ -9,9 +9,9 @@ import { LockedTab } from "@/components/dashboard/LockedTab";
 import { NelsonLogo } from "@/components/NelsonLogo";
 
 const V = {
-  night: "#161618", zinc: "#6E6E78", ash: "#9E9EA8",
-  fog: "#EAEAEE", cloud: "#F4F4F7", white: "#FEFEFF",
-  amber: "#CF8523", teal: "#2D9B83",
+  night: "#161618", zinc: "#888880", ash: "#888880",
+  fog: "#E8E4DE", cloud: "#F7F5F2", white: "#FFFFFF",
+  amber: "#CF8523", teal: "#1D9E75",
   display: "'Satoshi', 'General Sans', -apple-system, sans-serif",
   mono: "'JetBrains Mono', 'SF Mono', monospace",
 };

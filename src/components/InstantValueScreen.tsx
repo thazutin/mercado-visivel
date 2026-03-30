@@ -6,13 +6,13 @@ import FeedbackWidget from "./FeedbackWidget";
 import { NelsonLogo } from "./NelsonLogo";
 
 const V = {
-  night: "#161618", graphite: "#232326", slate: "#3A3A40",
-  zinc: "#6E6E78", ash: "#9E9EA8", mist: "#C8C8D0",
-  fog: "#EAEAEE", cloud: "#F4F4F7", white: "#FEFEFF",
+  night: "#161618", graphite: "#232326", slate: "#E8E4DE",
+  zinc: "#888880", ash: "#888880", mist: "#C8C8D0",
+  fog: "#E8E4DE", cloud: "#F7F5F2", white: "#FFFFFF",
   amber: "#CF8523", amberSoft: "#E6A445",
-  amberWash: "rgba(207,133,35,0.08)",
-  teal: "#2D9B83", tealWash: "rgba(45,155,131,0.08)",
-  coral: "#D9534F", coralWash: "rgba(217,83,79,0.08)",
+  amberWash: "rgba(207,133,35,0.06)",
+  teal: "#1D9E75", tealWash: "rgba(29,158,117,0.08)",
+  coral: "#D9534F", coralWash: "rgba(217,83,79,0.06)",
   display: "'Satoshi', 'General Sans', -apple-system, sans-serif",
   body: "'Satoshi', 'General Sans', -apple-system, sans-serif",
   mono: "'JetBrains Mono', 'SF Mono', monospace",
