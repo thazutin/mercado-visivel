@@ -1217,7 +1217,8 @@ Responda APENAS em JSON, sem markdown:
     const influencePercent = step4.influence.totalInfluence || 0;
     const ticketMedio = est.ticketMedio || 500;
     const taxaConversao = est.taxaConversao || 0.03;
-    const audienciaTarget = est.audienciaTarget || est.populacaoRaio || 0;
+    const audienciaTarget = audienciaResult.target?.audienciaTarget || est.populacaoRaio || 0;
+    console.log(`[Pipeline] audienciaTarget usado na projeção: ${audienciaTarget} (target filtrado) vs populacaoRaio: ${est.populacaoRaio}`);
     const populacaoMunicipio = est.populacaoMunicipio || est.populacaoRaio || 1;
     const populacaoRaio = est.populacaoRaio || 0;
 
