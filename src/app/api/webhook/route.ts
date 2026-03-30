@@ -158,7 +158,11 @@ export async function POST(req: NextRequest) {
         })
         .then(async (res) => {
           const text = await res.text();
-          console.log(`[Webhook] plan/generate response: ${res.status} — ${text.slice(0, 200)}`);
+          if (!res.ok) {
+            console.error(`[Webhook] plan/generate FAILED: ${res.status} — ${text.slice(0, 500)}`);
+          } else {
+            console.log(`[Webhook] plan/generate OK: ${res.status} — ${text.slice(0, 200)}`);
+          }
         })
         .catch((err) => console.error("[Webhook] Plan generation trigger failed:", err))
       );

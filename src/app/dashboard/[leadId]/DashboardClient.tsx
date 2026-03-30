@@ -973,6 +973,8 @@ function ContentsSection({ leadId, tier }: { leadId: string; tier: Tier }) {
 export default function DashboardClient({ lead, plan, diagnosis, tier, checklist }: Props) {
   const [tab, setTab] = useState<TabKey>("diagnostico");
   const [snapshots, setSnapshots] = useState<any[]>([]);
+  const [planStatus, setPlanStatus] = useState(lead.plan_status);
+  const [pollTimeout, setPollTimeout] = useState(false);
 
   useEffect(() => {
     fetch(`/api/snapshots?leadId=${lead.id}`)
@@ -981,7 +983,32 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
       .catch(() => {});
   }, [lead.id]);
 
-  const planReady = lead.plan_status === "ready";
+  // Poll plan_status when generating
+  useEffect(() => {
+    if (planStatus === "ready") return;
+    let attempts = 0;
+    const poll = setInterval(async () => {
+      attempts++;
+      try {
+        const res = await fetch(`/api/diagnose?leadId=${lead.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.plan_status === "ready" || data.planReady) {
+            setPlanStatus("ready");
+            clearInterval(poll);
+            window.location.reload();
+          }
+        }
+      } catch { /* ignore */ }
+      if (attempts >= 18) { // 3 minutes (18 x 10s)
+        setPollTimeout(true);
+        clearInterval(poll);
+      }
+    }, 10_000);
+    return () => clearInterval(poll);
+  }, [lead.id, planStatus]);
+
+  const planReady = planStatus === "ready";
 
   return (
     <div style={{ minHeight: "100vh", background: V.cloud, padding: "40px 24px" }}>
@@ -1004,11 +1031,14 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
         {/* Banner: generating */}
         {tier !== "free" && !planReady && (
           <div style={{
-            background: "rgba(207,133,35,0.08)", border: "1px solid rgba(207,133,35,0.2)",
+            background: pollTimeout ? "rgba(217,83,79,0.08)" : "rgba(207,133,35,0.08)",
+            border: `1px solid ${pollTimeout ? "rgba(217,83,79,0.2)" : "rgba(207,133,35,0.2)"}`,
             borderRadius: 12, padding: "14px 18px", marginBottom: 16,
-            fontSize: 13, color: V.amber, fontWeight: 500, lineHeight: 1.5,
+            fontSize: 13, color: pollTimeout ? V.coral : V.amber, fontWeight: 500, lineHeight: 1.5,
           }}>
-            ✓ Recebi. Estou montando seu plano agora. Itens estruturantes, relatório do seu mercado e posts prontos em até 15 minutos.
+            {pollTimeout
+              ? "Está demorando mais que o esperado. Tente recarregar a página ou volte em alguns minutos."
+              : "✓ Recebi. Estou montando seu plano agora. Itens estruturantes, relatório do seu mercado e posts prontos em até 15 minutos."}
           </div>
         )}
 

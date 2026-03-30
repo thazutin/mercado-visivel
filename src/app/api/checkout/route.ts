@@ -37,13 +37,13 @@ export async function POST(req: NextRequest) {
           price_data: {
             currency,
             product_data: {
-              name: "Virô — Diagnóstico Completo",
+              name: "Virô — Plano de Ação Local",
               description:
                 locale === "pt"
-                  ? "Diagnóstico por canal + Plano de ação prioritário + Sazonalidade + Amostra de conteúdos"
+                  ? "Itens estruturantes do seu mercado + Relatório setorial com dados reais + Posts prontos para publicar"
                   : locale === "es"
-                  ? "Diagnóstico por canal + Plan de acción prioritario + Estacionalidad + Muestra de contenidos"
-                  : "Channel diagnostic + Priority action plan + Seasonality + Content samples",
+                  ? "Ítems estructurantes + Informe sectorial con datos reales + Posts listos para publicar"
+                  : "Action items for your market + Sector report with real data + Ready-to-publish posts",
             },
             unit_amount: amount,
           },

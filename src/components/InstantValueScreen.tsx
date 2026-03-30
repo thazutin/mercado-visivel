@@ -217,11 +217,15 @@ export default function InstantValueScreen({ product, region, results, onCheckou
   ].filter(Boolean);
   const nenhumEncontrado = fontesEncontradas.length === 0 && results.influencePercent === 0;
 
-  // Oportunidade calculations
-  const familiasAtual = proj?.familiasAtual || Math.round((results.audiencia?.audienciaTarget || 0) * (results.influencePercent / 100));
-  const familiasPotencial = proj?.familiasPotencial || Math.round((results.audiencia?.audienciaTarget || 0) * ((results.influencePercent + 6) / 100));
-  const oportunidade = nenhumEncontrado ? 0 : (proj?.familiasGap || (familiasPotencial - familiasAtual));
+  // Oportunidade calculations — garantir que familiasAtual <= audienciaTotal
   const audienciaTotal = results.audiencia?.audienciaTarget || 0;
+  const familiasAtual = proj?.familiasAtual != null
+    ? Math.min(proj.familiasAtual, audienciaTotal)
+    : Math.round(audienciaTotal * (results.influencePercent / 100));
+  const familiasPotencial = proj?.familiasPotencial != null
+    ? Math.min(proj.familiasPotencial, audienciaTotal)
+    : Math.round(audienciaTotal * (Math.min(results.influencePercent + 6, 100) / 100));
+  const oportunidade = nenhumEncontrado ? 0 : Math.max(0, familiasPotencial - familiasAtual);
   const raioKm = results.audiencia?.raioKm || 3;
 
   // Pilar status indicators
@@ -323,12 +327,10 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           </div>
           <div style={{ background: V.cloud, borderRadius: 10, padding: "12px 16px", border: `1px solid ${V.fog}` }}>
             <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.6, textAlign: "center" }}>
-              {isNacionalAny && !isB2B
-                ? `${results.influencePercent}% da atenção digital no mercado nacional de ${product}. Quem vende para o Brasil todo compete com centenas de players — os itens estruturantes mostram como aumentar essa posição.`
-                : isB2BNacional
-                ? `${results.influencePercent}% da atenção digital no mercado nacional de ${product}. Em um mercado com centenas de players ativos, os itens estruturantes mostram como aumentar essa posição.`
+              {isNacionalAny
+                ? `No mercado nacional de ${product}, centenas de ${isB2B ? 'empresas' : 'players'} competem pela mesma atenção. Os itens estruturantes mostram como aumentar essa posição.`
                 : audienciaTotal > 0
-                ? `De ${audienciaTotal.toLocaleString('pt-BR')} ${isB2B ? 'empresas' : 'pessoas'} no seu mercado, você disputa hoje por ${results.influencePercent}% — ${familiasAtual.toLocaleString('pt-BR')}. Com as ações certas, chega a ${familiasPotencial.toLocaleString('pt-BR')}.`
+                ? `De ${audienciaTotal.toLocaleString('pt-BR')} ${isB2B ? 'empresas' : 'pessoas'} no seu mercado, você chega hoje a ${familiasAtual.toLocaleString('pt-BR')}. Com as ações certas, passa a ${familiasPotencial.toLocaleString('pt-BR')}.`
                 : `Você disputa ${results.influencePercent}% do seu mercado hoje. Com as ações certas, pode disputar mais.`}
             </p>
           </div>
@@ -618,6 +620,10 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                     <div style={{ fontSize: 11, color: V.ash }}>{p.detail}</div>
                   </div>
                 ))}
+                <div style={{ marginTop: 8, padding: "8px 10px", background: V.cloud, borderRadius: 6,
+                  fontSize: 10, color: V.ash, textAlign: "center" as const, fontFamily: V.mono }}>
+                  Score geral = média ponderada: Descoberta (35%), Credibilidade+Reputação (45%), Cultura (20%) — ajustado por compressão realista
+                </div>
               </div>
             );
           })()}
@@ -812,7 +818,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               background: V.white, color: V.night, fontSize: 15, fontWeight: 600,
               cursor: loading ? "wait" : "pointer", opacity: loading ? 0.7 : 1,
             }}>
-              {loading ? "Redirecionando..." : "Desbloquear diagnóstico completo"}
+              {loading ? "Redirecionando..." : "Gerar meu plano de ação"}
             </button>
             <p style={{ fontSize: 11, color: V.ash, textAlign: "center", marginTop: 8 }}>Pagamento único · sem assinatura</p>
           </div>

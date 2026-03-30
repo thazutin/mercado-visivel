@@ -504,13 +504,13 @@ function fullDiagnosisEmailHtml({
   return emailShell(`
     <div style="background:#0A0A0C;border-radius:16px;padding:28px 24px;margin-bottom:24px;">
       <p style="font-size:13px;color:#9E9EA8;margin:0 0 8px;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;">
-        Diagnóstico completo pronto
+        Seu plano está pronto
       </p>
       <h1 style="font-size:22px;font-weight:700;color:#FEFEFF;margin:0 0 12px;line-height:1.3;">
-        ${product} em ${shortRegion} — tudo no seu painel.
+        ${product} em ${shortRegion} — achei o que precisava.
       </h1>
       <p style="font-size:14px;color:#9E9EA8;margin:0;line-height:1.6;">
-        Geramos tudo com dados reais do seu mercado. Abra o painel para ver o que encontramos.
+        Vasculhei seu mercado com dados reais. Comece pelo primeiro item do plano — é o que mais move.
       </p>
     </div>
 
