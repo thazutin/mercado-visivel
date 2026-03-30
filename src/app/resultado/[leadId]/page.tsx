@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import ResultadoClient from "./ResultadoClient";
+import PollingScreen from "./PollingScreen";
 
 function getSupabase() {
   return createClient(
@@ -59,7 +60,7 @@ export default async function ResultadoPage({ params }: { params: { leadId: stri
     .order("created_at", { ascending: false }).limit(1).single();
 
   if (!diagnosis) {
-    return <ErrorScreen title="Estou vasculhando seu mercado." subtitle="Cruzo Google, Maps, Instagram e IA para montar sua leitura. Volto em alguns minutos." />;
+    return <PollingScreen leadId={leadId} product={lead.product} region={lead.region} />;
   }
 
   const raw = diagnosis.raw_data || {};

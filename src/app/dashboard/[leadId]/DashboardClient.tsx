@@ -570,10 +570,10 @@ function PilaresScoreCard({ breakdown, levers, clientType }: {
         <div>
           <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
             letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4 }}>
-            Posição Competitiva · escala 0 a 100
+            Posição Competitiva
           </div>
           <div style={{ fontSize: 13, color: V.mist }}>
-            Probabilidade de ser escolhido quando alguém decide contratar
+            quanto mais perto de 100, maior a probabilidade de ser escolhido
           </div>
         </div>
         <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 16 }}>
@@ -582,6 +582,13 @@ function PilaresScoreCard({ breakdown, levers, clientType }: {
             {scoreGeral}
           </div>
         </div>
+      </div>
+      <div style={{ height: 6, background: V.graphite, borderRadius: 3, overflow: "hidden", marginBottom: 4, marginTop: -6 }}>
+        <div style={{ height: "100%", background: V.teal, borderRadius: 3, width: `${scoreGeral}%`, transition: "width 0.6s ease" }} />
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+        <span style={{ fontFamily: V.mono, fontSize: 9, color: V.mist }}>Posição atual</span>
+        <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>Meta: 100</span>
       </div>
 
       {/* 3 pilares */}

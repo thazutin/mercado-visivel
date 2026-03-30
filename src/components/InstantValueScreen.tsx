@@ -556,88 +556,59 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             </Expandable>
         </div>
 
-        {/* ── Card 4: Sua posição ── */}
-        <div style={{ marginBottom: 4 }}>
-          {hasInfluence ? (
-            <div style={{ background: V.night, borderRadius: "14px 14px 0 0", padding: "24px 18px", textAlign: "center", border: `1px solid ${V.slate}`, borderBottom: "none" }}>
-              <div style={{
-                fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1,
-                color: results.influencePercent < 20 ? V.amberSoft : V.teal,
-              }}>
-                {results.influencePercent}
-              </div>
-              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>{isNacionalAny ? "sua posição competitiva no mercado digital nacional · escala 0 a 100" : "sua posição competitiva no mercado local · escala 0 a 100"}</p>
+        {/* ── Score + pilares (sempre visível) ── */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ background: V.night, borderRadius: 12, padding: "20px 18px", textAlign: "center", marginBottom: 12 }}>
+            <div style={{
+              fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1,
+              color: results.influencePercent < 20 ? V.amberSoft : V.teal,
+            }}>
+              {results.influencePercent || 0}
             </div>
-          ) : (
-            <div style={{ background: V.night, borderRadius: "14px 14px 0 0", padding: "24px 18px", textAlign: "center", border: `1px solid ${V.slate}`, borderBottom: "none" }}>
-              <div style={{ fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, color: V.coral, letterSpacing: "-0.03em", lineHeight: 1 }}>0</div>
-              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>{isNacionalAny ? "sua posição competitiva no mercado digital nacional · escala 0 a 100" : "sua posição competitiva no mercado local · escala 0 a 100"}</p>
-              <p style={{ fontSize: 11, color: V.coral, margin: "4px 0 0" }}>Invisível no mercado</p>
+            <p style={{ fontSize: 12, color: V.mist, margin: "8px 0 12px" }}>
+              sua posição hoje — quanto mais perto de 100, maior a probabilidade de ser escolhido
+            </p>
+            <div style={{ height: 6, background: V.graphite, borderRadius: 3, overflow: "hidden", position: "relative" }}>
+              <div style={{ height: "100%", background: V.teal, borderRadius: 3, width: `${results.influencePercent || 0}%`, transition: "width 0.6s ease" }} />
             </div>
-          )}
-          <Expandable title="Sua Posição — 3 Pilares" icon="📊">
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.mist }}>Posição atual</span>
+              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>Meta: 100</span>
+            </div>
+          </div>
           {(() => {
-            const bd = results.influenceBreakdown4D || results.influenceBreakdown;
+            const bd = (results as any).influenceBreakdown4D || results.influenceBreakdown;
             const d1 = (bd as any)?.d1_descoberta ?? (bd as any)?.d1_discovery ?? 0;
             const d2 = (bd as any)?.d2_credibilidade ?? (bd as any)?.d2_credibility ?? 0;
             const d3 = (bd as any)?.d3_presenca ?? (bd as any)?.d3_reach ?? 0;
             const d4 = (bd as any)?.d4_reputacao ?? 0;
-
             const pilaresScore = [
-              {
-                icon: "🔍", label: "Seja Encontrável",
-                score: Math.round(d1), color: V.teal,
-                detail: results.maps?.found
-                  ? `Maps: ★ ${results.maps.rating} (${results.maps.reviewCount} avaliações)`
-                  : "Não encontrado no Google Maps",
-              },
-              {
-                icon: "⭐", label: "Construa Credibilidade",
-                score: Math.round((d2 + d4) / 2), color: V.amber,
-                detail: results.maps?.reviewCount
-                  ? `${results.maps.reviewCount} avaliações · ★ ${results.maps.rating}`
-                  : "Sem avaliações detectadas",
-              },
-              {
-                icon: "📣", label: "Participe da Cultura",
-                score: Math.round(d3), color: "#8B5CF6",
-                detail: results.instagram?.handle
-                  ? `@${results.instagram.handle} · ${results.instagram.followers?.toLocaleString('pt-BR')} seguidores`
-                  : "Presença digital não detectada",
-              },
+              { icon: "🔍", label: "Seja Encontrável", score: Math.round(d1), color: V.teal,
+                detail: results.maps?.found ? `Maps: ★ ${results.maps.rating} (${results.maps.reviewCount} avaliações)` : "Não encontrado no Google Maps" },
+              { icon: "⭐", label: "Construa Credibilidade", score: Math.round((d2 + d4) / 2), color: V.amber,
+                detail: results.maps?.reviewCount ? `${results.maps.reviewCount} avaliações · ★ ${results.maps.rating}` : "Sem avaliações detectadas" },
+              { icon: "📣", label: "Participe da Cultura", score: Math.round(d3), color: "#8B5CF6",
+                detail: results.instagram?.handle ? `@${results.instagram.handle} · ${results.instagram.followers?.toLocaleString('pt-BR')} seguidores` : "Presença digital não detectada" },
             ];
-
-            return (
-              <div>
-                <p style={{ fontSize: 12, color: V.ash, margin: "0 0 16px", lineHeight: 1.5 }}>
-                  Probabilidade de ser escolhido quando alguém no seu raio decide contratar.
-                </p>
-                {pilaresScore.map((p, i) => (
-                  <div key={i} style={{ marginBottom: 12 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ fontSize: 14 }}>{p.icon}</span>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{p.label}</span>
-                      </div>
-                      <span style={{ fontSize: 16, fontWeight: 800, color: p.color }}>{p.score}</span>
-                    </div>
-                    <div style={{ height: 4, background: V.fog, borderRadius: 2, overflow: "hidden", marginBottom: 6 }}>
-                      <div style={{ height: "100%", background: p.color, borderRadius: 2, width: `${p.score}%`, transition: "width 0.6s ease" }} />
-                    </div>
-                    <div style={{ fontSize: 11, color: V.ash }}>{p.detail}</div>
+            return pilaresScore.map((p, i) => (
+              <div key={i} style={{ marginBottom: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 14 }}>{p.icon}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{p.label}</span>
                   </div>
-                ))}
-                <div style={{ marginTop: 8, padding: "8px 10px", background: V.cloud, borderRadius: 6,
-                  fontSize: 10, color: V.ash, textAlign: "center" as const, fontFamily: V.mono }}>
-                  Score geral = Descoberta (35%) + Credibilidade (45%) + Cultura (20%)
+                  <span style={{ fontSize: 16, fontWeight: 800, color: p.color }}>{p.score}</span>
                 </div>
+                <div style={{ height: 4, background: V.fog, borderRadius: 2, overflow: "hidden", marginBottom: 4 }}>
+                  <div style={{ height: "100%", background: p.color, borderRadius: 2, width: `${p.score}%`, transition: "width 0.6s ease" }} />
+                </div>
+                <div style={{ fontSize: 11, color: V.ash }}>{p.detail}</div>
               </div>
-            );
+            ));
           })()}
-        </Expandable>
         </div>
 
-        {/* ── Conclusão expansível ── */}
+        {/* ── Accordions de dados ── */}
         <details style={{ marginBottom: 16 }}>
           <summary style={{ background: V.amberWash, borderRadius: 12, padding: "14px 16px", border: `1px solid ${V.amber}30`, cursor: "pointer", listStyle: "none", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
@@ -670,62 +641,64 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           </div>
         </details>
 
-        {/* ═══ BLOCO 3 — COMO AUMENTAR ESSA POSIÇÃO ═══ */}
+        {/* ═══ BLOCO 3 — COMO CAPTURAR ═══ */}
         <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12, paddingLeft: 4, marginTop: 24 }}>
           Como aumentar essa posição
         </div>
 
-        <div style={{ fontSize: 11, color: V.ash, marginBottom: 12, paddingLeft: 4, lineHeight: 1.5 }}>
-          Recomendações gerais para qualquer negócio local. Seu plano personalizado considera os gaps reais do seu negócio.
-        </div>
+        {(() => {
+          const allLevers = (results as any).influenceBreakdown?.levers || (results as any).influenceBreakdown4D?.levers || [];
+          const pilarData = [
+            { icon: "🔍", label: "Seja Encontrável", dim: "descoberta", color: V.teal, status: pilar1Status,
+              fallback: "Otimizar perfil no Google Meu Negócio com fotos e descrição completa" },
+            { icon: "⭐", label: "Construa Credibilidade", dim: "credibilidade", color: V.amber, status: pilar2Status,
+              fallback: "Solicitar avaliações dos últimos 20 clientes via WhatsApp" },
+            { icon: "📣", label: "Participe da Cultura", dim: "presenca", color: "#8B5CF6", status: pilar3Status,
+              fallback: "Publicar 2 posts/semana respondendo dúvidas frequentes do seu público" },
+          ];
+          const bd = (results as any).influenceBreakdown4D || results.influenceBreakdown;
+          const scores = [
+            (bd as any)?.d1_descoberta ?? 0,
+            Math.round(((bd as any)?.d2_credibilidade ?? 0) + ((bd as any)?.d4_reputacao ?? 0)) / 2,
+            (bd as any)?.d3_presenca ?? 0,
+          ];
+          return pilarData.map((p, i) => {
+            const lever = allLevers.find((l: any) => l.dimension === p.dim || (p.dim === 'credibilidade' && l.dimension === 'reputacao'));
+            const action = lever?.action || p.fallback;
+            return (
+              <div key={i} style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "14px 16px", marginBottom: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 16 }}>{p.icon}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: V.night }}>{p.label}</span>
+                  </div>
+                  <span style={{ fontSize: 16, fontWeight: 800, color: p.color }}>{Math.round(scores[i])}</span>
+                </div>
+                <p style={{ fontSize: 12, color: V.night, margin: "0 0 8px", lineHeight: 1.5, fontWeight: 500 }}>{action}</p>
+                <div style={{ padding: "4px 8px", background: p.status.bg, borderRadius: 4, fontSize: 10, color: p.status.color, fontWeight: 500 }}>
+                  {p.status.text}
+                </div>
+              </div>
+            );
+          });
+        })()}
 
-        {/* Pilar 1 — Seja Encontrável */}
-        <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "16px", marginBottom: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <span style={{ fontSize: 18 }}>🔍</span>
-            <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>Seja Encontrável</span>
+        {/* CTA inline */}
+        {!hideCTA && (
+          <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "16px", marginTop: 4, marginBottom: 8, textAlign: "center" }}>
+            <p style={{ fontSize: 13, color: V.night, margin: "0 0 12px", lineHeight: 1.5 }}>
+              Seu plano completo tem 15-20 ações específicas para <strong>{product}</strong> — na ordem certa, com texto pronto para usar.
+            </p>
+            <button onClick={() => onCheckout()} disabled={loading} style={{
+              padding: "12px 24px", borderRadius: 10, border: "none",
+              background: V.amber, color: V.white, fontSize: 14, fontWeight: 700,
+              cursor: loading ? "wait" : "pointer", opacity: loading ? 0.7 : 1,
+            }}>
+              {loading ? "Redirecionando..." : "Gerar meu plano de ação →"}
+            </button>
+            <p style={{ fontSize: 11, color: V.ash, margin: "8px 0 0" }}>R$ 497 · pronto em até 15 minutos · pagamento único</p>
           </div>
-          <ul style={{ margin: 0, padding: "0 0 0 16px", listStyle: "disc", color: V.zinc }}>
-            {pilar1Acoes.map((acao, i) => (
-              <li key={i} style={{ fontSize: 12, lineHeight: 1.7, marginBottom: 2 }}>{acao}</li>
-            ))}
-          </ul>
-          <div style={{ marginTop: 10, padding: "6px 10px", background: pilar1Status.bg, borderRadius: 6, fontSize: 11, color: pilar1Status.color, fontWeight: 500 }}>
-            {pilar1Status.text}
-          </div>
-        </div>
-
-        {/* Pilar 2 — Construa Credibilidade */}
-        <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "16px", marginBottom: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <span style={{ fontSize: 18 }}>⭐</span>
-            <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>Construa Credibilidade</span>
-          </div>
-          <ul style={{ margin: 0, padding: "0 0 0 16px", listStyle: "disc", color: V.zinc }}>
-            {pilar2Acoes.map((acao, i) => (
-              <li key={i} style={{ fontSize: 12, lineHeight: 1.7, marginBottom: 2 }}>{acao}</li>
-            ))}
-          </ul>
-          <div style={{ marginTop: 10, padding: "6px 10px", background: pilar2Status.bg, borderRadius: 6, fontSize: 11, color: pilar2Status.color, fontWeight: 500 }}>
-            {pilar2Status.text}
-          </div>
-        </div>
-
-        {/* Pilar 3 — Participe da Cultura */}
-        <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "16px", marginBottom: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <span style={{ fontSize: 18 }}>🌐</span>
-            <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>Participe da Cultura</span>
-          </div>
-          <ul style={{ margin: 0, padding: "0 0 0 16px", listStyle: "disc", color: V.zinc }}>
-            {pilar3Acoes.map((acao, i) => (
-              <li key={i} style={{ fontSize: 12, lineHeight: 1.7, marginBottom: 2 }}>{acao}</li>
-            ))}
-          </ul>
-          <div style={{ marginTop: 10, padding: "6px 10px", background: pilar3Status.bg, borderRadius: 6, fontSize: 11, color: pilar3Status.color, fontWeight: 500 }}>
-            {pilar3Status.text}
-          </div>
-        </div>
+        )}
 
         {/* ═══ PNCP — Contratações Públicas (B2G only) ═══ */}
         {isB2G && results.pncp && results.pncp.totalEncontradas > 0 && (

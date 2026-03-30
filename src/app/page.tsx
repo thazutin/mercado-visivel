@@ -370,8 +370,9 @@ export default function Home() {
         opacity: heroVisible ? 1 : 0, transition: "opacity 0.6s ease",
       }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <NelsonLogo size={48} variant="light" />
+          <div style={{ display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 8, marginBottom: 24 }}>
+            <img src="/favicon.svg" height={40} alt="Nelson" style={{ display: "block" }} />
+            <span style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.white }}>virô</span>
           </div>
           <h1 style={{
             fontFamily: V.display, fontSize: "clamp(28px, 5vw, 38px)", fontWeight: 700,
