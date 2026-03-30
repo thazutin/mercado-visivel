@@ -167,6 +167,7 @@ export async function POST(req: NextRequest) {
     );
 
     // 7. Notifica por WhatsApp + email
+    const projecao = lead.diagnosis_display?.projecaoFinanceira;
     await notifyFullDiagnosisReady({
       email: lead.email,
       whatsapp: lead.whatsapp,
@@ -174,6 +175,8 @@ export async function POST(req: NextRequest) {
       product: lead.product,
       region: lead.region,
       name: lead.name,
+      familiasGap: projecao?.familiasGap || 0,
+      buscasMensais: raw.volumes?.totalMonthlyVolume || 0,
     });
 
     console.log(`[PlanGen] Plan ready for lead ${leadId}`);

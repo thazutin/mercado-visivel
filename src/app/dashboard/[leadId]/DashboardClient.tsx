@@ -11,6 +11,26 @@ function fmtBRL(n: number): string {
   return `R$${n.toLocaleString('pt-BR')}`;
 }
 
+function formatLocationDisplay(address: string): string {
+  if (!address) return '';
+  // Remove CEP, "Brazil", "Brasil" e código postal
+  const cleaned = address
+    .replace(/\d{5}-?\d{3}/g, '')
+    .replace(/,?\s*Bra[sz]il\s*$/i, '')
+    .replace(/,?\s*BR\s*$/i, '');
+  const parts = cleaned.split(',').map(p => p.trim()).filter(Boolean);
+  // Se tem 3+ partes: "Bairro, Cidade" (pega penúltimo e antepenúltimo relevante)
+  if (parts.length >= 3) {
+    // Tenta encontrar bairro e cidade
+    const city = parts.find(p => /- [A-Z]{2}$/.test(p))?.replace(/\s*-\s*[A-Z]{2}$/, '').trim();
+    const neighborhood = parts.length > 2 ? parts[parts.length - 3]?.trim() : null;
+    if (neighborhood && city) return `${neighborhood}, ${city}`;
+    if (city) return city;
+  }
+  // Fallback: primeira parte do endereço (antes da primeira vírgula)
+  return parts[0] || address;
+}
+
 const V = {
   night: "#161618", graphite: "#232326", slate: "#3A3A40",
   zinc: "#6E6E78", ash: "#9E9EA8", fog: "#EAEAEE",
@@ -1024,7 +1044,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
             <NelsonLogo size={24} variant="light" />
           </div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: V.night, margin: 0 }}>
-            {lead.product} · {lead.region}
+            {lead.product} · {formatLocationDisplay(lead.region)}
           </h1>
         </div>
 

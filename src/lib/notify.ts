@@ -188,11 +188,17 @@ export async function notifyFullDiagnosisReady(opts: {
   product: string;
   region: string;
   name?: string;
+  familiasGap?: number;
+  buscasMensais?: number;
 }): Promise<void> {
-  const { email, whatsapp, leadId, product, region, name } = opts;
+  const { email, whatsapp, leadId, product, region, name, familiasGap, buscasMensais } = opts;
   const dashboardUrl = `${BASE_URL}/dashboard/${leadId}`;
   const shortRegion = region.split(",")[0].trim();
   const displayName = name || product;
+
+  const subject = (familiasGap && familiasGap > 0)
+    ? `${displayName}, seu plano está pronto — +${familiasGap.toLocaleString('pt-BR')} pessoas a mais por mês te conhecendo`
+    : `${displayName}, seu plano está pronto — veja o que fazer para aparecer quando te buscam`;
 
   await Promise.allSettled([
     sendWhatsApp(
@@ -203,8 +209,8 @@ export async function notifyFullDiagnosisReady(opts: {
 
     sendEmail({
       to: email,
-      subject: `${displayName}, seu plano está pronto. Comece pelo primeiro item.`,
-      html: fullDiagnosisEmailHtml({ product, shortRegion, url: dashboardUrl }),
+      subject,
+      html: fullDiagnosisEmailHtml({ product, shortRegion, url: dashboardUrl, familiasGap, buscasMensais }),
     }),
   ]);
 }
@@ -496,60 +502,47 @@ function fullDiagnosisEmailHtml({
   product,
   shortRegion,
   url,
+  familiasGap,
+  buscasMensais,
 }: {
   product: string;
   shortRegion: string;
   url: string;
+  familiasGap?: number;
+  buscasMensais?: number;
 }): string {
+  const heroMetric = (familiasGap && familiasGap > 0)
+    ? `<div style="font-size:48px;font-weight:900;color:#2D9B83;line-height:1;margin-bottom:8px;">+${familiasGap.toLocaleString('pt-BR')}</div>
+       <div style="font-size:14px;color:#9E9EA8;margin-bottom:4px;">pessoas adicionais por mês passando a te conhecer</div>
+       <div style="font-size:12px;color:#6E6E78;">com as ações do seu plano</div>`
+    : (buscasMensais && buscasMensais > 0)
+    ? `<div style="font-size:48px;font-weight:900;color:#CF8523;line-height:1;margin-bottom:8px;">${buscasMensais.toLocaleString('pt-BR')}</div>
+       <div style="font-size:14px;color:#9E9EA8;margin-bottom:4px;">buscas por mês por ${product} em ${shortRegion}</div>
+       <div style="font-size:12px;color:#6E6E78;">Seu plano mostra como capturar mais delas.</div>`
+    : `<div style="font-size:22px;font-weight:700;color:#FEFEFF;line-height:1.3;">Seu plano está pronto.</div>
+       <div style="font-size:14px;color:#9E9EA8;margin-top:8px;">Comece pelo primeiro item — é o que mais move agora.</div>`;
+
   return emailShell(`
-    <div style="background:#0A0A0C;border-radius:16px;padding:28px 24px;margin-bottom:24px;">
-      <p style="font-size:13px;color:#9E9EA8;margin:0 0 8px;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;">
+    <div style="background:#0A0A0C;border-radius:16px;padding:28px 24px;margin-bottom:24px;text-align:center;">
+      <p style="font-size:11px;color:#6E6E78;margin:0 0 16px;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;">
         Seu plano está pronto
       </p>
-      <h1 style="font-size:22px;font-weight:700;color:#FEFEFF;margin:0 0 12px;line-height:1.3;">
-        ${product} em ${shortRegion} — achei o que precisava.
-      </h1>
-      <p style="font-size:14px;color:#9E9EA8;margin:0;line-height:1.6;">
-        Vasculhei seu mercado com dados reais. Comece pelo primeiro item do plano — é o que mais move.
-      </p>
+      ${heroMetric}
     </div>
 
-    <div style="margin-bottom:24px;">
-      <p style="font-size:11px;color:#6E6E78;letter-spacing:0.06em;text-transform:uppercase;margin:0 0 12px;font-family:monospace;">
-        O que você encontra no painel
-      </p>
+    <p style="font-size:14px;color:#3A3A40;margin:0 0 24px;line-height:1.6;">
+      Comece pelo primeiro item do seu plano — é o que mais move agora.
+    </p>
 
-      <div style="background:#161618;border-radius:10px;padding:14px 16px;margin-bottom:8px;border-left:3px solid #2D9B83;">
-        <div style="font-size:13px;font-weight:600;color:#FEFEFF;margin-bottom:4px;">Diagnóstico por canal</div>
-        <div style="font-size:12px;color:#6E6E78;line-height:1.5;">Google, Instagram, Maps e IA — onde você está forte e onde está perdendo.</div>
-      </div>
-
-      <div style="background:#161618;border-radius:10px;padding:14px 16px;margin-bottom:8px;border-left:3px solid #CF8523;">
-        <div style="font-size:13px;font-weight:600;color:#FEFEFF;margin-bottom:4px;">Itens estruturantes</div>
-        <div style="font-size:12px;color:#6E6E78;line-height:1.5;">O básico que precisa estar no lugar — checklist baseada nos gaps do seu negócio, ordenada por impacto.</div>
-      </div>
-
-      <div style="background:#161618;border-radius:10px;padding:14px 16px;margin-bottom:8px;border-left:3px solid #8B5CF6;">
-        <div style="font-size:13px;font-weight:600;color:#FEFEFF;margin-bottom:4px;">Relatório setorial</div>
-        <div style="font-size:12px;color:#6E6E78;line-height:1.5;">Tendências reais do mercado de ${product} em ${shortRegion} — o contexto que dá direção às suas ações.</div>
-      </div>
-
-      <div style="background:#161618;border-radius:10px;padding:14px 16px;border-left:3px solid #E1306C;">
-        <div style="font-size:13px;font-weight:600;color:#FEFEFF;margin-bottom:4px;">Posts prontos para publicar</div>
-        <div style="font-size:12px;color:#6E6E78;line-height:1.5;">Conectados ao contexto do seu mercado esta semana — copie, adapte e publique.</div>
-      </div>
-    </div>
-
-    <a href="${url}" style="display:block;background:#FEFEFF;color:#0A0A0C;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:8px;">
-      Acessar meu painel →
+    <a href="${url}" style="display:block;background:#161618;color:#FEFEFF;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:8px;">
+      Ver meu plano de ação →
     </a>
     <p style="font-size:11px;color:#6E6E78;text-align:center;margin:0 0 16px;">
       Este link é seu acesso permanente ao painel. Guarde este email.
     </p>
 
-    <p style="font-size:11px;color:#6E6E78;text-align:center;margin:0;line-height:1.6;">
-      Seu painel fica disponível por 12 meses.<br/>
-      Conteúdos atualizados toda sexta com o contexto do seu mercado.
+    <p style="font-size:10px;color:#6E6E78;text-align:center;margin:0;font-style:italic;">
+      — Nelson · Virô · virolocal.com
     </p>
   `);
 }
