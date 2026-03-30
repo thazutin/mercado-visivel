@@ -547,7 +547,7 @@ function PilaresScoreCard({ breakdown, levers, clientType }: {
         <div>
           <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
             letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4 }}>
-            Posição Competitiva Local
+            Posição Competitiva · escala 0 a 100
           </div>
           <div style={{ fontSize: 13, color: V.mist }}>
             Probabilidade de ser escolhido quando alguém decide contratar
@@ -556,7 +556,7 @@ function PilaresScoreCard({ breakdown, levers, clientType }: {
         <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 16 }}>
           <div style={{ fontSize: 36, fontWeight: 900, color: V.teal,
             lineHeight: 1, fontFamily: V.display }}>
-            {scoreGeral}%
+            {scoreGeral}
           </div>
         </div>
       </div>
@@ -1169,6 +1169,15 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
                     Falar sobre consultoria personalizada →
                   </a>
                 </div>
+                {tier === "subscriber" && (
+                  <div style={{ textAlign: "center", marginTop: 12, fontSize: 11, color: V.ash }}>
+                    Assinatura mensal · R$99/mês · cancele quando quiser ·{' '}
+                    <a href="https://wa.me/5511999999999?text=Quero gerenciar minha assinatura Virô"
+                      target="_blank" style={{ color: V.amber, textDecoration: "underline" }}>
+                      Gerenciar assinatura →
+                    </a>
+                  </div>
+                )}
               </div>
             )}
           </div>

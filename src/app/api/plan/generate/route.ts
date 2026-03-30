@@ -181,22 +181,27 @@ Responda APENAS em JSON: {"summary": "texto aqui", "indicators": [], "outlook": 
       console.error('[PlanGen] Cenário do mercado falhou (non-fatal):', (cenarioErr as Error).message);
     }
 
-    // 6. Update lead status
+    // 6. Gerar posts e enriquecimento ANTES de marcar ready
+    try {
+      console.log(`[PlanGen] Gerando conteúdos para lead ${leadId}...`);
+      const enrichPromise = runPostDiagnosisEnrichment(
+        leadId,
+        raw as any,
+        { name: lead.name, product: lead.product, region: lead.region, client_type: lead.client_type },
+      );
+      // Timeout de 90s — se demorar mais, continua sem conteúdos
+      const timeout = new Promise<void>(resolve => setTimeout(resolve, 90_000));
+      await Promise.race([enrichPromise, timeout]);
+      console.log(`[PlanGen] Enriquecimento concluído (ou timeout) para ${leadId}`);
+    } catch (enrichErr) {
+      console.error("[PlanGen] Erro no enriquecimento (non-fatal):", enrichErr);
+    }
+
+    // 6b. Update lead status — agora tudo está pronto
     await supabase
       .from("leads")
       .update({ plan_status: "ready", weeks_active: 0 })
       .eq("id", leadId);
-
-    // 6b. Enriquecimento pós-diagnóstico (sazonalidade + conteúdos)
-    waitUntil(
-      runPostDiagnosisEnrichment(
-        leadId,
-        raw as any,
-        { name: lead.name, product: lead.product, region: lead.region, client_type: lead.client_type },
-      ).catch((err: any) =>
-        console.error("[PlanGen] Erro no enriquecimento pós-diagnóstico:", err)
-      )
-    );
 
     // 7. Notifica por WhatsApp + email
     const projecao = lead.diagnosis_display?.projecaoFinanceira;

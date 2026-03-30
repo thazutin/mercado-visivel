@@ -593,13 +593,6 @@ export default function Home() {
               </div>
             ))}
 
-            {/* CTA preview */}
-            <div style={{ background: "#F5F3EF", borderRadius: 10, padding: "10px 14px",
-              marginTop: 4, textAlign: "center", border: "1px solid #E8E4DC" }}>
-              <span style={{ fontSize: 11, color: "#6E6E78" }}>
-                🔒 Ver plano personalizado — <strong style={{ color: "#CF8523" }}>Diagnóstico Completo R$497</strong>
-              </span>
-            </div>
           </div>
 
           {/* Content preview */}
@@ -855,7 +848,7 @@ export default function Home() {
               + 3 briefings completos para agência ou produtora
             </p>
             <p style={{ fontSize: 11, color: V.ash, margin: 0, fontFamily: V.mono }}>
-              Disponível após o Diagnóstico Completo
+              Disponível após o Diagnóstico Completo · Cancele quando quiser · sem multa
             </p>
           </div>
           <span style={{ fontFamily: V.mono, fontSize: 9, color: "#8B5CF6", background: "rgba(139,92,246,0.08)", padding: "3px 8px", borderRadius: 100, fontWeight: 600, flexShrink: 0 }}>R$99/mês</span>
@@ -900,14 +893,12 @@ export default function Home() {
           Perguntas comuns
         </h2>
         {[
-          { q: "O relatório inicial é mesmo gratuito?", a: "Sim, 100% gratuito. Você preenche o formulário, a Virô analisa seu mercado em tempo real e entrega o relatório sem precisar criar conta ou inserir cartão." },
-          { q: "O que está incluído no Diagnóstico Completo?", a: "O Diagnóstico Completo (R$497, pagamento único) entrega seu plano personalizado nos 3 pilares: Seja Encontrável (Maps, SEO, IA), Construa Credibilidade (reviews, fotos, posicionamento) e Participe da Cultura (conteúdo, parceiros, menções). Cada pilar tem ações concretas com passo a passo aplicável ao seu negócio específico, um relatório setorial com dados reais desta semana, e posts prontos para publicar. Disponível no painel em até 15 minutos após o pagamento." },
-          { q: "Quanto tempo leva para receber o diagnóstico?", a: "O relatório inicial fica pronto em até 1 minuto após você preencher o formulário. O Diagnóstico Completo fica disponível no painel em até 15 minutos após a confirmação do pagamento." },
-          { q: "Como acesso meu painel depois de pagar?", a: "Após o pagamento, você recebe um email com o link de acesso direto ao painel. O login é feito com o mesmo email usado no cadastro — sem senha, via link mágico." },
-          { q: "O que são os Conteúdos Semanais?", a: "Toda sexta você recebe: o que mudou no seu mercado esta semana, uma oportunidade específica para agir agora, 4 posts prontos para publicar conectados ao contexto do momento, e 3 briefings completos para compartilhar com time ou agência. A premissa é simples: sem ação contínua, a tendência é entropia." },
-          { q: "Posso cancelar a recorrência?", a: "Sim, a qualquer momento direto no painel ou por email. Não há fidelidade nem multa." },
-          { q: "Funciona para qualquer negócio?", a: "Funciona para negócios locais com atendimento físico ou regional: lojas, clínicas, restaurantes, escritórios, studios, prestadores de serviço. Se você depende de clientes na sua cidade ou região, a Virô é para você." },
-          { q: "Meus dados ficam seguros?", a: "Sim. Seus dados são usados exclusivamente para gerar seu diagnóstico e nunca são compartilhados com terceiros. Veja nossa Política de Privacidade para mais detalhes." },
+          { q: "O diagnóstico gratuito usa dados reais do meu negócio?", a: "Sim. Virô coleta dados do Google Maps, Instagram, volume de buscas locais e dados de população do IBGE em tempo real. Não inventamos nada." },
+          { q: "O que eu recebo com o Plano de Ação?", a: "Itens estruturantes priorizados pelos seus gaps reais, um relatório setorial do seu mercado com dados atuais, e posts prontos para publicar esta semana. Tudo gerado especificamente para o seu negócio." },
+          { q: "Em quanto tempo fico com o plano pronto?", a: "O diagnóstico gratuito sai em até 2 minutos. O plano de ação completo fica pronto em até 15 minutos após o pagamento." },
+          { q: "E a assinatura mensal — o que inclui?", a: "Atualização semanal do seu mercado toda sexta-feira: novo relatório setorial e novos posts conectados ao contexto da semana. Você pode cancelar quando quiser, direto pelo painel." },
+          { q: "Funciona para qualquer tipo de negócio?", a: "Para negócios locais com presença física ou área de atuação definida. Restaurantes, clínicas, academias, escolas, salões, lojas, escritórios de serviço — se você atende pessoas numa região, Virô funciona para você." },
+          { q: "E se meu negócio não aparecer no Google Maps?", a: "O diagnóstico ainda funciona — analisamos a demanda do seu mercado e a concorrência do seu raio mesmo sem o seu perfil. O plano vai indicar exatamente o que fazer para aparecer." },
         ].map((faq, i) => (
           <FAQItem key={i} question={faq.q} answer={faq.a} />
         ))}

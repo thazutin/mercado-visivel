@@ -154,6 +154,14 @@ export async function notifyDiagnosisReady(opts: {
   console.log(`[NOTIFY] iniciando email/whatsapp para email=${email}, phone=${whatsapp}, leadId=${leadId}`);
   const url = `${BASE_URL}/resultado/${leadId}`;
   const shortRegion = region.split(",")[0].trim();
+  const familiasGap = projecaoFinanceira?.familiasGap || 0;
+  const displayName = (opts as any).name || product;
+
+  const subject = familiasGap > 0
+    ? `${displayName}, encontrei ${familiasGap.toLocaleString('pt-BR')} pessoas que ainda não te conhecem`
+    : searchVolume && searchVolume > 0
+    ? `${displayName}, seu mercado tem ${searchVolume.toLocaleString('pt-BR')} buscas por mês — veja sua posição`
+    : `${displayName}, achei o que precisava. Veja o que encontrei.`;
 
   const results = await Promise.allSettled([
     sendWhatsApp(
@@ -164,8 +172,8 @@ export async function notifyDiagnosisReady(opts: {
 
     sendEmail({
       to: email,
-      subject: `${(opts as any).name || product}, achei o que precisava. Veja o que encontrei.`,
-      html: diagnosisEmailHtml({ product, shortRegion, influencePercent, searchVolume, url, projecaoFinanceira, isB2B: (opts as any).isB2B ?? false }),
+      subject,
+      html: diagnosisEmailHtmlSimple({ product, shortRegion, url, familiasGap, searchVolume }),
     }),
   ]);
 
@@ -494,6 +502,33 @@ function diagnosisEmailHtml(opts: {
     </div>
     <p style="font-size:12px;color:#9E9EA8;line-height:1.6;margin:0;">
       Dados coletados em tempo real: Google Search, Google Maps, Instagram, IA e IBGE.
+    </p>
+  `);
+}
+
+function diagnosisEmailHtmlSimple({ product, shortRegion, url, familiasGap, searchVolume }: {
+  product: string; shortRegion: string; url: string; familiasGap: number; searchVolume?: number;
+}): string {
+  const heroMetric = familiasGap > 0
+    ? `<div style="font-size:48px;font-weight:900;color:#2D9B83;line-height:1;margin-bottom:8px;">+${familiasGap.toLocaleString('pt-BR')}</div>
+       <div style="font-size:14px;color:#9E9EA8;">pessoas no seu raio que ainda não te consideram</div>`
+    : (searchVolume && searchVolume > 0)
+    ? `<div style="font-size:48px;font-weight:900;color:#CF8523;line-height:1;margin-bottom:8px;">${searchVolume.toLocaleString('pt-BR')}</div>
+       <div style="font-size:14px;color:#9E9EA8;">buscas/mês por ${product} em ${shortRegion}</div>`
+    : `<div style="font-size:22px;font-weight:700;color:#FEFEFF;line-height:1.3;">Vasculhei seu mercado. Veja o que encontrei.</div>`;
+
+  return emailShell(`
+    <div style="background:#0A0A0C;border-radius:16px;padding:28px 24px;margin-bottom:24px;text-align:center;">
+      <p style="font-size:11px;color:#6E6E78;margin:0 0 16px;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;">
+        Seu diagnóstico está pronto
+      </p>
+      ${heroMetric}
+    </div>
+    <a href="${url}" style="display:block;background:#161618;color:#FEFEFF;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:16px;">
+      Ver meu diagnóstico →
+    </a>
+    <p style="font-size:10px;color:#6E6E78;text-align:center;margin:0;font-style:italic;">
+      — Nelson · Virô · virolocal.com
     </p>
   `);
 }

@@ -437,9 +437,12 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             </div>
           )}
           <Expandable title="Volume de buscas" icon="🔍">
-          <p style={{ fontSize: 12, color: V.ash, margin: "0 0 12px", lineHeight: 1.5 }}>
-            Estas são as buscas que importam para o seu negócio na sua região.
-          </p>
+          <div style={{ background: V.amberWash, borderRadius: 8, padding: "8px 12px", marginBottom: 12, borderLeft: `3px solid ${V.amber}` }}>
+            <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
+              Os volumes abaixo são nacionais — referência para entender quais termos têm mais intenção de compra.
+              O número de <strong>{(results.totalVolume || 0).toLocaleString('pt-BR')}</strong> buscas/mês acima é o volume estimado no raio de <strong>{raioKm}km</strong> do seu negócio, ajustado pela população local.
+            </p>
+          </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: `1px solid ${V.fog}`, fontSize: 10, color: V.ash, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
             <span style={{ flex: 1 }}>Termo</span>
             <span style={{ width: 60, textAlign: "right" }}>Vol/mês</span>
@@ -561,14 +564,14 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1,
                 color: results.influencePercent < 20 ? V.amberSoft : V.teal,
               }}>
-                {results.influencePercent}%
+                {results.influencePercent}
               </div>
-              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>{isNacionalAny ? "é sua posição competitiva no mercado digital nacional" : "é sua posição competitiva no mercado local"}</p>
+              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>{isNacionalAny ? "sua posição competitiva no mercado digital nacional · escala 0 a 100" : "sua posição competitiva no mercado local · escala 0 a 100"}</p>
             </div>
           ) : (
             <div style={{ background: V.night, borderRadius: "14px 14px 0 0", padding: "24px 18px", textAlign: "center", border: `1px solid ${V.slate}`, borderBottom: "none" }}>
-              <div style={{ fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, color: V.coral, letterSpacing: "-0.03em", lineHeight: 1 }}>0%</div>
-              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>{isNacionalAny ? "é sua posição competitiva no mercado digital nacional" : "é sua posição competitiva no mercado local"}</p>
+              <div style={{ fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, color: V.coral, letterSpacing: "-0.03em", lineHeight: 1 }}>0</div>
+              <p style={{ fontSize: 13, color: V.mist, margin: "8px 0 0", lineHeight: 1.4 }}>{isNacionalAny ? "sua posição competitiva no mercado digital nacional · escala 0 a 100" : "sua posição competitiva no mercado local · escala 0 a 100"}</p>
               <p style={{ fontSize: 11, color: V.coral, margin: "4px 0 0" }}>Invisível no mercado</p>
             </div>
           )}
@@ -776,35 +779,42 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         )}
 
         {/* ═══ CTA ═══ */}
-        {!hideCTA && (<><div style={{ padding: "24px 0 16px" }}>
-          <p style={{ fontSize: 18, fontWeight: 700, color: V.night, margin: "0 0 8px", lineHeight: 1.4 }}>
-            Agora você sabe. O próximo passo é agir.
-          </p>
-          <p style={{ fontSize: 14, color: V.zinc, margin: "0 0 4px", lineHeight: 1.6 }}>
-            <strong style={{ color: V.night }}>Antes:</strong> Não sabia o que fazer primeiro
-          </p>
-          <p style={{ fontSize: 14, color: V.zinc, margin: "0 0 20px", lineHeight: 1.6 }}>
-            <strong style={{ color: V.teal }}>Agora:</strong> Sei onde estou e o que fazer para disputar mais
-          </p>
-        </div>
-
-        <div style={{ background: V.night, borderRadius: 14, padding: "28px 20px", marginBottom: 16, color: V.white }}>
+        {!hideCTA && (<>
+        <div style={{ background: V.night, borderRadius: 14, padding: "28px 20px", marginBottom: 16, marginTop: 24, color: V.white }}>
           <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.04em", textTransform: "uppercase" as const, marginBottom: 4 }}>
             Pacote completo · pagamento único
           </div>
           <div style={{ fontFamily: V.display, fontSize: 32, fontWeight: 700, marginBottom: 16 }}>R$ 497</div>
 
-          {[
-            "Diagnóstico completo por canal (Google, Instagram, Maps, IA)",
-            "Itens estruturantes — o básico que precisa estar no lugar",
-            "Relatório setorial do seu mercado com dados reais",
-            "Posts prontos para publicar conectados ao contexto da semana",
-          ].map((d, i) => (
-            <div key={i} style={{ display: "flex", gap: 10, marginBottom: 8, alignItems: "center" }}>
-              <span style={{ color: V.amber, fontSize: 12 }}>✓</span>
-              <span style={{ fontSize: 13, color: V.mist }}>{d}</span>
-            </div>
-          ))}
+          <div style={{ borderBottom: `1px solid ${V.graphite}`, paddingBottom: 14, marginBottom: 14 }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: V.amber, margin: "0 0 4px", textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
+              Por que você precisa disso
+            </p>
+            <p style={{ fontSize: 13, color: V.mist, margin: 0, lineHeight: 1.5 }}>
+              Você já sabe sua posição. Agora precisa saber exatamente o que fazer — na ordem certa, pelos gaps reais do seu negócio.
+            </p>
+          </div>
+
+          <div style={{ marginBottom: 14 }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: V.amber, margin: "0 0 8px", textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
+              O que você recebe
+            </p>
+            {[
+              "Itens estruturantes — as ações prioritárias pelos seus gaps reais",
+              "Diagnóstico completo por canal (Google, Maps, Instagram, IA)",
+              "Relatório setorial do seu mercado com dados atuais",
+              "Posts prontos para publicar conectados ao contexto da semana",
+            ].map((d, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, marginBottom: 6, alignItems: "center" }}>
+                <span style={{ color: V.amber, fontSize: 12 }}>✓</span>
+                <span style={{ fontSize: 13, color: V.mist }}>{d}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ background: V.graphite, borderRadius: 8, padding: "10px 14px", marginBottom: 16, textAlign: "center" }}>
+            <span style={{ fontSize: 12, color: V.mist }}>⏱ Até 15 minutos após o pagamento</span>
+          </div>
 
           <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${V.graphite}` }}>
             <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
