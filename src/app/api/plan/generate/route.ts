@@ -149,6 +149,38 @@ export async function POST(req: NextRequest) {
       console.error("[PlanGen] Welcome briefing failed (non-fatal):", briefErr);
     }
 
+    // 5d. Gerar cenário do mercado (macro_context) — antes de marcar ready
+    try {
+      const shortRegion = (lead.region || '').split(',')[0].trim();
+      console.log(`[PlanGen] Gerando cenário do mercado para ${lead.product} em ${shortRegion}...`);
+      const cenarioResponse = await claude.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 400,
+        temperature: 0.3,
+        messages: [{
+          role: 'user',
+          content: `Em 3-4 frases diretas, descreva o cenário atual do mercado de "${lead.product}" em ${shortRegion}.
+Inclua: tendências recentes, nível de digitalização do setor, e 1 oportunidade específica para negócios locais.
+Sem jargão. Linguagem simples. Baseado em conhecimento real do setor.
+Responda APENAS em JSON: {"summary": "texto aqui", "indicators": [], "outlook": "neutral", "key_opportunity": "texto"}`,
+        }],
+      });
+      const cenarioText = cenarioResponse.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
+      let macroContext: any;
+      try {
+        macroContext = JSON.parse(cenarioText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
+      } catch {
+        macroContext = { summary: cenarioText.slice(0, 500), indicators: [], outlook: 'neutral', key_opportunity: '' };
+      }
+      // Salvar no diagnóstico
+      if (diagnosisId) {
+        await supabase.from('diagnoses').update({ macro_context: macroContext }).eq('id', diagnosisId);
+      }
+      console.log(`[PlanGen] Cenário do mercado OK`);
+    } catch (cenarioErr) {
+      console.error('[PlanGen] Cenário do mercado falhou (non-fatal):', (cenarioErr as Error).message);
+    }
+
     // 6. Update lead status
     await supabase
       .from("leads")
@@ -279,27 +311,43 @@ async function generateItensEstruturantes(
     `${i + 1}. [${l.dimension}] ${l.action} (+${l.impact}pts) | atual: ${l.currentValue || 'N/A'} → meta: ${l.targetValue || 'N/A'}`
   ).join('\n');
 
-  const prompt = `Consultor de mercado local. Gere ITENS ESTRUTURANTES para este negócio.
+  const prompt = `Você é um especialista em marketing local para pequenos negócios brasileiros.
+Com base no diagnóstico abaixo, gere os itens estruturantes prioritários — as ações fundamentais que precisam estar no lugar antes de qualquer outra coisa.
 
-DADOS: ${context}
+Diagnóstico: ${context}
 
-DIMENSÃO MAIS FRACA: ${dimensaoMaisFraca}
-ALAVANCAS: ${leversText}
+Dimensão mais fraca: ${dimensaoMaisFraca}
+Alavancas: ${leversText}
 
-REGRAS: 4-8 itens concretos e verificáveis. Dimensão mais fraca primeiro. Linguagem direta. Não incluir o que já existe.
+Regras:
+- Máximo 8 itens, mínimo 4
+- Cada item deve ser específico para os dados reais do negócio (use os números)
+- Ordenados por impacto: o item 1 é o que mais move agora
+- Foque nos gaps reais: se Descoberta é baixa, os primeiros itens devem endereçar isso
+- Use linguagem direta, sem jargão
 
-JSON apenas:
-{"items":[{"id":"ex","dimensao":"descoberta|credibilidade|presenca|reputacao","titulo":"...","descricao":"...","acao":"...","verificacao":"...","impacto":"alto|medio|baixo","prazo":"esta semana|este mês|próximo mês","concluido":false}],"summary":"1 frase"}`;
+Retorne APENAS JSON válido:
+{"items":[{"id":"maps_profile","dimensao":"descoberta","titulo":"Título curto (max 10 palavras)","descricao":"Por que importa + como fazer (2-3 frases)","acao":"Passo a passo em 2-3 linhas","verificacao":"Como confirmar que está feito","impacto":"alto","prazo":"esta semana","concluido":false}],"summary":"1 frase resumindo o maior gap"}`;
 
   const response = await claude.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 2000,
+    max_tokens: 2500,
     temperature: 0.2,
     messages: [{ role: 'user', content: prompt }],
   });
 
   const text = response.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
-  const parsed = JSON.parse(text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
+  let parsed: { items: ItensEstruturante[]; summary: string };
+  try {
+    parsed = JSON.parse(text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
+  } catch (parseErr) {
+    console.error('[PlanGen] JSON parse failed for itens estruturantes:', (parseErr as Error).message, 'Raw:', text.slice(0, 500));
+    throw new Error('Failed to parse itens estruturantes JSON');
+  }
+  if (!parsed.items || parsed.items.length === 0) {
+    console.error('[PlanGen] Haiku retornou 0 itens. Raw:', text.slice(0, 500));
+    throw new Error('Haiku returned 0 itens estruturantes');
+  }
   console.log(`[PlanGen] Itens estruturantes: ${parsed.items.length} itens gerados`);
   return parsed;
 }

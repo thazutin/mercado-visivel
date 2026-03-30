@@ -1229,9 +1229,10 @@ Responda APENAS em JSON, sem markdown:
     // Calcula influência meta somando impacto dos levers disponíveis
     const levers = (step4.influence as any).breakdown?.levers || [];
     const totalLeverImpact = levers.reduce((sum: number, l: any) => sum + (l.impact || 0), 0);
-    // Cap realista: máximo +30pts de melhoria, teto de 80%
-    const influenciaMeta = Math.min(influencePercent + Math.min(totalLeverImpact, 30), 80);
-    console.log(`[Pipeline] Influência meta: ${influencePercent}% + ${totalLeverImpact}pts levers = ${influenciaMeta}%`);
+    // Mínimo +10pts de delta (mesmo sem levers), máximo +30pts, teto de 80%
+    const deltaScore = Math.max(10, Math.min(totalLeverImpact, 30));
+    const influenciaMeta = Math.min(influencePercent + deltaScore, 80);
+    console.log(`[Pipeline] Influência meta: ${influencePercent}% + ${deltaScore}pts (levers=${totalLeverImpact}) = ${influenciaMeta}%`);
 
     // CAMADA 1 — Captura imediata (buscas ativas no raio)
     const buscasNoRaio = Math.round(totalVolume * fatorGeo);
@@ -1251,7 +1252,12 @@ Responda APENAS em JSON, sem markdown:
     }
     const familiasAtual = Math.round(audienciaTarget * (influencePercent / 100) * penaltyFactor);
     const familiasPotencial = Math.round(audienciaTarget * (influenciaMeta / 100) * penaltyFactor);
-    const familiasGap = familiasPotencial - familiasAtual;
+    let familiasGap = familiasPotencial - familiasAtual;
+    // Fallback: se gap <= 0, garantir mínimo 10% de oportunidade
+    if (familiasGap <= 0 && audienciaTarget > 0) {
+      familiasGap = Math.max(1, Math.round(audienciaTarget * 0.10 * penaltyFactor));
+    }
+    console.log(`[Pipeline] Famílias: atual=${familiasAtual} meta=${familiasPotencial} gap=${familiasGap} (audiencia=${audienciaTarget}, score=${influencePercent}→${influenciaMeta}, penalty=${penaltyFactor})`);
 
     // CAMADA 3 — Risco competitivo (comparação com líder)
     const mapsCompetitors = step4.influence?.rawGoogle?.mapsPresence?.mapsCompetitors || [];

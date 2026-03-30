@@ -20,7 +20,9 @@ export async function POST(req: NextRequest) {
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://virolocal.com";
+    // CHECKOUT_AMOUNT em centavos. Para testar: CHECKOUT_AMOUNT=100 (R$1). Produção: 49700 (R$497)
     const checkoutAmount = parseInt(process.env.CHECKOUT_AMOUNT || "49700", 10);
+    console.log(`[Checkout] amount=${checkoutAmount} centavos (env=${process.env.CHECKOUT_AMOUNT || 'default 49700'})`);
 
     const pricing: Record<string, { amount: number; currency: string }> = {
       pt: { amount: checkoutAmount, currency: "brl" },

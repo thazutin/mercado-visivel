@@ -224,8 +224,12 @@ export default function InstantValueScreen({ product, region, results, onCheckou
     : Math.round(audienciaTotal * (results.influencePercent / 100));
   const familiasPotencial = proj?.familiasPotencial != null
     ? Math.min(proj.familiasPotencial, audienciaTotal)
-    : Math.round(audienciaTotal * (Math.min(results.influencePercent + 6, 100) / 100));
-  const oportunidade = nenhumEncontrado ? 0 : Math.max(0, familiasPotencial - familiasAtual);
+    : Math.round(audienciaTotal * (Math.min(results.influencePercent + 10, 100) / 100));
+  let oportunidade = nenhumEncontrado ? 0 : Math.max(0, familiasPotencial - familiasAtual);
+  // Fallback: se gap = 0, usar familiasGap do pipeline ou 10% da audiência
+  if (oportunidade <= 0 && !nenhumEncontrado && audienciaTotal > 0) {
+    oportunidade = proj?.familiasGap || Math.max(1, Math.round(audienciaTotal * 0.10));
+  }
   const raioKm = results.audiencia?.raioKm || 3;
 
   // Pilar status indicators
