@@ -446,26 +446,20 @@ export function calculateCompositeInfluence(
     ct,
   );
 
-  // Penalização nacional: mercado nacional tem muito mais concorrentes
-  // Score deve refletir que é muito mais difícil se destacar nacionalmente
-  let d1Final = d1, d2Final = d2, d3Final = d3, d4Final = d4;
+  // Score de posição competitiva mede execução local — sem penaltyFactor
+  // PenaltyFactor é aplicado apenas na projeção financeira (analysis.ts)
+  const d1Final = d1, d2Final = d2, d3Final = d3, d4Final = d4;
+
   if (isNacional) {
-    // 50 competidores = 50% do score local, 200 = 25%, 500+ = 15%
     const totalComp = benchmarkNacionalCompetidores || 100;
-    const penaltyFactor = Math.max(0.15, Math.min(0.7, 10 / Math.sqrt(totalComp)));
-    d1Final = Math.round(d1 * penaltyFactor);
-    d2Final = Math.round(d2 * penaltyFactor);
-    d3Final = Math.round(d3 * penaltyFactor);
-    d4Final = Math.round(d4 * penaltyFactor);
-    console.log(`[PosComp Nacional] Penalização: ${(penaltyFactor * 100).toFixed(0)}% (${totalComp} competidores nacionais)`);
+    console.log(`[PosComp Nacional] ${totalComp} competidores — penalty aplicado apenas na projeção financeira, não no score`);
   }
 
-  const rawInfluence = Math.round(
-    d1Final * weights.d1 + d2Final * weights.d2 + d3Final * weights.d3 + d4Final * weights.d4
+  // Score geral = média ponderada dos pilares (derivável dos valores exibidos)
+  // Pilar Encontrável = D1, Pilar Credibilidade = (D2+D4)/2, Pilar Cultura = D3
+  const totalInfluence = Math.round(
+    d1Final * 0.35 + ((d2Final + d4Final) / 2) * 0.45 + d3Final * 0.20
   );
-
-  // Cap realista com raiz quadrada
-  const totalInfluence = Math.round(Math.sqrt(rawInfluence / 100) * 40);
 
   const breakdown: InfluenceBreakdown = {
     total: totalInfluence,
@@ -473,14 +467,14 @@ export function calculateCompositeInfluence(
     d2_credibilidade: Math.round(d2Final),
     d3_presenca: Math.round(d3Final),
     d4_reputacao: Math.round(d4Final),
-    // Compat fields (mantém para não quebrar outros componentes)
+    // Compat fields
     d1_discovery: Math.round(d1Final),
     d2_credibility: Math.round(d2Final),
     d3_reach: Math.round(d3Final),
-    d4_ai_visibility: Math.round(d1Final), // AI está dentro de D1 agora
+    d4_ai_visibility: Math.round(d1Final),
   };
 
-  console.log(`[PosComp 4D] Raw=${rawInfluence}% → Realistic=${totalInfluence}% | D1_Descoberta=${Math.round(d1)} D2_Credibilidade=${Math.round(d2)} D3_Presença=${Math.round(d3)} D4_Reputação=${Math.round(d4)} | Concorrentes: ${mapsCompetitors.length}`);
+  console.log(`[PosComp 4D] Score=${totalInfluence}% | D1=${Math.round(d1)} D2=${Math.round(d2)} D3=${Math.round(d3)} D4=${Math.round(d4)} | Concorrentes: ${mapsCompetitors.length}`);
 
   // Backward-compat: old-style scores
   const googleScore = google.ctrShare;

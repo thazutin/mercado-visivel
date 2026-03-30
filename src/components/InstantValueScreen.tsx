@@ -622,7 +622,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 ))}
                 <div style={{ marginTop: 8, padding: "8px 10px", background: V.cloud, borderRadius: 6,
                   fontSize: 10, color: V.ash, textAlign: "center" as const, fontFamily: V.mono }}>
-                  Score geral = média ponderada: Descoberta (35%), Credibilidade+Reputação (45%), Cultura (20%) — ajustado por compressão realista
+                  Score geral = Descoberta (35%) + Credibilidade (45%) + Cultura (20%)
                 </div>
               </div>
             );

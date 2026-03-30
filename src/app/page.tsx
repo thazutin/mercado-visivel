@@ -370,10 +370,7 @@ export default function Home() {
         opacity: heroVisible ? 1 : 0, transition: "opacity 0.6s ease",
       }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-            <NelsonLogo size={28} variant="light" />
-            <span style={{ fontFamily: V.display, fontSize: 18, fontWeight: 700, color: V.white }}>Virô</span>
-          </div>
+          <NelsonLogo size={36} variant="light" />
           <h1 style={{
             fontFamily: V.display, fontSize: "clamp(28px, 5vw, 38px)", fontWeight: 700,
             color: V.white, letterSpacing: "-0.03em", margin: "24px 0 16px", lineHeight: 1.2,

@@ -1243,8 +1243,14 @@ Responda APENAS em JSON, sem markdown:
     const clientesGap = clientesPotencial - clientesAtual;
 
     // CAMADA 2 — Mercado alcançável (audiência física no raio)
-    const familiasAtual = Math.round(audienciaTarget * (influencePercent / 100));
-    const familiasPotencial = Math.round(audienciaTarget * (influenciaMeta / 100));
+    // Para negócios nacionais, penaltyFactor reduz o mercado alcançável (não o score)
+    let penaltyFactor = 1;
+    if (isNacional && benchmarkComp) {
+      penaltyFactor = Math.max(0.15, Math.min(0.7, 10 / Math.sqrt(benchmarkComp)));
+      console.log(`[Pipeline] Nacional penaltyFactor=${(penaltyFactor * 100).toFixed(0)}% aplicado na projeção (${benchmarkComp} competidores)`);
+    }
+    const familiasAtual = Math.round(audienciaTarget * (influencePercent / 100) * penaltyFactor);
+    const familiasPotencial = Math.round(audienciaTarget * (influenciaMeta / 100) * penaltyFactor);
     const familiasGap = familiasPotencial - familiasAtual;
 
     // CAMADA 3 — Risco competitivo (comparação com líder)
