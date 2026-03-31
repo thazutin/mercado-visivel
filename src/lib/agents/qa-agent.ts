@@ -57,11 +57,13 @@ export async function runDataChecks(): Promise<{ checks: CheckResult[]; testLead
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        businessName: 'QA Test Restaurante',
         product: 'Restaurante',
         region: 'São Paulo, SP, Brasil',
         name: 'QA Test',
         email: 'qa-test@virolocal.com',
-        whatsapp: '',
+        whatsapp: '11999999999',
+        step: 2,
       }),
     });
 
