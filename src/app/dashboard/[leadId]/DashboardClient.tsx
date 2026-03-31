@@ -148,17 +148,83 @@ function SeasonalityBlock({ seasonality }: { seasonality: any }) {
   );
 }
 
-// ─── Macro Context ───────────────────────────────────────────────────
-function MacroContextBlock({ macroContext }: { macroContext: any }) {
-  const placeholder = "Integração com dados macroeconômicos em breve.";
-  const summary = macroContext?.summary;
-  const isPlaceholder = !summary || summary === placeholder;
+// ─── Diagnóstico Aprofundado ─────────────────────────────────────────
+function DiagnosticoAprofundado({ macroContext, seasonality, display }: {
+  macroContext: any; seasonality: any; display: any;
+}) {
+  const maps = display?.maps;
+  const instagram = display?.instagram;
 
   return (
-    <div style={{ background: V.cloud, borderRadius: 12, padding: "16px 20px", marginBottom: 16 }}>
-      <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 4 }}>Contexto</div>
-      <div style={{ fontSize: 14, fontWeight: 600, color: V.night, marginBottom: 8 }}>Cenário atual do mercado</div>
-      <p style={{ fontSize: 13, color: isPlaceholder ? V.ash : V.zinc, margin: 0, lineHeight: 1.6 }}>{isPlaceholder ? placeholder : summary}</p>
+    <div style={{ marginTop: 24 }}>
+      {/* Cenário do mercado */}
+      {macroContext?.summary && macroContext.summary !== "Integração com dados macroeconômicos em breve." ? (
+        <div style={{ background: V.night, borderRadius: 12, padding: "20px", marginBottom: 16 }}>
+          <p style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.1em", margin: "0 0 8px" }}>CONTEXTO DO MERCADO</p>
+          <p style={{ fontSize: 15, color: V.white, fontWeight: 600, margin: "0 0 12px", lineHeight: 1.4 }}>{macroContext.summary}</p>
+          {macroContext.key_opportunity && (
+            <div style={{ background: V.graphite, borderRadius: 8, padding: "12px", borderLeft: `3px solid ${V.amber}` }}>
+              <p style={{ fontSize: 11, color: V.amber, margin: "0 0 4px", fontWeight: 600 }}>OPORTUNIDADE</p>
+              <p style={{ fontSize: 13, color: V.mist, margin: 0 }}>{macroContext.key_opportunity}</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div style={{ background: V.cloud, borderRadius: 12, padding: "16px", marginBottom: 16 }}>
+          <p style={{ fontSize: 13, color: V.ash, margin: 0 }}>Contexto de mercado sendo coletado...</p>
+        </div>
+      )}
+
+      {/* Sazonalidade */}
+      {seasonality?.months && seasonality.months.length > 0 && seasonality.months.some((m: any) => m.volume > 0) && (
+        <div style={{ background: V.white, border: `1px solid ${V.fog}`, borderRadius: 12, padding: "20px", marginBottom: 16 }}>
+          <p style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.1em", margin: "0 0 16px" }}>
+            SAZONALIDADE · pico: {seasonality.peak_month} · vale: {seasonality.low_month}
+          </p>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 60 }}>
+            {seasonality.months.map((m: any) => {
+              const maxVol = Math.max(...seasonality.months.map((x: any) => x.volume));
+              const height = maxVol > 0 ? Math.max((m.volume / maxVol) * 60, 4) : 4;
+              const isPeak = m.month === seasonality.peak_month;
+              return (
+                <div key={m.month} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                  <div style={{ width: "100%", height, background: isPeak ? V.amber : V.fog, borderRadius: "2px 2px 0 0" }} />
+                  <span style={{ fontSize: 8, color: V.ash }}>{m.month.slice(0, 3)}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Presença por canal */}
+      {(maps || instagram?.handle) && (
+        <div style={{ background: V.white, border: `1px solid ${V.fog}`, borderRadius: 12, padding: "20px", marginBottom: 16 }}>
+          <p style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.1em", margin: "0 0 16px" }}>SUA PRESENÇA POR CANAL</p>
+          {maps && (
+            <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${V.fog}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Google Maps</span>
+                <span style={{ fontSize: 13, color: maps.found ? V.teal : V.coral, fontWeight: 600 }}>{maps.found ? "✓ Encontrado" : "✗ Não encontrado"}</span>
+              </div>
+              {maps.found && (
+                <p style={{ fontSize: 12, color: V.ash, margin: 0 }}>★ {maps.rating} · {maps.reviewCount} avaliações{maps.photos ? ` · ${maps.photos} fotos` : ''}</p>
+              )}
+            </div>
+          )}
+          {instagram?.handle && (
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Instagram</span>
+                <span style={{ fontSize: 13, color: V.teal, fontWeight: 600 }}>@{instagram.handle}</span>
+              </div>
+              <p style={{ fontSize: 12, color: V.ash, margin: 0 }}>
+                {instagram.followers?.toLocaleString('pt-BR')} seguidores{instagram.postsLast30d ? ` · ${instagram.postsLast30d} posts/mês` : ''}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -1131,20 +1197,23 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
 
             {/* Diagnóstico aprofundado (pago) */}
             {tier !== "free" && planReady && (
-              <div style={{ marginTop: 16 }}>
-                <MacroContextBlock macroContext={diagnosis?.macro_context} />
+              <>
                 <PilaresScoreCard
                   breakdown={lead.diagnosis_display?.influenceBreakdown4D || lead.diagnosis_display?.influenceBreakdown}
                   levers={lead.diagnosis_display?.influenceBreakdown?.levers || lead.diagnosis_display?.influenceBreakdown4D?.levers || []}
                   clientType={lead.client_type}
+                />
+                <DiagnosticoAprofundado
+                  macroContext={diagnosis?.macro_context}
+                  seasonality={diagnosis?.seasonality}
+                  display={lead.diagnosis_display}
                 />
                 <InfluenceChart
                   snapshots={snapshots}
                   currentScore={lead.diagnosis_display?.influencePercent || 0}
                   product={lead.product}
                 />
-                <ProjecaoCard projecao={lead.diagnosis_display?.projecaoFinanceira} />
-              </div>
+              </>
             )}
           </div>
         )}
