@@ -403,14 +403,30 @@ Negocio: ${contextoCompacto}`;
     parsed = JSON.parse(cleaned);
   } catch (parseErr) {
     console.warn('[PlanGen] JSON parse failed:', (parseErr as Error).message);
+    // Strategy 1: repair truncated JSON
     try {
       const repaired = repairTruncatedJson(rawText);
       parsed = JSON.parse(repaired);
       console.log('[PlanGen] JSON repair OK, items:', parsed?.items?.length);
-    } catch (e2) {
-      console.error('[PlanGen] JSON repair also failed:', (e2 as Error).message);
-      console.error('[PlanGen] Full cleaned text:\n', cleaned);
-      throw new Error('Failed to parse itens estruturantes JSON');
+    } catch {
+      // Strategy 2: strip problematic fields (acao, copy_pronto, verificacao) that LLM adds despite instructions
+      console.warn('[PlanGen] Repair failed, trying field stripping...');
+      try {
+        const stripped = cleaned
+          .replace(/"acao"\s*:\s*"[^"]*(?:"|$)/g, '')
+          .replace(/"copy_pronto"\s*:\s*"[^"]*(?:"|$)/g, '')
+          .replace(/"verificacao"\s*:\s*"[^"]*(?:"|$)/g, '')
+          .replace(/,\s*,/g, ',')
+          .replace(/,\s*}/g, '}')
+          .replace(/{\s*,/g, '{');
+        const repairedStripped = repairTruncatedJson(stripped);
+        parsed = JSON.parse(repairedStripped);
+        console.log('[PlanGen] Field stripping + repair OK, items:', parsed?.items?.length);
+      } catch (e3) {
+        console.error('[PlanGen] All parse strategies failed:', (e3 as Error).message);
+        console.error('[PlanGen] Full cleaned text:\n', cleaned.slice(0, 2000));
+        throw new Error('Failed to parse itens estruturantes JSON');
+      }
     }
   }
   if (!parsed?.items || parsed.items.length < 3) {
