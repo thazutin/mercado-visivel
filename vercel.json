@@ -15,6 +15,10 @@
     {
       "path": "/api/agents/copy",
       "schedule": "0 9 * * 1"
+    },
+    {
+      "path": "/api/agents/product",
+      "schedule": "0 10 * * 1"
     }
   ],
   "functions": {
