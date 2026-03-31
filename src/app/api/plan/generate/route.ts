@@ -150,12 +150,23 @@ export async function POST(req: NextRequest) {
         copy_pronto: item.copy_pronto || '',
       }));
 
-      const { error: checklistError } = await supabase
-        .from('checklists')
-        .upsert({ lead_id: leadId, items: itemsParaSalvar }, { onConflict: 'lead_id' });
+      // Delete existing then insert fresh (upsert may fail silently without unique constraint)
+      await supabase.from('checklists').delete().eq('lead_id', leadId);
 
-      if (checklistError) {
-        console.error('[PlanGen] Checklists upsert erro:', checklistError.message);
+      const { data: insertData, error: insertError } = await supabase
+        .from('checklists')
+        .insert({ lead_id: leadId, items: itemsParaSalvar })
+        .select();
+
+      console.log('[PlanGen] Checklist insert result:', {
+        data: insertData ? `${insertData.length} rows` : 'null',
+        error: insertError?.message || null,
+        itemCount: itemsParaSalvar.length,
+        leadId,
+      });
+
+      if (insertError) {
+        console.error('[PlanGen] Checklist ERRO:', insertError.message, insertError.details, insertError.hint);
       } else {
         console.log(`[PlanGen] Checklists salvos: ${itemsParaSalvar.length} itens`);
       }
