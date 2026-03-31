@@ -13,6 +13,19 @@ export async function GET(req: NextRequest) {
   if (!leadId) return NextResponse.json({ error: "leadId required" }, { status: 400 });
 
   const supabase = getSupabase();
+
+  // Try JSONB format first (single row with items array)
+  const { data: single } = await supabase
+    .from("checklists")
+    .select("items")
+    .eq("lead_id", leadId)
+    .single();
+
+  if (single?.items && Array.isArray(single.items)) {
+    return NextResponse.json({ items: single.items });
+  }
+
+  // Fallback: multiple rows (legacy format)
   const { data, error } = await supabase
     .from("checklists")
     .select("*")
@@ -24,10 +37,33 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const { id, completed } = await req.json();
+  const { id, completed, leadId } = await req.json();
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
   const supabase = getSupabase();
+
+  // Try JSONB format first
+  if (leadId) {
+    const { data: single } = await supabase
+      .from("checklists")
+      .select("items")
+      .eq("lead_id", leadId)
+      .single();
+
+    if (single?.items && Array.isArray(single.items)) {
+      const updated = single.items.map((item: any) =>
+        String(item.id) === String(id) ? { ...item, concluida: completed } : item
+      );
+      const { error } = await supabase
+        .from("checklists")
+        .update({ items: updated })
+        .eq("lead_id", leadId);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ ok: true });
+    }
+  }
+
+  // Fallback: legacy row-per-item
   const { error } = await supabase
     .from("checklists")
     .update({ completed, completed_at: completed ? new Date().toISOString() : null })

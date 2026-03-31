@@ -136,30 +136,28 @@ export async function POST(req: NextRequest) {
       throw new Error(`Plan save failed: ${planError.message}`);
     }
 
-    // 5b. Salvar itens estruturantes na tabela checklists
+    // 5b. Salvar itens como JSONB array em uma única linha
     try {
-      await supabase.from("checklists").delete().eq("lead_id", leadId);
-
-      const checklistRows = itensEstruturantes.items.map((item: ItensEstruturante, index: number) => ({
-        lead_id: leadId,
-        title: item.titulo || '',
-        description: item.descricao || '',
-        dimensao: item.dimensao || 'descoberta',
-        impact: item.impacto || 'medio',
-        deadline: item.prazo || 'este mes',
-        order_index: index,
-        completed: false,
-        tipo: 'estruturante',
-        ...(item.copy_pronto ? { copy_pronto: item.copy_pronto } : {}),
+      const itemsParaSalvar = itensEstruturantes.items.map((item: any, idx: number) => ({
+        id: item.id || String(idx + 1),
+        titulo: item.titulo,
+        descricao: item.descricao,
+        dimensao: item.dimensao,
+        pilar: item.pilar || item.dimensao,
+        impacto: item.impacto,
+        prazo: item.prazo,
+        concluida: false,
+        copy_pronto: item.copy_pronto || '',
       }));
 
-      console.log(`[PlanGen] Inserting ${checklistRows.length} checklists, sample:`, JSON.stringify(checklistRows[0]));
-      const { error: checklistError } = await supabase.from("checklists").insert(checklistRows);
+      const { error: checklistError } = await supabase
+        .from('checklists')
+        .upsert({ lead_id: leadId, items: itemsParaSalvar }, { onConflict: 'lead_id' });
 
       if (checklistError) {
-        console.error('[PlanGen] Checklists insert erro:', checklistError.message, checklistError.details, checklistError.hint);
+        console.error('[PlanGen] Checklists upsert erro:', checklistError.message);
       } else {
-        console.log(`[PlanGen] ${checklistRows.length} atividades salvas no plano`);
+        console.log(`[PlanGen] Checklists salvos: ${itemsParaSalvar.length} itens`);
       }
     } catch (err) {
       console.error('[PlanGen] Checklists falhou (non-fatal):', (err as Error).message);

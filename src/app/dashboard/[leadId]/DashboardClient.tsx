@@ -248,19 +248,28 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
     fetch(`/api/checklists?leadId=${leadId}`)
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (data?.items) setItems(data.items);
+        if (data?.items) {
+          // Normalize: JSONB uses concluida, legacy uses completed
+          const normalized = data.items.map((i: any) => ({
+            ...i,
+            completed: i.completed ?? i.concluida ?? false,
+            title: i.title || i.titulo || '',
+            description: i.description || i.descricao || '',
+          }));
+          setItems(normalized);
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, [leadId]);
 
   const toggleItem = async (itemId: string, completed: boolean) => {
+    setItems(prev => prev.map(i => i.id === itemId ? { ...i, completed, concluida: completed } : i));
     await fetch('/api/checklists', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: itemId, completed }),
+      body: JSON.stringify({ id: itemId, completed, leadId }),
     });
-    setItems(prev => prev.map(i => i.id === itemId ? { ...i, completed } : i));
   };
 
   if (!planReady) return <Spinner text="Identificando o que precisa estar no lugar primeiro..." />;
