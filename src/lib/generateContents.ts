@@ -97,6 +97,9 @@ Objetivo: ${objective}
 
 ${lowScore ? `CONTEXTO ESTRATÉGICO: este negócio aparece para apenas ${lead.influence_score}% da demanda local. O conteúdo deve ajudar a recuperar presença digital — foco em diferenciação e proximidade com a comunidade local.` : ''}
 
+${relatorioContext?.destaque ? `CONTEXTO DO MERCADO ESTA SEMANA: ${relatorioContext.destaque}` : ''}
+${relatorioContext?.oportunidade_da_semana ? `OPORTUNIDADE DA SEMANA: ${relatorioContext.oportunidade_da_semana}` : ''}
+
 IMPORTANTE — Propósito dos conteúdos:
 Cada post deve ser criado com intenção clara de aumentar a probabilidade de venda futura. Não é conteúdo genérico — é conteúdo que:
 1. Reduz fricção de decisão (mostra que o negócio é confiável e próximo)

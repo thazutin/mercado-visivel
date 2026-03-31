@@ -174,6 +174,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
   const [show, setShow] = useState(false);
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
+  const [porQueAberto, setPorQueAberto] = useState(false);
   useEffect(() => { setTimeout(() => setShow(true), 100); }, []);
 
   const termCount = results.termGeneration?.count || results.terms.length;
@@ -260,49 +261,56 @@ export default function InstantValueScreen({ product, region, results, onCheckou
     ? ["Publicar artigo técnico em portal do setor (1x/mês)", "Identificar newsletters de nicho onde decisores estão e pedir menção", "Participar de podcast ou evento do segmento como convidado", "Fazer parceria com players complementares que aparecem em buscas de IA"]
     : ["Criar 2 posts/semana respondendo perguntas reais que clientes fazem", "Pedir menção a parceiros locais (outros negócios complementares no raio)", "Identificar portais do setor que indexam bem no ChatGPT e pedir presença", "Colaborar com criadores de conteúdo locais do mesmo segmento"];
 
+  // Pilares com scores e levers
+  const bd = (results as any).influenceBreakdown4D || results.influenceBreakdown;
+  const d1 = (bd as any)?.d1_descoberta ?? (bd as any)?.d1_discovery ?? 0;
+  const d2 = (bd as any)?.d2_credibilidade ?? (bd as any)?.d2_credibility ?? 0;
+  const d3 = (bd as any)?.d3_presenca ?? (bd as any)?.d3_reach ?? 0;
+  const d4 = (bd as any)?.d4_reputacao ?? 0;
+  const allLevers = (results as any).influenceBreakdown?.levers || (bd as any)?.levers || [];
+
+  const pilarCards = [
+    { icon: "🔍", label: "Seja Encontrável", score: Math.round(d1), color: V.teal, dim: "descoberta",
+      detail: results.maps?.found ? `Maps: ★ ${results.maps.rating} · ${results.maps.reviewCount} avaliações` : "Não encontrado no Google Maps",
+      status: pilar1Status, fallback: "Otimizar perfil no Google Meu Negócio com fotos e descrição completa" },
+    { icon: "⭐", label: "Construa Credibilidade", score: Math.round((d2 + d4) / 2), color: V.amber, dim: "credibilidade",
+      detail: results.maps?.reviewCount ? `${results.maps.reviewCount} avaliações · ★ ${results.maps.rating}` : "Sem avaliações detectadas",
+      status: pilar2Status, fallback: "Solicitar avaliações dos últimos 20 clientes via WhatsApp" },
+    { icon: "📣", label: "Participe da Cultura", score: Math.round(d3), color: "#8B5CF6", dim: "presenca",
+      detail: igData?.handle ? `@${igData.handle} · ${igData.followers?.toLocaleString('pt-BR')} seguidores` : "Presença digital não detectada",
+      status: pilar3Status, fallback: "Publicar 2 posts/semana respondendo dúvidas frequentes do seu público" },
+  ];
+
   return (
     <div style={{ minHeight: "100vh", background: V.cloud, padding: "48px 20px", opacity: show ? 1 : 0, transition: "opacity 0.5s ease" }}>
       <div style={{ maxWidth: 560, margin: "0 auto" }}>
 
         {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
           <div style={{ marginBottom: 12, display: "flex", justifyContent: "center" }}>
             <NelsonLogo size={48} />
           </div>
           <p style={{ fontSize: 13, color: V.ash, margin: 0 }}>{product} · {shortRegion}</p>
         </div>
 
-        {/* ═══ CONFIRMAÇÃO DE FONTES ═══ */}
-        {nenhumEncontrado ? (
-          <div style={{ background: "#FFF3E0", borderRadius: 10, padding: "12px 16px", marginBottom: 16, border: "1px solid #FFB74D" }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "#E65100", marginBottom: 4 }}>
-              ⚠️ Não encontramos seu negócio online
-            </div>
-            <p style={{ fontSize: 12, color: "#BF360C", margin: 0, lineHeight: 1.5 }}>
-              Nenhuma presença digital detectada. O plano de ação foi gerado para quem está começando do zero.
-            </p>
+        {/* Chips de fontes */}
+        {fontesEncontradas.length > 0 && (
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" as const, justifyContent: "center", marginBottom: 16 }}>
+            {fontesEncontradas.map((fonte: any, i: number) => (
+              <span key={i} style={{ fontSize: 10, color: V.night, background: V.white, borderRadius: 6, padding: "3px 8px", border: `1px solid ${V.fog}` }}>
+                ✓ {fonte.label}
+              </span>
+            ))}
           </div>
-        ) : fontesEncontradas.length > 0 ? (
-          <div style={{ background: V.cloud, borderRadius: 10, padding: "10px 14px", marginBottom: 16, border: `1px solid ${V.fog}` }}>
-            <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 8 }}>
-              Dados analisados de
-            </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" as const }}>
-              {fontesEncontradas.map((fonte: any, i: number) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 4, background: V.white, borderRadius: 6, padding: "4px 8px", border: `1px solid ${V.fog}` }}>
-                  <span style={{ fontSize: 10, color: V.teal }}>✓</span>
-                  <span style={{ fontSize: 11, color: V.night, fontWeight: 500 }}>{fonte.label}</span>
-                  {fonte.detail && (
-                    <span style={{ fontSize: 10, color: V.ash }}>· {fonte.detail}</span>
-                  )}
-                </div>
-              ))}
-            </div>
+        )}
+        {nenhumEncontrado && (
+          <div style={{ background: "#FFF3E0", borderRadius: 10, padding: "10px 14px", marginBottom: 16, border: "1px solid #FFB74D", fontSize: 12, color: "#BF360C", lineHeight: 1.5 }}>
+            ⚠️ Não encontramos seu negócio online. O plano parte do zero.
           </div>
-        ) : null}
+        )}
 
-        {/* ═══ BLOCO 1 — OPORTUNIDADE ═══ */}
-        <div style={{ marginBottom: 24 }}>
+        {/* ═══════════════ BLOCO 1 — OPORTUNIDADE ═══════════════ */}
+        <div style={{ marginBottom: 16 }}>
           <div style={{ background: V.night, borderRadius: 16, padding: "28px 20px", textAlign: "center", marginBottom: 12 }}>
             <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 16 }}>
               Oportunidade identificada
@@ -343,240 +351,24 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           </div>
         </div>
 
-        {/* ═══ BLOCO 2 — POR QUE ESSA OPORTUNIDADE EXISTE ═══ */}
-        <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12, paddingLeft: 4 }}>
-          Por que essa oportunidade existe
-        </div>
+        {/* ═══════════════ BOTÃO TOGGLE ═══════════════ */}
+        <button onClick={() => setPorQueAberto(!porQueAberto)} style={{
+          width: "100%", padding: "12px 16px", borderRadius: 10, border: `1px solid ${V.amber}30`,
+          background: V.amberWash, cursor: "pointer", fontSize: 13, fontWeight: 600,
+          color: V.amber, marginBottom: 16, textAlign: "center",
+        }}>
+          {porQueAberto ? 'Fechar ↑' : 'Por que identificamos essa oportunidade ↓'}
+        </button>
 
-        {/* ── Card 1: Mercado no raio ── */}
-        <div style={{ marginBottom: 4 }}>
-          {hasAudiencia ? (
-            <div style={{ background: V.white, borderRadius: "14px 14px 0 0", padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, borderBottom: "none" }}>
-              <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.teal, letterSpacing: "-0.03em", lineHeight: 1 }}>
-                ~{fmtPop(aud!.audienciaTarget)}
-              </div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>{isB2G ? 'órgãos públicos' : isB2B ? 'empresas' : 'pessoas'} no seu mercado{aud!.raioKm && aud!.densidade !== "nacional" ? ` · raio ${aud!.raioKm}km` : ''}</p>
-            </div>
-          ) : (
-            <div style={{ background: V.white, borderRadius: "14px 14px 0 0", padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, borderBottom: "none", opacity: 0.6 }}>
-              <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Mercado endereçável indisponível para este município</p>
-            </div>
-          )}
-          <Expandable title="Tamanho da audiência" icon="👥">
-          {aud && aud.populacaoRaio > 0 ? (
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
-                <span style={{ fontSize: 12, color: V.zinc }}>População no raio</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>
-                  {fmtPop(aud.populacaoRaio)} {audienciaUnit}
-                  {aud.densidade !== "nacional" && aud.raioKm && (
-                    <span style={{ fontSize: 11, fontWeight: 400, color: V.ash }}> em {aud.raioKm}km</span>
-                  )}
-                  {aud.ibgeAno && (
-                    <span style={{ fontSize: 10, fontWeight: 400, color: V.ash }}> (IBGE {aud.ibgeAno})</span>
-                  )}
-                </span>
-              </div>
-              {aud.targetProfile && (
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
-                  <span style={{ fontSize: 12, color: V.zinc }}>{isB2B ? 'Empresa-alvo' : 'Perfil target'}</span>
-                  <span style={{ fontSize: 12, fontWeight: 500, color: V.night, textAlign: "right", maxWidth: "60%" }}>{aud.targetProfile}</span>
-                </div>
-              )}
-              {aud.audienciaTarget > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${V.fog}` }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Audiência estimada</span>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: V.teal }}>
-                    ~{fmtPop(aud.audienciaTarget)} {audienciaUnit}
-                    <span style={{ fontSize: 11, fontWeight: 400, color: V.ash, marginLeft: 4 }}>
-                      ({Math.round(aud.estimatedPercentage * 100)}%)
-                    </span>
-                  </span>
-                </div>
-              )}
-              {aud.rationale && (
-                <p style={{ fontSize: 11, color: V.ash, margin: "8px 0 0", fontStyle: "italic", lineHeight: 1.5 }}>{aud.rationale}</p>
-              )}
-              {results.lat && results.lng && aud.raioKm && aud.densidade !== "nacional" && (
-                <div style={{ marginTop: 12, borderRadius: 10, overflow: "hidden", border: `1px solid ${V.fog}` }}>
-                  <img
-                    src={`https://maps.googleapis.com/maps/api/staticmap?center=${results.lat},${results.lng}&zoom=${aud.raioKm <= 5 ? 13 : 10}&size=560x200&scale=2&maptype=roadmap&style=feature:all|saturation:-50&markers=size:small|color:0x2D9B83|${results.lat},${results.lng}&path=color:0x2D9B8380|weight:2|fillcolor:0x2D9B8318|${generateCirclePath(results.lat!, results.lng!, aud.raioKm!)}&key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY}`}
-                    alt={`Mapa do raio de ${aud.raioKm}km`}
-                    style={{ width: "100%", height: "auto", display: "block" }}
-                  />
-                  <div style={{ padding: "8px 12px", background: V.cloud, fontSize: 11, color: V.zinc, textAlign: "center" }}>
-                    Raio de análise: {aud.raioKm}km a partir de {aud.municipioNome}
-                  </div>
-                </div>
-              )}
-              <p style={{ fontSize: 10, color: V.ash, margin: "10px 0 0", fontFamily: V.mono }}>Fonte: IBGE{aud.ibgeAno ? ` ${aud.ibgeAno}` : ''} · Estimativa Virô</p>
-              {(results.demandType === 'local_workers' || results.demandType === 'tourist_flow') && (
-                <div style={{ marginTop: 8, padding: "6px 10px", background: V.amberWash, borderRadius: 6, borderLeft: `3px solid ${V.amber}`, fontSize: 11, color: V.zinc, lineHeight: 1.5 }}>
-                  ℹ️ Os dados de população são do IBGE (residentes). Para {results.demandType === 'local_workers' ? 'negócios que atendem trabalhadores do bairro' : 'negócios com demanda turística'}, a demanda real vem principalmente de {results.demandType === 'local_workers' ? 'quem trabalha na região' : 'visitantes'} — uma estimativa mais precisa será integrada em breve.
-                </div>
-              )}
-            </div>
-          ) : (
-            <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Dados IBGE indisponíveis para este município.</p>
-          )}
-        </Expandable>
-        </div>
-
-        {/* ── Card 2: Demanda ativa ── */}
-        <div style={{ marginBottom: 4 }}>
-          {hasVolume ? (
-            <div style={{ background: V.white, borderRadius: "14px 14px 0 0", padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, borderBottom: "none" }}>
-              <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, color: V.night, letterSpacing: "-0.03em", lineHeight: 1 }}>
-                <AnimatedCounter target={results.totalVolume} duration={1500} />
-              </div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>buscas/mês com intenção de compra</p>
-              {results.volumeGeo && results.volumeGeo.level !== 'city' && (
-                <p style={{ fontSize: 10, color: V.amber, margin: "4px 0 0", fontFamily: V.mono }}>
-                  Dados de {results.volumeGeo.level === 'regional' ? results.volumeGeo.label : results.volumeGeo.level === 'state' ? `estado ${results.volumeGeo.label}` : 'Brasil'}
-                </p>
-              )}
-              {results.pipeline?.sourcesUsed?.includes("claude_volume_estimate") && (
-                <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>volume estimado</p>
-              )}
-            </div>
-          ) : (
-            <div style={{ background: V.white, borderRadius: "14px 14px 0 0", padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, borderBottom: "none", opacity: 0.6 }}>
-              <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Demanda ativa indisponível para este mercado</p>
-            </div>
-          )}
-          <Expandable title="Volume de buscas" icon="🔍">
-          <div style={{ background: V.amberWash, borderRadius: 8, padding: "8px 12px", marginBottom: 12, borderLeft: `3px solid ${V.amber}` }}>
-            <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
-              Os volumes abaixo são nacionais — referência para entender quais termos têm mais intenção de compra.
-              O número de <strong>{(results.totalVolume || 0).toLocaleString('pt-BR')}</strong> buscas/mês acima é o volume estimado no raio de <strong>{raioKm}km</strong> do seu negócio, ajustado pela população local.
-            </p>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: `1px solid ${V.fog}`, fontSize: 10, color: V.ash, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
-            <span style={{ flex: 1 }}>Termo</span>
-            <span style={{ width: 60, textAlign: "right" }}>Vol/mês</span>
-            <span style={{ width: 60, textAlign: "right" }}>Posição</span>
-            <span style={{ width: 80, textAlign: "right" }}>Intenção</span>
-          </div>
-          {(() => {
-            const maxVol = Math.max(...results.terms.slice(0, 15).map(t => t.volume), 0);
-            return results.terms.slice(0, 15).map((t, i) => {
-              const intent = inferIntent(t.term, isB2B);
-              const isTop = t.volume > 0 && t.volume === maxVol;
-              const pos = t.position && t.position !== "—" ? Number(t.position) : null;
-              const posLabel = pos ? (pos <= 3 ? "Top 3" : pos <= 10 ? "Top 10" : `#${pos}`) : "—";
-              const posColor = pos ? (pos <= 3 ? V.teal : pos <= 10 ? V.amber : V.ash) : V.ash;
-              return (
-                <div key={i} style={{
-                  display: "flex", justifyContent: "space-between", alignItems: "center",
-                  padding: "8px 0", borderBottom: i < 14 ? `1px solid ${V.fog}` : "none",
-                  background: isTop ? V.amberWash : "transparent",
-                  marginLeft: isTop ? -4 : 0, marginRight: isTop ? -4 : 0,
-                  paddingLeft: isTop ? 4 : 0, paddingRight: isTop ? 4 : 0,
-                  borderRadius: isTop ? 4 : 0,
-                }}>
-                  <span style={{ fontSize: 13, color: V.night, lineHeight: 1.4, flex: 1 }}>{t.term}</span>
-                  <span style={{ fontFamily: V.mono, fontSize: 11, color: t.volume > 0 ? V.night : V.ash, width: 60, textAlign: "right", flexShrink: 0 }}>
-                    {t.volume > 0 ? t.volume.toLocaleString("pt-BR") : "—"}
-                  </span>
-                  <span style={{ fontFamily: V.mono, fontSize: 11, color: posColor, fontWeight: pos && pos <= 10 ? 600 : 400, width: 60, textAlign: "right", flexShrink: 0 }}>
-                    {posLabel}
-                  </span>
-                  <span style={{ width: 80, textAlign: "right", flexShrink: 0 }}>
-                    <span style={{
-                      fontFamily: V.mono, fontSize: 9, letterSpacing: "0.04em",
-                      color: intent.color, background: `${intent.color}18`,
-                      padding: "2px 6px", borderRadius: 100,
-                    }}>
-                      {intent.label}
-                    </span>
-                  </span>
-                </div>
-              );
-            });
-          })()}
-          {results.terms.length > 15 && (
-            <p style={{ fontSize: 11, color: V.ash, marginTop: 8, textAlign: "center" }}>+{results.terms.length - 15} termos no diagnóstico completo</p>
-          )}
-          <p style={{ fontSize: 10, color: V.ash, margin: "12px 0 0", fontFamily: V.mono }}>
-            Fonte: Google Ads + SERP{results.volumeGeo ? ` · ${results.volumeGeo.level === 'city' ? results.volumeGeo.label : results.volumeGeo.level === 'regional' ? results.volumeGeo.label : results.volumeGeo.level === 'state' ? results.volumeGeo.label : 'Brasil'}` : ''}
-          </p>
-        </Expandable>
-        </div>
-
-        {/* ── Card 3: Concorrência ── */}
-        <div style={{ marginBottom: 4 }}>
-          {hasCi ? (
-            <div style={{ background: V.white, borderRadius: "14px 14px 0 0", padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, borderBottom: "none" }}>
-              {ci!.activeCompetitors === 0 && ci!.totalCompetitors === 0 ? (
-                <>
-                  <div style={{ fontFamily: V.display, fontSize: "clamp(22px, 5vw, 32px)", fontWeight: 700, color: V.teal, lineHeight: 1.2 }}>Sem concorrência</div>
-                  <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>nenhum concorrente digital no seu raio</p>
-                </>
-              ) : (
-                <>
-                  <div style={{ fontFamily: V.display, fontSize: "clamp(28px, 6vw, 40px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1, color: ci!.color === 'green' ? V.teal : ci!.color === 'yellow' ? V.amber : V.coral }}>
-                    {ci!.activeCompetitors}
-                  </div>
-                  <p style={{ fontSize: 12, color: V.zinc, margin: "6px 0 0", lineHeight: 1.4 }}>negócio{ci!.activeCompetitors !== 1 ? 's' : ''} disputando atenção com você</p>
-                  <span style={{
-                    display: "inline-block", marginTop: 8, fontFamily: V.mono, fontSize: 10, padding: "3px 10px", borderRadius: 100, fontWeight: 600,
-                    background: ci!.color === 'green' ? "rgba(45,155,131,0.12)" : ci!.color === 'yellow' ? V.amberWash : V.coralWash,
-                    color: ci!.color === 'green' ? V.teal : ci!.color === 'yellow' ? V.amber : V.coral,
-                  }}>
-                    {ci!.labelText}
-                  </span>
-                </>
-              )}
-            </div>
-          ) : (
-            <div style={{ background: V.white, borderRadius: "14px 14px 0 0", padding: "24px 18px", textAlign: "center", border: `1px solid ${V.fog}`, borderBottom: "none", opacity: 0.6 }}>
-              <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Concorrência indisponível para esta região</p>
-            </div>
-          )}
-          <Expandable title="Concorrência no seu raio" icon="🏪">
-            {!hasCi ? (
-              <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Dados de concorrência não disponíveis para esta região.</p>
-            ) : ci!.activeCompetitors === 0 && ci!.totalCompetitors === 0 ? (
-              <p style={{ fontSize: 12, color: V.teal, margin: 0 }}>Nenhum concorrente digital encontrado no seu raio — oportunidade.</p>
-            ) : (
-              <div>
-                <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 12px", lineHeight: 1.5 }}>
-                  {ci!.activeCompetitors} negócio{ci!.activeCompetitors !== 1 ? 's' : ''} disputa{ci!.activeCompetitors === 1 ? '' : 'm'} atenção com você nesta região.
-                </p>
-                  {ci!.competitors.filter(c => c.hasWebsite || c.hasInstagram).slice(0, 8).map((c, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0", fontSize: 12, color: V.zinc, borderBottom: i < Math.min(ci!.competitors.filter(cc => cc.hasWebsite || cc.hasInstagram).length, 8) - 1 ? `1px solid ${V.fog}` : "none" }}>
-                      <span style={{ flex: 1 }}>{c.name}</span>
-                      <span style={{ display: "flex", gap: 4, fontSize: 10 }}>
-                        {c.hasWebsite && <span title="Site" style={{ background: V.tealWash, color: V.teal, padding: "1px 5px", borderRadius: 4, fontFamily: V.mono }}>Site</span>}
-                        {c.hasInstagram && <span title="Instagram" style={{ background: "#E1306C18", color: "#E1306C", padding: "1px 5px", borderRadius: 4, fontFamily: V.mono }}>IG</span>}
-                      </span>
-                      {c.rating && <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>★{c.rating}</span>}
-                      {c.mapsPosition && <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>#{c.mapsPosition}</span>}
-                    </div>
-                  ))}
-                  <div style={{ marginTop: 12, padding: "10px 14px", background: ci!.color === 'green' ? "rgba(45,155,131,0.08)" : ci!.color === 'yellow' ? V.amberWash : V.coralWash, borderRadius: 8, textAlign: "center" }}>
-                    <span style={{ fontFamily: V.mono, fontSize: 11, fontWeight: 600, color: ci!.color === 'green' ? V.teal : ci!.color === 'yellow' ? V.amber : V.coral }}>
-                      {ci!.labelText} · {ci!.indexValue.toLocaleString("pt-BR")} buscas por concorrente
-                    </span>
-                  </div>
-                </div>
-              )}
-            </Expandable>
-        </div>
-
-        {/* ── Score + pilares (sempre visível) ── */}
-        <div style={{ marginBottom: 16 }}>
+        {/* ═══════════════ BLOCO 2 — POR QUE (expansível) ═══════════════ */}
+        {porQueAberto && (<div style={{ marginBottom: 16 }}>
+          {/* 2A — Score + pilares */}
           <div style={{ background: V.night, borderRadius: 12, padding: "20px 18px", textAlign: "center", marginBottom: 12 }}>
-            <div style={{
-              fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1,
-              color: results.influencePercent < 20 ? V.amberSoft : V.teal,
-            }}>
+            <div style={{ fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1, color: results.influencePercent < 20 ? V.amberSoft : V.teal }}>
               {results.influencePercent || 0}
             </div>
-            <p style={{ fontSize: 12, color: V.mist, margin: "8px 0 12px" }}>
-              sua posição hoje — quanto mais perto de 100, maior a probabilidade de ser escolhido
-            </p>
-            <div style={{ height: 6, background: V.graphite, borderRadius: 3, overflow: "hidden", position: "relative" }}>
+            <p style={{ fontSize: 12, color: V.mist, margin: "8px 0 12px" }}>sua posição hoje · meta: 100</p>
+            <div style={{ height: 6, background: V.graphite, borderRadius: 3, overflow: "hidden" }}>
               <div style={{ height: "100%", background: V.teal, borderRadius: 3, width: `${results.influencePercent || 0}%`, transition: "width 0.6s ease" }} />
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
@@ -584,235 +376,135 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>Meta: 100</span>
             </div>
           </div>
-          {(() => {
-            const bd = (results as any).influenceBreakdown4D || results.influenceBreakdown;
-            const d1 = (bd as any)?.d1_descoberta ?? (bd as any)?.d1_discovery ?? 0;
-            const d2 = (bd as any)?.d2_credibilidade ?? (bd as any)?.d2_credibility ?? 0;
-            const d3 = (bd as any)?.d3_presenca ?? (bd as any)?.d3_reach ?? 0;
-            const d4 = (bd as any)?.d4_reputacao ?? 0;
-            const pilaresScore = [
-              { icon: "🔍", label: "Seja Encontrável", score: Math.round(d1), color: V.teal,
-                detail: results.maps?.found ? `Maps: ★ ${results.maps.rating} (${results.maps.reviewCount} avaliações)` : "Não encontrado no Google Maps" },
-              { icon: "⭐", label: "Construa Credibilidade", score: Math.round((d2 + d4) / 2), color: V.amber,
-                detail: results.maps?.reviewCount ? `${results.maps.reviewCount} avaliações · ★ ${results.maps.rating}` : "Sem avaliações detectadas" },
-              { icon: "📣", label: "Participe da Cultura", score: Math.round(d3), color: "#8B5CF6",
-                detail: results.instagram?.handle ? `@${results.instagram.handle} · ${results.instagram.followers?.toLocaleString('pt-BR')} seguidores` : "Presença digital não detectada" },
-            ];
-            return pilaresScore.map((p, i) => (
-              <div key={i} style={{ marginBottom: 8 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 14 }}>{p.icon}</span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{p.label}</span>
+          {pilarCards.map((p, i) => (
+            <div key={i} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "12px 14px", marginBottom: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{p.icon} {p.label}</span>
+                <span style={{ fontSize: 16, fontWeight: 800, color: p.color }}>{p.score}</span>
+              </div>
+              <div style={{ height: 4, background: V.fog, borderRadius: 2, overflow: "hidden", marginBottom: 4 }}>
+                <div style={{ height: "100%", background: p.color, borderRadius: 2, width: `${p.score}%`, transition: "width 0.6s ease" }} />
+              </div>
+              <div style={{ fontSize: 11, color: V.ash }}>{p.detail}</div>
+            </div>
+          ))}
+
+          {/* 2B — Accordions de dados */}
+          <div style={{ marginTop: 12 }}>
+            <Expandable title={`👥 Tamanho da audiência — ${hasAudiencia ? fmtPop(aud!.audienciaTarget) : '—'}`} icon="">
+              {aud && aud.populacaoRaio > 0 ? (
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
+                    <span style={{ fontSize: 12, color: V.zinc }}>População no raio</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{fmtPop(aud.populacaoRaio)} {audienciaUnit}{aud.raioKm && aud.densidade !== "nacional" ? ` em ${aud.raioKm}km` : ''}</span>
                   </div>
-                  <span style={{ fontSize: 16, fontWeight: 800, color: p.color }}>{p.score}</span>
+                  {aud.targetProfile && (
+                    <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
+                      <span style={{ fontSize: 12, color: V.zinc }}>{isB2B ? 'Empresa-alvo' : 'Perfil target'}</span>
+                      <span style={{ fontSize: 12, fontWeight: 500, color: V.night, textAlign: "right", maxWidth: "60%" }}>{aud.targetProfile}</span>
+                    </div>
+                  )}
+                  {aud.audienciaTarget > 0 && (
+                    <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0" }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Audiência estimada</span>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: V.teal }}>~{fmtPop(aud.audienciaTarget)} {audienciaUnit}</span>
+                    </div>
+                  )}
+                  {(results.demandType === 'local_workers' || results.demandType === 'tourist_flow') && (
+                    <div style={{ marginTop: 8, padding: "6px 10px", background: V.amberWash, borderRadius: 6, borderLeft: `3px solid ${V.amber}`, fontSize: 11, color: V.zinc, lineHeight: 1.5 }}>
+                      ℹ️ Dados de população são do IBGE (residentes). Para {results.demandType === 'local_workers' ? 'negócios que atendem trabalhadores' : 'negócios com demanda turística'}, a demanda real vem de {results.demandType === 'local_workers' ? 'quem trabalha na região' : 'visitantes'}.
+                    </div>
+                  )}
+                  <p style={{ fontSize: 10, color: V.ash, margin: "10px 0 0", fontFamily: V.mono }}>Fonte: IBGE{aud.ibgeAno ? ` ${aud.ibgeAno}` : ''} · Estimativa Virô</p>
                 </div>
-                <div style={{ height: 4, background: V.fog, borderRadius: 2, overflow: "hidden", marginBottom: 4 }}>
-                  <div style={{ height: "100%", background: p.color, borderRadius: 2, width: `${p.score}%`, transition: "width 0.6s ease" }} />
+              ) : <p style={{ fontSize: 12, color: V.ash, margin: 0 }}>Dados indisponíveis.</p>}
+            </Expandable>
+            <Expandable title={`🔍 Volume de buscas — ${hasVolume ? results.totalVolume.toLocaleString('pt-BR') + '/mês' : '—'}`} icon="">
+              <div style={{ background: V.amberWash, borderRadius: 8, padding: "8px 12px", marginBottom: 12, borderLeft: `3px solid ${V.amber}` }}>
+                <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
+                  Os volumes abaixo são nacionais. O número de <strong>{(results.totalVolume || 0).toLocaleString('pt-BR')}</strong> buscas/mês acima é estimado no raio de <strong>{raioKm}km</strong>.
+                </p>
+              </div>
+              {results.terms.slice(0, 10).map((t, i) => {
+                const intent = inferIntent(t.term, isB2B);
+                return (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: i < 9 ? `1px solid ${V.fog}` : "none", fontSize: 12 }}>
+                    <span style={{ color: V.night, flex: 1 }}>{t.term}</span>
+                    <span style={{ fontFamily: V.mono, fontSize: 11, color: V.ash, width: 50, textAlign: "right" }}>{t.volume > 0 ? t.volume.toLocaleString("pt-BR") : "—"}</span>
+                  </div>
+                );
+              })}
+            </Expandable>
+            <Expandable title={`🏪 Concorrência — ${hasCi ? ci!.activeCompetitors + ' negócios' : '—'}`} icon="">
+              {hasCi ? (
+                <div>
+                  <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px" }}>{ci!.activeCompetitors} negócio{ci!.activeCompetitors !== 1 ? 's' : ''} disputando atenção com você.</p>
+                  {ci!.competitors.filter(c => c.hasWebsite || c.hasInstagram).slice(0, 6).map((c, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0", fontSize: 12, color: V.zinc, borderBottom: `1px solid ${V.fog}` }}>
+                      <span style={{ flex: 1 }}>{c.name}</span>
+                      {c.rating && <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>★{c.rating}</span>}
+                    </div>
+                  ))}
+                  <div style={{ marginTop: 8, padding: "6px 10px", background: ci!.color === 'green' ? V.tealWash : ci!.color === 'yellow' ? V.amberWash : V.coralWash, borderRadius: 6, textAlign: "center" }}>
+                    <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 600, color: ci!.color === 'green' ? V.teal : ci!.color === 'yellow' ? V.amber : V.coral }}>{ci!.labelText}</span>
+                  </div>
                 </div>
-                <div style={{ fontSize: 11, color: V.ash }}>{p.detail}</div>
-              </div>
-            ));
-          })()}
-        </div>
-
-        {/* ── Accordions de dados ── */}
-        <details style={{ marginBottom: 16 }}>
-          <summary style={{ background: V.amberWash, borderRadius: 12, padding: "14px 16px", border: `1px solid ${V.amber}30`, cursor: "pointer", listStyle: "none", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 6 }}>
-                A fórmula
-              </div>
-              <p style={{ fontSize: 14, fontWeight: 600, color: V.night, margin: 0, lineHeight: 1.5 }}>
-                {audienciaTotal > 0
-                  ? `${audienciaTotal.toLocaleString('pt-BR')} ${isB2B ? 'empresas' : 'pessoas'} no raio · você disputa ${results.influencePercent}% · potencial +${oportunidade.toLocaleString('pt-BR')}/mês`
-                  : `Você disputa ${results.influencePercent}% do mercado · há espaço para crescer`}
-              </p>
-            </div>
-            <span style={{ fontSize: 14, color: V.ash, flexShrink: 0, marginLeft: 8 }}>▾</span>
-          </summary>
-          <div style={{ padding: "12px 16px", background: V.cloud, borderRadius: "0 0 12px 12px", border: `1px solid ${V.fog}`, borderTop: "none" }}>
-            <div style={{ fontSize: 12, color: V.zinc, lineHeight: 1.8 }}>
-              <div>📊 <strong>Mercado total no raio:</strong> {audienciaTotal.toLocaleString('pt-BR')} {isB2B ? 'empresas' : 'pessoas'}</div>
-              <div>🔍 <strong>Buscas ativas/mês:</strong> {(results.totalVolume || 0).toLocaleString('pt-BR')} com intenção de compra</div>
-              <div>🏪 <strong>Concorrentes:</strong> {results.competitionIndex?.activeCompetitors || '—'} disputando atenção</div>
-              <div>📈 <strong>Sua posição hoje:</strong> {results.influencePercent}% → disputa {familiasAtual.toLocaleString('pt-BR')} {isB2B ? 'empresas' : 'pessoas'}/mês</div>
-              <div style={{ marginTop: 8, padding: "8px 10px", background: `${V.teal}15`, borderRadius: 8, color: V.teal, fontWeight: 600 }}>
-                🎯 Com o plano: {results.influencePercent + (proj?.influenciaMeta ? proj.influenciaMeta - results.influencePercent : 6)}% → +{oportunidade.toLocaleString('pt-BR')} {isB2B ? 'empresas' : 'pessoas'} adicionais/mês · sem mídia paga
-              </div>
-            </div>
-            {results.pipeline?.durationMs && (
-              <p style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, marginTop: 10, textAlign: "center" as const }}>
-                {(results.pipeline.durationMs / 1000).toFixed(1)}s · {results.pipeline.version} · {(results.pipeline.sourcesUsed || []).length} fontes
-              </p>
-            )}
+              ) : <p style={{ fontSize: 12, color: V.ash, margin: 0 }}>Dados indisponíveis.</p>}
+            </Expandable>
           </div>
-        </details>
+        </div>)}
 
-        {/* ═══ BLOCO 3 — COMO CAPTURAR ═══ */}
-        <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12, paddingLeft: 4, marginTop: 24 }}>
+        {/* ═══════════════ BLOCO 3 — COMO CAPTURAR ═══════════════ */}
+        <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 8, paddingLeft: 4, marginTop: 8 }}>
           Como aumentar essa posição
         </div>
 
-        {(() => {
-          const allLevers = (results as any).influenceBreakdown?.levers || (results as any).influenceBreakdown4D?.levers || [];
-          const pilarData = [
-            { icon: "🔍", label: "Seja Encontrável", dim: "descoberta", color: V.teal, status: pilar1Status,
-              fallback: "Otimizar perfil no Google Meu Negócio com fotos e descrição completa" },
-            { icon: "⭐", label: "Construa Credibilidade", dim: "credibilidade", color: V.amber, status: pilar2Status,
-              fallback: "Solicitar avaliações dos últimos 20 clientes via WhatsApp" },
-            { icon: "📣", label: "Participe da Cultura", dim: "presenca", color: "#8B5CF6", status: pilar3Status,
-              fallback: "Publicar 2 posts/semana respondendo dúvidas frequentes do seu público" },
-          ];
-          const bd = (results as any).influenceBreakdown4D || results.influenceBreakdown;
-          const scores = [
-            (bd as any)?.d1_descoberta ?? 0,
-            Math.round(((bd as any)?.d2_credibilidade ?? 0) + ((bd as any)?.d4_reputacao ?? 0)) / 2,
-            (bd as any)?.d3_presenca ?? 0,
-          ];
-          return pilarData.map((p, i) => {
-            const lever = allLevers.find((l: any) => l.dimension === p.dim || (p.dim === 'credibilidade' && l.dimension === 'reputacao'));
-            const action = lever?.action || p.fallback;
-            return (
-              <div key={i} style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "14px 16px", marginBottom: 8 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 16 }}>{p.icon}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: V.night }}>{p.label}</span>
-                  </div>
-                  <span style={{ fontSize: 16, fontWeight: 800, color: p.color }}>{Math.round(scores[i])}</span>
-                </div>
-                <p style={{ fontSize: 12, color: V.night, margin: "0 0 8px", lineHeight: 1.5, fontWeight: 500 }}>{action}</p>
-                <div style={{ padding: "4px 8px", background: p.status.bg, borderRadius: 4, fontSize: 10, color: p.status.color, fontWeight: 500 }}>
-                  {p.status.text}
-                </div>
+        <div style={{ fontSize: 11, color: V.ash, marginBottom: 12, paddingLeft: 4, lineHeight: 1.5 }}>
+          Recomendações gerais. Seu plano personalizado considera os gaps reais do seu negócio.
+        </div>
+
+        {pilarCards.map((p, i) => {
+          const lever = allLevers.find((l: any) => l.dimension === p.dim || (p.dim === 'credibilidade' && l.dimension === 'reputacao'));
+          return (
+            <div key={i} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "12px 14px", marginBottom: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: V.night }}>{p.icon} {p.label}</span>
+                <span style={{ fontSize: 16, fontWeight: 800, color: p.color }}>{p.score}</span>
               </div>
-            );
-          });
-        })()}
+              <p style={{ fontSize: 12, color: V.night, margin: "0 0 6px", lineHeight: 1.5, fontWeight: 500 }}>{lever?.action || p.fallback}</p>
+              <div style={{ padding: "4px 8px", background: p.status.bg, borderRadius: 4, fontSize: 10, color: p.status.color, fontWeight: 500 }}>{p.status.text}</div>
+            </div>
+          );
+        })}
 
         {/* CTA inline */}
         {!hideCTA && (
-          <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "16px", marginTop: 4, marginBottom: 8, textAlign: "center" }}>
-            <p style={{ fontSize: 13, color: V.night, margin: "0 0 12px", lineHeight: 1.5 }}>
-              Seu plano completo tem 15-20 ações específicas para <strong>{product}</strong> — na ordem certa, com texto pronto para usar.
+          <div style={{ background: V.night, borderRadius: 12, padding: "20px 16px", marginTop: 12, color: V.white, textAlign: "center" }}>
+            <p style={{ fontSize: 13, color: V.mist, margin: "0 0 12px", lineHeight: 1.5 }}>
+              Seu plano completo tem 15-20 ações específicas para <strong style={{ color: V.white }}>{product}</strong> — na ordem certa, com texto pronto para usar.
             </p>
-            <button onClick={() => onCheckout()} disabled={loading} style={{
-              padding: "12px 24px", borderRadius: 10, border: "none",
-              background: V.amber, color: V.white, fontSize: 14, fontWeight: 700,
-              cursor: loading ? "wait" : "pointer", opacity: loading ? 0.7 : 1,
-            }}>
-              {loading ? "Redirecionando..." : "Gerar meu plano de ação →"}
-            </button>
-            <p style={{ fontSize: 11, color: V.ash, margin: "8px 0 0" }}>R$ 497 · pronto em até 15 minutos · pagamento único</p>
-          </div>
-        )}
-
-        {/* ═══ PNCP — Contratações Públicas (B2G only) ═══ */}
-        {isB2G && results.pncp && results.pncp.totalEncontradas > 0 && (
-          <Expandable title="Contratações Públicas (PNCP)" icon="📋">
-            <div style={{ padding: "12px 16px" }}>
-              <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-                <div style={{ flex: 1, background: V.cloud, borderRadius: 10, padding: "12px", textAlign: "center" }}>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: V.night }}>{results.pncp.totalEncontradas}</div>
-                  <div style={{ fontSize: 10, color: V.ash }}>contratações</div>
-                </div>
-                <div style={{ flex: 1, background: V.cloud, borderRadius: 10, padding: "12px", textAlign: "center" }}>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: V.teal }}>R${(results.pncp.valorTotalEstimado / 1000).toFixed(0)}k</div>
-                  <div style={{ fontSize: 10, color: V.ash }}>valor total</div>
-                </div>
-                <div style={{ flex: 1, background: V.cloud, borderRadius: 10, padding: "12px", textAlign: "center" }}>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: V.night }}>{results.pncp.orgaosUnicos}</div>
-                  <div style={{ fontSize: 10, color: V.ash }}>órgãos</div>
-                </div>
-              </div>
-              {results.pncp.modalidades.length > 0 && (
-                <div style={{ marginBottom: 12 }}>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: V.zinc, margin: "0 0 6px" }}>Modalidades mais comuns:</p>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    {results.pncp.modalidades.slice(0, 5).map((m, i) => (
-                      <Chip key={i} color={V.teal}>{m.modalidade} ({m.count})</Chip>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {results.pncp.contratacoes.length > 0 && (
-                <div>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: V.zinc, margin: "0 0 6px" }}>Contratações recentes:</p>
-                  {results.pncp.contratacoes.slice(0, 5).map((c, i) => (
-                    <div key={i} style={{ padding: "8px 0", borderBottom: i < 4 ? `1px solid ${V.fog}` : "none" }}>
-                      <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.4 }}>{c.objeto.slice(0, 120)}{c.objeto.length > 120 ? '...' : ''}</p>
-                      <p style={{ fontSize: 10, color: V.ash, margin: "2px 0 0" }}>{c.orgaoEntidade} · {c.modalidade} · R${c.valorEstimado > 0 ? (c.valorEstimado / 1000).toFixed(0) + 'k' : '—'}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <p style={{ fontSize: 10, color: V.ash, margin: "8px 0 0", fontFamily: V.mono }}>
-                Fonte: PNCP · {results.pncp.periodoConsultado}
-              </p>
-            </div>
-          </Expandable>
-        )}
-
-        {/* ═══ CTA ═══ */}
-        {!hideCTA && (<>
-        <div style={{ background: V.night, borderRadius: 14, padding: "28px 20px", marginBottom: 16, marginTop: 24, color: V.white }}>
-          <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.04em", textTransform: "uppercase" as const, marginBottom: 4 }}>
-            Pacote completo · pagamento único
-          </div>
-          <div style={{ fontFamily: V.display, fontSize: 32, fontWeight: 700, marginBottom: 16 }}>R$ 497</div>
-
-          <div style={{ borderBottom: `1px solid ${V.graphite}`, paddingBottom: 14, marginBottom: 14 }}>
-            <p style={{ fontSize: 12, fontWeight: 600, color: V.amber, margin: "0 0 4px", textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
-              Por que você precisa disso
-            </p>
-            <p style={{ fontSize: 13, color: V.mist, margin: 0, lineHeight: 1.5 }}>
-              As recomendações acima funcionam para qualquer negócio. O plano abaixo foi gerado para <strong style={{ color: V.white }}>{product}</strong> em <strong style={{ color: V.white }}>{shortRegion}</strong> especificamente — com os gaps reais do seu mercado, na ordem certa.
-            </p>
-          </div>
-
-          <div style={{ marginBottom: 14 }}>
-            <p style={{ fontSize: 12, fontWeight: 600, color: V.amber, margin: "0 0 8px", textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>
-              O que você recebe
-            </p>
-            {[
-              "Plano de ação personalizado — o básico bem feito, na ordem certa",
-              "Diagnóstico completo por canal (Google, Maps, Instagram, IA)",
-              "Relatório setorial do seu mercado com dados desta semana",
-              "Posts prontos para publicar conectados ao contexto atual",
-            ].map((d, i) => (
-              <div key={i} style={{ display: "flex", gap: 10, marginBottom: 6, alignItems: "center" }}>
-                <span style={{ color: V.amber, fontSize: 12 }}>✓</span>
-                <span style={{ fontSize: 13, color: V.mist }}>{d}</span>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ background: V.graphite, borderRadius: 8, padding: "10px 14px", marginBottom: 16, textAlign: "center" }}>
-            <span style={{ fontSize: 12, color: V.mist }}>⏱ Até 15 minutos após o pagamento</span>
-          </div>
-
-          <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${V.graphite}` }}>
-            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <div style={{ fontFamily: V.display, fontSize: 24, fontWeight: 700, margin: "0 0 12px" }}>R$ 497</div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 12, justifyContent: "center" }}>
               <input type="text" placeholder="Cupom" value={coupon}
                 onChange={(e: any) => { setCoupon(e.target.value.toUpperCase()); setCouponApplied(false); }}
-                style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: `1px solid ${V.slate}`, background: V.graphite, color: V.white, fontSize: 13, fontFamily: V.mono, outline: "none" }} />
+                style={{ width: 120, padding: "8px 12px", borderRadius: 8, border: `1px solid ${V.slate}`, background: V.graphite, color: V.white, fontSize: 12, fontFamily: V.mono, outline: "none" }} />
               {coupon.length > 0 && (
-                <button onClick={() => setCouponApplied(true)} style={{ padding: "10px 14px", borderRadius: 8, border: "none", background: couponApplied ? V.teal : V.amber, color: V.white, fontSize: 12, fontFamily: V.mono, cursor: "pointer" }}>
+                <button onClick={() => setCouponApplied(true)} style={{ padding: "8px 12px", borderRadius: 8, border: "none", background: couponApplied ? V.teal : V.amber, color: V.white, fontSize: 11, fontFamily: V.mono, cursor: "pointer" }}>
                   {couponApplied ? "✓" : "Aplicar"}
                 </button>
               )}
             </div>
             <button onClick={() => onCheckout(couponApplied ? coupon : undefined)} disabled={loading} style={{
               width: "100%", padding: "14px", borderRadius: 10, border: "none",
-              background: V.white, color: V.night, fontSize: 15, fontWeight: 600,
+              background: V.amber, color: V.white, fontSize: 15, fontWeight: 700,
               cursor: loading ? "wait" : "pointer", opacity: loading ? 0.7 : 1,
             }}>
-              {loading ? "Redirecionando..." : "Gerar meu plano de ação"}
+              {loading ? "Redirecionando..." : "Gerar meu plano de ação →"}
             </button>
-            <p style={{ fontSize: 11, color: V.ash, textAlign: "center", marginTop: 8 }}>Pagamento único · sem assinatura</p>
+            <p style={{ fontSize: 11, color: V.ash, margin: "8px 0 0" }}>Pronto em até 15 minutos · pagamento único</p>
           </div>
-        </div></>)}
+        )}
+
 
         {/* Feedback */}
         {leadId && (
