@@ -409,38 +409,65 @@ Negocio: ${contextoCompacto}` }],
   }
   console.log(`[PlanGen] Chamada 1: ${parsed.items.length} itens`);
 
-  // ── CHAMADA 2: Enriquecer com copy_pronto (batches de 5) ──────────────
+  // ── CHAMADA 2: Enriquecer com copy_pronto + how_to + keywords (batches de 5) ──
   const items = parsed.items;
   const BATCH = 5;
   for (let i = 0; i < items.length; i += BATCH) {
     const batch = items.slice(i, i + BATCH);
     try {
-      console.log(`[PlanGen] Copy batch ${i}-${i + batch.length}...`);
-      const resCopy = await claude.messages.create({
+      console.log(`[PlanGen] Enrich batch ${i}-${i + batch.length}...`);
+      const resEnrich = await claude.messages.create({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1000,
+        max_tokens: 2000,
         temperature: 0.2,
         system: 'Responda APENAS com JSON válido.',
-        messages: [{ role: 'user', content: `Para cada atividade, gere copy_pronto — o texto PRONTO para usar (nao instrucoes, o texto em si). Max 200 chars.
+        messages: [{ role: 'user', content: `Para cada atividade, gere campos extras. Contexto: ${contextoCompacto.slice(0, 200)}
+
 Atividades:
 ${batch.map(it => `${it.id}. ${it.titulo}: ${it.descricao}`).join('\n')}
-JSON: {"copies":[{"id":"1","copy_pronto":"texto pronto"}]}` }],
+
+JSON:
+{"enriched":[{
+  "id":"1",
+  "copy_pronto":"texto pronto para copiar, max 200 chars",
+  "how_to_steps":["passo 1 concreto","passo 2","passo 3"],
+  "keywords":["termo1","termo2","termo3","termo4","termo5"],
+  "content_hook":"1 frase de gancho para post ou blog",
+  "whatsapp_template":"mensagem WhatsApp pronta ou null",
+  "program_description":"descricao da ferramenta mencionada ou null"
+}]}
+
+Regras:
+- how_to_steps: 3-5 passos praticos e especificos, nao genericos
+- keywords: 5-8 termos para usar em textos e SEO
+- content_hook: frase com curiosidade ou urgencia
+- whatsapp_template: APENAS se o item envolve enviar mensagem (reviews, contato). Mensagem completa em 1a pessoa. null caso contrario
+- program_description: APENAS se menciona ferramenta (Google Meu Negocio, Meta Ads, etc). 2-3 linhas do que e e por que usar. null caso contrario` }],
       });
-      const copyRaw = resCopy.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
-      const copyParsed = extractJson(copyRaw);
-      for (const c of copyParsed.copies || []) {
-        const idx = items.findIndex(it => String(it.id) === String(c.id));
-        if (idx >= 0) items[idx].copy_pronto = c.copy_pronto;
+      const enrichRaw = resEnrich.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
+      const enrichParsed = extractJson(enrichRaw);
+      for (const e of enrichParsed.enriched || enrichParsed.copies || []) {
+        const idx = items.findIndex(it => String(it.id) === String(e.id));
+        if (idx >= 0) {
+          items[idx].copy_pronto = e.copy_pronto || items[idx].copy_pronto || '';
+          items[idx].how_to_steps = e.how_to_steps || [];
+          items[idx].keywords = e.keywords || [];
+          items[idx].content_hook = e.content_hook || '';
+          items[idx].whatsapp_template = e.whatsapp_template || null;
+          items[idx].program_description = e.program_description || null;
+          items[idx].content_generated = false;
+        }
       }
-      console.log(`[PlanGen] Copy batch OK: ${(copyParsed.copies || []).length} copies`);
+      console.log(`[PlanGen] Enrich batch OK: ${(enrichParsed.enriched || enrichParsed.copies || []).length} items`);
     } catch (err) {
-      console.warn(`[PlanGen] Copy batch ${i} falhou (non-fatal):`, (err as Error).message);
+      console.warn(`[PlanGen] Enrich batch ${i} falhou (non-fatal):`, (err as Error).message);
     }
     if (i + BATCH < items.length) await new Promise(r => setTimeout(r, 1000));
   }
 
   const withCopy = items.filter(it => it.copy_pronto).length;
-  console.log(`[PlanGen] Total: ${items.length} itens, ${withCopy} com copy_pronto`);
+  const withHowTo = items.filter(it => it.how_to_steps?.length > 0).length;
+  console.log(`[PlanGen] Total: ${items.length} itens, ${withCopy} copy_pronto, ${withHowTo} how_to`);
   return { items, summary: parsed.summary || '' };
 }
 

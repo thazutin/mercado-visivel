@@ -361,8 +361,29 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
   const completed = items.filter(i => i.completed).length;
   const total = items.length;
 
-  const renderItem = (item: any) => {
-    const pilarInfo = PILAR_MAP[item.dimensao] || { label: item.dimensao, color: V.ash, icon: '📋' };
+  const [generatingContent, setGeneratingContent] = useState<Record<string, boolean>>({});
+
+  const generateContent = async (itemIdx: number, contentType: string) => {
+    const key = `${itemIdx}-${contentType}`;
+    setGeneratingContent(prev => ({ ...prev, [key]: true }));
+    try {
+      const res = await fetch('/api/plan/content', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadId, itemIndex: itemIdx, contentType }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setItems(prev => prev.map((it, idx) => idx === itemIdx ? {
+          ...it, content_generated: true,
+          generated_blog: data.content?.blog || it.generated_blog,
+          generated_instagram: data.content?.instagram || it.generated_instagram,
+        } : it));
+      }
+    } catch { /* ignore */ }
+    setGeneratingContent(prev => ({ ...prev, [key]: false }));
+  };
+
+  const renderItem = (item: any, itemIdx: number) => {
     return (
       <div key={item.id} style={{
         background: item.completed ? "rgba(45,155,131,0.04)" : V.white,
@@ -400,27 +421,95 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
               </span>
             </div>
             {item.description && (
-              <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px",
-                lineHeight: 1.5 }}>
-                {item.description}
-              </p>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px", lineHeight: 1.5 }}>{item.description}</p>
             )}
-            {item.action && !item.completed && (
-              <div style={{ background: V.cloud, borderRadius: 8,
-                padding: "8px 10px", marginBottom: 6 }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: V.zinc,
-                  textTransform: "uppercase", letterSpacing: "0.04em",
-                  marginBottom: 4 }}>
-                  Como fazer
-                </div>
-                <p style={{ fontSize: 12, color: V.night, margin: 0,
-                  lineHeight: 1.5 }}>
-                  {item.action}
-                </p>
+
+            {/* How to steps */}
+            {item.how_to_steps?.length > 0 && !item.completed && (
+              <div style={{ background: V.cloud, borderRadius: 8, padding: "8px 10px", marginBottom: 6 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: V.zinc, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Como fazer</div>
+                <ol style={{ margin: 0, padding: "0 0 0 16px", fontSize: 12, color: V.night, lineHeight: 1.6 }}>
+                  {item.how_to_steps.map((step: string, si: number) => <li key={si}>{step}</li>)}
+                </ol>
               </div>
             )}
+
+            {/* Keywords */}
+            {item.keywords?.length > 0 && !item.completed && (
+              <div style={{ marginBottom: 6 }}>
+                <span style={{ fontSize: 10, color: V.ash, fontWeight: 600 }}>Palavras-chave: </span>
+                {item.keywords.map((kw: string, ki: number) => (
+                  <span key={ki} style={{ fontSize: 10, color: V.teal, background: V.tealWash, padding: "1px 6px", borderRadius: 4, marginRight: 4 }}>{kw}</span>
+                ))}
+              </div>
+            )}
+
+            {/* Copy pronto */}
             {item.copy_pronto && !item.completed && (
               <CopyBlock text={item.copy_pronto} />
+            )}
+
+            {/* WhatsApp template */}
+            {item.whatsapp_template && !item.completed && (
+              <div style={{ background: "rgba(37,211,102,0.06)", borderLeft: "3px solid #25D366", borderRadius: "0 8px 8px 0", padding: "8px 10px", marginBottom: 6 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: "#25D366", marginBottom: 4 }}>📱 Mensagem WhatsApp pronta</div>
+                <p style={{ fontSize: 12, color: V.night, margin: "0 0 6px", lineHeight: 1.5 }}>{item.whatsapp_template}</p>
+                <button onClick={() => navigator.clipboard.writeText(item.whatsapp_template)} style={{ fontSize: 10, color: "#25D366", background: "none", border: "1px solid #25D366", borderRadius: 4, padding: "2px 8px", cursor: "pointer" }}>Copiar mensagem</button>
+              </div>
+            )}
+
+            {/* Program description */}
+            {item.program_description && !item.completed && (
+              <div style={{ background: V.amberWash, borderLeft: `3px solid ${V.amber}`, borderRadius: "0 8px 8px 0", padding: "8px 10px", marginBottom: 6 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: V.amber, marginBottom: 4 }}>ℹ️ Sobre a ferramenta</div>
+                <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.5 }}>{item.program_description}</p>
+              </div>
+            )}
+
+            {/* Content generation buttons */}
+            {planReady && !item.completed && (
+              <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                {!item.generated_blog && (
+                  <button onClick={() => generateContent(itemIdx, 'blog')} disabled={generatingContent[`${itemIdx}-blog`]}
+                    style={{ fontSize: 11, color: V.teal, background: "none", border: `1px solid ${V.teal}`, borderRadius: 6, padding: "4px 10px", cursor: "pointer", opacity: generatingContent[`${itemIdx}-blog`] ? 0.5 : 1 }}>
+                    {generatingContent[`${itemIdx}-blog`] ? 'Gerando...' : '📝 Gerar texto blog'}
+                  </button>
+                )}
+                {!item.generated_instagram && (
+                  <button onClick={() => generateContent(itemIdx, 'instagram')} disabled={generatingContent[`${itemIdx}-instagram`]}
+                    style={{ fontSize: 11, color: "#8B5CF6", background: "none", border: "1px solid #8B5CF6", borderRadius: 6, padding: "4px 10px", cursor: "pointer", opacity: generatingContent[`${itemIdx}-instagram`] ? 0.5 : 1 }}>
+                    {generatingContent[`${itemIdx}-instagram`] ? 'Gerando...' : '📸 Gerar post Instagram'}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Generated blog content */}
+            {item.generated_blog && (
+              <div style={{ background: V.cloud, borderRadius: 8, padding: "10px 12px", marginTop: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: V.teal, marginBottom: 6 }}>📝 BLOG POST GERADO</div>
+                <p style={{ fontSize: 13, fontWeight: 600, color: V.night, margin: "0 0 4px" }}>{item.generated_blog.title}</p>
+                <p style={{ fontSize: 11, color: V.ash, margin: "0 0 8px", fontStyle: "italic" }}>{item.generated_blog.meta_description}</p>
+                <p style={{ fontSize: 12, color: V.night, margin: "0 0 6px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{item.generated_blog.body}</p>
+                <button onClick={() => navigator.clipboard.writeText(`${item.generated_blog.title}\n\n${item.generated_blog.body}`)} style={{ fontSize: 10, color: V.teal, background: "none", border: `1px solid ${V.teal}`, borderRadius: 4, padding: "3px 8px", cursor: "pointer" }}>Copiar blog</button>
+              </div>
+            )}
+
+            {/* Generated instagram content */}
+            {item.generated_instagram && (
+              <div style={{ background: V.cloud, borderRadius: 8, padding: "10px 12px", marginTop: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: "#8B5CF6", marginBottom: 6 }}>📸 POST INSTAGRAM GERADO</div>
+                <p style={{ fontSize: 12, color: V.night, margin: "0 0 6px", lineHeight: 1.6 }}>{item.generated_instagram.caption}</p>
+                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" as const, marginBottom: 6 }}>
+                  {(item.generated_instagram.hashtags || []).map((h: string, hi: number) => (
+                    <span key={hi} style={{ fontSize: 10, color: "#8B5CF6", background: "rgba(139,92,246,0.08)", padding: "1px 6px", borderRadius: 4 }}>{h}</span>
+                  ))}
+                </div>
+                {item.generated_instagram.visual_suggestion && (
+                  <p style={{ fontSize: 11, color: V.ash, margin: "0 0 6px", fontStyle: "italic" }}>🖼 {item.generated_instagram.visual_suggestion}</p>
+                )}
+                <button onClick={() => navigator.clipboard.writeText(item.generated_instagram.caption)} style={{ fontSize: 10, color: "#8B5CF6", background: "none", border: "1px solid #8B5CF6", borderRadius: 4, padding: "3px 8px", cursor: "pointer" }}>Copiar legenda</button>
+              </div>
             )}
             {item.verification && !item.completed && (
               <p style={{ fontSize: 11, color: V.teal, margin: 0,
@@ -452,7 +541,10 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
         <div style={{ height: 4, background: V.fog, borderRadius: 2, overflow: "hidden", marginBottom: 10 }}>
           <div style={{ height: "100%", borderRadius: 2, background: pilarColor, width: `${grupoPct}%`, transition: "width 0.3s ease" }} />
         </div>
-        {grupoItems.map(renderItem)}
+        {grupoItems.map((gi) => {
+          const globalIdx = items.findIndex(it => it.id === gi.id);
+          return renderItem(gi, globalIdx >= 0 ? globalIdx : 0);
+        })}
       </div>
     );
   };
@@ -1254,6 +1346,29 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
                       {acaoFoco && <p style={{ fontSize: 12, color: V.ash, margin: 0 }}>Próxima atividade: {acaoFoco}</p>}
                     </div>
                   ) : null;
+                })()}
+
+                {/* Semana 0: item do plano para não-assinantes */}
+                {tier !== 'subscriber' && plan?.content?.itensEstruturantes && (() => {
+                  const semana0 = plan.content.itensEstruturantes.find((i: any) => (i.prazo || '').toLowerCase().includes('semana'));
+                  if (!semana0) return null;
+                  return (
+                    <div style={{ background: V.white, border: `1px solid ${V.fog}`, borderRadius: 12, padding: "16px", marginBottom: 16 }}>
+                      <p style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, letterSpacing: "0.08em", margin: "0 0 8px" }}>SUA AÇÃO DESTA SEMANA</p>
+                      <p style={{ fontSize: 14, fontWeight: 600, color: V.night, margin: "0 0 6px" }}>{semana0.titulo}</p>
+                      {semana0.how_to_steps?.length > 0 && (
+                        <ol style={{ margin: "0 0 8px", padding: "0 0 0 16px", fontSize: 12, color: V.night, lineHeight: 1.6 }}>
+                          {semana0.how_to_steps.map((s: string, si: number) => <li key={si}>{s}</li>)}
+                        </ol>
+                      )}
+                      {semana0.content_hook && <p style={{ fontSize: 12, color: V.amber, margin: "0 0 8px", fontWeight: 500 }}>💡 {semana0.content_hook}</p>}
+                      {semana0.whatsapp_template && (
+                        <div style={{ background: "rgba(37,211,102,0.06)", borderLeft: "3px solid #25D366", borderRadius: "0 8px 8px 0", padding: "8px 10px", marginBottom: 8 }}>
+                          <p style={{ fontSize: 11, color: V.night, margin: 0, lineHeight: 1.5 }}>{semana0.whatsapp_template}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
                 })()}
 
                 <RelatorioSetorialBlock relatorio={plan?.content?.relatorioSetorial} />
