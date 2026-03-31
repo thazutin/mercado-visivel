@@ -379,18 +379,23 @@ Negocio: ${contextoCompacto}`;
   });
 
   const rawText = response.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
-  console.log(`[PlanGen] Haiku raw response (${rawText.length} chars): ${rawText.slice(0, 200)}...`);
+  const stopReason = (response as any).stop_reason || 'unknown';
+  console.log(`[PlanGen] Haiku stop_reason=${stopReason}, chars=${rawText.length}`);
+  console.log(`[PlanGen] Haiku FULL response:\n${rawText}`);
+
+  const cleaned = rawText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
   let parsed: { items: ItensEstruturante[]; summary: string };
   try {
-    parsed = JSON.parse(rawText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
+    parsed = JSON.parse(cleaned);
   } catch (parseErr) {
-    console.warn('[PlanGen] JSON parse failed, tentando repair...', (parseErr as Error).message);
+    console.warn('[PlanGen] JSON parse failed:', (parseErr as Error).message);
     try {
       const repaired = repairTruncatedJson(rawText);
       parsed = JSON.parse(repaired);
-      console.log('[PlanGen] JSON repair OK');
+      console.log('[PlanGen] JSON repair OK, items:', parsed?.items?.length);
     } catch (e2) {
-      console.error('[PlanGen] JSON repair falhou:', (e2 as Error).message, 'Raw:', rawText.slice(0, 500));
+      console.error('[PlanGen] JSON repair also failed:', (e2 as Error).message);
+      console.error('[PlanGen] Cleaned text for debug:\n', cleaned.slice(0, 1000));
       throw new Error('Failed to parse itens estruturantes JSON');
     }
   }
