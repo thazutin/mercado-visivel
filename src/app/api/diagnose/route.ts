@@ -322,6 +322,14 @@ function buildDisplayData(result: any) {
       google: influence.google?.score || 0,
       instagram: influence.instagram?.score || 0,
       web: influence.web?.available ? influence.web.score : null,
+      // Spread 4D breakdown values for direct access
+      ...((influence as any).breakdown ? {
+        d1_descoberta: (influence as any).breakdown.d1_descoberta,
+        d2_credibilidade: (influence as any).breakdown.d2_credibilidade,
+        d3_presenca: (influence as any).breakdown.d3_presenca,
+        d4_reputacao: (influence as any).breakdown.d4_reputacao,
+        levers: (influence as any).breakdown.levers || [],
+      } : {}),
     },
     influenceBreakdown4D: (influence as any).breakdown || null,
     maps: mapsData ? {

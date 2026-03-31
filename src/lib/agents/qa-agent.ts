@@ -29,29 +29,7 @@ export async function runDataChecks(): Promise<{ checks: CheckResult[]; testLead
   // ── CHECK 1: Pipeline completes in < 120s ──────────────────────────────
   const t0 = Date.now();
   try {
-    // Create test lead directly in Supabase
-    const { data: lead, error: insertError } = await supabase
-      .from('leads')
-      .insert({
-        name: 'QA Test',
-        product: 'Restaurante',
-        region: 'São Paulo, SP, Brasil',
-        email: 'qa-test@virolocal.com',
-        whatsapp: '',
-        status: 'pending',
-        client_type: 'b2c',
-      })
-      .select('id')
-      .single();
-
-    if (insertError || !lead) {
-      checks.push({ name: 'CHECK 1 — Pipeline', status: 'fail', detail: `Insert failed: ${insertError?.message}` });
-      return { checks, testLeadId: null };
-    }
-
-    testLeadId = lead.id;
-
-    // Trigger pipeline via API
+    // Trigger pipeline via API — the API creates the lead in Supabase
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://virolocal.com';
     const diagRes = await fetch(`${baseUrl}/api/diagnose`, {
       method: 'POST',
@@ -63,7 +41,6 @@ export async function runDataChecks(): Promise<{ checks: CheckResult[]; testLead
         name: 'QA Test',
         email: 'qa-test@virolocal.com',
         whatsapp: '11999999999',
-        step: 2,
       }),
     });
 
@@ -72,23 +49,28 @@ export async function runDataChecks(): Promise<{ checks: CheckResult[]; testLead
       checks.push({ name: 'CHECK 1 — Pipeline', status: 'fail', detail: `API returned ${diagRes.status}: ${text.slice(0, 200)}`, durationMs: Date.now() - t0 });
     } else {
       const diagData = await diagRes.json();
-      testLeadId = diagData.leadId || testLeadId;
+      testLeadId = diagData.leadId || null;
 
-      // Poll until done or timeout
-      let status = 'processing';
-      const maxWait = 120_000;
-      const pollStart = Date.now();
-      while (Date.now() - pollStart < maxWait && status !== 'done' && status !== 'error') {
-        await delay(3000);
-        const { data: polled } = await supabase.from('leads').select('status').eq('id', testLeadId).single();
-        status = polled?.status || 'processing';
-      }
-
-      const elapsed = Date.now() - t0;
-      if (status === 'done') {
-        checks.push({ name: 'CHECK 1 — Pipeline', status: 'pass', detail: `Completed in ${(elapsed / 1000).toFixed(1)}s`, durationMs: elapsed });
+      if (!testLeadId) {
+        checks.push({ name: 'CHECK 1 — Pipeline', status: 'fail', detail: 'API returned ok but no leadId', durationMs: Date.now() - t0 });
       } else {
-        checks.push({ name: 'CHECK 1 — Pipeline', status: 'fail', detail: `Timeout or error. Status: ${status} after ${(elapsed / 1000).toFixed(1)}s`, durationMs: elapsed });
+        // The diagnose API runs the pipeline synchronously — when it returns 200, status should already be 'done'
+        // But poll anyway in case of async processing
+        let status = 'processing';
+        const maxWait = 120_000;
+        const pollStart = Date.now();
+        while (Date.now() - pollStart < maxWait && status !== 'done' && status !== 'error') {
+          await delay(3000);
+          const { data: polled } = await supabase.from('leads').select('status').eq('id', testLeadId).single();
+          status = polled?.status || 'processing';
+        }
+
+        const elapsed = Date.now() - t0;
+        if (status === 'done') {
+          checks.push({ name: 'CHECK 1 — Pipeline', status: 'pass', detail: `Completed in ${(elapsed / 1000).toFixed(1)}s`, durationMs: elapsed });
+        } else {
+          checks.push({ name: 'CHECK 1 — Pipeline', status: 'fail', detail: `Timeout or error. Status: ${status} after ${(elapsed / 1000).toFixed(1)}s`, durationMs: elapsed });
+        }
       }
     }
   } catch (err) {
