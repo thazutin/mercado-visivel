@@ -347,36 +347,39 @@ async function generateItensEstruturantes(
   const d3 = breakdown?.d3_presenca ?? breakdown?.d3_reach ?? 0;
   const d4 = breakdown?.d4_reputacao ?? 0;
 
-  const dimensaoMaisFraca =
-    Math.min(d1, d2, d3, d4) === d1 ? 'Descoberta' :
-    Math.min(d1, d2, d3, d4) === d2 ? 'Credibilidade' :
-    Math.min(d1, d2, d3, d4) === d3 ? 'Presença' : 'Reputação';
+  const dimensaoMaisFraca = Math.min(d1, d2, d3, d4) === d1 ? 'descoberta' :
+    Math.min(d1, d2, d3, d4) === d2 ? 'credibilidade' :
+    Math.min(d1, d2, d3, d4) === d3 ? 'presenca' : 'credibilidade';
 
-  const leversText = levers.slice(0, 5).map((l: any, i: number) =>
-    `${i + 1}. [${l.dimension}] ${l.action} (+${l.impact}pts) | atual: ${l.currentValue || 'N/A'} → meta: ${l.targetValue || 'N/A'}`
-  ).join('\n');
+  // Contexto ultra-compacto: max 300 chars
+  const contextoCompacto = context.slice(0, 300);
 
-  const prompt = `Gere 8 atividades do básico bem feito para este negócio.
+  const prompt = `Gere exatamente 8 atividades de marketing local para este negócio.
+Retorne APENAS este JSON, sem texto antes ou depois, sem markdown:
+{"items":[{"id":"1","dimensao":"descoberta","titulo":"Titulo curto","descricao":"Uma frase curta.","impacto":"+2pts Descoberta","prazo":"Esta semana","concluido":false}],"summary":"Resumo"}
+Regras absolutas:
+- Exatamente 8 itens
+- descricao: maximo 120 caracteres, UMA frase, sem aspas internas
+- dimensao: apenas "descoberta", "credibilidade" ou "presenca"
+- impacto: maximo 20 caracteres
+- prazo: apenas "Esta semana", "Este mes" ou "Proximos 3 meses"
+- NENHUM outro campo alem dos listados acima
+- NENHUM campo "acao", "copy_pronto", "verificacao" ou qualquer outro
+- Sem quebras de linha dentro dos valores de string
+- Pilar mais fraco: ${dimensaoMaisFraca}
+Negocio: ${contextoCompacto}`;
 
-${context}
-
-Pilar fraco: ${dimensaoMaisFraca}
-
-JSON com 8 itens, cada um com: id (string curta), dimensao (descoberta|credibilidade|presenca|reputacao), titulo (max 8 palavras), descricao (1 frase curta), impacto (alto|medio|baixo), prazo (esta semana|este mes|proximo mes), concluido (false).
-
-Exemplo:
-{"items":[{"id":"gmb","dimensao":"descoberta","titulo":"Completar perfil Google Maps","descricao":"Negocio sem fotos nem horario no Maps.","impacto":"alto","prazo":"esta semana","concluido":false}],"summary":"Frase resumo"}
-
-Retorne APENAS o JSON. Sem markdown. Sem explicacao.`;
+  console.log(`[PlanGen] Prompt length: ${prompt.length} chars`);
 
   const response = await claude.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 3000,
+    max_tokens: 2000,
     temperature: 0.2,
     messages: [{ role: 'user', content: prompt }],
   });
 
   const rawText = response.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
+  console.log(`[PlanGen] Haiku raw response (${rawText.length} chars): ${rawText.slice(0, 200)}...`);
   let parsed: { items: ItensEstruturante[]; summary: string };
   try {
     parsed = JSON.parse(rawText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
