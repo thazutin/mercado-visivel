@@ -15,14 +15,18 @@ export async function generateRelatorioSetorial(
   const geoContext = isNacional ? 'Brasil' : shortRegion;
 
   try {
-    // Etapa 1: Web search para tendências reais do setor
+    // Etapa 1: Web search para dados reais
     const searchResponse = await claudeClient.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 800,
       tools: [{ type: "web_search_20250305" as any, name: "web_search" }],
       messages: [{
         role: 'user',
-        content: `Busque informações relevantes sobre o mercado de "${product}" em ${geoContext} nos últimos 3 meses. Inclua: tendências de consumo, movimentos dos principais players, sazonalidade atual, dados econômicos relevantes para o setor. Foque em informações práticas e acionáveis para um pequeno negócio local.`,
+        content: `Busque dados REAIS desta semana sobre "${product}" em ${geoContext}:
+1. "${product} Brasil 2026" — tendências recentes
+2. "mercado ${product} ${geoContext}" — dados atuais
+3. Feriados ou eventos relevantes para ${product} nos próximos 7 dias
+Foque em dados verificáveis com fonte.`,
       }],
     });
 
@@ -32,44 +36,91 @@ export async function generateRelatorioSetorial(
       .join('\n')
       .slice(0, 3000);
 
-    // Etapa 2: Síntese em formato estruturado
+    // Etapa 2: Síntese com exigência de dados reais
     const synthesisResponse = await claudeClient.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 1500,
       temperature: 0.2,
+      system: 'Responda APENAS com JSON válido.',
       messages: [{
         role: 'user',
-        content: `Com base nos dados do mercado de "${product}" em ${geoContext}:
+        content: `Com base APENAS nos dados encontrados sobre "${product}" em ${geoContext}:
 
-DADOS COLETADOS:
 ${searchContext}
 
-Gere um relatório setorial para o dono deste negócio. Linguagem simples, direta, sem jargão.
-
-Responda APENAS em JSON:
+Retorne JSON:
 {
-  "titulo": "O mercado de [setor] em [região] — semana de [data atual]",
-  "destaque": "1 frase com o insight mais relevante desta semana para este negócio",
-  "tendencias": [
-    {
-      "titulo": "Tendência curta",
-      "descricao": "O que está acontecendo e o que significa para o negócio (2-3 frases)",
-      "relevancia": "alta|media|baixa",
-      "acao_sugerida": "O que fazer agora (1 frase concreta)"
-    }
-  ],
-  "oportunidade_da_semana": "Uma oportunidade específica baseada no contexto atual — o que fazer esta semana para aproveitar",
-  "contexto_competitivo": "O que os líderes do setor estão fazendo que é relevante observar (2-3 frases)",
-  "data_ref": "semana de [data atual]",
-  "fontes_resumo": "breve descrição das fontes consultadas"
-}`,
+  "titulo": "O mercado de ${product} em ${geoContext}",
+  "destaque": "insight mais importante — 1 frase com dado real e fonte",
+  "tendencias": [{"titulo":"...","descricao":"...","relevancia":"alta|media|baixa","acao_sugerida":"..."}],
+  "oportunidade_da_semana": "ação específica baseada no que está acontecendo",
+  "contexto_competitivo": "o que players do setor estão fazendo",
+  "data_ref": "${new Date().toLocaleDateString('pt-BR')}",
+  "fontes_resumo": "fontes consultadas",
+  "confianca": "alta|media|baixa"
+}
+
+SE não encontrou dados reais para algum campo, use: "Sem dados verificados esta semana."
+NÃO invente tendências ou percentuais sem fonte.`,
       }],
     });
 
     const synthesisText = synthesisResponse.content
       .filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
-    const relatorio = JSON.parse(synthesisText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
-    console.log(`[RelatorioSetorial] "${relatorio.destaque?.slice(0, 60)}..."`);
+
+    let relatorio: any;
+    try {
+      const cleaned = synthesisText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+      const start = cleaned.indexOf('{');
+      const end = cleaned.lastIndexOf('}');
+      relatorio = JSON.parse(start >= 0 ? cleaned.slice(start, end + 1) : cleaned);
+    } catch {
+      relatorio = {
+        titulo: `Mercado de ${product} em ${geoContext}`,
+        destaque: synthesisText.slice(0, 300),
+        tendencias: [],
+        oportunidade_da_semana: '',
+        contexto_competitivo: '',
+        data_ref: new Date().toLocaleDateString('pt-BR'),
+        fontes_resumo: '',
+        confianca: 'baixa',
+      };
+    }
+
+    // Flag de dados limitados
+    const semDados = relatorio.confianca === 'baixa' ||
+      (relatorio.destaque || '').includes('Sem dados verificados');
+    if (semDados) relatorio.dadosLimitados = true;
+
+    console.log(`[RelatorioSetorial] "${relatorio.destaque?.slice(0, 60)}..." confianca=${relatorio.confianca || 'unknown'}`);
+
+    // Etapa 3: Gerar briefings para distribuição
+    try {
+      const resBriefings = await claudeClient.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 800,
+        system: 'Responda APENAS com JSON válido.',
+        messages: [{ role: 'user', content: `Com base neste contexto:
+Destaque: ${relatorio.destaque}
+Oportunidade: ${relatorio.oportunidade_da_semana}
+Negócio: ${product} em ${geoContext}
+
+Gere 3 briefings:
+- briefing_equipe (tom operacional, max 80 palavras): o que fazer esta semana e por quê
+- briefing_agencia (tom estratégico, max 120 palavras): contexto, oportunidade, direcionamento
+- briefing_afiliado (tom comercial, max 80 palavras): por que é bom momento para indicar
+
+JSON: {"briefing_equipe":"...","briefing_agencia":"...","briefing_afiliado":"..."}` }],
+      });
+      const briefText = resBriefings.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
+      const briefCleaned = briefText.slice(briefText.indexOf('{'), briefText.lastIndexOf('}') + 1);
+      relatorio.briefings = JSON.parse(briefCleaned);
+      console.log('[RelatorioSetorial] Briefings gerados');
+    } catch (briefErr) {
+      console.warn('[RelatorioSetorial] Briefings falhou (non-fatal):', (briefErr as Error).message);
+      relatorio.briefings = null;
+    }
+
     return relatorio;
 
   } catch (err) {
@@ -82,6 +133,8 @@ Responda APENAS em JSON:
       contexto_competitivo: '',
       data_ref: new Date().toLocaleDateString('pt-BR'),
       fontes_resumo: '',
+      dadosLimitados: true,
+      briefings: null,
     };
   }
 }

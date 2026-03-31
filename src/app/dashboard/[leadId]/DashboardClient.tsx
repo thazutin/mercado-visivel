@@ -1242,7 +1242,45 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
               <Spinner text="Buscando o que mudou no seu mercado esta semana..." />
             ) : (
               <div>
+                {/* Foco da semana baseado no plano */}
+                {plan?.content?.itensEstruturantes && plan.content.itensEstruturantes.length > 0 && (() => {
+                  const pendentes = plan.content.itensEstruturantes.filter((i: any) => !i.concluida);
+                  const pilarFoco = pendentes[0]?.pilar || pendentes[0]?.dimensao || 'Descoberta';
+                  const acaoFoco = pendentes[0]?.titulo || '';
+                  return pilarFoco ? (
+                    <div style={{ background: "#FAF8F5", borderLeft: `3px solid ${V.amber}`, borderRadius: "0 8px 8px 0", padding: "14px 16px", marginBottom: 16 }}>
+                      <p style={{ fontSize: 10, color: V.amber, fontWeight: 600, letterSpacing: "0.08em", margin: "0 0 4px" }}>FOCO DESTA SEMANA</p>
+                      <p style={{ fontSize: 14, fontWeight: 600, color: V.night, margin: "0 0 4px" }}>{pilarFoco}</p>
+                      {acaoFoco && <p style={{ fontSize: 12, color: V.ash, margin: 0 }}>Próxima atividade: {acaoFoco}</p>}
+                    </div>
+                  ) : null;
+                })()}
+
                 <RelatorioSetorialBlock relatorio={plan?.content?.relatorioSetorial} />
+
+                {/* Briefings para distribuição */}
+                {plan?.content?.relatorioSetorial?.briefings && (
+                  <div style={{ marginBottom: 16 }}>
+                    <p style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.08em", marginBottom: 12 }}>BRIEFINGS PARA DISTRIBUIÇÃO</p>
+                    {[
+                      { key: 'briefing_equipe', label: 'Para sua equipe' },
+                      { key: 'briefing_agencia', label: 'Para agência ou parceiro' },
+                      { key: 'briefing_afiliado', label: 'Para afiliado ou distribuidor' },
+                    ].filter(b => plan.content.relatorioSetorial.briefings[b.key]).map(({ key, label }) => (
+                      <div key={key} style={{ background: V.white, border: `1px solid ${V.fog}`, borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: V.night }}>{label}</span>
+                          <button onClick={() => navigator.clipboard.writeText(plan.content.relatorioSetorial.briefings[key])}
+                            style={{ fontSize: 11, color: V.amber, background: "none", border: `1px solid ${V.amber}`, borderRadius: 4, padding: "3px 8px", cursor: "pointer" }}>
+                            Copiar
+                          </button>
+                        </div>
+                        <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.6 }}>{plan.content.relatorioSetorial.briefings[key]}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <Section title="Posts desta semana" defaultOpen={true}>
                   <ContentsSection leadId={lead.id} tier={tier} />
                 </Section>
