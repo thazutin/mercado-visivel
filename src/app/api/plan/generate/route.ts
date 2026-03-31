@@ -282,6 +282,53 @@ function buildContext(lead: any, raw: any): string {
   return JSON.stringify(ctx, null, 2);
 }
 
+// ─── JSON REPAIR ─────────────────────────────────────────────────────────────
+
+function repairTruncatedJson(raw: string): string {
+  let text = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+  try { JSON.parse(text); return text; } catch { /* continue */ }
+
+  let braces = 0, brackets = 0, inString = false, escaped = false;
+  for (const char of text) {
+    if (escaped) { escaped = false; continue; }
+    if (char === '\\' && inString) { escaped = true; continue; }
+    if (char === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (char === '{') braces++;
+    if (char === '}') braces--;
+    if (char === '[') brackets++;
+    if (char === ']') brackets--;
+  }
+
+  // If we're inside a string, close it
+  if (inString) text += '"';
+
+  // Remove last possibly truncated item (after last comma but before closing)
+  const lastComma = text.lastIndexOf(',');
+  const lastClose = Math.max(text.lastIndexOf('}'), text.lastIndexOf(']'));
+  if (lastComma > lastClose) {
+    text = text.substring(0, lastComma);
+  }
+
+  // Recount after trimming
+  braces = 0; brackets = 0; inString = false; escaped = false;
+  for (const char of text) {
+    if (escaped) { escaped = false; continue; }
+    if (char === '\\' && inString) { escaped = true; continue; }
+    if (char === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (char === '{') braces++;
+    if (char === '}') braces--;
+    if (char === '[') brackets++;
+    if (char === ']') brackets--;
+  }
+
+  for (let i = 0; i < brackets; i++) text += ']';
+  for (let i = 0; i < braces; i++) text += '}';
+
+  return text;
+}
+
 // ─── ITENS ESTRUTURANTES ─────────────────────────────────────────────────────
 
 interface ItensEstruturante {
@@ -331,7 +378,7 @@ Para cada atividade:
 - titulo: ação clara em até 8 palavras
 - descricao: POR QUE isso importa para este negócio (1-2 frases com dados reais)
 - acao: passo a passo específico (2-3 linhas)
-- copy_pronto: texto pronto para copiar e usar (ex: descrição do GMB já escrita, resposta modelo para avaliação, bio do Instagram) — quando aplicável, senão null
+- copy_pronto: máximo 150 caracteres. Texto direto, sem numeração, sem passos — apenas o texto pronto para copiar. null se não aplicável
 - dimensao: "descoberta" | "credibilidade" | "presenca" | "reputacao"
 - impacto: "alto" | "medio" | "baixo"
 - prazo: "esta semana" | "este mês" | "próximos 3 meses"
@@ -353,17 +400,24 @@ JSON apenas:
     messages: [{ role: 'user', content: prompt }],
   });
 
-  const text = response.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
+  const rawText = response.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
   let parsed: { items: ItensEstruturante[]; summary: string };
   try {
-    parsed = JSON.parse(text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
+    parsed = JSON.parse(rawText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
   } catch (parseErr) {
-    console.error('[PlanGen] JSON parse failed for itens estruturantes:', (parseErr as Error).message, 'Raw:', text.slice(0, 500));
-    throw new Error('Failed to parse itens estruturantes JSON');
+    console.warn('[PlanGen] JSON parse failed, tentando repair...', (parseErr as Error).message);
+    try {
+      const repaired = repairTruncatedJson(rawText);
+      parsed = JSON.parse(repaired);
+      console.log('[PlanGen] JSON repair OK');
+    } catch (e2) {
+      console.error('[PlanGen] JSON repair falhou:', (e2 as Error).message, 'Raw:', rawText.slice(0, 500));
+      throw new Error('Failed to parse itens estruturantes JSON');
+    }
   }
-  if (!parsed.items || parsed.items.length === 0) {
-    console.error('[PlanGen] Haiku retornou 0 itens. Raw:', text.slice(0, 500));
-    throw new Error('Haiku returned 0 itens estruturantes');
+  if (!parsed?.items || parsed.items.length < 3) {
+    console.error(`[PlanGen] Itens insuficientes: ${parsed?.items?.length ?? 0}. Raw:`, rawText.slice(0, 500));
+    throw new Error(`Itens insuficientes: ${parsed?.items?.length ?? 0}`);
   }
   console.log(`[PlanGen] Itens estruturantes: ${parsed.items.length} itens gerados`);
   return parsed;
