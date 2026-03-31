@@ -5,16 +5,16 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Virô — Seu próximo cliente já está te procurando",
-  description: "Em 60 segundos você vê quantos clientes passam pelo seu radar sem te ver — e o que fazer para ser a escolha óbvia.",
+  title: "Virô — Posição competitiva local para o seu negócio",
+  description: "Descubra quantas pessoas no seu mercado ainda não te conhecem. Diagnóstico gratuito em 60 segundos.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
     apple: "/favicon.svg",
   },
   openGraph: {
-    title: "Virô — Seu próximo cliente já está te procurando",
-    description: "Em 60 segundos você vê quantos clientes passam pelo seu radar sem te ver — e o que fazer para ser a escolha óbvia.",
+    title: "Virô — Posição competitiva local para o seu negócio",
+    description: "Descubra quantas pessoas no seu mercado ainda não te conhecem. Diagnóstico gratuito em 60 segundos.",
     type: "website",
   },
 };

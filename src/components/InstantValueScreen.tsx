@@ -193,7 +193,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
   const hasProj = proj && (proj.gapCaptura > 0 || (proj.gapMensal && proj.gapMensal > 0)) && proj.mercadoTotal > 0;
   const ci = results.competitionIndex;
   const hasCi = ci && (ci.totalSearchVolume > 0 || ci.totalCompetitors > 0);
-  const isB2B = results.clientType === 'b2b';
+  const isB2B = results.clientType === 'b2b' || results.demandType === 'national_service' || results.demandType === 'ecommerce_national';
   const isB2G = results.clientType === 'b2g';
   const isNacional = /brasil|nacional/i.test(results.audiencia?.municipioNome || '');
   const isNacionalAny = isNacional;
@@ -481,9 +481,10 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         {!hideCTA && (
           <div style={{ background: V.night, borderRadius: 12, padding: "20px 16px", marginTop: 12, color: V.white, textAlign: "center" }}>
             <p style={{ fontSize: 13, color: V.mist, margin: "0 0 12px", lineHeight: 1.5 }}>
-              Seu plano completo tem 15 ações específicas para <strong style={{ color: V.white }}>{product}</strong> — na ordem certa, com texto pronto para usar.
+              As recomendações acima funcionam para qualquer negócio. O plano abaixo foi gerado para <strong style={{ color: V.white }}>{product}</strong> em <strong style={{ color: V.white }}>{shortRegion}</strong> — com os gaps reais do seu mercado, na ordem certa.
             </p>
-            <div style={{ fontFamily: V.display, fontSize: 24, fontWeight: 700, margin: "0 0 12px" }}>R$ 497</div>
+            <p style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", margin: "0 0 4px" }}>PAGAMENTO ÚNICO</p>
+            <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, margin: "0 0 12px" }}>R$ 497</div>
             <div style={{ display: "flex", gap: 8, marginBottom: 12, justifyContent: "center" }}>
               <input type="text" placeholder="Cupom" value={coupon}
                 onChange={(e: any) => { setCoupon(e.target.value.toUpperCase()); setCouponApplied(false); }}
