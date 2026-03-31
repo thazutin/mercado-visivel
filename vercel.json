@@ -23,6 +23,10 @@
     {
       "path": "/api/agents/content",
       "schedule": "0 11 * * 1"
+    },
+    {
+      "path": "/api/agents/qa",
+      "schedule": "0 8,20 * * *"
     }
   ],
   "functions": {
@@ -36,6 +40,9 @@
       "maxDuration": 300
     },
     "src/app/api/cron/weekly-contents/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/agents/qa/route.ts": {
       "maxDuration": 300
     }
   }
