@@ -583,27 +583,44 @@ Responda APENAS em JSON, sem markdown:
 
     console.log(`[Pipeline] Starting parallel calls: Volumes + SERP(${topTerms.length} terms) + Maps + Instagram(${instagramHandles.length} handles)`);
 
-    // 2. SERP scraping (timeout: 45s — Apify actor needs warm-up time)
-    parallelPromises.push(
-      withTimeout(
-        (async () => {
-          const t0 = Date.now();
-          console.log('[SERP] started');
-          try {
-            console.log(`[pipeline] município usado em SERP:`, extractedCity);
-            const r = await serpScraper(topTerms, resolvedRegion, siteDomain);
-            sourcesUsed.push("apify_serp");
-            console.log(`[SERP] completed in ${((Date.now() - t0) / 1000).toFixed(1)}s — ${r.length} positions`);
-            return r;
-          } catch (err) {
-            console.error(`[SERP] failed after ${((Date.now() - t0) / 1000).toFixed(1)}s:`, (err as Error).message);
-            throw err;
-          }
-        })(),
-        45_000,
-        "SERP",
-      )
-    );
+    // 2. SERP scraping — skip for nacional (irrelevant), timeout 30s + retry with 3 terms
+    if (isNacional) {
+      console.log('[Pipeline] Nacional — SERP pulado (não relevante para mercado nacional)');
+      sourcesUnavailable.push('serp_scraper');
+      parallelPromises.push(Promise.resolve([]));
+    } else {
+      parallelPromises.push(
+        withTimeout(
+          (async () => {
+            const t0 = Date.now();
+            console.log('[SERP] started');
+            try {
+              console.log(`[pipeline] município usado em SERP:`, extractedCity);
+              const r = await serpScraper(topTerms, resolvedRegion, siteDomain);
+              sourcesUsed.push("apify_serp");
+              console.log(`[SERP] completed in ${((Date.now() - t0) / 1000).toFixed(1)}s — ${r.length} positions`);
+              return r;
+            } catch (err) {
+              console.warn(`[SERP] failed after ${((Date.now() - t0) / 1000).toFixed(1)}s — tentando retry com 3 termos...`);
+              try {
+                const r = await withTimeout(
+                  serpScraper(topTerms.slice(0, 3), resolvedRegion, siteDomain),
+                  20_000, 'SERP-retry',
+                );
+                sourcesUsed.push("apify_serp");
+                console.log(`[SERP] retry OK: ${r.length} positions`);
+                return r;
+              } catch (retryErr) {
+                console.warn('[SERP] retry também falhou — seguindo sem SERP');
+                throw retryErr;
+              }
+            }
+          })(),
+          30_000,
+          "SERP",
+        )
+      );
+    }
     promiseLabels.push("serp");
 
     // 3. Google Maps (timeout: 45s — Google Places API can be slow)

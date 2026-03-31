@@ -78,23 +78,45 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Build context
+    const t0 = Date.now();
     const context = buildContext(lead, raw);
     const breakdown = raw.influence?.influence?.breakdown || {};
     const levers = breakdown?.levers || [];
+    const shortRegionGen = (lead.region || '').split(',')[0].trim();
 
-    // 3. Gerar Itens Estruturantes
-    console.log(`[PlanGen] Gerando itens estruturantes para lead ${leadId}...`);
-    const itensEstruturantes = await generateItensEstruturantes(
-      claude, context, levers, breakdown, lead.client_type || 'b2c'
-    );
-    console.log(`[PlanGen] Itens estruturantes OK: ${itensEstruturantes.items.length} itens`);
+    // 3. PARALELO: Itens + Relatório + Macro (não dependem um do outro)
+    console.log(`[PlanGen] Iniciando geração paralela para lead ${leadId}...`);
+    const [itensResult, relatorioResult, macroResult] = await Promise.allSettled([
+      generateItensEstruturantes(claude, context, levers, breakdown, lead.client_type || 'b2c'),
+      generateRelatorioSetorial(lead.product, lead.region, lead.client_type || 'b2c'),
+      claude.messages.create({
+        model: 'claude-haiku-4-5-20251001', max_tokens: 600, temperature: 0.3,
+        messages: [{ role: 'user', content: `Em 3-4 frases diretas, descreva o cenário atual do mercado de "${lead.product}" em ${shortRegionGen}. Inclua: tendências recentes, nível de digitalização do setor, e 1 oportunidade específica. Sem jargão. JSON: {"summary":"...","indicators":[],"outlook":"neutral","key_opportunity":"..."}` }],
+      }),
+    ]);
+    console.log(`[PlanGen] Paralelo concluído em ${Date.now() - t0}ms`);
 
-    // 4. Gerar Relatório Setorial
-    console.log(`[PlanGen] Gerando relatório setorial para lead ${leadId}...`);
-    const relatorioSetorial = await generateRelatorioSetorial(
-      lead.product, lead.region, lead.client_type || 'b2c'
-    );
-    console.log(`[PlanGen] Relatório setorial OK`);
+    // Extrair resultados
+    const itensEstruturantes = itensResult.status === 'fulfilled' ? itensResult.value
+      : (() => { console.error('[PlanGen] Itens falhou:', (itensResult as any).reason); throw (itensResult as any).reason; })();
+    console.log(`[PlanGen] Itens OK: ${itensEstruturantes.items.length} itens (${Date.now() - t0}ms)`);
+
+    const relatorioSetorial = relatorioResult.status === 'fulfilled' ? relatorioResult.value
+      : { destaque: '', tendencias: [], oportunidade_da_semana: '', contexto_competitivo: '', data_ref: '', fontes_resumo: '' };
+    if (relatorioResult.status === 'rejected') console.error('[PlanGen] Relatório falhou (non-fatal):', (relatorioResult as any).reason);
+    else console.log(`[PlanGen] Relatório OK (${Date.now() - t0}ms)`);
+
+    // Macro context
+    let macroContext: any = { summary: 'Contexto não disponível.', indicators: [], outlook: 'neutral', key_opportunity: '' };
+    if (macroResult.status === 'fulfilled') {
+      const cenText = macroResult.value.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
+      try { macroContext = JSON.parse(cenText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()); }
+      catch { macroContext = { summary: cenText.slice(0, 500), indicators: [], outlook: 'neutral', key_opportunity: '' }; }
+      if (diagnosisId) await supabase.from('diagnoses').update({ macro_context: macroContext }).eq('id', diagnosisId);
+      console.log(`[PlanGen] Macro OK (${Date.now() - t0}ms)`);
+    } else {
+      console.error('[PlanGen] Macro falhou (non-fatal):', (macroResult as any).reason);
+    }
 
     // 5. Salvar plan no Supabase
     await supabase.from("plans").delete().eq("lead_id", leadId);
@@ -150,38 +172,6 @@ export async function POST(req: NextRequest) {
       console.error("[PlanGen] Welcome briefing failed (non-fatal):", briefErr);
     }
 
-    // 5d. Gerar cenário do mercado (macro_context) — antes de marcar ready
-    try {
-      const shortRegion = (lead.region || '').split(',')[0].trim();
-      console.log(`[PlanGen] Gerando cenário do mercado para ${lead.product} em ${shortRegion}...`);
-      const cenarioResponse = await claude.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 400,
-        temperature: 0.3,
-        messages: [{
-          role: 'user',
-          content: `Em 3-4 frases diretas, descreva o cenário atual do mercado de "${lead.product}" em ${shortRegion}.
-Inclua: tendências recentes, nível de digitalização do setor, e 1 oportunidade específica para negócios locais.
-Sem jargão. Linguagem simples. Baseado em conhecimento real do setor.
-Responda APENAS em JSON: {"summary": "texto aqui", "indicators": [], "outlook": "neutral", "key_opportunity": "texto"}`,
-        }],
-      });
-      const cenarioText = cenarioResponse.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
-      let macroContext: any;
-      try {
-        macroContext = JSON.parse(cenarioText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim());
-      } catch {
-        macroContext = { summary: cenarioText.slice(0, 500), indicators: [], outlook: 'neutral', key_opportunity: '' };
-      }
-      // Salvar no diagnóstico
-      if (diagnosisId) {
-        await supabase.from('diagnoses').update({ macro_context: macroContext }).eq('id', diagnosisId);
-      }
-      console.log(`[PlanGen] Cenário do mercado OK`);
-    } catch (cenarioErr) {
-      console.error('[PlanGen] Cenário do mercado falhou (non-fatal):', (cenarioErr as Error).message);
-    }
-
     // 6. Gerar posts e enriquecimento ANTES de marcar ready
     try {
       console.log(`[PlanGen] Gerando conteúdos para lead ${leadId}...`);
@@ -217,7 +207,7 @@ Responda APENAS em JSON: {"summary": "texto aqui", "indicators": [], "outlook": 
       buscasMensais: raw.volumes?.totalMonthlyVolume || 0,
     });
 
-    console.log(`[PlanGen] Plan ready for lead ${leadId}`);
+    console.log(`[PlanGen] Plan ready for lead ${leadId} — total: ${Date.now() - t0}ms`);
 
     return NextResponse.json({ ok: true, leadId });
   } catch (err: any) {

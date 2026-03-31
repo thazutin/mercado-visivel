@@ -683,11 +683,15 @@ export function createApifyInstagramScraper(config: ApifyConfig) {
 
       console.log(`[Instagram] @${handle}: profileData found=${!!profileData}, posts matched=${handlePosts.length}/${posts.length}`);
 
-      const followers = profileData?.followersCount || profileData?.followers || profileData?.followedByCount || 0;
-      const bio = profileData?.biography || profileData?.bio || '';
+      const followers = profileData?.followersCount || profileData?.followers || profileData?.followedByCount || profileData?.edge_followed_by?.count || profileData?.userInfo?.followersCount || 0;
+      const bio = profileData?.biography || profileData?.bio || profileData?.userInfo?.biography || '';
       const isPrivate = profileData?.isPrivate || profileData?.private || false;
-      const fullName = profileData?.fullName || profileData?.name || handle;
+      const fullName = profileData?.fullName || profileData?.name || profileData?.userInfo?.fullName || handle;
       const isBusiness = profileData?.isBusinessAccount || profileData?.isBusiness || false;
+
+      if (profileData) {
+        console.log(`[Instagram Parser] @${handle} field check: followersCount=${profileData.followersCount}, followers=${profileData.followers}, followedByCount=${profileData.followedByCount}, edge_followed_by=${profileData.edge_followed_by?.count}, resolved=${followers}`);
+      }
 
       if (!profileData && handlePosts.length === 0) {
         return {
