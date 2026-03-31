@@ -15,9 +15,11 @@ import { generateRelatorioSetorial } from "@/lib/pipeline/relatorio-setorial";
 export const maxDuration = 800;
 
 function getSupabase() {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key) console.error('[PlanGen] SUPABASE_SERVICE_ROLE_KEY is missing! Using anon key as fallback.');
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    key || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 }
 
@@ -91,7 +93,8 @@ export async function POST(req: NextRequest) {
       generateItensEstruturantes(claude, context, levers, breakdown, lead.client_type || 'b2c'),
       stagger(2000).then(() => generateRelatorioSetorial(lead.product, lead.region, lead.client_type || 'b2c')),
       stagger(4000).then(() => claude.messages.create({
-        model: 'claude-haiku-4-5-20251001', max_tokens: 600, temperature: 0.3,
+        model: 'claude-haiku-4-5-20251001', max_tokens: 1200, temperature: 0.3,
+        system: 'Responda APENAS com JSON válido.',
         messages: [{ role: 'user', content: `Em 3-4 frases diretas, descreva o cenário atual do mercado de "${lead.product}" em ${shortRegionGen}. Inclua: tendências recentes, nível de digitalização do setor, e 1 oportunidade específica. Sem jargão. JSON: {"summary":"...","indicators":[],"outlook":"neutral","key_opportunity":"..."}` }],
       })),
     ]);
@@ -111,8 +114,8 @@ export async function POST(req: NextRequest) {
     let macroContext: any = { summary: 'Contexto não disponível.', indicators: [], outlook: 'neutral', key_opportunity: '' };
     if (macroResult.status === 'fulfilled') {
       const cenText = macroResult.value.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
-      try { macroContext = JSON.parse(cenText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()); }
-      catch { macroContext = { summary: cenText.slice(0, 500), indicators: [], outlook: 'neutral', key_opportunity: '' }; }
+      try { macroContext = extractJson(cenText); }
+      catch { macroContext = { summary: cenText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim().slice(0, 500), indicators: [], outlook: 'neutral', key_opportunity: '' }; }
       if (diagnosisId) await supabase.from('diagnoses').update({ macro_context: macroContext }).eq('id', diagnosisId);
       console.log(`[PlanGen] Macro OK (${Date.now() - t0}ms)`);
     } else {

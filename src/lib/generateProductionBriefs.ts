@@ -148,8 +148,8 @@ Responda APENAS em JSON — array com 3 objetos:
 Gere APENAS o JSON.`;
 
   const response = await claude.messages.create({
-    model: 'claude-sonnet-4-5-20250929',
-    max_tokens: 4000,
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 600,
     temperature: 0.4,
     messages: [{ role: 'user', content: prompt }],
   });
