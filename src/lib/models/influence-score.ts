@@ -67,6 +67,12 @@ function scoreD1_descoberta(
     linkedinScore = 50;
   }
 
+  // Fallback: se SERP vazio (pulado para nacional) mas Maps verificado, não zerar D1
+  if (serpPositions.length === 0 && mapsPresence?.found) {
+    const baseMapScore = mapsPresence.inLocalPack ? 40 : 20;
+    return Math.max(baseMapScore * 0.5, mapsScore * 0.5 + aiScore * 0.2);
+  }
+
   if (clientType === 'b2b') {
     // B2B: SERP 40% + LinkedIn 30% + AI 20% + Maps 10%
     return serpScore * 0.40 + linkedinScore * 0.30 + aiScore * 0.20 + mapsScore * 0.10;
@@ -148,6 +154,11 @@ function scoreD3_presenca(
   clientType: string,
 ): number {
   let score = 0;
+
+  // followers=0 com dataAvailable=true é provavelmente falha do parser
+  if (igProfile?.dataAvailable && igProfile.followers === 0) {
+    return linkedinPresent ? 30 : 0;
+  }
 
   if (igProfile?.dataAvailable) {
     const followers = igProfile.followers || 0;

@@ -1105,44 +1105,38 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
         {/* ═══ TAB: DIAGNÓSTICO ═══ */}
         {tab === "diagnostico" && (
           <div>
-            <Section title="Diagnóstico inicial">
-              {lead.diagnosis_display ? (
-                <InstantValueScreen
-                  product={lead.product}
-                  region={lead.region}
-                  results={lead.diagnosis_display}
-                  onCheckout={() => {}}
-                  leadId={lead.id}
-                  hideCTA
-                  hideWorkRoutes
-                />
-              ) : (
-                <p style={{ fontSize: 13, color: V.ash }}>Diagnóstico inicial não disponível.</p>
-              )}
-            </Section>
+            {/* Diagnóstico unificado */}
+            {lead.diagnosis_display ? (
+              <InstantValueScreen
+                product={lead.product}
+                region={lead.region}
+                results={lead.diagnosis_display}
+                onCheckout={() => {}}
+                leadId={lead.id}
+                hideCTA
+                hideWorkRoutes
+              />
+            ) : (
+              <p style={{ fontSize: 13, color: V.ash }}>Diagnóstico não disponível.</p>
+            )}
 
-            <Section title="Diagnóstico completo" defaultOpen={tier !== "free" && !planReady}>
-              {tier === "free" ? (
-                <LockedTab lockLevel={1} ctaLabel="Desbloquear por R$497" ctaUrl="#" leadId={lead.id} />
-              ) : !planReady ? (
-                <Spinner text="Analisando seus dados..." />
-              ) : (
-                <div>
-                  <MacroContextBlock macroContext={diagnosis?.macro_context} />
-                  <PilaresScoreCard
-                    breakdown={lead.diagnosis_display?.influenceBreakdown4D || lead.diagnosis_display?.influenceBreakdown}
-                    levers={lead.diagnosis_display?.influenceBreakdown?.levers || lead.diagnosis_display?.influenceBreakdown4D?.levers || []}
-                    clientType={lead.client_type}
-                  />
-                  <InfluenceChart
-                    snapshots={snapshots}
-                    currentScore={lead.diagnosis_display?.influencePercent || 0}
-                    product={lead.product}
-                  />
-                  <ProjecaoCard projecao={lead.diagnosis_display?.projecaoFinanceira} />
-                </div>
-              )}
-            </Section>
+            {/* Diagnóstico aprofundado (pago) */}
+            {tier !== "free" && planReady && (
+              <div style={{ marginTop: 16 }}>
+                <MacroContextBlock macroContext={diagnosis?.macro_context} />
+                <PilaresScoreCard
+                  breakdown={lead.diagnosis_display?.influenceBreakdown4D || lead.diagnosis_display?.influenceBreakdown}
+                  levers={lead.diagnosis_display?.influenceBreakdown?.levers || lead.diagnosis_display?.influenceBreakdown4D?.levers || []}
+                  clientType={lead.client_type}
+                />
+                <InfluenceChart
+                  snapshots={snapshots}
+                  currentScore={lead.diagnosis_display?.influencePercent || 0}
+                  product={lead.product}
+                />
+                <ProjecaoCard projecao={lead.diagnosis_display?.projecaoFinanceira} />
+              </div>
+            )}
           </div>
         )}
 

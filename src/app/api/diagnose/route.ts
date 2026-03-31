@@ -180,6 +180,8 @@ export async function POST(req: NextRequest) {
         influencePercent: Math.round(pipelineResult.influence.influence.totalInfluence),
         searchVolume: pipelineResult.volumes.totalMonthlyVolume || 0,
         projecaoFinanceira: sanitizeProjecao((pipelineResult as any).projecaoFinanceira),
+        name: formData.businessName || formData.product,
+        demandType: (pipelineResult as any).demandType || 'local_residents',
       });
       console.log("[Diagnose] notify completed");
     } catch (err) {

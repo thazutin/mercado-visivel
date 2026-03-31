@@ -149,18 +149,29 @@ export async function notifyDiagnosisReady(opts: {
     familiasGap?: number;
   } | null;
   isB2B?: boolean;
+  name?: string;
+  demandType?: string;
 }): Promise<void> {
   const { email, whatsapp, leadId, product, region, influencePercent, searchVolume, projecaoFinanceira } = opts;
   console.log(`[NOTIFY] iniciando email/whatsapp para email=${email}, phone=${whatsapp}, leadId=${leadId}`);
   const url = `${BASE_URL}/resultado/${leadId}`;
   const shortRegion = region.split(",")[0].trim();
   const familiasGap = projecaoFinanceira?.familiasGap || 0;
-  const displayName = (opts as any).name || product;
+  const displayName = opts.name || product;
+  const demandType = opts.demandType || 'local_residents';
+
+  const heroLabel = demandType === 'ecommerce_national' || demandType === 'national_service'
+    ? 'buscas mensais que ainda não chegam até você'
+    : demandType === 'tourist_flow'
+    ? 'visitantes por mês que ainda não te consideram'
+    : demandType === 'local_workers'
+    ? 'pessoas que trabalham no seu raio e ainda não te conhecem'
+    : 'pessoas no seu raio que ainda não te consideram';
 
   const subject = familiasGap > 0
-    ? `${displayName}, encontrei ${familiasGap.toLocaleString('pt-BR')} pessoas que ainda não te conhecem`
+    ? `${displayName}, encontrei +${familiasGap.toLocaleString('pt-BR')} — veja o que fazer`
     : searchVolume && searchVolume > 0
-    ? `${displayName}, seu mercado tem ${searchVolume.toLocaleString('pt-BR')} buscas por mês — veja sua posição`
+    ? `${displayName}, seu mercado tem ${searchVolume.toLocaleString('pt-BR')} buscas/mês — veja sua posição`
     : `${displayName}, achei o que precisava. Veja o que encontrei.`;
 
   const results = await Promise.allSettled([
@@ -173,7 +184,7 @@ export async function notifyDiagnosisReady(opts: {
     sendEmail({
       to: email,
       subject,
-      html: diagnosisEmailHtmlSimple({ product, shortRegion, url, familiasGap, searchVolume }),
+      html: diagnosisEmailHtmlSimple({ product, shortRegion, url, familiasGap, searchVolume, heroLabel }),
     }),
   ]);
 
@@ -504,12 +515,13 @@ function diagnosisEmailHtml(opts: {
   `);
 }
 
-function diagnosisEmailHtmlSimple({ product, shortRegion, url, familiasGap, searchVolume }: {
-  product: string; shortRegion: string; url: string; familiasGap: number; searchVolume?: number;
+function diagnosisEmailHtmlSimple({ product, shortRegion, url, familiasGap, searchVolume, heroLabel }: {
+  product: string; shortRegion: string; url: string; familiasGap: number; searchVolume?: number; heroLabel?: string;
 }): string {
+  const label = heroLabel || 'pessoas no seu raio que ainda não te consideram';
   const heroMetric = familiasGap > 0
     ? `<div style="font-size:48px;font-weight:900;color:#2D9B83;line-height:1;margin-bottom:8px;">+${familiasGap.toLocaleString('pt-BR')}</div>
-       <div style="font-size:14px;color:#888880;">pessoas no seu raio que ainda não te consideram</div>`
+       <div style="font-size:14px;color:#888880;">${label}</div>`
     : (searchVolume && searchVolume > 0)
     ? `<div style="font-size:48px;font-weight:900;color:#CF8523;line-height:1;margin-bottom:8px;">${searchVolume.toLocaleString('pt-BR')}</div>
        <div style="font-size:14px;color:#888880;">buscas/mês por ${product} em ${shortRegion}</div>`
