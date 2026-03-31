@@ -1018,11 +1018,25 @@ Responda APENAS em JSON, sem markdown:
     if (apifyConfig && process.env.GOOGLE_PLACES_API_KEY) {
       const competitionSearch = createMapsCompetitionSearch(apifyConfig);
       console.log(`[pipeline] município usado em Competition Index:`, extractedCity);
-      const competitorResults = await withTimeout(
+      let competitorResults = await withTimeout(
         competitionSearch(input.product, resolvedRegion),
         10_000,
         "MapsCompetition",
       );
+      // Fallback: se 0 resultados, tenta com termo mais amplo (primeiro substantivo)
+      if (competitorResults.length === 0) {
+        const broadTerm = input.product.split(/\s+/).slice(0, 2).join(' ');
+        if (broadTerm !== input.product) {
+          console.log(`[Pipeline] Competition fallback: "${input.product}" → "${broadTerm}"`);
+          try {
+            competitorResults = await withTimeout(
+              competitionSearch(broadTerm, resolvedRegion),
+              8_000,
+              "MapsCompetition-fallback",
+            );
+          } catch { /* ignore fallback failure */ }
+        }
+      }
       if (competitorResults.length > 0) {
         // Mapeia para o formato esperado por calcularIndiceSaturacao
         const mapsForIndex = competitorResults.map(c => ({

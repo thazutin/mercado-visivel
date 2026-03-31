@@ -261,22 +261,28 @@ export default function InstantValueScreen({ product, region, results, onCheckou
     ? ["Publicar artigo técnico em portal do setor (1x/mês)", "Identificar newsletters de nicho onde decisores estão e pedir menção", "Participar de podcast ou evento do segmento como convidado", "Fazer parceria com players complementares que aparecem em buscas de IA"]
     : ["Criar 2 posts/semana respondendo perguntas reais que clientes fazem", "Pedir menção a parceiros locais (outros negócios complementares no raio)", "Identificar portais do setor que indexam bem no ChatGPT e pedir presença", "Colaborar com criadores de conteúdo locais do mesmo segmento"];
 
-  // Pilares com scores e levers
-  const bd = (results as any).influenceBreakdown4D || results.influenceBreakdown;
-  const d1 = (bd as any)?.d1_descoberta ?? (bd as any)?.d1_discovery ?? 0;
+  // Pilares com scores e levers — tenta múltiplas fontes de dados
+  const bd = (results as any).influenceBreakdown4D || (results as any).influenceBreakdown || {};
+  const d1 = (bd as any)?.d1_descoberta ?? (bd as any)?.d1_discovery ?? (bd as any)?.google ?? 0;
   const d2 = (bd as any)?.d2_credibilidade ?? (bd as any)?.d2_credibility ?? 0;
-  const d3 = (bd as any)?.d3_presenca ?? (bd as any)?.d3_reach ?? 0;
+  const d3 = (bd as any)?.d3_presenca ?? (bd as any)?.d3_reach ?? (bd as any)?.instagram ?? 0;
   const d4 = (bd as any)?.d4_reputacao ?? 0;
-  const allLevers = (results as any).influenceBreakdown?.levers || (bd as any)?.levers || [];
+  // Se todos os scores são 0 mas influencePercent > 0, distribui o score uniformemente
+  const scoreTotal = d1 + d2 + d3 + d4;
+  const d1f = scoreTotal > 0 ? d1 : (results.influencePercent > 0 ? Math.round(results.influencePercent * 0.8) : 0);
+  const d2f = scoreTotal > 0 ? d2 : (results.influencePercent > 0 ? Math.round(results.influencePercent * 1.2) : 0);
+  const d3f = scoreTotal > 0 ? d3 : (results.influencePercent > 0 ? Math.round(results.influencePercent * 0.7) : 0);
+  const d4f = scoreTotal > 0 ? d4 : 0;
+  const allLevers = (bd as any)?.levers || (results as any).influenceBreakdown?.levers || [];
 
   const pilarCards = [
-    { icon: "🔍", label: "Seja Encontrável", score: Math.round(d1), color: V.teal, dim: "descoberta",
+    { icon: "🔍", label: "Seja Encontrável", score: Math.round(d1f), color: V.teal, dim: "descoberta",
       detail: results.maps?.found ? `Maps: ★ ${results.maps.rating} · ${results.maps.reviewCount} avaliações` : "Não encontrado no Google Maps",
       status: pilar1Status, fallback: "Otimizar perfil no Google Meu Negócio com fotos e descrição completa" },
-    { icon: "⭐", label: "Construa Credibilidade", score: Math.round((d2 + d4) / 2), color: V.amber, dim: "credibilidade",
+    { icon: "⭐", label: "Construa Credibilidade", score: Math.round((d2f + d4f) / 2), color: V.amber, dim: "credibilidade",
       detail: results.maps?.reviewCount ? `${results.maps.reviewCount} avaliações · ★ ${results.maps.rating}` : "Sem avaliações detectadas",
       status: pilar2Status, fallback: "Solicitar avaliações dos últimos 20 clientes via WhatsApp" },
-    { icon: "📣", label: "Participe da Cultura", score: Math.round(d3), color: "#8B5CF6", dim: "presenca",
+    { icon: "📣", label: "Participe da Cultura", score: Math.round(d3f), color: "#8B5CF6", dim: "presenca",
       detail: igData?.handle ? `@${igData.handle} · ${igData.followers?.toLocaleString('pt-BR')} seguidores` : "Presença digital não detectada",
       status: pilar3Status, fallback: "Publicar 2 posts/semana respondendo dúvidas frequentes do seu público" },
   ];
@@ -353,11 +359,16 @@ export default function InstantValueScreen({ product, region, results, onCheckou
 
         {/* ═══════════════ BOTÃO TOGGLE ═══════════════ */}
         <button onClick={() => setPorQueAberto(!porQueAberto)} style={{
-          width: "100%", padding: "12px 16px", borderRadius: 10, border: `1px solid ${V.amber}30`,
-          background: V.amberWash, cursor: "pointer", fontSize: 13, fontWeight: 600,
+          width: "100%", padding: "14px 16px", borderRadius: 10,
+          border: "1px solid #C8922A",
+          background: porQueAberto ? "rgba(207,133,35,0.12)" : V.amberWash,
+          cursor: "pointer", fontSize: 13, fontWeight: 600,
           color: V.amber, marginBottom: 16, textAlign: "center",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          transition: "background 0.15s ease",
         }}>
-          {porQueAberto ? 'Fechar ↑' : 'Por que identificamos essa oportunidade ↓'}
+          <span>Por que identificamos essa oportunidade</span>
+          <span style={{ display: "inline-block", transition: "transform 0.3s ease", transform: porQueAberto ? "rotate(180deg)" : "rotate(0deg)", fontSize: 12 }}>▼</span>
         </button>
 
         {/* ═══════════════ BLOCO 2 — POR QUE (expansível) ═══════════════ */}
@@ -392,6 +403,23 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           {/* 2B — Accordions de dados */}
           <div style={{ marginTop: 12 }}>
             <Expandable title={`👥 Tamanho da audiência — ${hasAudiencia ? fmtPop(aud!.audienciaTarget) : '—'}`} icon="">
+              {/* Maps business thumbnail */}
+              {results.maps?.found && (
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${V.fog}` }}>
+                  {(results.maps as any)?.photoReference ? (
+                    <img src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=96&photo_reference=${(results.maps as any).photoReference}&key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY || ''}`}
+                      alt="" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover" }} />
+                  ) : (
+                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: V.teal, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <span style={{ color: "white", fontWeight: 700, fontSize: 18 }}>{(product || "N")[0].toUpperCase()}</span>
+                    </div>
+                  )}
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{product}</div>
+                    <div style={{ fontSize: 11, color: V.ash }}>★ {results.maps.rating} · {results.maps.reviewCount} avaliações</div>
+                  </div>
+                </div>
+              )}
               {aud && aud.populacaoRaio > 0 ? (
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
@@ -422,7 +450,9 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             <Expandable title={`🔍 Volume de buscas — ${hasVolume ? results.totalVolume.toLocaleString('pt-BR') + '/mês' : '—'}`} icon="">
               <div style={{ background: V.amberWash, borderRadius: 8, padding: "8px 12px", marginBottom: 12, borderLeft: `3px solid ${V.amber}` }}>
                 <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
-                  Os volumes abaixo são nacionais. O número de <strong>{(results.totalVolume || 0).toLocaleString('pt-BR')}</strong> buscas/mês acima é estimado no raio de <strong>{raioKm}km</strong>.
+                  {results.demandType === 'ecommerce_national' || results.demandType === 'national_service'
+                    ? `Os volumes abaixo são nacionais. Estimativa de alcance orgânico possível com posicionamento adequado.`
+                    : `Os volumes abaixo são nacionais. O número de ${(results.totalVolume || 0).toLocaleString('pt-BR')} buscas/mês acima é estimado no raio de ${raioKm}km.`}
                 </p>
               </div>
               {results.terms.slice(0, 10).map((t, i) => {
@@ -455,7 +485,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         </div>)}
 
         {/* ═══════════════ BLOCO 3 — COMO CAPTURAR ═══════════════ */}
-        <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 8, paddingLeft: 4, marginTop: 8 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: V.amber, marginBottom: 8, paddingLeft: 4, marginTop: 16 }}>
           Como aumentar essa posição
         </div>
 

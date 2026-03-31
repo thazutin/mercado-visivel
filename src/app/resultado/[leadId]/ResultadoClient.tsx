@@ -60,19 +60,19 @@ export default function ResultadoClient({ product, region, leadId, results }: Pr
     }
   }, [searchParams, leadId, router]);
 
-  // Poll para saber quando o plano ficou pronto
+  // Poll para saber quando o plano ficou pronto (a cada 3s)
   useEffect(() => {
     if (!showPostPayment) return;
     const poll = setInterval(async () => {
       try {
         const res = await fetch(`/api/diagnose?leadId=${leadId}`);
         const data = await res.json();
-        if (data.planReady || data.plan_status === "ready") {
+        if (data.planReady || data.plan_status === "ready" || data.status === "done") {
           setPlanReady(true);
           clearInterval(poll);
         }
       } catch { /* ignora */ }
-    }, 10_000);
+    }, 3_000);
     const timeout = setTimeout(() => { clearInterval(poll); setShowPostPayment(false); }, 5 * 60_000);
     return () => { clearInterval(poll); clearTimeout(timeout); };
   }, [showPostPayment, leadId]);
