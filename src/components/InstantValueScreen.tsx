@@ -343,7 +343,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           <div style={{ background: V.cloud, borderRadius: 10, padding: "12px 16px", border: `1px solid ${V.fog}` }}>
             <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.6, textAlign: "center" }}>
               {isNacionalAny
-                ? `No mercado nacional de ${product}, centenas de ${isB2B ? 'empresas' : 'players'} competem pela mesma atenção. Os itens estruturantes mostram como aumentar essa posição.`
+                ? `No mercado nacional de ${product}, centenas de ${isB2B ? 'empresas' : 'players'} competem pela mesma atenção. Seu plano mostra como aumentar essa posição.`
                 : audienciaTotal > 0
                 ? `De ${audienciaTotal.toLocaleString('pt-BR')} ${isB2B ? 'empresas' : 'pessoas'} no seu mercado, você chega hoje a ${familiasAtual.toLocaleString('pt-BR')}. Com as ações certas, passa a ${familiasPotencial.toLocaleString('pt-BR')}.`
                 : `Você disputa ${results.influencePercent}% do seu mercado hoje. Com as ações certas, pode disputar mais.`}

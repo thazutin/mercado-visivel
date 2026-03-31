@@ -23,7 +23,7 @@ const V = {
 const processingMessages = [
   "Gerando diagnóstico completo por canal...",
   "Montando plano de ação prioritário...",
-  "Definindo itens estruturantes...",
+  "Montando as atividades do seu plano...",
   "Analisando sazonalidade do mercado...",
   "Gerando amostra de conteúdos...",
   "Finalizando seu plano de ação...",

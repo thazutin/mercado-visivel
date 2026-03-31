@@ -140,27 +140,26 @@ export async function POST(req: NextRequest) {
     try {
       await supabase.from("checklists").delete().eq("lead_id", leadId);
 
+      // Insert only columns known to exist in the checklists table
       const checklistRows = itensEstruturantes.items.map((item: ItensEstruturante, index: number) => ({
         lead_id: leadId,
         title: item.titulo || '',
         description: item.descricao || '',
-        action: item.acao || '',
-        verification: item.verificacao || '',
+        dimensao: item.dimensao || 'descoberta',
         impact: item.impacto || 'medio',
         deadline: item.prazo || 'este mes',
-        dimensao: item.dimensao || 'descoberta',
         order_index: index,
         completed: false,
         tipo: 'estruturante',
-        copy_pronto: item.copy_pronto || null,
       }));
 
+      console.log(`[PlanGen] Inserting ${checklistRows.length} checklists, sample:`, JSON.stringify(checklistRows[0]));
       const { error: checklistError } = await supabase.from("checklists").insert(checklistRows);
 
       if (checklistError) {
-        console.error('[PlanGen] Checklists insert erro:', checklistError.message);
+        console.error('[PlanGen] Checklists insert erro:', checklistError.message, checklistError.details, checklistError.hint);
       } else {
-        console.log(`[PlanGen] ${checklistRows.length} itens estruturantes salvos`);
+        console.log(`[PlanGen] ${checklistRows.length} atividades salvas no plano`);
       }
     } catch (err) {
       console.error('[PlanGen] Checklists falhou (non-fatal):', (err as Error).message);
@@ -470,9 +469,9 @@ JSON: {"changes":[{"direction":"neutral","description":"Ponto de partida."}],"we
     parsed = JSON.parse(text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim());
   } catch {
     parsed = {
-      changes: [{ direction: "neutral", description: "Diagnóstico concluído — seus itens estruturantes estão prontos." }],
+      changes: [{ direction: "neutral", description: "Diagnóstico concluído — seu plano está pronto." }],
       weeklyAction: firstAction,
-      narrative: `Seu diagnóstico de ${lead.product} em ${shortRegion} está pronto. Analisamos seu mercado, mapeamos a concorrência e identificamos os itens fundamentais que precisam estar no lugar. A cada semana você recebe um briefing com o que mudou e o que fazer. Comece agora pelo primeiro item estruturante.`,
+      narrative: `Seu diagnóstico de ${lead.product} em ${shortRegion} está pronto. Analisamos seu mercado, mapeamos a concorrência e montamos seu plano de ação. A cada semana você recebe um briefing com o que mudou e o que fazer. Comece agora pela primeira atividade.`,
     };
   }
 

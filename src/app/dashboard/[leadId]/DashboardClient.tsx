@@ -412,7 +412,7 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
       )}
       {items.length === 0 ? (
         <p style={{ fontSize: 13, color: V.ash, textAlign: "center", padding: "24px 0" }}>
-          Nenhum item estruturante gerado ainda.
+          Seu plano está sendo preparado...
         </p>
       ) : (
         <>
