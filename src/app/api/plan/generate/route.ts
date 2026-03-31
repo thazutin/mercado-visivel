@@ -140,7 +140,6 @@ export async function POST(req: NextRequest) {
     try {
       await supabase.from("checklists").delete().eq("lead_id", leadId);
 
-      // Insert only columns known to exist in the checklists table
       const checklistRows = itensEstruturantes.items.map((item: ItensEstruturante, index: number) => ({
         lead_id: leadId,
         title: item.titulo || '',
@@ -151,6 +150,7 @@ export async function POST(req: NextRequest) {
         order_index: index,
         completed: false,
         tipo: 'estruturante',
+        ...(item.copy_pronto ? { copy_pronto: item.copy_pronto } : {}),
       }));
 
       console.log(`[PlanGen] Inserting ${checklistRows.length} checklists, sample:`, JSON.stringify(checklistRows[0]));
@@ -326,12 +326,22 @@ interface ItensEstruturante {
   dimensao: string;
   titulo: string;
   descricao: string;
-  acao: string;
-  verificacao: string;
   impacto: string;
   prazo: string;
   concluido: boolean;
   copy_pronto?: string;
+  pilar?: string;
+}
+
+function extractJson(raw: string): any {
+  let text = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start >= 0 && end > start) text = text.slice(start, end + 1);
+  try { return JSON.parse(text); } catch {
+    const repaired = repairTruncatedJson(text);
+    return JSON.parse(repaired);
+  }
 }
 
 async function generateItensEstruturantes(
@@ -345,95 +355,81 @@ async function generateItensEstruturantes(
   const d2 = breakdown?.d2_credibilidade ?? breakdown?.d2_credibility ?? 0;
   const d3 = breakdown?.d3_presenca ?? breakdown?.d3_reach ?? 0;
   const d4 = breakdown?.d4_reputacao ?? 0;
-
   const dimensaoMaisFraca = Math.min(d1, d2, d3, d4) === d1 ? 'descoberta' :
-    Math.min(d1, d2, d3, d4) === d2 ? 'credibilidade' :
-    Math.min(d1, d2, d3, d4) === d3 ? 'presenca' : 'credibilidade';
+    Math.min(d1, d2, d3, d4) === d2 ? 'credibilidade' : 'presenca';
+  const contextoCompacto = context.slice(0, 500);
 
-  // Contexto ultra-compacto: max 300 chars
-  const contextoCompacto = context.slice(0, 300);
-
-  const prompt = `Gere exatamente 8 atividades de marketing local para este negócio.
-Retorne APENAS este JSON, sem texto antes ou depois, sem markdown:
-{"items":[{"id":"1","dimensao":"descoberta","titulo":"Titulo curto","descricao":"Uma frase curta.","impacto":"+2pts Descoberta","prazo":"Esta semana","concluido":false}],"summary":"Resumo"}
-Regras absolutas:
-- Exatamente 8 itens
-- descricao: maximo 120 caracteres, UMA frase, sem aspas internas
-- dimensao: apenas "descoberta", "credibilidade" ou "presenca"
-- impacto: maximo 20 caracteres
-- prazo: apenas "Esta semana", "Este mes" ou "Proximos 3 meses"
-- NENHUM outro campo alem dos listados acima
-- NENHUM campo "acao", "copy_pronto", "verificacao" ou qualquer outro
-- Sem quebras de linha dentro dos valores de string
-- Pilar mais fraco: ${dimensaoMaisFraca}
-Negocio: ${contextoCompacto}`;
-
-  console.log(`[PlanGen] Prompt length: ${prompt.length} chars`);
-
-  const response = await claude.messages.create({
+  // ── CHAMADA 1: Estrutura dos 15 itens ──────────────────────────────────
+  console.log('[PlanGen] Chamada 1: gerando estrutura de 15 itens...');
+  const t0 = Date.now();
+  const resEstrutura = await claude.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 2000,
+    max_tokens: 3000,
     temperature: 0.1,
-    system: 'Responda APENAS com JSON valido. Sem markdown, sem texto, sem explicacao. Apenas o objeto JSON.',
-    messages: [{ role: 'user', content: prompt }],
+    system: 'Responda APENAS com JSON válido. Sem texto antes ou depois.',
+    messages: [{ role: 'user', content: `Gere exatamente 15 atividades do basico bem feito para este negocio.
+Retorne APENAS este JSON:
+{"items":[{"id":"1","dimensao":"descoberta","titulo":"Titulo em ate 8 palavras","descricao":"Por que importa em 1 frase.","pilar":"Descoberta","impacto":"+3pts Descoberta","prazo":"Esta semana","concluida":false}]}
+Regras:
+- Exatamente 15 itens
+- dimensao: apenas "descoberta", "credibilidade" ou "presenca"
+- pilar: apenas "Descoberta", "Credibilidade" ou "Cultura"
+- descricao: 1 frase, max 100 caracteres, dados reais do negocio
+- impacto: max 20 caracteres
+- prazo: apenas "Esta semana", "Este mes" ou "Proximos 3 meses"
+- Ordene por impacto: item 1 = maior alavanca
+- Pilar mais fraco: ${dimensaoMaisFraca}
+Negocio: ${contextoCompacto}` }],
   });
 
-  const rawText = response.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
-  const stopReason = (response as any).stop_reason || 'unknown';
-  console.log(`[PlanGen] Haiku stop_reason=${stopReason}, chars=${rawText.length}`);
-  console.log(`[PlanGen] Haiku FULL response:\n${rawText}`);
+  const rawEstrutura = resEstrutura.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
+  console.log(`[PlanGen] Chamada 1 OK (${Date.now() - t0}ms, ${rawEstrutura.length} chars, stop=${(resEstrutura as any).stop_reason})`);
 
-  // Aggressive cleanup: remove markdown, control chars, BOM
-  let cleaned = rawText
-    .replace(/```json\s*/g, '').replace(/```\s*/g, '')
-    .replace(/^\s*\n/, '').trim();
-
-  // If response starts with text before JSON, extract the JSON part
-  const jsonStart = cleaned.indexOf('{');
-  const jsonEnd = cleaned.lastIndexOf('}');
-  if (jsonStart >= 0 && jsonEnd > jsonStart) {
-    cleaned = cleaned.slice(jsonStart, jsonEnd + 1);
-  }
-
-  console.log(`[PlanGen] Cleaned JSON (${cleaned.length} chars): ${cleaned.slice(0, 100)}...${cleaned.slice(-50)}`);
-
-  let parsed: { items: ItensEstruturante[]; summary: string };
+  let parsed: { items: ItensEstruturante[]; summary?: string };
   try {
-    parsed = JSON.parse(cleaned);
-  } catch (parseErr) {
-    console.warn('[PlanGen] JSON parse failed:', (parseErr as Error).message);
-    // Strategy 1: repair truncated JSON
-    try {
-      const repaired = repairTruncatedJson(rawText);
-      parsed = JSON.parse(repaired);
-      console.log('[PlanGen] JSON repair OK, items:', parsed?.items?.length);
-    } catch {
-      // Strategy 2: strip problematic fields (acao, copy_pronto, verificacao) that LLM adds despite instructions
-      console.warn('[PlanGen] Repair failed, trying field stripping...');
-      try {
-        const stripped = cleaned
-          .replace(/"acao"\s*:\s*"[^"]*(?:"|$)/g, '')
-          .replace(/"copy_pronto"\s*:\s*"[^"]*(?:"|$)/g, '')
-          .replace(/"verificacao"\s*:\s*"[^"]*(?:"|$)/g, '')
-          .replace(/,\s*,/g, ',')
-          .replace(/,\s*}/g, '}')
-          .replace(/{\s*,/g, '{');
-        const repairedStripped = repairTruncatedJson(stripped);
-        parsed = JSON.parse(repairedStripped);
-        console.log('[PlanGen] Field stripping + repair OK, items:', parsed?.items?.length);
-      } catch (e3) {
-        console.error('[PlanGen] All parse strategies failed:', (e3 as Error).message);
-        console.error('[PlanGen] Full cleaned text:\n', cleaned.slice(0, 2000));
-        throw new Error('Failed to parse itens estruturantes JSON');
-      }
-    }
+    parsed = extractJson(rawEstrutura);
+  } catch (err) {
+    console.error('[PlanGen] Chamada 1 parse falhou:', (err as Error).message, '\nRaw:', rawEstrutura.slice(0, 1000));
+    throw new Error('Failed to parse itens JSON');
   }
   if (!parsed?.items || parsed.items.length < 3) {
-    console.error(`[PlanGen] Itens insuficientes: ${parsed?.items?.length ?? 0}. Raw:`, rawText.slice(0, 500));
     throw new Error(`Itens insuficientes: ${parsed?.items?.length ?? 0}`);
   }
-  console.log(`[PlanGen] Itens estruturantes: ${parsed.items.length} itens gerados`);
-  return parsed;
+  console.log(`[PlanGen] Chamada 1: ${parsed.items.length} itens`);
+
+  // ── CHAMADA 2: Enriquecer com copy_pronto (batches de 5) ──────────────
+  const items = parsed.items;
+  const BATCH = 5;
+  for (let i = 0; i < items.length; i += BATCH) {
+    const batch = items.slice(i, i + BATCH);
+    try {
+      console.log(`[PlanGen] Copy batch ${i}-${i + batch.length}...`);
+      const resCopy = await claude.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1000,
+        temperature: 0.2,
+        system: 'Responda APENAS com JSON válido.',
+        messages: [{ role: 'user', content: `Para cada atividade, gere copy_pronto — o texto PRONTO para usar (nao instrucoes, o texto em si). Max 200 chars.
+Atividades:
+${batch.map(it => `${it.id}. ${it.titulo}: ${it.descricao}`).join('\n')}
+JSON: {"copies":[{"id":"1","copy_pronto":"texto pronto"}]}` }],
+      });
+      const copyRaw = resCopy.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
+      const copyParsed = extractJson(copyRaw);
+      for (const c of copyParsed.copies || []) {
+        const idx = items.findIndex(it => String(it.id) === String(c.id));
+        if (idx >= 0) items[idx].copy_pronto = c.copy_pronto;
+      }
+      console.log(`[PlanGen] Copy batch OK: ${(copyParsed.copies || []).length} copies`);
+    } catch (err) {
+      console.warn(`[PlanGen] Copy batch ${i} falhou (non-fatal):`, (err as Error).message);
+    }
+    if (i + BATCH < items.length) await new Promise(r => setTimeout(r, 1000));
+  }
+
+  const withCopy = items.filter(it => it.copy_pronto).length;
+  console.log(`[PlanGen] Total: ${items.length} itens, ${withCopy} com copy_pronto`);
+  return { items, summary: parsed.summary || '' };
 }
 
 // generateRelatorioSetorial importado de @/lib/pipeline/relatorio-setorial
