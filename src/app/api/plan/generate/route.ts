@@ -374,7 +374,8 @@ Negocio: ${contextoCompacto}`;
   const response = await claude.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 2000,
-    temperature: 0.2,
+    temperature: 0.1,
+    system: 'Responda APENAS com JSON valido. Sem markdown, sem texto, sem explicacao. Apenas o objeto JSON.',
     messages: [{ role: 'user', content: prompt }],
   });
 
@@ -383,7 +384,20 @@ Negocio: ${contextoCompacto}`;
   console.log(`[PlanGen] Haiku stop_reason=${stopReason}, chars=${rawText.length}`);
   console.log(`[PlanGen] Haiku FULL response:\n${rawText}`);
 
-  const cleaned = rawText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+  // Aggressive cleanup: remove markdown, control chars, BOM
+  let cleaned = rawText
+    .replace(/```json\s*/g, '').replace(/```\s*/g, '')
+    .replace(/^\s*\n/, '').trim();
+
+  // If response starts with text before JSON, extract the JSON part
+  const jsonStart = cleaned.indexOf('{');
+  const jsonEnd = cleaned.lastIndexOf('}');
+  if (jsonStart >= 0 && jsonEnd > jsonStart) {
+    cleaned = cleaned.slice(jsonStart, jsonEnd + 1);
+  }
+
+  console.log(`[PlanGen] Cleaned JSON (${cleaned.length} chars): ${cleaned.slice(0, 100)}...${cleaned.slice(-50)}`);
+
   let parsed: { items: ItensEstruturante[]; summary: string };
   try {
     parsed = JSON.parse(cleaned);
@@ -395,7 +409,7 @@ Negocio: ${contextoCompacto}`;
       console.log('[PlanGen] JSON repair OK, items:', parsed?.items?.length);
     } catch (e2) {
       console.error('[PlanGen] JSON repair also failed:', (e2 as Error).message);
-      console.error('[PlanGen] Cleaned text for debug:\n', cleaned.slice(0, 1000));
+      console.error('[PlanGen] Full cleaned text:\n', cleaned);
       throw new Error('Failed to parse itens estruturantes JSON');
     }
   }
