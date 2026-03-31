@@ -91,7 +91,10 @@ interface Results {
     geoAdjustedVolume: number;
     gapMensal?: number;
     buscasNoTarget?: number;
+    mercadoLabel?: string;
+    demandType?: string;
   } | null;
+  demandType?: string;
 }
 interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; leadId?: string; hideCTA?: boolean; hideWorkRoutes?: boolean; }
 
@@ -326,7 +329,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               </>
             )}
             <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.04em" }}>
-              {isNacionalAny ? 'Mercado nacional' : `Raio de ${raioKm}km · ${shortRegion}`}
+              {proj?.mercadoLabel || (isNacionalAny ? 'Mercado nacional' : `Raio de ${raioKm}km · ${shortRegion}`)}
             </div>
           </div>
           <div style={{ background: V.cloud, borderRadius: 10, padding: "12px 16px", border: `1px solid ${V.fog}` }}>
@@ -407,6 +410,11 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 </div>
               )}
               <p style={{ fontSize: 10, color: V.ash, margin: "10px 0 0", fontFamily: V.mono }}>Fonte: IBGE{aud.ibgeAno ? ` ${aud.ibgeAno}` : ''} · Estimativa Virô</p>
+              {(results.demandType === 'local_workers' || results.demandType === 'tourist_flow') && (
+                <div style={{ marginTop: 8, padding: "6px 10px", background: V.amberWash, borderRadius: 6, borderLeft: `3px solid ${V.amber}`, fontSize: 11, color: V.zinc, lineHeight: 1.5 }}>
+                  ℹ️ Os dados de população são do IBGE (residentes). Para {results.demandType === 'local_workers' ? 'negócios que atendem trabalhadores do bairro' : 'negócios com demanda turística'}, a demanda real vem principalmente de {results.demandType === 'local_workers' ? 'quem trabalha na região' : 'visitantes'} — uma estimativa mais precisa será integrada em breve.
+                </div>
+              )}
             </div>
           ) : (
             <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>Dados IBGE indisponíveis para este município.</p>

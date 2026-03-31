@@ -335,6 +335,7 @@ export async function runInstantAnalysis(
   // =========================================================================
   let step1: Step1Output;
   let inferredClientType: 'b2c' | 'b2b' | 'b2g' = (input.clientType as any) || 'b2c';
+  let inferredDemandType: string = 'local_residents';
   try {
     const step1Result = await executeStep1(input, claude, {
       model: "claude-sonnet-4-5-20250929",
@@ -342,9 +343,10 @@ export async function runInstantAnalysis(
     });
     step1 = step1Result;
     inferredClientType = step1Result.inferredClientType || 'b2c';
+    inferredDemandType = step1Result.inferredDemandType || 'local_residents';
     // Propagate inferred clientType to the input for downstream steps
     input.clientType = inferredClientType;
-    console.log(`[Pipeline] Step 1 OK: ${step1.termCount} terms generated, clientType=${inferredClientType}`);
+    console.log(`[Pipeline] Step 1 OK: ${step1.termCount} terms generated, clientType=${inferredClientType}, demandType=${inferredDemandType}`);
 
     // Fallback: if too few terms, supplement with a direct Claude query
     if (step1.termCount < 10) {
@@ -1261,21 +1263,52 @@ Responda APENAS em JSON, sem markdown:
     const clientesPotencial = Math.round(buscasNoRaio * taxaConversao * (influenciaMeta / 100));
     const clientesGap = clientesPotencial - clientesAtual;
 
-    // CAMADA 2 — Mercado alcançável (audiência física no raio)
-    // Para negócios nacionais, penaltyFactor reduz o mercado alcançável (não o score)
+    // CAMADA 2 — Mercado alcançável (ajustado por demandType)
     let penaltyFactor = 1;
     if (isNacional && benchmarkComp) {
       penaltyFactor = Math.max(0.15, Math.min(0.7, 10 / Math.sqrt(benchmarkComp)));
-      console.log(`[Pipeline] Nacional penaltyFactor=${(penaltyFactor * 100).toFixed(0)}% aplicado na projeção (${benchmarkComp} competidores)`);
+      console.log(`[Pipeline] Nacional penaltyFactor=${(penaltyFactor * 100).toFixed(0)}% (${benchmarkComp} competidores)`);
     }
-    const familiasAtual = Math.round(audienciaTarget * (influencePercent / 100) * penaltyFactor);
-    const familiasPotencial = Math.round(audienciaTarget * (influenciaMeta / 100) * penaltyFactor);
+
+    let mercadoBase: number;
+    let mercadoLabel: string;
+    const raioKmProj = est.raioKm || 3;
+    switch (inferredDemandType) {
+      case 'ecommerce_national':
+      case 'national_service':
+        mercadoBase = totalVolume;
+        mercadoLabel = 'buscas/mês no Brasil';
+        break;
+      case 'tourist_flow':
+        mercadoBase = Math.round((audienciaResult.target?.audienciaTarget || audienciaTarget) * 2);
+        mercadoLabel = `visitantes estimados · raio ${raioKmProj}km`;
+        break;
+      case 'local_workers':
+        mercadoBase = Math.round((audienciaResult.target?.audienciaTarget || audienciaTarget) * 0.6);
+        mercadoLabel = `trabalhadores no raio · ${raioKmProj}km`;
+        break;
+      default:
+        mercadoBase = audienciaTarget;
+        mercadoLabel = `pessoas no raio · ${raioKmProj}km`;
+        break;
+    }
+    console.log(`[Pipeline] demandType=${inferredDemandType}, mercadoBase=${mercadoBase} (${mercadoLabel})`);
+
+    const familiasAtual = Math.round(mercadoBase * (influencePercent / 100) * penaltyFactor);
+    const familiasPotencial = Math.round(mercadoBase * (influenciaMeta / 100) * penaltyFactor);
     let familiasGap = familiasPotencial - familiasAtual;
-    // Fallback: se gap <= 0, garantir mínimo 10% de oportunidade
-    if (familiasGap <= 0 && audienciaTarget > 0) {
-      familiasGap = Math.max(1, Math.round(audienciaTarget * 0.10 * penaltyFactor));
+
+    // Cap para nacionais: max 30% do mercado como gap
+    if (inferredDemandType === 'ecommerce_national' || inferredDemandType === 'national_service') {
+      const gapCap = Math.round(totalVolume * 0.30);
+      familiasGap = Math.min(familiasGap, gapCap);
     }
-    console.log(`[Pipeline] Famílias: atual=${familiasAtual} meta=${familiasPotencial} gap=${familiasGap} (audiencia=${audienciaTarget}, score=${influencePercent}→${influenciaMeta}, penalty=${penaltyFactor})`);
+
+    // Fallback: se gap <= 0, garantir mínimo 10% de oportunidade
+    if (familiasGap <= 0 && mercadoBase > 0) {
+      familiasGap = Math.max(1, Math.round(mercadoBase * 0.10 * penaltyFactor));
+    }
+    console.log(`[Pipeline] Famílias: atual=${familiasAtual} meta=${familiasPotencial} gap=${familiasGap} (mercado=${mercadoBase}, score=${influencePercent}→${influenciaMeta}, penalty=${penaltyFactor})`);
 
     // CAMADA 3 — Risco competitivo (comparação com líder)
     const mapsCompetitors = step4.influence?.rawGoogle?.mapsPresence?.mapsCompetitors || [];
@@ -1336,6 +1369,10 @@ Responda APENAS em JSON, sem markdown:
       // Compat
       gapMensal: gapCaptura,
       buscasNoTarget: buscasNoRaio,
+      // Mercado
+      mercadoBase,
+      mercadoLabel,
+      demandType: inferredDemandType,
     };
 
     console.log(`[Pipeline] Projeção 3 camadas: captura=+R$${gapCaptura}(+${clientesGap} clientes) | famílias=+${familiasGap} | líder=${posicaoLider ? posicaoLider+'%' : 'N/A'}`);
@@ -1373,6 +1410,7 @@ Responda APENAS em JSON, sem markdown:
     audiencia: audienciaDisplay,
     competitionIndex: competitionIndex || null,
     clientType: inferredClientType,
+    demandType: inferredDemandType,
     pncp: pncpData,
     aiVisibility: aiVisibility ? {
       score: aiVisibility.score,

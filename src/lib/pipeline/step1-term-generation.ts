@@ -55,9 +55,17 @@ DISTRIBUIÇÃO:
 - INFORMACIONAIS (2-3): aprendendo
 - TENSÃO (2-3): insatisfação/reclamação
 
+CLASSIFICAÇÃO demandType (de onde vem a demanda):
+- "local_residents": serve moradores do bairro (escola, academia, salão, clínica)
+- "local_workers": serve quem trabalha no bairro (restaurante comercial, estacionamento)
+- "tourist_flow": demanda de turistas/visitantes (hotel, pousada, atração turística)
+- "ecommerce_national": vende online para todo o Brasil sem loja física (loja virtual, SaaS)
+- "national_service": presta serviço nacional sem presença física local (consultoria, agência)
+
 FORMATO (JSON estrito, sem markdown):
 {
   "clientType": "b2c",
+  "demandType": "local_residents",
   "terms": [
     { "term": "botox preço perto de mim", "intent": "transactional", "category": "core", "rationale": "Alta intenção + preço + proximidade" }
   ]
@@ -67,11 +75,14 @@ Categories: "core", "branded", "comparative", "tension"
 Gere APENAS o JSON.`;
 }
 
-export function parseTermGenerationResponse(rawResponse: string): { terms: GeneratedTerm[]; clientType: 'b2c' | 'b2b' | 'b2g' } {
+export type DemandType = 'local_residents' | 'local_workers' | 'tourist_flow' | 'ecommerce_national' | 'national_service';
+
+export function parseTermGenerationResponse(rawResponse: string): { terms: GeneratedTerm[]; clientType: 'b2c' | 'b2b' | 'b2g'; demandType: DemandType } {
   const cleaned = rawResponse.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
 
   let parsed: {
     clientType?: 'b2c' | 'b2b' | 'b2g';
+    demandType?: DemandType;
     terms: Array<{
       term: string; intent: TermIntent;
       category: 'core' | 'branded' | 'comparative' | 'tension';
@@ -90,6 +101,8 @@ export function parseTermGenerationResponse(rawResponse: string): { terms: Gener
   }
 
   const clientType = parsed.clientType === 'b2b' ? 'b2b' : parsed.clientType === 'b2g' ? 'b2g' : 'b2c';
+  const validDemandTypes: DemandType[] = ['local_residents', 'local_workers', 'tourist_flow', 'ecommerce_national', 'national_service'];
+  const demandType: DemandType = validDemandTypes.includes(parsed.demandType as DemandType) ? parsed.demandType as DemandType : 'local_residents';
 
   const terms = parsed.terms.map(t => ({
     term: t.term.toLowerCase().trim(),
@@ -99,7 +112,7 @@ export function parseTermGenerationResponse(rawResponse: string): { terms: Gener
     rationale: t.rationale,
   }));
 
-  return { terms, clientType };
+  return { terms, clientType, demandType };
 }
 
 export function validateTerms(terms: GeneratedTerm[]): { valid: boolean; issues: string[] } {
@@ -117,7 +130,7 @@ export async function executeStep1(
   input: FormInput,
   claudeClient: { createMessage: (params: any) => Promise<any> },
   options?: { model?: string; maxRetries?: number }
-): Promise<Step1Output & { inferredClientType: 'b2c' | 'b2b' | 'b2g' }> {
+): Promise<Step1Output & { inferredClientType: 'b2c' | 'b2b' | 'b2g'; inferredDemandType: DemandType }> {
   const startTime = Date.now();
   const model = options?.model ?? 'claude-sonnet-4-5-20250929';
   const maxRetries = options?.maxRetries ?? 2;
@@ -125,6 +138,7 @@ export async function executeStep1(
   const prompt = buildTermGenerationPrompt(input);
   let terms: GeneratedTerm[] = [];
   let inferredClientType: 'b2c' | 'b2b' | 'b2g' = 'b2c';
+  let inferredDemandType: DemandType = 'local_residents';
   let attempts = 0;
 
   while (attempts <= maxRetries) {
@@ -142,7 +156,8 @@ export async function executeStep1(
       const result = parseTermGenerationResponse(text);
       terms = result.terms;
       inferredClientType = result.clientType;
-      console.log(`[Step1] Inferred clientType: ${inferredClientType}`);
+      inferredDemandType = result.demandType;
+      console.log(`[Step1] Inferred clientType: ${inferredClientType}, demandType: ${inferredDemandType}`);
 
       const validation = validateTerms(terms);
       if (validation.valid) break;
@@ -163,5 +178,6 @@ export async function executeStep1(
     promptVersion: TERM_GEN_PROMPT_VERSION,
     processingTimeMs: Date.now() - startTime,
     inferredClientType,
+    inferredDemandType,
   };
 }
