@@ -1,0 +1,45 @@
+{
+  "version": "2026-03-30",
+  "description": "Regras de terminologia e voz do Nelson. Atualizar sempre que houver decisão de mudança de copy.",
+  "forbidden": [
+    { "term": "itens estruturantes", "replace": "o básico bem feito", "context": "nome do plano de ação" },
+    { "term": "item estruturante", "replace": "atividade", "context": "item individual do plano" },
+    { "term": "diagnóstico completo", "replace": "diagnóstico", "context": "nome da seção no dashboard" },
+    { "term": "influência digital", "replace": "posição competitiva", "context": "nome do score" },
+    { "term": "Influência Digital", "replace": "Posição Competitiva", "context": "nome do score capitalizado" },
+    { "term": "desbloquear", "replace": "gerar", "context": "CTA de pagamento" },
+    { "term": "plano de 90 dias", "replace": "", "context": "removido do produto" },
+    { "term": "checklist", "replace": "plano de ação", "context": "nome do entregável" },
+    { "term": "escala 0 a 100", "replace": "", "context": "removido — barra comunica sozinha" },
+    { "term": "ROI", "replace": "", "context": "jargão proibido na voz do Nelson" },
+    { "term": "KPI", "replace": "", "context": "jargão proibido na voz do Nelson" },
+    { "term": "engajamento", "replace": "", "context": "jargão proibido na voz do Nelson" },
+    { "term": "stakeholder", "replace": "", "context": "jargão proibido na voz do Nelson" },
+    { "term": "estratégia omnichannel", "replace": "", "context": "jargão proibido" },
+    { "term": "Desbloquear diagnóstico", "replace": "Gerar meu plano de ação", "context": "CTA principal" },
+    { "term": "90 dias", "replace": "", "context": "removido do produto" },
+    { "term": "Ver plano personalizado", "replace": "Gerar meu plano de ação", "context": "CTA" }
+  ],
+  "required_patterns": [
+    { "pattern": "Gerar meu plano de ação", "context": "CTA principal de conversão" },
+    { "pattern": "o básico bem feito", "context": "conceito central do plano" },
+    { "pattern": "posição competitiva", "context": "nome do score principal" }
+  ],
+  "voice_rules": [
+    "Sem jargão de marketing — fala como um contador experiente, não como consultor",
+    "Números reais sempre — nunca genérico ou estimado sem fonte",
+    "Direto ao ponto — sem ansiedade explicativa",
+    "Voz do Nelson: concisa, honesta, acionável",
+    "Sem artigo antes de Virô — sempre 'Virô', nunca 'a Virô'",
+    "CTAs em primeira pessoa — 'Gerar meu plano', não 'Gerar o plano'"
+  ],
+  "files_to_check": [
+    "src/components/InstantValueScreen.tsx",
+    "src/app/resultado/[leadId]/ResultadoClient.tsx",
+    "src/app/dashboard/[leadId]/DashboardClient.tsx",
+    "src/app/page.tsx",
+    "src/lib/notify.ts",
+    "src/app/api/plan/generate/route.ts",
+    "src/lib/generateContents.ts"
+  ]
+}
