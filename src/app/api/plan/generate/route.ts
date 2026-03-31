@@ -142,13 +142,13 @@ export async function POST(req: NextRequest) {
 
       const checklistRows = itensEstruturantes.items.map((item: ItensEstruturante, index: number) => ({
         lead_id: leadId,
-        title: item.titulo,
-        description: item.descricao,
-        action: item.acao,
-        verification: item.verificacao,
-        impact: item.impacto,
-        deadline: item.prazo,
-        dimensao: item.dimensao,
+        title: item.titulo || '',
+        description: item.descricao || '',
+        action: item.acao || '',
+        verification: item.verificacao || '',
+        impact: item.impacto || 'medio',
+        deadline: item.prazo || 'este mes',
+        dimensao: item.dimensao || 'descoberta',
         order_index: index,
         completed: false,
         tipo: 'estruturante',
@@ -356,37 +356,22 @@ async function generateItensEstruturantes(
     `${i + 1}. [${l.dimension}] ${l.action} (+${l.impact}pts) | atual: ${l.currentValue || 'N/A'} → meta: ${l.targetValue || 'N/A'}`
   ).join('\n');
 
-  const prompt = `Você é um especialista em marketing local para pequenos negócios brasileiros.
-Gere exatamente 10 atividades do "básico bem feito" para este negócio específico.
+  const prompt = `Gere 8 atividades do básico bem feito para este negócio.
 
-Conceito: atividades fundamentais que precisam estar no lugar para os indicadores de posição competitiva avançarem. Não são estratégias avançadas — são o básico que a maioria dos negócios locais ainda não fez direito.
+${context}
 
-Diagnóstico: ${context}
-Pilar mais fraco: ${dimensaoMaisFraca}
-Alavancas: ${leversText}
+Pilar fraco: ${dimensaoMaisFraca}
 
-Para cada atividade:
-- titulo: ação clara em até 8 palavras
-- descricao: POR QUE isso importa para este negócio (1-2 frases com dados reais)
-- acao: passo a passo específico (2-3 linhas)
-- copy_pronto: texto de até 80 caracteres para copiar e usar diretamente. NÃO use numeração, NÃO use passos, NÃO use instruções. É o texto em si (ex: descrição do GMB, resposta de avaliação, bio). Máximo absoluto: 80 chars. null se não aplicável
-- dimensao: "descoberta" | "credibilidade" | "presenca" | "reputacao"
-- impacto: "alto" | "medio" | "baixo"
-- prazo: "esta semana" | "este mês" | "próximos 3 meses"
-- verificacao: como confirmar que está feito
+JSON com 8 itens, cada um com: id (string curta), dimensao (descoberta|credibilidade|presenca|reputacao), titulo (max 8 palavras), descricao (1 frase curta), impacto (alto|medio|baixo), prazo (esta semana|este mes|proximo mes), concluido (false).
 
-Regras:
-- Use os dados reais do diagnóstico (avaliações, fotos, seguidores, buscas)
-- Ordene por impacto: atividade 1 = maior alavanca agora
-- Pelo menos 5 atividades com copy_pronto real e específico
-- Sem jargão — linguagem que um dono de negócio entende
+Exemplo:
+{"items":[{"id":"gmb","dimensao":"descoberta","titulo":"Completar perfil Google Maps","descricao":"Negocio sem fotos nem horario no Maps.","impacto":"alto","prazo":"esta semana","concluido":false}],"summary":"Frase resumo"}
 
-JSON apenas:
-{"items":[{"id":"ex","dimensao":"descoberta","titulo":"...","descricao":"...","acao":"...","copy_pronto":"...ou null","verificacao":"...","impacto":"alto","prazo":"esta semana","concluido":false}],"summary":"1 frase"}`;
+Retorne APENAS o JSON. Sem markdown. Sem explicacao.`;
 
   const response = await claude.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 6000,
+    max_tokens: 3000,
     temperature: 0.2,
     messages: [{ role: 'user', content: prompt }],
   });
