@@ -84,17 +84,18 @@ export async function POST(req: NextRequest) {
     const levers = breakdown?.levers || [];
     const shortRegionGen = (lead.region || '').split(',')[0].trim();
 
-    // 3. PARALELO: Itens + Relatório + Macro (não dependem um do outro)
-    console.log(`[PlanGen] Iniciando geração paralela para lead ${leadId}...`);
+    // 3. ESCALONADO: Itens → (2s) → Relatório → (2s) → Macro (evita rate limit)
+    const stagger = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
+    console.log(`[PlanGen] Iniciando geração escalonada para lead ${leadId}...`);
     const [itensResult, relatorioResult, macroResult] = await Promise.allSettled([
       generateItensEstruturantes(claude, context, levers, breakdown, lead.client_type || 'b2c'),
-      generateRelatorioSetorial(lead.product, lead.region, lead.client_type || 'b2c'),
-      claude.messages.create({
+      stagger(2000).then(() => generateRelatorioSetorial(lead.product, lead.region, lead.client_type || 'b2c')),
+      stagger(4000).then(() => claude.messages.create({
         model: 'claude-haiku-4-5-20251001', max_tokens: 600, temperature: 0.3,
         messages: [{ role: 'user', content: `Em 3-4 frases diretas, descreva o cenário atual do mercado de "${lead.product}" em ${shortRegionGen}. Inclua: tendências recentes, nível de digitalização do setor, e 1 oportunidade específica. Sem jargão. JSON: {"summary":"...","indicators":[],"outlook":"neutral","key_opportunity":"..."}` }],
-      }),
+      })),
     ]);
-    console.log(`[PlanGen] Paralelo concluído em ${Date.now() - t0}ms`);
+    console.log(`[PlanGen] Escalonado concluído em ${Date.now() - t0}ms`);
 
     // Extrair resultados
     const itensEstruturantes = itensResult.status === 'fulfilled' ? itensResult.value
@@ -356,7 +357,7 @@ async function generateItensEstruturantes(
   ).join('\n');
 
   const prompt = `Você é um especialista em marketing local para pequenos negócios brasileiros.
-Gere 15-20 atividades do "básico bem feito" para este negócio específico.
+Gere exatamente 10 atividades do "básico bem feito" para este negócio específico.
 
 Conceito: atividades fundamentais que precisam estar no lugar para os indicadores de posição competitiva avançarem. Não são estratégias avançadas — são o básico que a maioria dos negócios locais ainda não fez direito.
 
@@ -368,7 +369,7 @@ Para cada atividade:
 - titulo: ação clara em até 8 palavras
 - descricao: POR QUE isso importa para este negócio (1-2 frases com dados reais)
 - acao: passo a passo específico (2-3 linhas)
-- copy_pronto: máximo 150 caracteres. Texto direto, sem numeração, sem passos — apenas o texto pronto para copiar. null se não aplicável
+- copy_pronto: texto de até 80 caracteres para copiar e usar diretamente. NÃO use numeração, NÃO use passos, NÃO use instruções. É o texto em si (ex: descrição do GMB, resposta de avaliação, bio). Máximo absoluto: 80 chars. null se não aplicável
 - dimensao: "descoberta" | "credibilidade" | "presenca" | "reputacao"
 - impacto: "alto" | "medio" | "baixo"
 - prazo: "esta semana" | "este mês" | "próximos 3 meses"
@@ -385,7 +386,7 @@ JSON apenas:
 
   const response = await claude.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 4000,
+    max_tokens: 6000,
     temperature: 0.2,
     messages: [{ role: 'user', content: prompt }],
   });

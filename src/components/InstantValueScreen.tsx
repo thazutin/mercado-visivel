@@ -481,7 +481,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         {!hideCTA && (
           <div style={{ background: V.night, borderRadius: 12, padding: "20px 16px", marginTop: 12, color: V.white, textAlign: "center" }}>
             <p style={{ fontSize: 13, color: V.mist, margin: "0 0 12px", lineHeight: 1.5 }}>
-              Seu plano completo tem 15-20 ações específicas para <strong style={{ color: V.white }}>{product}</strong> — na ordem certa, com texto pronto para usar.
+              Seu plano completo tem 10 ações específicas para <strong style={{ color: V.white }}>{product}</strong> — na ordem certa, com texto pronto para usar.
             </p>
             <div style={{ fontFamily: V.display, fontSize: 24, fontWeight: 700, margin: "0 0 12px" }}>R$ 497</div>
             <div style={{ display: "flex", gap: 8, marginBottom: 12, justifyContent: "center" }}>
