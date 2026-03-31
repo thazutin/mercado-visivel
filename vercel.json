@@ -22,7 +22,7 @@
     },
     {
       "path": "/api/agents/content",
-      "schedule": "0 11 1-7,15-21 * 1"
+      "schedule": "0 11 * * 1"
     }
   ],
   "functions": {
