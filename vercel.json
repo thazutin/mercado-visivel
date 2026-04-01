@@ -44,6 +44,9 @@
     },
     "src/app/api/agents/qa/route.ts": {
       "maxDuration": 300
+    },
+    "src/app/api/admin/reprocess/route.ts": {
+      "maxDuration": 180
     }
   }
 }
