@@ -174,7 +174,6 @@ export default function InstantValueScreen({ product, region, results, onCheckou
   const [show, setShow] = useState(false);
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
-  const [porQueAberto, setPorQueAberto] = useState(false);
   useEffect(() => { setTimeout(() => setShow(true), 100); }, []);
 
   const termCount = results.termGeneration?.count || results.terms.length;
@@ -357,136 +356,51 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           </div>
         </div>
 
-        {/* ═══════════════ BOTÃO TOGGLE ═══════════════ */}
-        <button onClick={() => setPorQueAberto(!porQueAberto)} style={{
-          width: "100%", padding: "14px 16px", borderRadius: 10,
-          border: "1px solid #C8922A",
-          background: porQueAberto ? "rgba(207,133,35,0.12)" : V.amberWash,
-          cursor: "pointer", fontSize: 13, fontWeight: 600,
-          color: V.amber, marginBottom: 16, textAlign: "center",
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-          transition: "background 0.15s ease",
-        }}>
-          <span>Por que identificamos essa oportunidade</span>
-          <span style={{ display: "inline-block", transition: "transform 0.3s ease", transform: porQueAberto ? "rotate(180deg)" : "rotate(0deg)", fontSize: 12 }}>▼</span>
-        </button>
-
-        {/* ═══════════════ BLOCO 2 — POR QUE (expansível) ═══════════════ */}
-        {porQueAberto && (<div style={{ marginBottom: 16 }}>
-          {/* 2A — Score + pilares */}
-          <div style={{ background: V.night, borderRadius: 12, padding: "20px 18px", textAlign: "center", marginBottom: 12 }}>
-            <div style={{ fontFamily: V.display, fontSize: "clamp(36px, 8vw, 52px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 1, color: results.influencePercent < 20 ? V.amberSoft : V.teal }}>
-              {results.influencePercent || 0}
+        {/* ═══════════════ BLOCO 2 — RÉGUA VOCÊ ESTÁ AQUI ═══════════════ */}
+        {!nenhumEncontrado && (
+          <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "20px 18px", marginBottom: 16 }}>
+            <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 14, textAlign: "center" }}>
+              Sua posição digital
             </div>
-            <p style={{ fontSize: 12, color: V.mist, margin: "8px 0 12px" }}>sua posição hoje · meta: 100</p>
-            <div style={{ height: 6, background: V.graphite, borderRadius: 3, overflow: "hidden" }}>
-              <div style={{ height: "100%", background: V.teal, borderRadius: 3, width: `${results.influencePercent || 0}%`, transition: "width 0.6s ease" }} />
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
-              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.mist }}>Posição atual</span>
-              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>Meta: 100</span>
-            </div>
+            {(() => {
+              const atual = results.influencePercent || 0;
+              const potencial = Math.min(atual + 35, 85);
+              return (
+                <div style={{ position: "relative", padding: "0 8px" }}>
+                  {/* Régua */}
+                  <div style={{ position: "relative", height: 8, background: V.fog, borderRadius: 4, overflow: "visible" }}>
+                    {/* Faixa preenchida até potencial */}
+                    <div style={{ position: "absolute", left: 0, top: 0, height: "100%", borderRadius: 4, background: `linear-gradient(90deg, ${V.teal} ${(atual / potencial) * 100}%, ${V.amberSoft} 100%)`, width: `${potencial}%`, transition: "width 0.8s ease" }} />
+                    {/* Marcador atual */}
+                    <div style={{ position: "absolute", left: `${atual}%`, top: -6, transform: "translateX(-50%)", width: 20, height: 20, borderRadius: "50%", background: V.teal, border: `3px solid ${V.white}`, boxShadow: "0 1px 4px rgba(0,0,0,0.15)", zIndex: 2 }} />
+                    {/* Marcador potencial */}
+                    <div style={{ position: "absolute", left: `${potencial}%`, top: -4, transform: "translateX(-50%)", width: 16, height: 16, borderRadius: "50%", background: V.white, border: `2px dashed ${V.amber}`, zIndex: 1 }} />
+                  </div>
+                  {/* Labels */}
+                  <div style={{ position: "relative", marginTop: 14 }}>
+                    <div style={{ position: "absolute", left: `${atual}%`, transform: "translateX(-50%)", textAlign: "center" }}>
+                      <div style={{ fontFamily: V.display, fontSize: 18, fontWeight: 800, color: V.teal, lineHeight: 1 }}>{atual}</div>
+                      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, marginTop: 2, whiteSpace: "nowrap" }}>Você hoje</div>
+                    </div>
+                    <div style={{ position: "absolute", left: `${potencial}%`, transform: "translateX(-50%)", textAlign: "center" }}>
+                      <div style={{ fontFamily: V.display, fontSize: 18, fontWeight: 800, color: V.amber, lineHeight: 1 }}>{potencial}</div>
+                      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, marginTop: 2, whiteSpace: "nowrap" }}>Potencial</div>
+                    </div>
+                  </div>
+                  {/* Escala 0 e 100 */}
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 36 }}>
+                    <span style={{ fontFamily: V.mono, fontSize: 9, color: V.mist }}>0</span>
+                    <span style={{ fontFamily: V.mono, fontSize: 9, color: V.mist }}>100</span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
-          {pilarCards.map((p, i) => (
-            <div key={i} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "12px 14px", marginBottom: 8 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{p.icon} {p.label}</span>
-                <span style={{ fontSize: 16, fontWeight: 800, color: p.color }}>{p.score}</span>
-              </div>
-              <div style={{ height: 4, background: V.fog, borderRadius: 2, overflow: "hidden", marginBottom: 4 }}>
-                <div style={{ height: "100%", background: p.color, borderRadius: 2, width: `${p.score}%`, transition: "width 0.6s ease" }} />
-              </div>
-              <div style={{ fontSize: 11, color: V.ash }}>{p.detail}</div>
-            </div>
-          ))}
+        )}
 
-          {/* 2B — Accordions de dados */}
-          <div style={{ marginTop: 12 }}>
-            <Expandable title={`👥 Tamanho da audiência — ${hasAudiencia ? fmtPop(aud!.audienciaTarget) : '—'}`} icon="">
-              {/* Maps business thumbnail */}
-              {results.maps?.found && (
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${V.fog}` }}>
-                  {(results.maps as any)?.photoReference ? (
-                    <img src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=96&photo_reference=${(results.maps as any).photoReference}&key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY || ''}`}
-                      alt="" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover" }} />
-                  ) : (
-                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: V.teal, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <span style={{ color: "white", fontWeight: 700, fontSize: 18 }}>{(product || "N")[0].toUpperCase()}</span>
-                    </div>
-                  )}
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{product}</div>
-                    <div style={{ fontSize: 11, color: V.ash }}>★ {results.maps.rating} · {results.maps.reviewCount} avaliações</div>
-                  </div>
-                </div>
-              )}
-              {aud && aud.populacaoRaio > 0 ? (
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
-                    <span style={{ fontSize: 12, color: V.zinc }}>População no raio</span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{fmtPop(aud.populacaoRaio)} {audienciaUnit}{aud.raioKm && aud.densidade !== "nacional" ? ` em ${aud.raioKm}km` : ''}</span>
-                  </div>
-                  {aud.targetProfile && (
-                    <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
-                      <span style={{ fontSize: 12, color: V.zinc }}>{isB2B ? 'Empresa-alvo' : 'Perfil target'}</span>
-                      <span style={{ fontSize: 12, fontWeight: 500, color: V.night, textAlign: "right", maxWidth: "60%" }}>{aud.targetProfile}</span>
-                    </div>
-                  )}
-                  {aud.audienciaTarget > 0 && (
-                    <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0" }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Audiência estimada</span>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: V.teal }}>~{fmtPop(aud.audienciaTarget)} {audienciaUnit}</span>
-                    </div>
-                  )}
-                  {(results.demandType === 'local_workers' || results.demandType === 'tourist_flow') && (
-                    <div style={{ marginTop: 8, padding: "6px 10px", background: V.amberWash, borderRadius: 6, borderLeft: `3px solid ${V.amber}`, fontSize: 11, color: V.zinc, lineHeight: 1.5 }}>
-                      ℹ️ Dados de população são do IBGE (residentes). Para {results.demandType === 'local_workers' ? 'negócios que atendem trabalhadores' : 'negócios com demanda turística'}, a demanda real vem de {results.demandType === 'local_workers' ? 'quem trabalha na região' : 'visitantes'}.
-                    </div>
-                  )}
-                  <p style={{ fontSize: 10, color: V.ash, margin: "10px 0 0", fontFamily: V.mono }}>Fonte: IBGE{aud.ibgeAno ? ` ${aud.ibgeAno}` : ''} · Estimativa Virô</p>
-                </div>
-              ) : <p style={{ fontSize: 12, color: V.ash, margin: 0 }}>Dados indisponíveis.</p>}
-            </Expandable>
-            <Expandable title={`🔍 Volume de buscas — ${hasVolume ? results.totalVolume.toLocaleString('pt-BR') + '/mês' : '—'}`} icon="">
-              <div style={{ background: V.amberWash, borderRadius: 8, padding: "8px 12px", marginBottom: 12, borderLeft: `3px solid ${V.amber}` }}>
-                <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
-                  {results.demandType === 'ecommerce_national' || results.demandType === 'national_service'
-                    ? `Os volumes abaixo são nacionais. Estimativa de alcance orgânico possível com posicionamento adequado.`
-                    : `Os volumes abaixo são nacionais. O número de ${(results.totalVolume || 0).toLocaleString('pt-BR')} buscas/mês acima é estimado no raio de ${raioKm}km.`}
-                </p>
-              </div>
-              {results.terms.slice(0, 10).map((t, i) => {
-                const intent = inferIntent(t.term, isB2B);
-                return (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: i < 9 ? `1px solid ${V.fog}` : "none", fontSize: 12 }}>
-                    <span style={{ color: V.night, flex: 1 }}>{t.term}</span>
-                    <span style={{ fontFamily: V.mono, fontSize: 11, color: V.ash, width: 50, textAlign: "right" }}>{t.volume > 0 ? t.volume.toLocaleString("pt-BR") : "—"}</span>
-                  </div>
-                );
-              })}
-            </Expandable>
-            <Expandable title={`🏪 Concorrência — ${hasCi ? ci!.activeCompetitors + ' negócios' : '—'}`} icon="">
-              {hasCi ? (
-                <div>
-                  <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px" }}>{ci!.activeCompetitors} negócio{ci!.activeCompetitors !== 1 ? 's' : ''} disputando atenção com você.</p>
-                  {ci!.competitors.filter(c => c.hasWebsite || c.hasInstagram).slice(0, 6).map((c, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0", fontSize: 12, color: V.zinc, borderBottom: `1px solid ${V.fog}` }}>
-                      <span style={{ flex: 1 }}>{c.name}</span>
-                      {c.rating && <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>★{c.rating}</span>}
-                    </div>
-                  ))}
-                  <div style={{ marginTop: 8, padding: "6px 10px", background: ci!.color === 'green' ? V.tealWash : ci!.color === 'yellow' ? V.amberWash : V.coralWash, borderRadius: 6, textAlign: "center" }}>
-                    <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 600, color: ci!.color === 'green' ? V.teal : ci!.color === 'yellow' ? V.amber : V.coral }}>{ci!.labelText}</span>
-                  </div>
-                </div>
-              ) : <p style={{ fontSize: 12, color: V.ash, margin: 0 }}>Dados indisponíveis.</p>}
-            </Expandable>
-          </div>
-        </div>)}
-
-        {/* ═══════════════ BLOCO 3 — COMO CAPTURAR ═══════════════ */}
-        <div style={{ fontSize: 13, fontWeight: 600, color: V.amber, marginBottom: 8, paddingLeft: 4, marginTop: 16 }}>
-          Como aumentar essa posição
+        {/* ═══════════════ BLOCO 3 — COMO CHEGAR LÁ ═══════════════ */}
+        <div style={{ fontSize: 13, fontWeight: 600, color: V.amber, marginBottom: 8, paddingLeft: 4, marginTop: 8 }}>
+          Como chegar lá
         </div>
 
         <div style={{ fontSize: 11, color: V.ash, marginBottom: 12, paddingLeft: 4, lineHeight: 1.5 }}>
@@ -506,6 +420,120 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             </div>
           );
         })}
+
+        {/* ═══════════════ BLOCO 4 — POR QUE ACREDITAMOS ═══════════════ */}
+        <div style={{ fontSize: 13, fontWeight: 600, color: V.amber, marginBottom: 8, paddingLeft: 4, marginTop: 16 }}>
+          Por que acreditamos nessa oportunidade
+        </div>
+
+        {/* Accordion 1 — Tamanho do mercado */}
+        <Expandable title={`👥 Tamanho do mercado potencial — ${hasAudiencia ? fmtPop(aud!.audienciaTarget) + ' ' + audienciaUnit : '—'}`} icon="">
+          {results.maps?.found && (
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${V.fog}` }}>
+              <div style={{ width: 48, height: 48, borderRadius: "50%", background: V.teal, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <span style={{ color: "white", fontWeight: 700, fontSize: 18 }}>{(product || "N")[0].toUpperCase()}</span>
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{product}</div>
+                <div style={{ fontSize: 11, color: V.ash }}>★ {results.maps.rating} · {results.maps.reviewCount} avaliações</div>
+              </div>
+            </div>
+          )}
+          {aud && aud.populacaoRaio > 0 ? (
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
+                <span style={{ fontSize: 12, color: V.zinc }}>{isB2B ? 'Base de empresas' : 'População no raio'}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{fmtPop(aud.populacaoRaio)} {audienciaUnit}{aud.raioKm && aud.densidade !== "nacional" ? ` em ${aud.raioKm}km` : ''}</span>
+              </div>
+              {aud.targetProfile && (
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
+                  <span style={{ fontSize: 12, color: V.zinc }}>{isB2B ? 'Empresa-alvo' : 'Perfil target'}</span>
+                  <span style={{ fontSize: 12, fontWeight: 500, color: V.night, textAlign: "right", maxWidth: "60%" }}>{aud.targetProfile}</span>
+                </div>
+              )}
+              {aud.audienciaTarget > 0 && (
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0" }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Audiência estimada</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: V.teal }}>~{fmtPop(aud.audienciaTarget)} {audienciaUnit}</span>
+                </div>
+              )}
+              {(results.demandType === 'local_workers' || results.demandType === 'tourist_flow') && (
+                <div style={{ marginTop: 8, padding: "6px 10px", background: V.amberWash, borderRadius: 6, borderLeft: `3px solid ${V.amber}`, fontSize: 11, color: V.zinc, lineHeight: 1.5 }}>
+                  ℹ️ Para {results.demandType === 'local_workers' ? 'negócios que atendem trabalhadores' : 'negócios com demanda turística'}, a demanda real vem de {results.demandType === 'local_workers' ? 'quem trabalha na região' : 'visitantes'}.
+                </div>
+              )}
+              <p style={{ fontSize: 10, color: V.ash, margin: "10px 0 0", fontFamily: V.mono }}>Fonte: IBGE{aud.ibgeAno ? ` ${aud.ibgeAno}` : ''} · Estimativa Virô</p>
+            </div>
+          ) : <p style={{ fontSize: 12, color: V.ash, margin: 0 }}>Dados indisponíveis.</p>}
+        </Expandable>
+
+        {/* Accordion 2 — Demanda ativa */}
+        <Expandable title={`🔍 Demanda ativa — ${hasVolume ? results.totalVolume.toLocaleString('pt-BR') + ' buscas/mês' : '—'}`} icon="">
+          <div style={{ background: V.amberWash, borderRadius: 8, padding: "8px 12px", marginBottom: 12, borderLeft: `3px solid ${V.amber}` }}>
+            <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
+              {results.demandType === 'ecommerce_national' || results.demandType === 'national_service'
+                ? `Volumes nacionais. Estimativa de alcance orgânico possível com posicionamento adequado.`
+                : `Volumes nacionais. O número de ${(results.totalVolume || 0).toLocaleString('pt-BR')} buscas/mês é estimado no raio de ${raioKm}km.`}
+            </p>
+          </div>
+          {results.terms.slice(0, 10).map((t, i) => (
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: i < 9 ? `1px solid ${V.fog}` : "none", fontSize: 12 }}>
+              <span style={{ color: V.night, flex: 1 }}>{t.term}</span>
+              <span style={{ fontFamily: V.mono, fontSize: 11, color: V.ash, width: 50, textAlign: "right" }}>{t.volume > 0 ? t.volume.toLocaleString("pt-BR") : "—"}</span>
+            </div>
+          ))}
+        </Expandable>
+
+        {/* Accordion 3 — Concorrência */}
+        <Expandable title={`🏪 Concorrência — ${hasCi ? ci!.activeCompetitors + ' negócios' : '—'}`} icon="">
+          {hasCi ? (
+            <div>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px" }}>{ci!.activeCompetitors} negócio{ci!.activeCompetitors !== 1 ? 's' : ''} disputando atenção com você.</p>
+              {ci!.competitors.filter(c => c.hasWebsite || c.hasInstagram).slice(0, 6).map((c, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0", fontSize: 12, color: V.zinc, borderBottom: `1px solid ${V.fog}` }}>
+                  <span style={{ flex: 1 }}>{c.name}</span>
+                  {c.rating && <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>★{c.rating}</span>}
+                </div>
+              ))}
+              <div style={{ marginTop: 8, padding: "6px 10px", background: ci!.color === 'green' ? V.tealWash : ci!.color === 'yellow' ? V.amberWash : V.coralWash, borderRadius: 6, textAlign: "center" }}>
+                <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 600, color: ci!.color === 'green' ? V.teal : ci!.color === 'yellow' ? V.amber : V.coral }}>{ci!.labelText}</span>
+              </div>
+            </div>
+          ) : <p style={{ fontSize: 12, color: V.ash, margin: 0 }}>Dados indisponíveis.</p>}
+        </Expandable>
+
+        {/* Accordion 4 — O que você já faz bem */}
+        <Expandable title="✅ O que você já faz bem" icon="">
+          {fontesEncontradas.length > 0 ? (
+            <div>
+              {fontesEncontradas.map((fonte: any, i: number) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < fontesEncontradas.length - 1 ? `1px solid ${V.fog}` : "none" }}>
+                  <span style={{ fontSize: 14 }}>✓</span>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: V.night }}>{fonte.label}</div>
+                    <div style={{ fontSize: 11, color: V.ash }}>{fonte.detail}</div>
+                  </div>
+                </div>
+              ))}
+              {pilarCards.filter(p => p.score >= 40).map((p, i) => (
+                <div key={`pilar-${i}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
+                  <span style={{ fontSize: 14 }}>{p.icon}</span>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: V.night }}>{p.label}: {p.score}/100</div>
+                    <div style={{ fontSize: 11, color: V.ash }}>{p.status.text}</div>
+                  </div>
+                </div>
+              ))}
+              <p style={{ fontSize: 11, color: V.teal, margin: "10px 0 0", fontWeight: 500 }}>
+                Esses são os alicerces. O plano parte do que já funciona para acelerar o crescimento.
+              </p>
+            </div>
+          ) : (
+            <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.6 }}>
+              Ainda não detectamos presença digital ativa. O plano vai construir sua base do zero.
+            </p>
+          )}
+        </Expandable>
 
         {/* CTA inline */}
         {!hideCTA && (
