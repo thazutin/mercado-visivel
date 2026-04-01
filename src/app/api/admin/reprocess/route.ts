@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
   console.log(`[Reprocess] Starting for lead ${leadId}: ${lead.name || lead.product}`);
 
-  // Build formData from lead record
+  // Build formData from lead record — ensure all arrays/fields have safe defaults
   const formData: any = {
     businessName: lead.name || lead.product,
     product: lead.product,
@@ -45,10 +45,15 @@ export async function POST(req: NextRequest) {
     differentiator: lead.differentiator || '',
     clientType: lead.client_type || 'b2c',
     ticket: lead.ticket || '',
-    competitors: lead.competitors || [],
-    channels: lead.channels || [],
+    competitors: Array.isArray(lead.competitors) ? lead.competitors : [],
+    channels: Array.isArray(lead.channels) ? lead.channels : [],
+    digitalPresence: [],
     customerDescription: lead.customer_description || '',
+    noInstagram: false,
+    challenge: lead.challenge || '',
+    freeText: lead.free_text || '',
     locale: lead.locale || 'pt',
+    coupon: '',
   };
 
   try {
