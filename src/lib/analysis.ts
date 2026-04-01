@@ -336,13 +336,35 @@ export async function runInstantAnalysis(
   let step1: Step1Output;
   let inferredClientType: 'b2c' | 'b2b' | 'b2g' = (input.clientType as any) || 'b2c';
   let inferredDemandType: string = 'local_residents';
+
+  // FIX 1 — B2B keyword override: force b2b when product matches known B2B terms
+  const B2B_KEYWORDS = [
+    'corporativo', 'empresarial', 'b2b', 'consultoria', 'treinamento',
+    'rh ', 'recursos humanos', 'contabilidade', 'advocacia', 'auditoria',
+    'facilities', 'saas', 'software', 'tecnologia para empresas',
+    'benefícios', 'beneficios', 'incentivos', 'limpeza comercial',
+    'segurança do trabalho', 'seguranca do trabalho', 'marketing agency',
+    'outsourcing', 'terceirização', 'terceirizacao',
+  ];
+  const productLower = (input.product || '').toLowerCase();
+  const diffLower = (input.differentiator || '').toLowerCase();
+  const isB2BKeyword = B2B_KEYWORDS.some(kw => productLower.includes(kw) || diffLower.includes(kw));
+  if (isB2BKeyword && inferredClientType !== 'b2g') {
+    inferredClientType = 'b2b';
+    input.clientType = 'b2b';
+    console.log(`[Pipeline] B2B keyword override: "${input.product}" matched B2B keyword list`);
+  }
+
   try {
     const step1Result = await executeStep1(input, claude, {
       model: "claude-sonnet-4-5-20250929",
       maxRetries: 1,
     });
     step1 = step1Result;
-    inferredClientType = step1Result.inferredClientType || 'b2c';
+    // B2B keyword override takes precedence over Step1 inference
+    if (!isB2BKeyword) {
+      inferredClientType = step1Result.inferredClientType || inferredClientType;
+    }
     inferredDemandType = step1Result.inferredDemandType || 'local_residents';
     // Propagate inferred clientType to the input for downstream steps
     input.clientType = inferredClientType;
@@ -426,6 +448,14 @@ Responda APENAS em JSON, sem markdown:
     };
     sourcesUsed.push('claude_fallback_terms');
     console.log(`[Pipeline] Fallback: ${step1.termCount} basic terms generated`);
+  }
+
+  // FIX 1b — B2B + nacional → force national_service demandType
+  if (inferredClientType === 'b2b' && /brasil.*nacional|nacional|todo o brasil/i.test(input.region)) {
+    if (inferredDemandType !== 'ecommerce_national' && inferredDemandType !== 'national_service') {
+      inferredDemandType = 'national_service';
+      console.log(`[Pipeline] B2B nacional → forcing demandType to national_service`);
+    }
   }
 
   // =========================================================================
@@ -900,7 +930,57 @@ Responda APENAS em JSON, sem markdown:
     };
   });
 
-  const totalMonthlyVolume = termVolumes.reduce((s, t) => s + t.monthlyVolume, 0);
+  let totalMonthlyVolume = termVolumes.reduce((s, t) => s + t.monthlyVolume, 0);
+  let searchVolumeIsEstimate = false;
+
+  // FIX 2 — Volume zero fallback: retry with shorter terms, then use benchmark
+  if (totalMonthlyVolume === 0 && step1.terms.length > 0) {
+    console.warn('[Pipeline] All term volumes are 0 — trying shorter terms fallback');
+
+    // 2a. Try shorter terms (first 1-2 words of product)
+    const productWords = input.product.trim().split(/\s+/);
+    const shortTerms = [
+      productWords[0],
+      ...(productWords.length > 1 ? [productWords.slice(0, 2).join(' ')] : []),
+      `${productWords[0]} empresa`,
+      `${productWords[0]} serviço`,
+    ].filter(Boolean).map(t => t.toLowerCase());
+
+    try {
+      const shortResult = await fetchTermVolumes(shortTerms, input.region, resolvedRadiusKm);
+      const shortTotal = shortResult.volumes.reduce((s, v) => s + v.monthlyVolume, 0);
+      if (shortTotal > 0) {
+        console.log(`[Pipeline] Short-term fallback found volume: ${shortTotal}/mês`);
+        // Distribute proportionally across original terms
+        const perTerm = Math.round(shortTotal / termVolumes.length);
+        termVolumes.forEach(tv => { if (tv.monthlyVolume === 0) tv.monthlyVolume = perTerm; });
+        totalMonthlyVolume = termVolumes.reduce((s, t) => s + t.monthlyVolume, 0);
+        searchVolumeIsEstimate = true;
+      }
+    } catch (err) {
+      console.warn('[Pipeline] Short-term volume fallback failed:', (err as Error).message);
+    }
+
+    // 2b. If still 0, use hardcoded benchmark
+    if (totalMonthlyVolume === 0) {
+      const VOLUME_BENCHMARKS: Record<string, number> = {
+        'treinamento': 8000, 'consultoria': 5000, 'contabilidade': 12000,
+        'advocacia': 6000, 'restaurante': 15000, 'academia': 10000,
+        'salão': 8000, 'salao': 8000, 'clínica': 9000, 'clinica': 9000,
+        'padaria': 12000, 'pizzaria': 10000, 'hotel': 8000, 'hotelaria': 6000,
+        'educação': 7000, 'educacao': 7000, 'escola': 8000,
+        'software': 5000, 'saas': 4000, 'marketing': 6000,
+      };
+      const matchedKey = Object.keys(VOLUME_BENCHMARKS).find(k => productLower.includes(k));
+      const benchmarkVolume = matchedKey ? VOLUME_BENCHMARKS[matchedKey] : 3000;
+      const perTerm = Math.round(benchmarkVolume / termVolumes.length);
+      termVolumes.forEach(tv => { tv.monthlyVolume = perTerm; });
+      totalMonthlyVolume = benchmarkVolume;
+      searchVolumeIsEstimate = true;
+      console.log(`[Pipeline] Using benchmark volume: ${benchmarkVolume}/mês (matched: ${matchedKey || 'default'})`);
+    }
+  }
+
   const weightedMonthlyVolume = termVolumes.reduce((s, t) => {
     const weight = step1.terms.find((st) => st.term === t.term)?.intentWeight || 0.5;
     return s + t.monthlyVolume * weight;
@@ -1082,23 +1162,67 @@ Responda APENAS em JSON, sem markdown:
   // AUDIÊNCIA ESTIMADA — reutiliza precomputedAudiencia (calculado antes dos scrapers)
   // =========================================================================
   console.log(`[pipeline] município usado em Audiência (IBGE):`, extractedCity);
+  let audienciaIsEstimate = false;
   const audienciaPromise = (async (): Promise<{ estimada: AudienciaEstimada | null; target: AudienciaTarget | null }> => {
-    try {
-      const estimada = precomputedAudiencia;
-      if (!estimada) return { estimada: null, target: null };
-
-      const target = await inferirTargetAudiencia(
-        input.product,
-        input.differentiator || input.product,
-        estimada.populacaoRaio,
-        claude,
-        input.clientType || 'b2c',
-      );
-      return { estimada, target };
-    } catch (err) {
-      console.warn('[Pipeline] Audiência falhou/ignorado:', (err as Error).message);
-      return { estimada: null, target: null };
+    const estimada = precomputedAudiencia;
+    if (!estimada) {
+      // FIX 3 — No IBGE data at all: use hardcoded fallback
+      console.warn('[Pipeline] No precomputed audiência — using hardcoded fallback');
+      audienciaIsEstimate = true;
+      const isNac = /brasil.*nacional|nacional|todo o brasil/i.test(input.region);
+      const fallbackEstimada: AudienciaEstimada = {
+        populacaoRaio: isNac ? (inferredClientType === 'b2b' ? 1500000 : 5000000) : 50000,
+        populacaoMunicipio: isNac ? (inferredClientType === 'b2b' ? 1500000 : 5000000) : 100000,
+        raioKm: isNac ? null : 3,
+        densidade: isNac ? 'nacional' : 'urbana',
+        municipioNome: isNac ? 'Brasil' : input.region.split(',')[0].trim(),
+        ibgeAno: 2024,
+        ticketMedio: inferredClientType === 'b2b' ? 2000 : 500,
+        taxaConversao: inferredClientType === 'b2b' ? 0.02 : 0.03,
+        ticketRationale: 'estimativa padrão (dados IBGE indisponíveis)',
+      } as any;
+      const fallbackTarget: AudienciaTarget = {
+        audienciaTarget: fallbackEstimada.populacaoRaio,
+        targetProfile: inferredClientType === 'b2b' ? 'empresas brasileiras no segmento' : 'consumidores no mercado local',
+        estimatedPercentage: 100,
+        rationale: 'Estimativa padrão — dados demográficos indisponíveis',
+      } as any;
+      return { estimada: fallbackEstimada, target: fallbackTarget };
     }
+
+    // Try inferirTargetAudiencia with retry
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const target = await inferirTargetAudiencia(
+          input.product,
+          input.differentiator || input.product,
+          estimada.populacaoRaio,
+          claude,
+          input.clientType || 'b2c',
+        );
+        return { estimada, target };
+      } catch (err) {
+        if (attempt === 0) {
+          console.warn('[Pipeline] inferirTargetAudiencia failed, retrying in 2s:', (err as Error).message);
+          await new Promise(r => setTimeout(r, 2000));
+        } else {
+          console.warn('[Pipeline] inferirTargetAudiencia failed after retry — using fallback');
+        }
+      }
+    }
+
+    // FIX 3 — Fallback after retry: use population-based estimate
+    audienciaIsEstimate = true;
+    const isNac = /brasil.*nacional|nacional|todo o brasil/i.test(input.region);
+    const fallbackTarget: AudienciaTarget = {
+      audienciaTarget: isNac
+        ? (inferredClientType === 'b2b' ? 1500000 : 5000000)
+        : Math.round(estimada.populacaoRaio * 0.15),
+      targetProfile: inferredClientType === 'b2b' ? 'empresas brasileiras no segmento' : 'consumidores no mercado local',
+      estimatedPercentage: isNac ? 100 : 15,
+      rationale: 'Estimativa padrão — Claude indisponível',
+    } as any;
+    return { estimada, target: fallbackTarget };
   })();
 
   // =========================================================================
@@ -1460,13 +1584,149 @@ Responda APENAS em JSON, sem markdown:
     } : null,
     // @ts-ignore
     projecaoFinanceira,
+    // @ts-ignore
+    searchVolumeIsEstimate,
+    // @ts-ignore
+    audienciaIsEstimate,
   };
 
   console.log(
-    `[Pipeline] Complete in ${totalProcessingTimeMs}ms | Confidence: ${confidenceLevel} | Sources: ${sourcesUsed.join(", ")} | Unavailable: ${sourcesUnavailable.join(", ")}`
+    `[Pipeline] Complete in ${totalProcessingTimeMs}ms | Confidence: ${confidenceLevel} | Sources: ${sourcesUsed.join(", ")} | Unavailable: ${sourcesUnavailable.join(", ")}${searchVolumeIsEstimate ? ' | Volume: ESTIMADO' : ''}`
   );
 
   return result;
+}
+
+// ============================================================================
+// SHARED DISPLAY HELPERS — used by /api/diagnose and /api/admin/reprocess
+// ============================================================================
+
+export function sanitizeProjecao(projecao: any): any {
+  if (!projecao) return null;
+  if (projecao.mercadoTotal === 0 && projecao.receitaAtual === 0) return null;
+  return projecao;
+}
+
+export function buildDisplayData(result: any) {
+  const sizing = result.marketSizing?.sizing || {};
+  const influence = result.influence?.influence || {};
+  const gaps = result.gaps?.analysis || {};
+
+  const serpPositions = influence.rawGoogle?.serpPositions || [];
+  const mapsData = influence.rawGoogle?.mapsPresence || null;
+  const igData = influence.rawInstagram || null;
+
+  // Se nenhuma fonte encontrou o negócio, score é 0
+  const nenhumDadoReal =
+    !mapsData?.found &&
+    !igData?.profile?.dataAvailable &&
+    serpPositions.filter((sp: any) => sp.position && sp.position <= 20).length === 0;
+  const influencePercentFinal = nenhumDadoReal ? 0 : Math.round(influence.totalInfluence || 0);
+
+  const terms = (result.terms?.terms || []).slice(0, 10).map((t: any) => {
+    const volumeMatch = (result.volumes?.termVolumes || []).find((v: any) => v.term === t.term);
+    const serpMatch = serpPositions.find(
+      (sp: any) => sp.term?.toLowerCase() === t.term.toLowerCase()
+    );
+    return {
+      term: t.term,
+      volume: volumeMatch?.monthlyVolume || 0,
+      cpc: volumeMatch?.cpcBrl || 0,
+      intent: t.intent,
+      position: serpMatch?.position ? String(serpMatch.position) : "—",
+      serpFeatures: serpMatch?.serpFeatures || [],
+    };
+  });
+
+  return {
+    terms,
+    totalVolume: (sizing as any)?.weightedSearchVolume
+      || result.volumes?.totalMonthlyVolume || 0,
+    avgCpc: 0,
+    marketLow: sizing?.marketPotential?.low || 0,
+    marketHigh: sizing?.marketPotential?.high || 0,
+    influencePercent: influencePercentFinal,
+    source: (result.sourcesUsed || []).join(", "),
+    confidence: result.confidenceLevel || 'low',
+    pipeline: {
+      version: result.pipelineVersion,
+      durationMs: result.totalProcessingTimeMs,
+      sourcesUsed: result.sourcesUsed || [],
+      sourcesUnavailable: result.sourcesUnavailable || [],
+    },
+    gapHeadline: gaps?.headlineInsight || "",
+    gapPattern: gaps?.primaryPattern || null,
+    gaps: gaps?.gaps || [],
+    workRoutes: gaps?.workRoutes || [],
+    influenceBreakdown: {
+      google: influence.google?.score || 0,
+      instagram: influence.instagram?.score || 0,
+      web: influence.web?.available ? influence.web.score : null,
+      ...((influence as any).breakdown ? {
+        d1_descoberta: (influence as any).breakdown.d1_descoberta,
+        d2_credibilidade: (influence as any).breakdown.d2_credibilidade,
+        d3_presenca: (influence as any).breakdown.d3_presenca,
+        d4_reputacao: (influence as any).breakdown.d4_reputacao,
+        levers: (influence as any).breakdown.levers || [],
+      } : {}),
+    },
+    influenceBreakdown4D: (influence as any).breakdown || null,
+    maps: mapsData ? {
+      found: mapsData.found || false,
+      rating: mapsData.rating || null,
+      reviewCount: mapsData.reviewCount || null,
+      categories: mapsData.categories || [],
+      inLocalPack: mapsData.inLocalPack || false,
+      photos: mapsData.photos || 0,
+    } : null,
+    instagram: igData?.profile ? {
+      handle: igData.profile.handle || "",
+      followers: igData.profile.followers || 0,
+      engagementRate: igData.profile.engagementRate || 0,
+      postsLast30d: igData.profile.postsLast30d || 0,
+      avgLikes: igData.profile.avgLikesLast30d || 0,
+      avgViews: igData.profile.avgViewsReelsLast30d || 0,
+      recentPostsCount: igData.profile.recentPostsCount || 0,
+      recentAvgReach: igData.profile.recentAvgReach || 0,
+      dataAvailable: igData.profile.dataAvailable || false,
+    } : null,
+    competitorInstagram: igData?.competitors
+      ?.filter((c: any) => c.dataAvailable)
+      ?.map((c: any) => ({
+        handle: c.handle,
+        followers: c.followers || 0,
+        engagementRate: c.engagementRate || 0,
+        postsLast30d: c.postsLast30d || 0,
+        avgLikes: c.avgLikesLast30d || 0,
+        avgViews: c.avgViewsReelsLast30d || 0,
+      })) || [],
+    serpSummary: {
+      termsScraped: serpPositions.length,
+      termsRanked: serpPositions.filter((sp: any) => sp.position && sp.position <= 10).length,
+      hasLocalPack: serpPositions.some((sp: any) => sp.serpFeatures?.includes("local_pack")),
+      hasAds: serpPositions.some((sp: any) => sp.serpFeatures?.includes("ads")),
+    },
+    aiVisibility: result.aiVisibility || null,
+    audiencia: result.audiencia ? {
+      ...result.audiencia,
+      benchmarkNacionalCompetidores: result.audiencia.benchmarkNacionalCompetidores
+        || (result as any).precomputedAudiencia?.benchmarkNacionalCompetidores
+        || null,
+    } : null,
+    competitionIndex: result.competitionIndex || null,
+    clientType: result.clientType || 'b2c',
+    demandType: (result as any).demandType || 'local_residents',
+    volumeGeo: result.volumeGeo || null,
+    pncp: result.pncp || null,
+    projecaoFinanceira: sanitizeProjecao((result as any).projecaoFinanceira),
+    searchVolumeIsEstimate: (result as any).searchVolumeIsEstimate || false,
+    audienciaIsEstimate: (result as any).audienciaIsEstimate || false,
+    termGeneration: result.terms ? {
+      count: result.terms.termCount,
+      model: result.terms.generationModel,
+      promptVersion: result.terms.promptVersion,
+    } : null,
+  };
 }
 
 // ============================================================================

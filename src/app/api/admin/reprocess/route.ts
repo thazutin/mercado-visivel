@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { runInstantAnalysis } from '@/lib/analysis';
+import { runInstantAnalysis, buildDisplayData } from '@/lib/analysis';
 import { notifyDiagnosisReady } from '@/lib/notify';
 
 function getSupabase() {
@@ -61,50 +61,8 @@ export async function POST(req: NextRequest) {
     const pipelineResult = await runInstantAnalysis(formData, formData.locale);
     pipelineResult.leadId = leadId;
 
-    // Build display (inline — same logic as diagnose route)
-    const influence = pipelineResult.influence?.influence || {};
-    const sizing = pipelineResult.marketSizing?.sizing || {};
-    const gaps = pipelineResult.gaps?.analysis || {};
-    const serpPositions = influence.rawGoogle?.serpPositions || [];
-    const mapsData = influence.rawGoogle?.mapsPresence || null;
-
-    const display: any = {
-      terms: pipelineResult.terms?.terms?.slice(0, 10).map((t: any) => ({
-        term: t.term,
-        volume: pipelineResult.volumes?.termVolumes?.find((v: any) => v.term === t.term)?.monthlyVolume || 0,
-        cpc: 0,
-        position: serpPositions.find((sp: any) => sp.term?.toLowerCase() === t.term.toLowerCase())?.position ? String(serpPositions.find((sp: any) => sp.term?.toLowerCase() === t.term.toLowerCase())?.position) : '—',
-      })) || [],
-      totalVolume: (sizing as any)?.weightedSearchVolume || pipelineResult.volumes?.totalMonthlyVolume || 0,
-      avgCpc: 0,
-      marketLow: sizing?.marketPotential?.low || 0,
-      marketHigh: sizing?.marketPotential?.high || 0,
-      influencePercent: Math.round(influence.totalInfluence || 0),
-      source: pipelineResult.sourcesUsed?.join(', ') || '',
-      confidence: pipelineResult.confidenceLevel || 'low',
-      pipeline: { version: pipelineResult.pipelineVersion, durationMs: pipelineResult.totalProcessingTimeMs, sourcesUsed: pipelineResult.sourcesUsed, sourcesUnavailable: pipelineResult.sourcesUnavailable },
-      gapHeadline: gaps?.headlineInsight || '',
-      gaps: gaps?.gaps || [],
-      workRoutes: gaps?.workRoutes || [],
-      influenceBreakdown: {
-        google: influence.google?.score || 0,
-        instagram: influence.instagram?.score || 0,
-        ...((influence as any).breakdown ? {
-          d1_descoberta: (influence as any).breakdown.d1_descoberta,
-          d2_credibilidade: (influence as any).breakdown.d2_credibilidade,
-          d3_presenca: (influence as any).breakdown.d3_presenca,
-          d4_reputacao: (influence as any).breakdown.d4_reputacao,
-          levers: (influence as any).breakdown.levers || [],
-        } : {}),
-      },
-      influenceBreakdown4D: (influence as any).breakdown || null,
-      maps: mapsData ? { found: mapsData.found, rating: mapsData.rating, reviewCount: mapsData.reviewCount, inLocalPack: mapsData.inLocalPack, photos: mapsData.photos || 0 } : null,
-      audiencia: (pipelineResult as any).audiencia || null,
-      competitionIndex: (pipelineResult as any).competitionIndex || null,
-      clientType: pipelineResult.clientType || 'b2c',
-      demandType: (pipelineResult as any).demandType || 'local_residents',
-      projecaoFinanceira: (pipelineResult as any).projecaoFinanceira || null,
-    };
+    // Build display using shared buildDisplayData (same logic as diagnose route)
+    const display: any = buildDisplayData(pipelineResult);
 
     // Save to Supabase
     const { error: updateError } = await supabase
