@@ -358,7 +358,7 @@ export async function runInstantAnalysis(
           temperature: 0.3,
           messages: [{
             role: "user",
-            content: `Gere 20 termos de busca de alta intenção local para "${input.product}" na região "${resolvedRegion}".
+            content: `Gere 20 termos de busca de alta intenção local para "${input.product}" na região "${input.region}".
             
 Foco: termos que um consumidor digita no Google quando está pronto para comprar ou agendar.
 Inclua variações com: nome da cidade, "perto de mim", preço, melhor, agendar, telefone, avaliação.
@@ -403,7 +403,7 @@ Responda APENAS em JSON, sem markdown:
     // Generate minimal fallback terms so the pipeline can continue
     const basicTerms = [
       `${input.product} perto de mim`,
-      `${input.product} ${resolvedRegion.split(',')[0]}`,
+      `${input.product} ${input.region.split(',')[0]}`,
       `melhor ${input.product}`,
       `${input.product} preço`,
       `${input.product} avaliação`,
