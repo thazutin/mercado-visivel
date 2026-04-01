@@ -399,8 +399,33 @@ Responda APENAS em JSON, sem markdown:
       }
     }
   } catch (err) {
-    console.error("[Pipeline] Step 1 failed:", err);
-    throw new Error("Pipeline aborted: term generation failed");
+    console.error("[Pipeline] Step 1 failed — using basic fallback terms:", (err as Error).message);
+    // Generate minimal fallback terms so the pipeline can continue
+    const basicTerms = [
+      `${input.product} perto de mim`,
+      `${input.product} ${resolvedRegion.split(',')[0]}`,
+      `melhor ${input.product}`,
+      `${input.product} preço`,
+      `${input.product} avaliação`,
+      `contratar ${input.product}`,
+      `${input.product} telefone`,
+      `${input.product} agendar`,
+    ].map((term, i) => ({
+      term: term.toLowerCase(),
+      intent: 'transactional' as const,
+      intentWeight: 0.8,
+      category: 'core' as const,
+      rationale: 'fallback — step1 failed',
+    }));
+    step1 = {
+      terms: basicTerms,
+      termCount: basicTerms.length,
+      generationModel: 'fallback',
+      promptVersion: 'fallback-v1',
+      processingTimeMs: 0,
+    };
+    sourcesUsed.push('claude_fallback_terms');
+    console.log(`[Pipeline] Fallback: ${step1.termCount} basic terms generated`);
   }
 
   // =========================================================================
