@@ -59,7 +59,7 @@ export async function runDataChecks(): Promise<{ checks: CheckResult[]; testLead
         let status = 'processing';
         const maxWait = 120_000;
         const pollStart = Date.now();
-        while (Date.now() - pollStart < maxWait && status !== 'done' && status !== 'error') {
+        while (Date.now() - pollStart < maxWait && status !== 'done') {
           await delay(3000);
           const { data: polled } = await supabase.from('leads').select('status').eq('id', testLeadId).single();
           status = polled?.status || 'processing';

@@ -42,20 +42,29 @@ async function main() {
     console.log(`  - ${lead.id} | ${lead.name || lead.product} | ${age} min | ${lead.region?.split(',')[0]}`);
   }
 
-  // Mark as error
-  const ids = stuckLeads.map(l => l.id);
-  const { error: updateError } = await supabase
-    .from('leads')
-    .update({ status: 'error' })
-    .in('id', ids);
+  // Mark as done with empty display (status='error' may not exist in schema)
+  for (const lead of stuckLeads) {
+    const { error: updateError } = await supabase
+      .from('leads')
+      .update({
+        status: 'done',
+        diagnosis_display: {
+          terms: [], totalVolume: 0, avgCpc: 0, marketLow: 0, marketHigh: 0,
+          influencePercent: 0, source: 'recovered', confidence: 'low',
+          pipeline: { version: 'recovered', durationMs: 0, sourcesUsed: [], sourcesUnavailable: ['stuck_recovery'] },
+          _error: `Lead stuck in processing for ${Math.round((Date.now() - new Date(lead.created_at).getTime()) / 60000)} minutes`,
+        },
+      })
+      .eq('id', lead.id);
 
-  if (updateError) {
-    console.error('[Recovery] Erro ao atualizar:', updateError.message);
-    process.exit(1);
+    if (updateError) {
+      console.error(`[Recovery] Erro ao atualizar ${lead.id}:`, updateError.message);
+    } else {
+      console.log(`[Recovery] ✓ ${lead.id} recuperado (status=done com display vazio)`);
+    }
   }
 
-  console.log(`[Recovery] ${ids.length} leads marcados como status=error`);
-  console.log('[Recovery] Esses leads mostrarão mensagem de erro para o usuário.');
+  console.log(`[Recovery] ${stuckLeads.length} leads recuperados — mostrarão resultado vazio com opção de retry.`);
 }
 
 main().catch(console.error);

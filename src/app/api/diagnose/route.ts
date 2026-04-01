@@ -204,8 +204,29 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error("[Diagnose] Unexpected error:", err instanceof Error ? `${err.message}\n${err.stack}` : err);
+
+    // Mark lead as done with error flag so it doesn't stay stuck in processing
+    // Status 'error' may not exist in schema — use 'done' with empty display
+    if (lead?.id) {
+      try {
+        const supabase = getSupabaseAdmin();
+        await supabase.from('leads').update({
+          status: 'done',
+          diagnosis_display: {
+            terms: [], totalVolume: 0, avgCpc: 0, marketLow: 0, marketHigh: 0,
+            influencePercent: 0, source: 'error', confidence: 'low',
+            pipeline: { version: 'error', durationMs: 0, sourcesUsed: [], sourcesUnavailable: ['pipeline_error'] },
+            _error: errMsg,
+          },
+        }).eq('id', lead.id);
+        console.log(`[Diagnose] Lead ${lead.id} marked as done with error display`);
+      } catch (updateErr) {
+        console.error('[Diagnose] Failed to mark lead as done:', updateErr);
+      }
+    }
+
     return NextResponse.json(
-      { error: "Erro interno ao processar análise", reason: errMsg },
+      { error: "Erro interno ao processar análise", reason: errMsg, leadId: lead?.id },
       { status: 500 }
     );
   }

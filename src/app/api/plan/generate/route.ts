@@ -227,7 +227,7 @@ export async function POST(req: NextRequest) {
 
     await supabase
       .from("leads")
-      .update({ plan_status: "failed" })
+      .update({ plan_status: "error" })
       .eq("id", leadId);
 
     return NextResponse.json({ error: "Plan generation failed", detail: err?.message || String(err) }, { status: 500 });
