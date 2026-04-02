@@ -361,15 +361,24 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ leadId, itemIndex: itemIdx, contentType }),
       });
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         setItems(prev => prev.map((it, idx) => idx === itemIdx ? {
           ...it, content_generated: true,
           generated_blog: data.content?.blog || it.generated_blog,
           generated_instagram: data.content?.instagram || it.generated_instagram,
         } : it));
+      } else {
+        const errDetail = data.detail || data.error || '';
+        if (errDetail.includes('credit') || errDetail.includes('balance')) {
+          alert('Serviço temporariamente indisponível. Tente novamente em alguns minutos.');
+        } else {
+          alert('Erro ao gerar conteúdo. Tente novamente.');
+        }
       }
-    } catch { /* ignore */ }
+    } catch {
+      alert('Erro de conexão. Tente novamente.');
+    }
     setGeneratingContent(prev => ({ ...prev, [key]: false }));
   };
 
@@ -420,61 +429,20 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
               <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px", lineHeight: 1.5 }}>{item.description}</p>
             )}
 
-            {/* How to steps */}
-            {item.how_to_steps?.length > 0 && !item.completed && (
-              <div style={{ background: V.cloud, borderRadius: 8, padding: "8px 10px", marginBottom: 6 }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: V.zinc, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Como fazer</div>
-                <ol style={{ margin: 0, padding: "0 0 0 16px", fontSize: 12, color: V.night, lineHeight: 1.6 }}>
-                  {item.how_to_steps.map((step: string, si: number) => <li key={si}>{step}</li>)}
-                </ol>
-              </div>
-            )}
-
-            {/* Keywords */}
-            {item.keywords?.length > 0 && !item.completed && (
-              <div style={{ marginBottom: 6 }}>
-                <span style={{ fontSize: 10, color: V.ash, fontWeight: 600 }}>Palavras-chave: </span>
-                {item.keywords.map((kw: string, ki: number) => (
-                  <span key={ki} style={{ fontSize: 10, color: V.teal, background: V.tealWash, padding: "1px 6px", borderRadius: 4, marginRight: 4 }}>{kw}</span>
-                ))}
-              </div>
-            )}
-
-            {/* Copy pronto */}
-            {item.copy_pronto && !item.completed && (
-              <CopyBlock text={item.copy_pronto} />
-            )}
-
-            {/* WhatsApp template */}
-            {item.whatsapp_template && !item.completed && (
-              <div style={{ background: "rgba(37,211,102,0.06)", borderLeft: "3px solid #25D366", borderRadius: "0 8px 8px 0", padding: "8px 10px", marginBottom: 6 }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: "#25D366", marginBottom: 4 }}>📱 Mensagem WhatsApp pronta</div>
-                <p style={{ fontSize: 12, color: V.night, margin: "0 0 6px", lineHeight: 1.5 }}>{item.whatsapp_template}</p>
-                <button onClick={() => navigator.clipboard.writeText(item.whatsapp_template)} style={{ fontSize: 10, color: "#25D366", background: "none", border: "1px solid #25D366", borderRadius: 4, padding: "2px 8px", cursor: "pointer" }}>Copiar mensagem</button>
-              </div>
-            )}
-
-            {/* Program description */}
-            {item.program_description && !item.completed && (
-              <div style={{ background: V.amberWash, borderLeft: `3px solid ${V.amber}`, borderRadius: "0 8px 8px 0", padding: "8px 10px", marginBottom: 6 }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: V.amber, marginBottom: 4 }}>ℹ️ Sobre a ferramenta</div>
-                <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.5 }}>{item.program_description}</p>
-              </div>
-            )}
-
-            {/* Contextual content generation button */}
+            {/* Contextual content generation button — simplified */}
             {planReady && !item.completed && !item.generated_blog && (
               <div style={{ marginTop: 8 }}>
                 <button onClick={() => generateContent(itemIdx, 'both')} disabled={generatingContent[`${itemIdx}-both`]}
-                  style={{ fontSize: 12, color: V.night, background: V.cloud, border: `1px solid ${V.fog}`, borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontWeight: 600, opacity: generatingContent[`${itemIdx}-both`] ? 0.5 : 1, width: "100%" }}>
-                  {generatingContent[`${itemIdx}-both`] ? 'Gerando conteúdo...' : (() => {
+                  style={{ fontSize: 12, color: V.night, background: V.cloud, border: `1px solid ${V.fog}`, borderRadius: 8, padding: "10px 14px", cursor: "pointer", fontWeight: 600, opacity: generatingContent[`${itemIdx}-both`] ? 0.5 : 1, width: "100%" }}>
+                  {generatingContent[`${itemIdx}-both`] ? 'Gerando conteúdo (~1 min)...' : (() => {
                     const t = (item.title || '').toLowerCase();
                     if (/avalia[çc]/i.test(t) || /responder/i.test(t)) return 'Gerar respostas';
                     if (/youtube|canal|vídeo|video/i.test(t)) return 'Gerar roteiros';
                     if (/instagram|post|conteúdo|conteudo/i.test(t)) return 'Gerar posts';
                     if (/blog|artigo|seo/i.test(t)) return 'Gerar textos';
                     if (/whatsapp|mensag/i.test(t)) return 'Gerar mensagens';
-                    if (/google|maps|ficha/i.test(t)) return 'Gerar descrições';
+                    if (/google|maps|ficha|título/i.test(t)) return 'Gerar descrições';
+                    if (/página|pagina|site|landing/i.test(t)) return 'Gerar textos';
                     return 'Gerar conteúdo';
                   })()}
                 </button>

@@ -415,18 +415,22 @@ export default function InstantValueScreen({ product, region, results: initialRe
                     <div style={{ position: "absolute", left: `${atual}%`, top: -5, transform: "translateX(-50%)", width: 16, height: 16, borderRadius: "50%", background: V.teal, border: `2px solid ${V.white}`, boxShadow: "0 1px 3px rgba(0,0,0,0.12)", zIndex: 2 }} />
                     <div style={{ position: "absolute", left: `${potencial}%`, top: -4, transform: "translateX(-50%)", width: 14, height: 14, borderRadius: "50%", background: V.white, border: `2px dashed ${V.amber}`, zIndex: 1 }} />
                   </div>
-                  {/* Labels — "hoje" à esquerda do número, "potencial" à direita */}
-                  <div style={{ position: "relative", height: 28, marginTop: 10 }}>
-                    <div style={{ position: "absolute", left: `${atualPos}%`, transform: "translateX(-50%)", display: "flex", alignItems: "baseline", gap: 3, whiteSpace: "nowrap" }}>
-                      <span style={{ fontFamily: V.mono, fontSize: 8, color: V.ash }}>hoje</span>
-                      <span style={{ fontFamily: V.display, fontSize: 18, fontWeight: 800, color: V.teal }}>{atual}</span>
+                  {/* Labels — número centralizado abaixo do ponto, texto ao lado */}
+                  <div style={{ position: "relative", height: 32, marginTop: 12 }}>
+                    <div style={{ position: "absolute", left: `${atualPos}%`, transform: "translateX(-50%)", textAlign: "center", whiteSpace: "nowrap" }}>
+                      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 4 }}>
+                        <span style={{ fontFamily: V.mono, fontSize: 8, color: V.ash }}>hoje</span>
+                        <span style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.teal, lineHeight: 1 }}>{atual}</span>
+                      </div>
                     </div>
-                    <div style={{ position: "absolute", left: `${potencialPos}%`, transform: "translateX(-50%)", display: "flex", alignItems: "baseline", gap: 3, whiteSpace: "nowrap" }}>
-                      <span style={{ fontFamily: V.display, fontSize: 18, fontWeight: 800, color: V.amber }}>{potencial}</span>
-                      <span style={{ fontFamily: V.mono, fontSize: 8, color: V.ash }}>potencial</span>
+                    <div style={{ position: "absolute", left: `${potencialPos}%`, transform: "translateX(-50%)", textAlign: "center", whiteSpace: "nowrap" }}>
+                      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 4 }}>
+                        <span style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.amber, lineHeight: 1 }}>{potencial}</span>
+                        <span style={{ fontFamily: V.mono, fontSize: 8, color: V.ash }}>potencial</span>
+                      </div>
                     </div>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
                     <span style={{ fontFamily: V.mono, fontSize: 8, color: V.mist }}>0</span>
                     <span style={{ fontFamily: V.mono, fontSize: 8, color: V.mist }}>100</span>
                   </div>
@@ -621,26 +625,21 @@ export default function InstantValueScreen({ product, region, results: initialRe
           {seasonality?.months?.length > 0 && seasonality.months.some((m: any) => m.volume > 0) && (() => {
             const maxVol = Math.max(...seasonality.months.map((x: any) => x.volume));
             return (
-              <div style={{ marginTop: 16, paddingTop: 12, borderTop: `1px solid ${V.fog}` }}>
-                <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", marginBottom: 8 }}>
-                  SAZONALIDADE · VOLUME DE BUSCA POR MÊS
+              <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${V.fog}` }}>
+                <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", marginBottom: 12 }}>
+                  VOLUME DE BUSCA POR MÊS
                 </div>
-                <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 48 }}>
+                <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 64 }}>
                   {seasonality.months.map((m: any) => {
-                    const height = maxVol > 0 ? Math.max((m.volume / maxVol) * 48, 3) : 3;
+                    const height = maxVol > 0 ? Math.max((m.volume / maxVol) * 64, 4) : 4;
                     const isPeak = m.month === seasonality.peak_month;
-                    const isLow = m.month === seasonality.low_month;
                     return (
-                      <div key={m.month} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                        <div style={{ width: "100%", height, background: isPeak ? V.amber : isLow ? V.mist : V.fog, borderRadius: "2px 2px 0 0", transition: "height 0.3s" }} />
-                        <span style={{ fontSize: 7, color: V.ash, fontFamily: V.mono }}>{m.month?.slice(0, 3)}</span>
+                      <div key={m.month} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                        <div style={{ width: "100%", height, background: isPeak ? V.amber : `${V.ash}30`, borderRadius: "3px 3px 0 0", transition: "height 0.3s" }} />
+                        <span style={{ fontSize: 8, color: isPeak ? V.night : V.ash, fontFamily: V.mono, fontWeight: isPeak ? 600 : 400 }}>{m.month?.slice(0, 3)}</span>
                       </div>
                     );
                   })}
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontSize: 9, color: V.ash }}>
-                  <span>Pico: <strong style={{ color: V.night }}>{seasonality.peak_month}</strong></span>
-                  <span>Menor: <strong style={{ color: V.night }}>{seasonality.low_month}</strong></span>
                 </div>
               </div>
             );
