@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-
 import { V } from "@/lib/design-tokens";
 
 interface Props {
@@ -13,13 +12,12 @@ interface Props {
 
 export function LockedTab({ lockLevel, ctaLabel, ctaUrl, leadId }: Props) {
   const [loading, setLoading] = useState(false);
-
-  const [error, setError] = useState("");
+  const [errMsg, setErrMsg] = useState("");
 
   async function handleClick() {
     if (!leadId) return;
     setLoading(true);
-    setError("");
+    setErrMsg("");
     try {
       const endpoint = lockLevel === 2 ? "/api/checkout/subscription" : "/api/checkout";
       const body = lockLevel === 2
@@ -34,54 +32,20 @@ export function LockedTab({ lockLevel, ctaLabel, ctaUrl, leadId }: Props) {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        setError(data.error || "Erro ao iniciar pagamento. Tente novamente.");
+        setErrMsg(data.error || "Erro ao iniciar pagamento. Tente novamente.");
         setLoading(false);
       }
-    } catch (err) {
-      console.error("Checkout error:", err);
-      setError("Erro de conexão. Tente novamente.");
+    } catch (e) {
+      console.error("Checkout error:", e);
+      setErrMsg("Erro de conexão. Tente novamente.");
       setLoading(false);
     }
   }
 
   return (
     <div style={{ position: "relative", minHeight: 300 }}>
-      {/* Blurred preview content */}
-      <div style={{
-        filter: "blur(6px)", pointerEvents: "none" as const, userSelect: "none" as const,
-      }}>
+      <div style={{ filter: "blur(6px)", pointerEvents: "none" }}>
         {lockLevel === 1 ? (
-          <>
-            <div style={{
-              background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`,
-              padding: "20px 24px", marginBottom: 12,
-            }}>
-              <div style={{ fontSize: 11, color: V.amber, fontWeight: 600, marginBottom: 8 }}>
-                BLOCO 1
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 600, color: V.night, marginBottom: 12 }}>
-                Análise de posicionamento digital
-              </div>
-              <div style={{ fontSize: 14, color: V.zinc, lineHeight: 1.7 }}>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.
-              </div>
-            </div>
-            <div style={{
-              background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`,
-              padding: "20px 24px", marginBottom: 12,
-            }}>
-              <div style={{ fontSize: 11, color: V.amber, fontWeight: 600, marginBottom: 8 }}>
-                BLOCO 2
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 600, color: V.night, marginBottom: 12 }}>
-                Oportunidades identificadas
-              </div>
-              <div style={{ fontSize: 14, color: V.zinc, lineHeight: 1.7 }}>
-                Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.
-              </div>
-            </div>
-          </>
-        ) : (
           <>
             <div style={{
               background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`,
@@ -110,10 +74,15 @@ export function LockedTab({ lockLevel, ctaLabel, ctaUrl, leadId }: Props) {
               </div>
             </div>
           </>
+        ) : (
+          <>
+            <div style={{ background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`, padding: "20px 24px", marginBottom: 12 }}>
+              <div style={{ fontSize: 14, color: V.zinc, lineHeight: 1.7 }}>Conteúdo semanal personalizado para o seu negócio...</div>
+            </div>
+          </>
         )}
       </div>
 
-      {/* Overlay */}
       <div style={{
         position: "absolute", inset: 0,
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
@@ -125,7 +94,7 @@ export function LockedTab({ lockLevel, ctaLabel, ctaUrl, leadId }: Props) {
           maxWidth: 360,
         }}>
           <div style={{ fontSize: 32, marginBottom: 12, lineHeight: 1 }}>
-            {lockLevel === 1 ? "🔒" : "🔒🔒"}
+            {lockLevel === 1 ? "\uD83D\uDD12" : "\uD83D\uDD12\uD83D\uDD12"}
           </div>
           <div style={{ fontSize: 16, fontWeight: 600, color: V.night, marginBottom: 8 }}>
             {lockLevel === 1
@@ -151,9 +120,6 @@ export function LockedTab({ lockLevel, ctaLabel, ctaUrl, leadId }: Props) {
             >
               {loading ? "Redirecionando ao pagamento..." : ctaLabel}
             </button>
-            {error && (
-              <p style={{ fontSize: 12, color: V.coral, marginTop: 8 }}>{error}</p>
-            )}
           ) : (
             <a
               href={ctaUrl}
@@ -161,11 +127,14 @@ export function LockedTab({ lockLevel, ctaLabel, ctaUrl, leadId }: Props) {
                 display: "inline-block", padding: "12px 28px", borderRadius: 10,
                 background: lockLevel === 1 ? V.night : V.teal,
                 color: V.white, fontSize: 14, fontWeight: 600,
-                textDecoration: "none", transition: "opacity 0.15s",
+                textDecoration: "none",
               }}
             >
               {ctaLabel}
             </a>
+          )}
+          {errMsg && (
+            <p style={{ fontSize: 12, color: V.coral, marginTop: 8 }}>{errMsg}</p>
           )}
         </div>
       </div>
