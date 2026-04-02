@@ -96,6 +96,7 @@ export async function POST(req: NextRequest) {
       generateItensEstruturantes(claude, context, levers, breakdown, lead.client_type || 'b2c'),
 
 
+
       stagger(500).then(() => generateRelatorioSetorial(lead.product, lead.region, lead.client_type || 'b2c')),
       stagger(1000).then(() => generateMacroContext(lead.product, lead.region, lead.client_type || 'b2c')),
     ]);
