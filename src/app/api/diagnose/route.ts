@@ -201,7 +201,42 @@ export async function POST(req: NextRequest) {
       client_type: pipelineResult.clientType || "b2c",
     }).catch((err) => console.error("[Diagnose] Enrichment failed:", err));
 
-    // 9. Responde com resultado completo (frontend exibe imediatamente)
+    // 8b. Se dados slow ficaram pendentes, re-roda pipeline completo em background e atualiza display
+    if (display.enrichmentStatus === 'pending') {
+      console.log(`[Diagnose] Slow enrichment pending: [${display.enrichmentPending?.join(', ')}] — running full pipeline in background`);
+      (async () => {
+        try {
+          // Re-roda pipeline sem cutoff (demora ~60-90s, mas roda em background)
+          const fullResult = await runInstantAnalysis(formData, locale);
+          const fullDisplay = buildDisplayData(fullResult);
+          fullDisplay.lat = formData.lat || null;
+          fullDisplay.lng = formData.lng || null;
+          fullDisplay.enrichmentStatus = 'complete';
+          fullDisplay.enrichmentPending = [];
+
+          const supabaseAdmin = getSupabaseAdmin();
+          await supabaseAdmin
+            .from('leads')
+            .update({ diagnosis_display: fullDisplay })
+            .eq('id', lead.id);
+          console.log(`[Diagnose] Background enrichment complete for ${lead.id}`);
+        } catch (err) {
+          console.error('[Diagnose] Background enrichment failed:', err);
+          // Mark as complete even on failure to stop polling
+          try {
+            const supabaseAdmin = getSupabaseAdmin();
+            const existing = display;
+            existing.enrichmentStatus = 'complete';
+            await supabaseAdmin
+              .from('leads')
+              .update({ diagnosis_display: existing })
+              .eq('id', lead.id);
+          } catch { /* ignore */ }
+        }
+      })().catch(() => {});
+    }
+
+    // 9. Responde com resultado FAST (frontend exibe imediatamente, polls para enrichment)
     return NextResponse.json({
       lead_id: lead.id,
       results: display,

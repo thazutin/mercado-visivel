@@ -594,7 +594,9 @@ Responda APENAS em JSON, sem markdown:
     ? new URL(formData.site.startsWith("http") ? formData.site : `https://${formData.site}`).hostname.replace("www.", "")
     : undefined;
 
-  // Run ALL external calls in parallel (Apify + DataForSEO at the same time)
+  // ═══ PIPELINE 2-PHASE: Fast (~20s) then Slow (background) ═══
+  // Phase 1 (fast): Volumes + Maps + Competition — retorna resultado ao usuário
+  // Phase 2 (slow): SERP + Instagram + AI Visibility — atualiza em background
   let serpPositions: SerpPosition[] = [];
   let mapsPresence: MapsPresence | null = null;
   let instagramProfiles: InstagramProfile[] = [];
@@ -764,10 +766,42 @@ Responda APENAS em JSON, sem markdown:
     sourcesUnavailable.push("serp_scraper", "google_maps", "instagram");
   }
 
-  // Execute ALL in parallel
+  // Execute ALL in parallel with FAST CUTOFF at 25s
+  // Fast sources (Volumes, Maps) resolve in ~5-10s
+  // Slow sources (SERP, Instagram) take ~30-50s — will be enriched in background if they timeout
   const parallelStart = Date.now();
-  const parallelResults = await Promise.allSettled(parallelPromises);
-  console.log(`[Pipeline] All parallel calls resolved in ${Date.now() - parallelStart}ms`);
+  const FAST_CUTOFF_MS = 25_000;
+
+  // Wrap each promise to track which ones completed within cutoff
+  const timedPromises = parallelPromises.map((p, i) =>
+    p.then(val => ({ val, label: promiseLabels[i], resolved: true }))
+     .catch(err => ({ val: null, label: promiseLabels[i], resolved: false, error: err }))
+  );
+
+  // Race: wait for all OR cutoff
+  const raceResult = await Promise.race([
+    Promise.all(timedPromises),
+    new Promise<null>(resolve => setTimeout(() => resolve(null), FAST_CUTOFF_MS)),
+  ]);
+
+  // If cutoff fired, collect whatever completed so far
+  let parallelResults: PromiseSettledResult<any>[];
+  if (raceResult === null) {
+    console.log(`[Pipeline] FAST CUTOFF at ${FAST_CUTOFF_MS}ms — collecting completed results`);
+    // Give 500ms more for settling, then snapshot
+    await new Promise(r => setTimeout(r, 500));
+    parallelResults = await Promise.allSettled(
+      parallelPromises.map(p => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('cutoff')), 100))]))
+    );
+  } else {
+    parallelResults = parallelPromises.map((_, i) => {
+      const r = (raceResult as any)[i];
+      return r.resolved
+        ? { status: 'fulfilled' as const, value: r.val }
+        : { status: 'rejected' as const, reason: r.error };
+    });
+  }
+  console.log(`[Pipeline] Parallel phase resolved in ${Date.now() - parallelStart}ms`);
   for (let i = 0; i < promiseLabels.length; i++) {
     const r = parallelResults[i];
     console.log(`[Pipeline]   ${promiseLabels[i]}: ${r.status}${r.status === 'rejected' ? ` (${(r as any).reason?.message || r.reason})` : ''}`);
@@ -1594,6 +1628,16 @@ Responda APENAS em JSON, sem markdown:
   // =========================================================================
   const totalProcessingTimeMs = Date.now() - pipelineStart;
 
+  // Track which enrichments are still pending (cut off by fast phase)
+  const enrichmentPending: string[] = [];
+  if (!serpPositions.length && !isNacional && apifyConfig) enrichmentPending.push('serp');
+  if (!instagramProfiles.length && instagramHandles.length > 0) enrichmentPending.push('instagram');
+  if (!aiVisibility) enrichmentPending.push('ai_visibility');
+  const enrichmentStatus = enrichmentPending.length > 0 ? 'pending' : 'complete';
+  if (enrichmentPending.length > 0) {
+    console.log(`[Pipeline] Enrichment pending: [${enrichmentPending.join(', ')}] — will run in background`);
+  }
+
   // Confidence based on data sources available
   const dataSourceCount = sourcesUsed.filter(
     (s) => s !== "claude_term_gen" && s !== "claude_gap_analysis"
@@ -1638,6 +1682,10 @@ Responda APENAS em JSON, sem markdown:
     audienciaIsEstimate,
     // @ts-ignore
     b2bCompanies,
+    // @ts-ignore
+    enrichmentStatus,
+    // @ts-ignore
+    enrichmentPending,
   };
 
   console.log(
@@ -1770,6 +1818,8 @@ export function buildDisplayData(result: any) {
     pncp: result.pncp || null,
     projecaoFinanceira: sanitizeProjecao((result as any).projecaoFinanceira),
     b2bCompanies: (result as any).b2bCompanies || null,
+    enrichmentStatus: (result as any).enrichmentStatus || 'complete',
+    enrichmentPending: (result as any).enrichmentPending || [],
     searchVolumeIsEstimate: (result as any).searchVolumeIsEstimate || false,
     audienciaIsEstimate: (result as any).audienciaIsEstimate || false,
     termGeneration: result.terms ? {

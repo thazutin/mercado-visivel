@@ -158,11 +158,43 @@ function Chip({ children, color = V.ash }: { children: React.ReactNode; color?: 
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
-export default function InstantValueScreen({ product, region, results, onCheckout, loading, leadId, hideCTA, hideWorkRoutes, name }: Props) {
+export default function InstantValueScreen({ product, region, results: initialResults, onCheckout, loading, leadId, hideCTA, hideWorkRoutes, name }: Props) {
   const [show, setShow] = useState(false);
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
+  const [results, setResults] = useState(initialResults);
+  const [enriching, setEnriching] = useState(
+    (initialResults as any).enrichmentStatus === 'pending'
+  );
   useEffect(() => { setTimeout(() => setShow(true), 100); }, []);
+
+  // Poll for enrichment updates when data is still being collected
+  useEffect(() => {
+    if (!enriching || !leadId) return;
+    let attempts = 0;
+    const poll = setInterval(async () => {
+      attempts++;
+      try {
+        const res = await fetch(`/api/diagnose?leadId=${leadId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.results && data.results.enrichmentStatus === 'complete') {
+            setResults(data.results);
+            setEnriching(false);
+            clearInterval(poll);
+          } else if (data.results) {
+            // Update with whatever new data arrived
+            setResults(data.results);
+          }
+        }
+      } catch { /* ignore */ }
+      if (attempts >= 12) { // 2 min max
+        setEnriching(false);
+        clearInterval(poll);
+      }
+    }, 10_000);
+    return () => clearInterval(poll);
+  }, [enriching, leadId]);
 
   const termCount = results.termGeneration?.count || results.terms.length;
   const hasVolume = results.totalVolume > 0;
@@ -319,7 +351,13 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         )}
         {nenhumEncontrado && (
           <div style={{ background: "#FFF3E0", borderRadius: 10, padding: "10px 14px", marginBottom: 16, border: "1px solid #FFB74D", fontSize: 12, color: "#BF360C", lineHeight: 1.5 }}>
-            ⚠️ Não encontramos seu negócio online. O plano parte do zero.
+            Não encontramos seu negócio online. O plano parte do zero.
+          </div>
+        )}
+        {enriching && (
+          <div style={{ background: V.amberWash, borderRadius: 10, padding: "10px 14px", marginBottom: 16, border: `1px solid rgba(180,83,9,0.15)`, fontSize: 12, color: V.amber, lineHeight: 1.5, display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ width: 12, height: 12, border: `2px solid ${V.fog}`, borderTopColor: V.amber, borderRadius: "50%", animation: "spin 0.8s linear infinite", flexShrink: 0 }} />
+            Coletando dados de Instagram, posicionamento no Google e visibilidade em IA. Atualizamos automaticamente.
           </div>
         )}
 
