@@ -30,6 +30,25 @@ export async function inferirTargetAudiencia(
 
     console.log(`[Audience Target] START: segmento="${segmento}", pop=${populacaoRaio}, clientType=${clientType}, base=${populacaoBase}`);
 
+    // Prioridade 1: benchmark curado (se disponível, pula Claude — economiza 2-3s)
+    try {
+      const { getTargetPercentage, findBenchmark } = await import('@/config/sector-benchmarks');
+      const benchPct = getTargetPercentage(segmento, clientType);
+      if (benchPct !== null) {
+        const bench = findBenchmark(segmento);
+        const audienciaTarget = Math.round(populacaoBase * benchPct);
+        const unitLabel = isB2G ? 'órgãos' : isB2B ? 'empresas' : 'pessoas';
+        console.log(`[Audience Target] Benchmark: ${bench?.category} → ${(benchPct * 100).toFixed(1)}% → ${audienciaTarget.toLocaleString("pt-BR")} ${unitLabel}`);
+        return {
+          targetProfile: bench?.category.replace(/_/g, ' ') || segmento,
+          estimatedPercentage: benchPct,
+          audienciaTarget,
+          rationale: `Benchmark setorial: ${(benchPct * 100).toFixed(1)}% da base de ${populacaoBase.toLocaleString('pt-BR')} ${unitLabel}`,
+        };
+      }
+    } catch { /* benchmark import failed, continue to Claude */ }
+
+    // Prioridade 2: Claude Haiku (para categorias sem benchmark)
     let promptContent: string;
     if (isB2G) {
       promptContent = `Dado o segmento de negócio abaixo (B2G — vende para GOVERNO / setor público), estime o percentual dos órgãos públicos locais que representam clientes potenciais.

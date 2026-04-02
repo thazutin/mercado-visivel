@@ -673,7 +673,7 @@ Responda APENAS em JSON, sem markdown:
               }
             }
           })(),
-          30_000,
+          20_000,
           "SERP",
         )
       );
@@ -697,7 +697,7 @@ Responda APENAS em JSON, sem markdown:
             throw err;
           }
         })(),
-        45_000,
+        35_000,
         "Maps",
       )
     );
@@ -720,7 +720,7 @@ Responda APENAS em JSON, sem markdown:
                 throw err;
               }
             })(),
-            60_000,
+            40_000,
             "Instagram",
           )
         : Promise.resolve([])
@@ -1128,17 +1128,32 @@ Responda APENAS em JSON, sem markdown:
         10_000,
         "MapsCompetition",
       );
-      // Fallback: se 0 resultados, tenta com termo mais amplo (primeiro substantivo)
-      if (competitorResults.length === 0) {
-        const broadTerm = input.product.split(/\s+/).slice(0, 2).join(' ');
-        if (broadTerm !== input.product) {
+      // Fallback: se poucos resultados, tenta com termos mais amplos
+      if (competitorResults.length < 3) {
+        const fallbackTerms = [
+          // Primeiro: primeiro substantivo (categoria genérica)
+          input.product.split(/\s+/)[0],
+          // Segundo: primeiro termo de busca gerado (se disponível)
+          step1?.terms?.[0]?.term?.split(/\s+/).slice(0, 2).join(' '),
+        ].filter(Boolean).filter(t => t !== input.product);
+
+        for (const broadTerm of fallbackTerms) {
+          if (competitorResults.length >= 3) break;
           console.log(`[Pipeline] Competition fallback: "${input.product}" → "${broadTerm}"`);
           try {
-            competitorResults = await withTimeout(
-              competitionSearch(broadTerm, resolvedRegion),
+            const fallbackResults = await withTimeout(
+              competitionSearch(broadTerm!, resolvedRegion),
               8_000,
               "MapsCompetition-fallback",
             );
+            // Merge sem duplicatas (por nome)
+            const existingNames = new Set(competitorResults.map(c => c.name.toLowerCase()));
+            for (const r of fallbackResults) {
+              if (!existingNames.has(r.name.toLowerCase())) {
+                competitorResults.push(r);
+                existingNames.add(r.name.toLowerCase());
+              }
+            }
           } catch { /* ignore fallback failure */ }
         }
       }
@@ -1455,6 +1470,14 @@ Responda APENAS em JSON, sem markdown:
         mercadoLabel = `pessoas no raio · ${raioKmProj}km`;
         break;
     }
+    // Fallback: se mercadoBase ficou 0 (IBGE + Claude falharam), usar 3x volume ou mínimo 100
+    if (mercadoBase <= 0 && totalVolume > 0) {
+      mercadoBase = totalVolume * 3;
+      mercadoLabel = 'pessoas estimadas (fallback)';
+    } else if (mercadoBase <= 0) {
+      mercadoBase = 100;
+      mercadoLabel = 'pessoas estimadas (mínimo)';
+    }
     console.log(`[Pipeline] demandType=${inferredDemandType}, mercadoBase=${mercadoBase} (${mercadoLabel})`);
 
     const familiasAtual = Math.round(mercadoBase * (influencePercent / 100) * penaltyFactor);
@@ -1542,6 +1565,27 @@ Responda APENAS em JSON, sem markdown:
   }
 
   // =========================================================================
+  // B2B COMPANY SEARCH — lista de empresas-alvo (somente para B2B)
+  // =========================================================================
+  let b2bCompanies: any = null;
+  if (inferredClientType === 'b2b' && extractedCity) {
+    try {
+      const { searchB2BCompaniesLight } = await import('./pipeline/b2b-companies');
+      b2bCompanies = await withTimeout(
+        searchB2BCompaniesLight(input.product, extractedCity, extractedState || undefined),
+        12_000,
+        'B2BCompanies',
+      );
+      if (b2bCompanies) {
+        sourcesUsed.push('brasil_io_b2b');
+        console.log(`[Pipeline] B2B: ${b2bCompanies.totalInRegion} empresas encontradas, ${b2bCompanies.companies.length} retornadas`);
+      }
+    } catch (err) {
+      console.warn('[Pipeline] B2B Company Search failed (non-fatal):', (err as Error).message);
+    }
+  }
+
+  // =========================================================================
   // ASSEMBLE RESULT + determine confidence
   // =========================================================================
   const totalProcessingTimeMs = Date.now() - pipelineStart;
@@ -1588,6 +1632,8 @@ Responda APENAS em JSON, sem markdown:
     searchVolumeIsEstimate,
     // @ts-ignore
     audienciaIsEstimate,
+    // @ts-ignore
+    b2bCompanies,
   };
 
   console.log(
@@ -1719,6 +1765,7 @@ export function buildDisplayData(result: any) {
     volumeGeo: result.volumeGeo || null,
     pncp: result.pncp || null,
     projecaoFinanceira: sanitizeProjecao((result as any).projecaoFinanceira),
+    b2bCompanies: (result as any).b2bCompanies || null,
     searchVolumeIsEstimate: (result as any).searchVolumeIsEstimate || false,
     audienciaIsEstimate: (result as any).audienciaIsEstimate || false,
     termGeneration: result.terms ? {

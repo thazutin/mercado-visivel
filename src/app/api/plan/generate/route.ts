@@ -11,6 +11,7 @@ import { waitUntil } from "@vercel/functions";
 import { notifyFullDiagnosisReady } from "@/lib/notify";
 import { runPostDiagnosisEnrichment } from "@/lib/analysis";
 import { generateRelatorioSetorial } from "@/lib/pipeline/relatorio-setorial";
+import { generateMacroContext } from "@/lib/pipeline/macro-context";
 
 export const maxDuration = 800;
 
@@ -86,19 +87,15 @@ export async function POST(req: NextRequest) {
     const levers = breakdown?.levers || [];
     const shortRegionGen = (lead.region || '').split(',')[0].trim();
 
-    // 3. ESCALONADO: Itens → (2s) → Relatório → (2s) → Macro (evita rate limit)
+    // 3. PARALELO com micro-stagger (500ms) — evita rate limit Anthropic
     const stagger = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
-    console.log(`[PlanGen] Iniciando geração escalonada para lead ${leadId}...`);
+    console.log(`[PlanGen] Iniciando geração paralela para lead ${leadId}...`);
     const [itensResult, relatorioResult, macroResult] = await Promise.allSettled([
       generateItensEstruturantes(claude, context, levers, breakdown, lead.client_type || 'b2c'),
-      stagger(2000).then(() => generateRelatorioSetorial(lead.product, lead.region, lead.client_type || 'b2c')),
-      stagger(4000).then(() => claude.messages.create({
-        model: 'claude-haiku-4-5-20251001', max_tokens: 1200, temperature: 0.3,
-        system: 'Responda APENAS com JSON válido.',
-        messages: [{ role: 'user', content: `Em 3-4 frases diretas, descreva o cenário atual do mercado de "${lead.product}" em ${shortRegionGen}. Inclua: tendências recentes, nível de digitalização do setor, e 1 oportunidade específica. Sem jargão. JSON: {"summary":"...","indicators":[],"outlook":"neutral","key_opportunity":"..."}` }],
-      })),
+      stagger(500).then(() => generateRelatorioSetorial(lead.product, lead.region, lead.client_type || 'b2c')),
+      stagger(1000).then(() => generateMacroContext(lead.product, lead.region, lead.client_type || 'b2c')),
     ]);
-    console.log(`[PlanGen] Escalonado concluído em ${Date.now() - t0}ms`);
+    console.log(`[PlanGen] Paralelo concluído em ${Date.now() - t0}ms`);
 
     // Extrair resultados
     const itensEstruturantes = itensResult.status === 'fulfilled' ? itensResult.value
@@ -110,16 +107,28 @@ export async function POST(req: NextRequest) {
     if (relatorioResult.status === 'rejected') console.error('[PlanGen] Relatório falhou (non-fatal):', (relatorioResult as any).reason);
     else console.log(`[PlanGen] Relatório OK (${Date.now() - t0}ms)`);
 
-    // Macro context
+    // Macro context (agora via web search real)
     let macroContext: any = { summary: 'Contexto não disponível.', indicators: [], outlook: 'neutral', key_opportunity: '' };
     if (macroResult.status === 'fulfilled') {
-      const cenText = macroResult.value.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
-      try { macroContext = extractJson(cenText); }
-      catch { macroContext = { summary: cenText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim().slice(0, 500), indicators: [], outlook: 'neutral', key_opportunity: '' }; }
+      macroContext = macroResult.value;
       if (diagnosisId) await supabase.from('diagnoses').update({ macro_context: macroContext }).eq('id', diagnosisId);
-      console.log(`[PlanGen] Macro OK (${Date.now() - t0}ms)`);
+      console.log(`[PlanGen] Macro OK (confidence=${macroContext.confidence}, sources=${macroContext.sources?.length || 0}) (${Date.now() - t0}ms)`);
     } else {
       console.error('[PlanGen] Macro falhou (non-fatal):', (macroResult as any).reason);
+    }
+
+    // 4b. Validação pós-geração — garantir qualidade mínima dos itens
+    const GENERIC_TITLES = ['melhore sua presença online', 'aumente sua visibilidade', 'invista em marketing digital', 'crie conteúdo relevante'];
+    let validationIssues = 0;
+    for (const item of itensEstruturantes.items) {
+      const titleLower = (item.titulo || item.title || '').toLowerCase();
+      const isGeneric = GENERIC_TITLES.some(g => titleLower.includes(g));
+      const hasSteps = Array.isArray(item.how_to_steps) && item.how_to_steps.length >= 2;
+      const hasKeywords = Array.isArray(item.keywords) && item.keywords.length >= 3;
+      if (isGeneric || !hasSteps || !hasKeywords) validationIssues++;
+    }
+    if (validationIssues > 0) {
+      console.warn(`[PlanGen] Validation: ${validationIssues}/${itensEstruturantes.items.length} itens com qualidade baixa (genéricos, sem steps ou keywords)`);
     }
 
     // 5. Salvar plan no Supabase
@@ -184,27 +193,19 @@ export async function POST(req: NextRequest) {
       console.error("[PlanGen] Welcome briefing failed (non-fatal):", briefErr);
     }
 
-    // 6. Gerar posts e enriquecimento ANTES de marcar ready
-    try {
-      console.log(`[PlanGen] Gerando conteúdos para lead ${leadId}...`);
-      const enrichPromise = runPostDiagnosisEnrichment(
-        leadId,
-        raw as any,
-        { name: lead.name, product: lead.product, region: lead.region, client_type: lead.client_type },
-      );
-      // Timeout de 90s — se demorar mais, continua sem conteúdos
-      const timeout = new Promise<void>(resolve => setTimeout(resolve, 90_000));
-      await Promise.race([enrichPromise, timeout]);
-      console.log(`[PlanGen] Enriquecimento concluído (ou timeout) para ${leadId}`);
-    } catch (enrichErr) {
-      console.error("[PlanGen] Erro no enriquecimento (non-fatal):", enrichErr);
-    }
-
-    // 6b. Update lead status — agora tudo está pronto
+    // 6. Marcar plan_status="ready" AGORA — tabs carregam imediatamente
     await supabase
       .from("leads")
       .update({ plan_status: "ready", weeks_active: 0 })
       .eq("id", leadId);
+    console.log(`[PlanGen] Plan marked READY for ${leadId} in ${Date.now() - t0}ms`);
+
+    // 6b. Enriquecimento fire-and-forget (conteúdos, posts) — não bloqueia
+    runPostDiagnosisEnrichment(
+      leadId,
+      raw as any,
+      { name: lead.name, product: lead.product, region: lead.region, client_type: lead.client_type },
+    ).catch(err => console.error("[PlanGen] Enrichment background error:", err));
 
     // 7. Notifica por WhatsApp + email
     const projecao = lead.diagnosis_display?.projecaoFinanceira;
@@ -369,29 +370,41 @@ async function generateItensEstruturantes(
   const d4 = breakdown?.d4_reputacao ?? 0;
   const dimensaoMaisFraca = Math.min(d1, d2, d3, d4) === d1 ? 'descoberta' :
     Math.min(d1, d2, d3, d4) === d2 ? 'credibilidade' : 'presenca';
-  const contextoCompacto = context.slice(0, 500);
+  const contextoCompacto = context.slice(0, 1500); // Mais contexto = itens mais personalizados
 
-  // ── CHAMADA 1: Estrutura dos 15 itens ──────────────────────────────────
-  console.log('[PlanGen] Chamada 1: gerando estrutura de 15 itens...');
+  // ── CHAMADA 1: Estrutura dos 15 itens (Sonnet para qualidade) ──────────
+  console.log('[PlanGen] Chamada 1: gerando estrutura de 15 itens (Sonnet)...');
   const t0 = Date.now();
   const resEstrutura = await claude.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 3000,
-    temperature: 0.1,
-    system: 'Responda APENAS com JSON válido. Sem texto antes ou depois.',
-    messages: [{ role: 'user', content: `Gere exatamente 15 atividades do basico bem feito para este negocio.
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 4000,
+    temperature: 0.2,
+    system: 'Responda APENAS com JSON válido. Sem texto antes ou depois. Cada item deve ser específico para este negócio — nunca genérico.',
+    messages: [{ role: 'user', content: `Gere exatamente 15 ações práticas e específicas para este negócio.
+
+EXEMPLO de item BOM:
+{"id":"1","dimensao":"descoberta","titulo":"Otimizar ficha Google Maps com fotos do espaço","descricao":"Seu perfil tem 0 fotos — concorrentes com fotos recebem 42% mais cliques.","pilar":"Visibilidade","impacto":"+5pts Visibilidade","prazo":"Esta semana","concluida":false}
+
+EXEMPLO de item RUIM (genérico demais — NUNCA faça isso):
+{"id":"1","dimensao":"descoberta","titulo":"Melhore sua presença online","descricao":"Tenha mais visibilidade.","pilar":"Visibilidade","impacto":"alto","prazo":"Este mês","concluida":false}
+
 Retorne APENAS este JSON:
-{"items":[{"id":"1","dimensao":"descoberta","titulo":"Titulo em ate 8 palavras","descricao":"Por que importa em 1 frase.","pilar":"Descoberta","impacto":"+3pts Descoberta","prazo":"Esta semana","concluida":false}]}
+{"items":[{"id":"1","dimensao":"descoberta","titulo":"Ação em até 10 palavras","descricao":"Dado real do negócio + por que importa. Max 120 chars.","pilar":"Visibilidade","impacto":"+Xpts Pilar","prazo":"Esta semana","concluida":false}]}
+
 Regras:
 - Exatamente 15 itens
 - dimensao: apenas "descoberta", "credibilidade" ou "presenca"
-- pilar: apenas "Descoberta", "Credibilidade" ou "Cultura"
-- descricao: 1 frase, max 100 caracteres, dados reais do negocio
-- impacto: max 20 caracteres
-- prazo: apenas "Esta semana", "Este mes" ou "Proximos 3 meses"
-- Ordene por impacto: item 1 = maior alavanca
-- Pilar mais fraco: ${dimensaoMaisFraca}
-Negocio: ${contextoCompacto}` }],
+- pilar: apenas "Visibilidade", "Credibilidade" ou "Presença Digital"
+- descricao: DEVE citar um dado real do diagnóstico (reviews, followers, posição, volume). Max 120 chars.
+- impacto: "+Xpts [Pilar]" com X de 1 a 10
+- prazo: apenas "Esta semana", "Este mês" ou "Próximos 3 meses"
+- 5 itens para "Esta semana" (quick wins), 5 para "Este mês", 5 para "Próximos 3 meses"
+- Ordene por impacto: item 1 = maior alavanca imediata
+- Pilar mais fraco (priorizar): ${dimensaoMaisFraca}
+- Scores: Visibilidade=${d1}, Credibilidade=${d2}, Presença Digital=${d3}
+
+Negócio:
+${contextoCompacto}` }],
   });
 
   const rawEstrutura = resEstrutura.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
@@ -462,7 +475,7 @@ Regras:
     } catch (err) {
       console.warn(`[PlanGen] Enrich batch ${i} falhou (non-fatal):`, (err as Error).message);
     }
-    if (i + BATCH < items.length) await new Promise(r => setTimeout(r, 1000));
+    if (i + BATCH < items.length) await new Promise(r => setTimeout(r, 200)); // Reduzido de 1000ms
   }
 
   const withCopy = items.filter(it => it.copy_pronto).length;

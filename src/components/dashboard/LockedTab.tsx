@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 
-const V = {
-  night: "#161618", zinc: "#6E6E78", ash: "#9E9EA8", fog: "#EAEAEE",
-  cloud: "#F4F4F7", white: "#FEFEFF", amber: "#CF8523", teal: "#2D9B83",
-  display: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-};
+import { V } from "@/lib/design-tokens";
 
 interface Props {
   lockLevel: 1 | 2;
@@ -125,12 +121,12 @@ export function LockedTab({ lockLevel, ctaLabel, ctaUrl, leadId }: Props) {
           </div>
           <div style={{ fontSize: 16, fontWeight: 600, color: V.night, marginBottom: 8 }}>
             {lockLevel === 1
-              ? "Disponível no Diagnóstico Completo"
+              ? "Disponível no Plano de Ação"
               : "Disponível para Assinantes"}
           </div>
           <p style={{ fontSize: 13, color: V.ash, marginBottom: 20, lineHeight: 1.5 }}>
             {lockLevel === 1
-              ? "Desbloqueie o diagnóstico completo com análise detalhada, plano de ação e conteúdos prontos para suas redes."
+              ? "Gere seu plano de ação com análise detalhada, ações práticas e conteúdos prontos para suas redes."
               : "Assine para receber conteúdos novos toda semana, acompanhamento contínuo e suporte prioritário."}
           </p>
           {leadId ? (

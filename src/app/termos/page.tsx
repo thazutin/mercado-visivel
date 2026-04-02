@@ -5,19 +5,11 @@ export const metadata: Metadata = {
   description: "Termos de Serviço da plataforma Virô (Mercado Visível). Condições de uso do diagnóstico de presença digital.",
 };
 
-const V = {
-  night: "#161618",
-  zinc: "#6E6E78",
-  ash: "#9E9EA8",
-  fog: "#EAEAEE",
-  white: "#FEFEFF",
-  amber: "#CF8523",
-  font: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-};
+import { V } from "@/lib/design-tokens";
 
 export default function TermosPage() {
   return (
-    <main style={{ background: V.white, minHeight: "100vh", fontFamily: V.font, color: V.night }}>
+    <main style={{ background: V.white, minHeight: "100vh", fontFamily: V.body, color: V.night }}>
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "60px 24px 80px" }}>
         <a href="/" style={{ fontSize: 14, color: V.ash, textDecoration: "none", display: "inline-block", marginBottom: 32 }}>
           ← Voltar ao início
@@ -72,7 +64,7 @@ export default function TermosPage() {
           <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>5. Pagamento</h2>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
             O diagnóstico gratuito não possui custo. O diagnóstico completo tem o valor de{" "}
-            <strong style={{ color: V.night }}>R$ 397,00 (trezentos e noventa e sete reais)</strong>, em
+            <strong style={{ color: V.night }}>R$ 497,00 (quatrocentos e noventa e sete reais)</strong>, em
             pagamento único. Após a entrega do diagnóstico completo,{" "}
             <strong style={{ color: V.night }}>não oferecemos reembolso</strong>, pois o serviço foi
             integralmente prestado. Em caso de falha técnica comprovada que impeça a entrega, o valor será

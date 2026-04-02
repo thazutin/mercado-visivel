@@ -31,15 +31,7 @@ function formatLocationDisplay(address: string): string {
   return parts[0] || address;
 }
 
-const V = {
-  night: "#161618", graphite: "#232326", slate: "#E8E4DE",
-  zinc: "#888880", ash: "#888880", fog: "#E8E4DE",
-  cloud: "#F7F5F2", white: "#FFFFFF", amber: "#CF8523",
-  teal: "#1D9E75", coral: "#D9534F", coralWash: "rgba(217,83,79,0.06)",
-  mist: "#C8C8D0", amberWash: "rgba(207,133,35,0.06)",
-  display: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-  mono: "'JetBrains Mono', 'SF Mono', monospace",
-};
+import { V } from "@/lib/design-tokens";
 
 type TabKey = "diagnostico" | "estruturantes" | "semana";
 type Tier = "free" | "paid" | "subscriber";
@@ -341,7 +333,7 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
   if (!planReady) return <Spinner text="Identificando o que precisa estar no lugar primeiro..." />;
   if (loading) return <Spinner text="Um segundo..." />;
 
-  const summary = plan?.content?.itensEstrurantesSummary || '';
+  const summary = activePlan?.content?.itensEstrurantesSummary || '';
 
   const PILAR_MAP: Record<string, { label: string; color: string; icon: string }> = {
     descoberta: { label: 'Seja Encontrável', color: V.teal, icon: '🔍' },
@@ -1200,7 +1192,8 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
       .catch(() => {});
   }, [lead.id]);
 
-  // Poll plan_status when generating
+  // Poll plan_status when generating — 10 min timeout, refetch sem reload
+  const [planData, setPlanData] = useState(plan);
   useEffect(() => {
     if (planStatus === "ready") return;
     let attempts = 0;
@@ -1213,11 +1206,18 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
           if (data.plan_status === "ready" || data.planReady) {
             setPlanStatus("ready");
             clearInterval(poll);
-            window.location.reload();
+            // Refetch plan data sem reload
+            try {
+              const planRes = await fetch(`/api/plan?leadId=${lead.id}`);
+              if (planRes.ok) {
+                const freshPlan = await planRes.json();
+                if (freshPlan) setPlanData(freshPlan);
+              }
+            } catch { /* fallback: user pode recarregar manualmente */ }
           }
         }
       } catch { /* ignore */ }
-      if (attempts >= 18) { // 3 minutes (18 x 10s)
+      if (attempts >= 60) { // 10 minutos (60 x 10s)
         setPollTimeout(true);
         clearInterval(poll);
       }
@@ -1226,6 +1226,8 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
   }, [lead.id, planStatus]);
 
   const planReady = planStatus === "ready";
+  // Use planData (que pode ser atualizado via polling) em vez de plan (prop imutável)
+  const activePlan = planData || plan;
 
   return (
     <div style={{ minHeight: "100vh", background: V.cloud, padding: "40px 24px" }}>
@@ -1251,7 +1253,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
           }}>
             {pollTimeout
               ? "Está demorando mais que o esperado. Tente recarregar a página ou volte em alguns minutos."
-              : "✓ Recebi. Estou montando seu plano agora. O básico bem feito, relatório do seu mercado e posts prontos em até 15 minutos."}
+              : "Montando seu plano agora — itens priorizados, relatório do mercado e conteúdos prontos. Leva 2-3 minutos."}
           </div>
         )}
 
@@ -1315,7 +1317,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
         {tab === "estruturantes" && (
           <div>
             {tier === "free" ? (
-              <LockedTab lockLevel={1} ctaLabel="Desbloquear por R$497" ctaUrl="#" leadId={lead.id} />
+              <LockedTab lockLevel={1} ctaLabel="Gerar meu plano de ação · R$497" ctaUrl="#" leadId={lead.id} />
             ) : (
               <ItensEstruturantesTab
                 leadId={lead.id}
@@ -1330,14 +1332,14 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
         {tab === "semana" && (
           <div>
             {tier === "free" ? (
-              <LockedTab lockLevel={1} ctaLabel="Desbloquear por R$497" ctaUrl="#" leadId={lead.id} />
+              <LockedTab lockLevel={1} ctaLabel="Gerar meu plano de ação · R$497" ctaUrl="#" leadId={lead.id} />
             ) : !planReady ? (
               <Spinner text="Buscando o que mudou no seu mercado esta semana..." />
             ) : (
               <div>
                 {/* Foco da semana baseado no plano */}
-                {plan?.content?.itensEstruturantes && plan.content.itensEstruturantes.length > 0 && (() => {
-                  const pendentes = plan.content.itensEstruturantes.filter((i: any) => !i.concluida);
+                {activePlan?.content?.itensEstruturantes && activePlan.content.itensEstruturantes.length > 0 && (() => {
+                  const pendentes = activePlan.content.itensEstruturantes.filter((i: any) => !i.concluida);
                   const pilarFoco = pendentes[0]?.pilar || pendentes[0]?.dimensao || 'Descoberta';
                   const acaoFoco = pendentes[0]?.titulo || '';
                   return pilarFoco ? (
@@ -1350,8 +1352,8 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
                 })()}
 
                 {/* Semana 0: item do plano para não-assinantes */}
-                {tier !== 'subscriber' && plan?.content?.itensEstruturantes && (() => {
-                  const semana0 = plan.content.itensEstruturantes.find((i: any) => (i.prazo || '').toLowerCase().includes('semana'));
+                {tier !== 'subscriber' && activePlan?.content?.itensEstruturantes && (() => {
+                  const semana0 = activePlan.content.itensEstruturantes.find((i: any) => (i.prazo || '').toLowerCase().includes('semana'));
                   if (!semana0) return null;
                   return (
                     <div style={{ background: V.white, border: `1px solid ${V.fog}`, borderRadius: 12, padding: "16px", marginBottom: 16 }}>
@@ -1372,26 +1374,26 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
                   );
                 })()}
 
-                <RelatorioSetorialBlock relatorio={plan?.content?.relatorioSetorial} />
+                <RelatorioSetorialBlock relatorio={activePlan?.content?.relatorioSetorial} />
 
                 {/* Briefings para distribuição */}
-                {plan?.content?.relatorioSetorial?.briefings && (
+                {activePlan?.content?.relatorioSetorial?.briefings && (
                   <div style={{ marginBottom: 16 }}>
                     <p style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.08em", marginBottom: 12 }}>BRIEFINGS PARA DISTRIBUIÇÃO</p>
                     {[
                       { key: 'briefing_equipe', label: 'Para sua equipe' },
                       { key: 'briefing_agencia', label: 'Para agência ou parceiro' },
                       { key: 'briefing_afiliado', label: 'Para afiliado ou distribuidor' },
-                    ].filter(b => plan.content.relatorioSetorial.briefings[b.key]).map(({ key, label }) => (
+                    ].filter(b => activePlan.content.relatorioSetorial.briefings[b.key]).map(({ key, label }) => (
                       <div key={key} style={{ background: V.white, border: `1px solid ${V.fog}`, borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                           <span style={{ fontSize: 12, fontWeight: 600, color: V.night }}>{label}</span>
-                          <button onClick={() => navigator.clipboard.writeText(plan.content.relatorioSetorial.briefings[key])}
+                          <button onClick={() => navigator.clipboard.writeText(activePlan.content.relatorioSetorial.briefings[key])}
                             style={{ fontSize: 11, color: V.amber, background: "none", border: `1px solid ${V.amber}`, borderRadius: 4, padding: "3px 8px", cursor: "pointer" }}>
                             Copiar
                           </button>
                         </div>
-                        <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.6 }}>{plan.content.relatorioSetorial.briefings[key]}</p>
+                        <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.6 }}>{activePlan.content.relatorioSetorial.briefings[key]}</p>
                       </div>
                     ))}
                   </div>
@@ -1428,11 +1430,20 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
                 </div>
                 {tier === "subscriber" && (
                   <div style={{ textAlign: "center", marginTop: 12, fontSize: 11, color: V.ash }}>
-                    Assinatura mensal · R$99/mês · cancele quando quiser ·{' '}
-                    <a href="https://wa.me/5511999999999?text=Quero gerenciar minha assinatura Virô"
-                      target="_blank" style={{ color: V.amber, textDecoration: "underline" }}>
+                    Assinatura mensal · R$99/mês ·{' '}
+                    <button onClick={async () => {
+                      try {
+                        const res = await fetch('/api/checkout/portal', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ leadId: lead.id }),
+                        });
+                        const data = await res.json();
+                        if (data.url) window.location.href = data.url;
+                      } catch { /* ignore */ }
+                    }} style={{ color: V.amber, textDecoration: "underline", background: "none", border: "none", cursor: "pointer", fontSize: 11, padding: 0 }}>
                       Gerenciar assinatura →
-                    </a>
+                    </button>
                   </div>
                 )}
               </div>

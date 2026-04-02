@@ -115,6 +115,37 @@ export async function GET(req: NextRequest) {
     return sum + ((l.diagnosis_display as any)?.totalVolume || 0);
   }, 0);
 
+  // ── INSIGHTS DOS PLANOS PAGOS (conectar conteúdo ao plano) ────────────
+  const paidLeadIds = (recentLeads || [])
+    .filter(l => l.plan_status === 'ready')
+    .map(l => l.id);
+
+  let planInsights = '';
+  if (paidLeadIds.length > 0) {
+    const { data: plans } = await supabase
+      .from('plans')
+      .select('content')
+      .in('lead_id', paidLeadIds.slice(0, 5))
+      .eq('status', 'ready');
+
+    if (plans && plans.length > 0) {
+      const topActions = plans.flatMap((p: any) =>
+        (p.content?.itensEstruturantes || []).slice(0, 3)
+      ).map((item: any) => item.titulo || item.title || '').filter(Boolean).slice(0, 10);
+
+      const topKeywords = plans.flatMap((p: any) =>
+        (p.content?.itensEstruturantes || []).flatMap((item: any) => item.keywords || [])
+      ).slice(0, 15);
+
+      if (topActions.length > 0) {
+        const uniqueKeywords = Array.from(new Set(topKeywords));
+        planInsights = `
+- Ações mais recomendadas nos planos: ${topActions.join(', ')}
+- Keywords dos planos: ${uniqueKeywords.join(', ')}`;
+      }
+    }
+  }
+
   // ── GERAÇÃO DOS 3 POSTS COM CLAUDE SONNET ─────────────────────────────
 
   const context = `Você é o ghostwriter do Thales Zutin, fundador do Virô (virolocal.com).
@@ -126,7 +157,7 @@ DADOS REAIS (últimas 2 semanas):
 - ${recentLeads?.length || 0} diagnósticos gerados
 - Top segmentos: ${topSegments.map(([s, n]) => `${s} (${n})`).join(', ') || 'nenhum'}
 - Buscas analisadas: ${totalBuscasAnalisadas.toLocaleString('pt-BR')}/mês
-${bestCase ? `- Caso real: ${bestCase.segmento} em ${bestCase.cidade} — score ${bestCase.score}/100, ${bestCase.pilarAlto}: ${bestCase.scoreAlto} vs ${bestCase.pilarBaixo}: ${bestCase.scoreBaixo}, gap +${bestCase.familiasGap.toLocaleString('pt-BR')} pessoas, ${bestCase.buscasMensais.toLocaleString('pt-BR')} buscas/mês` : '- Nenhum caso com contraste suficiente esta quinzena'}
+${bestCase ? `- Caso real: ${bestCase.segmento} em ${bestCase.cidade} — score ${bestCase.score}/100, ${bestCase.pilarAlto}: ${bestCase.scoreAlto} vs ${bestCase.pilarBaixo}: ${bestCase.scoreBaixo}, gap +${bestCase.familiasGap.toLocaleString('pt-BR')} pessoas, ${bestCase.buscasMensais.toLocaleString('pt-BR')} buscas/mês` : '- Nenhum caso com contraste suficiente esta quinzena'}${planInsights}
 
 Gere 3 posts LinkedIn (JSON):
 

@@ -6,20 +6,7 @@ import InstantValueScreen from "@/components/InstantValueScreen";
 import { initialFormData, type LeadFormData, stepValidation } from "@/lib/schema";
 import { dictionaries, type Locale } from "@/lib/i18n";
 import { NelsonLogo } from "@/components/NelsonLogo";
-
-
-// ─── Design Tokens ─────────────────────────────────────────────────
-const V = {
-  night: "#161618", graphite: "#232326", slate: "#E8E4DE",
-  zinc: "#888880", ash: "#888880", mist: "#C8C8D0",
-  fog: "#E8E4DE", cloud: "#F7F5F2", white: "#FFFFFF",
-  amber: "#CF8523", amberSoft: "#E6A445", amberWash: "rgba(207,133,35,0.06)",
-  teal: "#1D9E75", tealWash: "rgba(29,158,117,0.08)",
-  coral: "#D9534F",
-  display: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-  body: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-  mono: "'JetBrains Mono', 'SF Mono', monospace",
-};
+import { V } from "@/lib/design-tokens";
 
 const inputStyle: React.CSSProperties = {
   width: "100%", padding: "14px 16px", borderRadius: 10,
@@ -563,13 +550,13 @@ export default function Home() {
             </div>
 
             {[
-              { icon: "🔍", label: "Seja Encontrável", color: "#2D9B83",
+              { icon: "🔍", label: "Visibilidade", color: "#2D9B83",
                 status: "⚠️ Não encontrado no Google Maps",
                 acao: "→ Criar perfil no Google Meu Negócio com fotos, horário e categoria" },
-              { icon: "⭐", label: "Construa Credibilidade", color: "#CF8523",
+              { icon: "⭐", label: "Credibilidade", color: "#CF8523",
                 status: "⚠️ Poucas avaliações — prioridade alta",
                 acao: "→ Pedir avaliação para os últimos 20 clientes via WhatsApp esta semana" },
-              { icon: "📣", label: "Participe da Cultura", color: "#8B5CF6",
+              { icon: "📣", label: "Presença Digital", color: "#8B5CF6",
                 status: "⚠️ Presença digital parada",
                 acao: "→ 2 posts/semana respondendo perguntas reais que clientes fazem" },
             ].map((pilar, i) => (
@@ -602,7 +589,7 @@ export default function Home() {
           {/* Content preview */}
           <div style={{ padding: "14px 18px 0" }}>
             <p style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.ash, margin: "0 0 10px" }}>
-              Exemplo de conteúdo — Construa Credibilidade
+              Exemplo de conteúdo — Credibilidade
             </p>
             <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, overflow: "hidden" }}>
 
@@ -758,7 +745,7 @@ export default function Home() {
             { icon: "📋", title: "Você informa seu negócio", text: "Nome, segmento e endereço. Leva menos de 1 minuto." },
             { icon: "🔍", title: "Virô analisa seu mercado em tempo real", text: "Cruzamos Google, Maps, Instagram, IA e IBGE para mapear sua posição, seus concorrentes e sua oportunidade." },
             { icon: "📊", title: "Você recebe o diagnóstico grátis", text: "Quantos clientes você pode ter a mais por mês, quem disputa com você e o que está te impedindo de crescer." },
-            { icon: "🔓", title: "Desbloqueie o plano personalizado — R$497", text: "Passo a passo do que fazer em cada pilar: ser encontrável, construir credibilidade e participar da cultura do seu mercado." },
+            { icon: "📝", title: "Gere seu plano de ação — R$497", text: "Passo a passo do que fazer em cada pilar: ser encontrável, construir credibilidade e participar da cultura do seu mercado." },
             { icon: "🔄", title: "Mantenha-se relevante toda semana — R$99/mês", text: "Insights do seu mercado + conteúdos prontos toda sexta. Sem ação contínua, a tendência é entropia." },
           ].map((step, i) => (
             <div key={i} style={{ background: V.white, borderRadius: 14, padding: "20px 20px", border: `1px solid ${V.fog}`, display: "flex", gap: 16, alignItems: "flex-start" }}>
@@ -824,9 +811,9 @@ export default function Home() {
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 32 }}>
           {[
-            { title: "Seja Encontrável", desc: "Maps otimizado, SEO local, visibilidade em IA — passo a passo para aparecer quando buscam" },
-            { title: "Construa Credibilidade", desc: "Reviews, fotos, bio, proposta de valor — o que convence quem te encontra" },
-            { title: "Participe da Cultura", desc: "Conteúdo real, parceiros que indexam bem em IA, menções no setor" },
+            { title: "Visibilidade", desc: "Maps otimizado, SEO local, visibilidade em IA — passo a passo para aparecer quando buscam" },
+            { title: "Credibilidade", desc: "Reviews, fotos, bio, proposta de valor — o que convence quem te encontra" },
+            { title: "Presença Digital", desc: "Conteúdo real, parceiros que indexam bem em IA, menções no setor" },
             { title: "Relatório setorial", desc: "Tendências reais do seu mercado esta semana" },
           ].map((item, i) => (
             <div key={i} style={{ padding: "14px 16px", borderRadius: 12, border: `2px solid ${V.amber}`, background: V.white, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
@@ -852,7 +839,7 @@ export default function Home() {
               + 3 briefings completos para agência ou produtora
             </p>
             <p style={{ fontSize: 11, color: V.ash, margin: 0, fontFamily: V.mono }}>
-              Disponível após o Diagnóstico Completo · Cancele quando quiser · sem multa
+              Disponível após o Plano de Ação · Cancele quando quiser · sem multa
             </p>
           </div>
           <span style={{ fontFamily: V.mono, fontSize: 9, color: "#8B5CF6", background: "rgba(139,92,246,0.08)", padding: "3px 8px", borderRadius: 100, fontWeight: 600, flexShrink: 0 }}>R$99/mês</span>
@@ -885,7 +872,7 @@ export default function Home() {
         <div style={{ background: V.cloud, borderRadius: 12, padding: "20px", border: `1px solid ${V.fog}` }}>
           <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.7, margin: 0 }}>
             <strong style={{ color: V.night }}>Medimos 3 pilares:</strong>{" "}
-            Seja Encontrável (aparece quando buscam — Google, Maps, IA), Construa Credibilidade (convence quem encontra — reviews, fotos, site) e Participe da Cultura (mantém relevância — conteúdo, menções, alcance). Tudo relativizado contra seus concorrentes reais no raio.
+            Visibilidade (aparece quando buscam — Google, Maps, IA), Credibilidade (convence quem encontra — reviews, fotos, site) e Presença Digital (mantém relevância — conteúdo, menções, alcance). Tudo relativizado contra seus concorrentes reais no raio.
           </p>
         </div>
       </Section>
@@ -899,7 +886,7 @@ export default function Home() {
         {[
           { q: "O diagnóstico gratuito usa dados reais do meu negócio?", a: "Sim. Virô coleta dados do Google Maps, Instagram, volume de buscas locais e dados de população do IBGE em tempo real. Não inventamos nada." },
           { q: "O que eu recebo com o Plano de Ação?", a: "O básico bem feito priorizado pelos seus gaps reais, um relatório setorial do seu mercado com dados atuais, e posts prontos para publicar esta semana. Tudo gerado especificamente para o seu negócio." },
-          { q: "Em quanto tempo fico com o plano pronto?", a: "O diagnóstico gratuito sai em até 2 minutos. O plano de ação completo fica pronto em até 15 minutos após o pagamento." },
+          { q: "Em quanto tempo fico com o plano pronto?", a: "O diagnóstico gratuito sai em até 2 minutos. O plano de ação fica pronto em 2-3 minutos após o pagamento." },
           { q: "E a assinatura mensal — o que inclui?", a: "Atualização semanal do seu mercado toda sexta-feira: novo relatório setorial e novos posts conectados ao contexto da semana. Você pode cancelar quando quiser, direto pelo painel." },
           { q: "Funciona para qualquer tipo de negócio?", a: "Para negócios locais com presença física ou área de atuação definida. Restaurantes, clínicas, academias, escolas, salões, lojas, escritórios de serviço — se você atende pessoas numa região, Virô funciona para você." },
           { q: "E se meu negócio não aparecer no Google Maps?", a: "O diagnóstico ainda funciona — analisamos a demanda do seu mercado e a concorrência do seu raio mesmo sem o seu perfil. O plano vai indicar exatamente o que fazer para aparecer." },

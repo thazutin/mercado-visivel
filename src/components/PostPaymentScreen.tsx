@@ -2,26 +2,10 @@
 
 import { useState, useEffect } from "react";
 
-const V = {
-  night: "#161618",
-  graphite: "#232326",
-  slate: "#3A3A40",
-  zinc: "#6E6E78",
-  ash: "#9E9EA8",
-  mist: "#C8C8D0",
-  fog: "#EAEAEE",
-  cloud: "#F4F4F7",
-  white: "#FEFEFF",
-  amber: "#CF8523",
-  teal: "#2D9B83",
-  tealWash: "rgba(45,155,131,0.08)",
-  display: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-  body: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-  mono: "'JetBrains Mono', 'SF Mono', monospace",
-};
+import { V } from "@/lib/design-tokens";
 
 const processingMessages = [
-  "Gerando diagnóstico completo por canal...",
+  "Gerando diagnóstico por canal...",
   "Montando plano de ação prioritário...",
   "Montando as atividades do seu plano...",
   "Analisando sazonalidade do mercado...",
@@ -114,7 +98,7 @@ export default function PostPaymentScreen({ product, region }: Props) {
           fontFamily: V.body, fontSize: 15, color: V.mist,
           lineHeight: 1.6, margin: "0 0 32px",
         }}>
-          Obrigado pela compra. Estamos preparando seu diagnóstico completo e plano de ação para{" "}
+          Obrigado pela compra. Estamos preparando seu diagnóstico e plano de ação para{" "}
           <strong style={{ color: V.white }}>{product}</strong> em{" "}
           <strong style={{ color: V.white }}>{shortRegion}</strong>.
         </p>
@@ -174,7 +158,7 @@ export default function PostPaymentScreen({ product, region }: Props) {
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[
-              { icon: "📊", text: "Diagnóstico completo por canal sendo gerado" },
+              { icon: "📊", text: "Diagnóstico por canal sendo gerado" },
               { icon: "📋", text: "Plano de ação com itens priorizados" },
               { icon: "📝", text: "Amostra de conteúdos prontos para publicar" },
               { icon: "📧", text: "Email de aviso quando estiver pronto — até 15 minutos" },
