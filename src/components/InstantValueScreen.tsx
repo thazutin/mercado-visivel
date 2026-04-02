@@ -259,20 +259,21 @@ export default function InstantValueScreen({ product, region, results: initialRe
   }
   const raioKm = results.audiencia?.raioKm || 3;
 
-  // Pilar status indicators
+  // Pilar status indicators — tons suaves, sem emojis
+  const statusMuted = { warn: { bg: "rgba(180,83,9,0.04)", color: "#92610A" }, ok: { bg: "rgba(15,118,110,0.04)", color: "#0C5C56" }, mid: { bg: "rgba(120,113,108,0.05)", color: V.slate } };
   const pilar1Status = !results.maps?.found
-    ? { text: "⚠️ Não encontrado no Google Maps — primeira ação", bg: V.coralWash, color: V.coral }
+    ? { text: "Não encontrado no Google Maps", ...statusMuted.warn }
     : !results.maps?.inLocalPack
-    ? { text: "📍 No Maps mas fora do top 3", bg: V.amberWash, color: V.amber }
-    : { text: "✅ Visível no Google Maps", bg: V.tealWash, color: V.teal };
+    ? { text: "No Maps mas fora do top 3", ...statusMuted.mid }
+    : { text: "Visível no Google Maps", ...statusMuted.ok };
   const pilar2Status = (results.maps?.reviewCount || 0) < 10
-    ? { text: "⚠️ Poucas avaliações — prioridade alta", bg: V.coralWash, color: V.coral }
+    ? { text: "Poucas avaliações", ...statusMuted.warn }
     : (results.maps?.rating || 0) >= 4.0
-    ? { text: "✅ Boa reputação base", bg: V.tealWash, color: V.teal }
-    : { text: "📍 Avaliações precisam melhorar", bg: V.amberWash, color: V.amber };
+    ? { text: "Boa reputação base", ...statusMuted.ok }
+    : { text: "Avaliações precisam melhorar", ...statusMuted.mid };
   const pilar3Status = !igData?.dataAvailable || (igData?.recentPostsCount ?? 0) === 0
-    ? { text: "⚠️ Presença digital parada", bg: V.coralWash, color: V.coral }
-    : { text: "✅ Presença ativa", bg: V.tealWash, color: V.teal };
+    ? { text: "Presença digital parada", ...statusMuted.warn }
+    : { text: "Presença ativa", ...statusMuted.ok };
 
   const pilar1Acoes = isB2B
     ? ["Otimizar LinkedIn Company Page com palavras-chave do setor e localização", "Criar página de serviços com SEO para termos B2B específicos do segmento", "Aparecer em buscas de IA: publicar conteúdo técnico que responde perguntas do decisor", "Listar empresa em diretórios setoriais que indexam bem no Google"]
@@ -379,7 +380,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
               </>
             ) : (
               <>
-                <div style={{ fontSize: 64, fontWeight: 900, color: V.teal, lineHeight: 1, fontFamily: V.display, letterSpacing: "-0.03em", marginBottom: 8 }}>
+                <div style={{ fontSize: 56, fontWeight: 800, color: "#2DD4A8", lineHeight: 1, fontFamily: V.display, letterSpacing: "-0.03em", marginBottom: 8 }}>
                   +{oportunidade > 0 ? oportunidade.toLocaleString('pt-BR') : '—'}
                 </div>
                 <div style={{ fontSize: 15, color: V.mist, lineHeight: 1.5, maxWidth: 300, margin: "0 auto 16px" }}>
@@ -402,32 +403,32 @@ export default function InstantValueScreen({ product, region, results: initialRe
               const potencial = proj?.influenciaMeta
                 ? Math.min(proj.influenciaMeta, 85)
                 : Math.min(atual + 35, 85);
+              // Evita sobreposição: se labels estiverem muito próximos, empurra
+              const atualPos = Math.max(atual, 5); // min 5% da esquerda
+              const potencialPos = Math.min(potencial, 95); // max 95% da direita
+              const tooClose = (potencialPos - atualPos) < 20;
               return (
                 <div style={{ position: "relative", padding: "0 8px" }}>
                   {/* Régua */}
-                  <div style={{ position: "relative", height: 8, background: V.fog, borderRadius: 4, overflow: "visible" }}>
-                    {/* Faixa preenchida até potencial */}
-                    <div style={{ position: "absolute", left: 0, top: 0, height: "100%", borderRadius: 4, background: `linear-gradient(90deg, ${V.teal} ${(atual / potencial) * 100}%, ${V.amberSoft} 100%)`, width: `${potencial}%`, transition: "width 0.8s ease" }} />
-                    {/* Marcador atual */}
-                    <div style={{ position: "absolute", left: `${atual}%`, top: -6, transform: "translateX(-50%)", width: 20, height: 20, borderRadius: "50%", background: V.teal, border: `3px solid ${V.white}`, boxShadow: "0 1px 4px rgba(0,0,0,0.15)", zIndex: 2 }} />
-                    {/* Marcador potencial */}
-                    <div style={{ position: "absolute", left: `${potencial}%`, top: -4, transform: "translateX(-50%)", width: 16, height: 16, borderRadius: "50%", background: V.white, border: `2px dashed ${V.amber}`, zIndex: 1 }} />
+                  <div style={{ position: "relative", height: 6, background: V.fog, borderRadius: 3, overflow: "visible" }}>
+                    <div style={{ position: "absolute", left: 0, top: 0, height: "100%", borderRadius: 3, background: `linear-gradient(90deg, ${V.teal}90 ${(atual / potencial) * 100}%, ${V.amberSoft}70 100%)`, width: `${potencial}%`, transition: "width 0.8s ease" }} />
+                    <div style={{ position: "absolute", left: `${atual}%`, top: -5, transform: "translateX(-50%)", width: 16, height: 16, borderRadius: "50%", background: V.teal, border: `2px solid ${V.white}`, boxShadow: "0 1px 3px rgba(0,0,0,0.12)", zIndex: 2 }} />
+                    <div style={{ position: "absolute", left: `${potencial}%`, top: -4, transform: "translateX(-50%)", width: 14, height: 14, borderRadius: "50%", background: V.white, border: `2px dashed ${V.amber}`, zIndex: 1 }} />
                   </div>
-                  {/* Labels */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 16 }}>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                      <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>Você hoje</span>
-                      <span style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: V.teal }}>{atual}</span>
+                  {/* Labels abaixo dos dots */}
+                  <div style={{ position: "relative", height: 44, marginTop: 8 }}>
+                    <div style={{ position: "absolute", left: `${tooClose ? 0 : atualPos}%`, transform: tooClose ? "none" : "translateX(-50%)", textAlign: tooClose ? "left" : "center" }}>
+                      <div style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.teal, lineHeight: 1 }}>{atual}</div>
+                      <div style={{ fontFamily: V.mono, fontSize: 8, color: V.ash, marginTop: 2 }}>Você hoje</div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                      <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>Potencial</span>
-                      <span style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: V.amber }}>{potencial}</span>
+                    <div style={{ position: "absolute", right: tooClose ? 0 : undefined, left: tooClose ? undefined : `${potencialPos}%`, transform: tooClose ? "none" : "translateX(-50%)", textAlign: tooClose ? "right" : "center" }}>
+                      <div style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.amber, lineHeight: 1 }}>{potencial}</div>
+                      <div style={{ fontFamily: V.mono, fontSize: 8, color: V.ash, marginTop: 2 }}>Potencial</div>
                     </div>
                   </div>
-                  {/* Escala 0 e 100 */}
-                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
-                    <span style={{ fontFamily: V.mono, fontSize: 9, color: V.mist }}>0</span>
-                    <span style={{ fontFamily: V.mono, fontSize: 9, color: V.mist }}>100</span>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ fontFamily: V.mono, fontSize: 8, color: V.mist }}>0</span>
+                    <span style={{ fontFamily: V.mono, fontSize: 8, color: V.mist }}>100</span>
                   </div>
                 </div>
               );
@@ -436,7 +437,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
         )}
 
         {/* ═══════════════ BLOCO 3 — COMO CHEGAR LÁ ═══════════════ */}
-        <div style={{ fontSize: 13, fontWeight: 600, color: V.amber, marginBottom: 8, paddingLeft: 4, marginTop: 8 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: V.slate, marginBottom: 8, paddingLeft: 4, marginTop: 8, letterSpacing: "0.02em" }}>
           Como chegar lá
         </div>
 
@@ -489,7 +490,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
         )}
 
         {/* ═══════════════ BLOCO 4 — POR QUE ACREDITAMOS ═══════════════ */}
-        <div style={{ fontSize: 13, fontWeight: 600, color: V.amber, marginBottom: 8, paddingLeft: 4, marginTop: 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: V.slate, marginBottom: 8, paddingLeft: 4, marginTop: 16, letterSpacing: "0.02em" }}>
           Por que acreditamos nessa oportunidade?
         </div>
 
