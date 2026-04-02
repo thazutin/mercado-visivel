@@ -88,11 +88,13 @@ export async function POST(req: NextRequest) {
     const shortRegionGen = (lead.region || '').split(',')[0].trim();
 
 
+
     // 3. PARALELO com micro-stagger (500ms) — evita rate limit Anthropic
     const stagger = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
     console.log(`[PlanGen] Iniciando geração paralela para lead ${leadId}...`);
     const [itensResult, relatorioResult, macroResult] = await Promise.allSettled([
       generateItensEstruturantes(claude, context, levers, breakdown, lead.client_type || 'b2c'),
+
 
       stagger(500).then(() => generateRelatorioSetorial(lead.product, lead.region, lead.client_type || 'b2c')),
       stagger(1000).then(() => generateMacroContext(lead.product, lead.region, lead.client_type || 'b2c')),

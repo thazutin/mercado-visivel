@@ -698,6 +698,7 @@ Responda APENAS em JSON, sem markdown:
           }
         })(),
 
+
         35_000,
         "Maps",
       )
@@ -721,6 +722,7 @@ Responda APENAS em JSON, sem markdown:
                 throw err;
               }
             })(),
+
 
             40_000,
             "Instagram",
