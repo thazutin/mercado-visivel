@@ -413,15 +413,15 @@ export default function InstantValueScreen({ product, region, results: initialRe
                     {/* Marcador potencial */}
                     <div style={{ position: "absolute", left: `${potencial}%`, top: -4, transform: "translateX(-50%)", width: 16, height: 16, borderRadius: "50%", background: V.white, border: `2px dashed ${V.amber}`, zIndex: 1 }} />
                   </div>
-                  {/* Labels — extremos opostos, nunca sobrepõem */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: 16, gap: 24 }}>
-                    <div>
-                      <span style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.teal }}>{atual}</span>
-                      <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, marginLeft: 6 }}>Você hoje</span>
+                  {/* Labels */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 16 }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                      <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>Você hoje</span>
+                      <span style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: V.teal }}>{atual}</span>
                     </div>
-                    <div>
-                      <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, marginRight: 6 }}>Potencial</span>
-                      <span style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.amber }}>{potencial}</span>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                      <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>Potencial</span>
+                      <span style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: V.amber }}>{potencial}</span>
                     </div>
                   </div>
                   {/* Escala 0 e 100 */}
