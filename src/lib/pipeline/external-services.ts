@@ -317,7 +317,7 @@ export function createMapsCompetitionSearch(config: ApifyConfig) {
         headers: {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': apiKey,
-          'X-Goog-FieldMask': 'places.id,places.displayName,places.rating,places.userRatingCount,places.types,places.photos,places.websiteUri',
+          'X-Goog-FieldMask': 'places.id,places.displayName,places.rating,places.userRatingCount,places.types,places.photos,places.websiteUri,places.location',
         },
         body: JSON.stringify({
           textQuery: `${product} ${region}`,
@@ -342,6 +342,8 @@ export function createMapsCompetitionSearch(config: ApifyConfig) {
         reviewCount: p.userRatingCount,
         photoCount: p.photos?.length || 0,
         categories: p.types?.slice(0, 3) || [],
+        lat: p.location?.latitude || null,
+        lng: p.location?.longitude || null,
       }));
     } catch (err) {
       console.error('[MapsCompetition] Error:', err);

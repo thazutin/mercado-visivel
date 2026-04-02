@@ -7,6 +7,7 @@
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { waitUntil } from "@vercel/functions";
 import { leadSchema } from "@/lib/schema";
 import { insertLead, updateLeadStatus, insertDiagnosis } from "@/lib/supabase";
 import { runInstantAnalysis, runPostDiagnosisEnrichment, buildDisplayData, sanitizeProjecao } from "@/lib/analysis";
@@ -193,20 +194,24 @@ export async function POST(req: NextRequest) {
       console.error("[Diagnose] notify failed:", err);
     }
 
-    // 8. Post-diagnosis enrichment (fire-and-forget — não bloqueia resposta)
-    runPostDiagnosisEnrichment(lead.id, pipelineResult, {
-      name: (formData as any).name || formData.product,
-      product: formData.product,
-      region: formData.region,
-      client_type: pipelineResult.clientType || "b2c",
-    }).catch((err) => console.error("[Diagnose] Enrichment failed:", err));
+    // 8. Background tasks — usa waitUntil() para manter processo vivo no Vercel após response
+    waitUntil((async () => {
+      // 8a. Post-diagnosis enrichment (checklist, seasonality, content)
+      try {
+        await runPostDiagnosisEnrichment(lead.id, pipelineResult, {
+          name: (formData as any).name || formData.product,
+          product: formData.product,
+          region: formData.region,
+          client_type: pipelineResult.clientType || "b2c",
+        });
+      } catch (err) {
+        console.error("[Diagnose] Enrichment failed:", err);
+      }
 
-    // 8b. Se dados slow ficaram pendentes, re-roda pipeline completo em background e atualiza display
-    if (display.enrichmentStatus === 'pending') {
-      console.log(`[Diagnose] Slow enrichment pending: [${display.enrichmentPending?.join(', ')}] — running full pipeline in background`);
-      (async () => {
+      // 8b. Se dados slow ficaram pendentes, re-roda pipeline completo e atualiza display
+      if (display.enrichmentStatus === 'pending') {
+        console.log(`[Diagnose] Slow enrichment pending: [${display.enrichmentPending?.join(', ')}] — running full pipeline in background`);
         try {
-          // Re-roda pipeline sem cutoff (demora ~60-90s, mas roda em background)
           const fullResult = await runInstantAnalysis(formData, locale);
           const fullDisplay = buildDisplayData(fullResult);
           fullDisplay.lat = formData.lat || null;
@@ -222,19 +227,14 @@ export async function POST(req: NextRequest) {
           console.log(`[Diagnose] Background enrichment complete for ${lead.id}`);
         } catch (err) {
           console.error('[Diagnose] Background enrichment failed:', err);
-          // Mark as complete even on failure to stop polling
           try {
             const supabaseAdmin = getSupabaseAdmin();
-            const existing = display;
-            existing.enrichmentStatus = 'complete';
-            await supabaseAdmin
-              .from('leads')
-              .update({ diagnosis_display: existing })
-              .eq('id', lead.id);
+            display.enrichmentStatus = 'complete';
+            await supabaseAdmin.from('leads').update({ diagnosis_display: display }).eq('id', lead.id);
           } catch { /* ignore */ }
         }
-      })().catch(() => {});
-    }
+      }
+    })());
 
     // 9. Responde com resultado FAST (frontend exibe imediatamente, polls para enrichment)
     return NextResponse.json({

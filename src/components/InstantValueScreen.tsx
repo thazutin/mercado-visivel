@@ -505,6 +505,8 @@ export default function InstantValueScreen({ product, region, results: initialRe
 
 
 
+
+
           if (oportunidade > 0) parts.push(`Há oportunidade de capturar mais demanda.`);
           return parts.length > 0 ? (
             <div style={{ background: V.tealWash, borderRadius: 10, padding: "12px 14px", marginBottom: 12, border: `1px solid rgba(15,118,110,0.12)` }}>
@@ -514,6 +516,9 @@ export default function InstantValueScreen({ product, region, results: initialRe
         })()}
 
         {/* Accordion 1 — Tamanho do mercado */}
+
+
+
 
 
 
@@ -575,6 +580,8 @@ export default function InstantValueScreen({ product, region, results: initialRe
 
 
 
+
+
         <Expandable title={`Demanda ativa — ${hasVolume ? fmtPop(totalVolumeInt) + ' buscas/mês' + (searchVolumeIsEstimate ? ' (estimativa)' : '') : 'sem dados de busca para este segmento'}`} icon="">
           <div style={{ background: V.amberWash, borderRadius: 8, padding: "8px 12px", marginBottom: 12, borderLeft: `3px solid ${V.amber}` }}>
             <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
@@ -601,6 +608,8 @@ export default function InstantValueScreen({ product, region, results: initialRe
 
 
 
+
+
         <Expandable title={`Concorrência — ${hasCi ? ci!.activeCompetitors + ' negócio' + (ci!.activeCompetitors !== 1 ? 's' : '') + (isNacional && ci!.activeCompetitors < 5 ? ' (parcial)' : ' mapeados') : 'mapeamento em andamento'}`} icon="">
           {hasCi ? (
             <div>
@@ -613,6 +622,9 @@ export default function InstantValueScreen({ product, region, results: initialRe
               {ci!.competitors.filter(c => c.hasWebsite || c.hasInstagram).slice(0, 6).map((c, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0", fontSize: 12, color: V.zinc, borderBottom: `1px solid ${V.fog}` }}>
                   <span style={{ flex: 1 }}>{c.name}</span>
+                  {(c as any).distanceKm != null && !isNacional && (
+                    <span style={{ fontFamily: V.mono, fontSize: 9, color: V.zinc }}>{(c as any).distanceKm}km</span>
+                  )}
                   {c.rating && <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>★{c.rating}</span>}
                 </div>
               ))}

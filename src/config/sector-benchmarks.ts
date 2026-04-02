@@ -9,6 +9,7 @@ export interface SectorBenchmark {
   ticketMedio: { low: number; mid: number; high: number };
   taxaConversao: { low: number; mid: number; high: number };
   targetPercentage: { b2c: number; b2b: number };
+  targetProfile: string;
   source: string;
 }
 

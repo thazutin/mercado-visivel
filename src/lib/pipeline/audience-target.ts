@@ -40,7 +40,7 @@ export async function inferirTargetAudiencia(
         const unitLabel = isB2G ? 'órgãos' : isB2B ? 'empresas' : 'pessoas';
         console.log(`[Audience Target] Benchmark: ${bench?.category} → ${(benchPct * 100).toFixed(1)}% → ${audienciaTarget.toLocaleString("pt-BR")} ${unitLabel}`);
         return {
-          targetProfile: bench?.category.replace(/_/g, ' ') || segmento,
+          targetProfile: bench?.targetProfile || bench?.category.replace(/_/g, ' ') || segmento,
           estimatedPercentage: benchPct,
           audienciaTarget,
           rationale: `Benchmark setorial: ${(benchPct * 100).toFixed(1)}% da base de ${populacaoBase.toLocaleString('pt-BR')} ${unitLabel}`,

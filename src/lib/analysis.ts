@@ -703,6 +703,8 @@ Responda APENAS em JSON, sem markdown:
 
 
 
+
+
         35_000,
         "Maps",
       )
@@ -726,6 +728,8 @@ Responda APENAS em JSON, sem markdown:
                 throw err;
               }
             })(),
+
+
 
 
 
@@ -1201,13 +1205,15 @@ Responda APENAS em JSON, sem markdown:
       }
       if (competitorResults.length > 0) {
         // Mapeia para o formato esperado por calcularIndiceSaturacao
-        const mapsForIndex = competitorResults.map(c => ({
+        const mapsForIndex = competitorResults.map((c: any) => ({
           title: c.name,
           website: c.website,
           rating: c.rating,
           reviewCount: c.reviewCount,
+          lat: c.lat || null,
+          lng: c.lng || null,
         }));
-        competitionIndex = calcularIndiceSaturacao(mapsForIndex, totalMonthlyVolume);
+        competitionIndex = calcularIndiceSaturacao(mapsForIndex, totalMonthlyVolume, pipelineLat, pipelineLng);
         sourcesUsed.push("maps_competition");
       }
     }
