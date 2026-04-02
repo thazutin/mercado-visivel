@@ -697,7 +697,7 @@ Responda APENAS em JSON, sem markdown:
             throw err;
           }
         })(),
-        25_000,
+        35_000,
         "Maps",
       )
     );
@@ -720,7 +720,7 @@ Responda APENAS em JSON, sem markdown:
                 throw err;
               }
             })(),
-            30_000,
+            40_000,
             "Instagram",
           )
         : Promise.resolve([])
