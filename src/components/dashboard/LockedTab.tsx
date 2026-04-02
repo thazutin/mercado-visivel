@@ -48,7 +48,7 @@ export function LockedTab({ lockLevel, ctaLabel, ctaUrl, leadId }: Props) {
     <div style={{ position: "relative", minHeight: 300 }}>
       {/* Blurred preview content */}
       <div style={{
-        filter: "blur(6px)", pointerEvents: "none", userSelect: "none",
+        filter: "blur(6px)", pointerEvents: "none" as const, userSelect: "none" as const,
       }}>
         {lockLevel === 1 ? (
           <>
