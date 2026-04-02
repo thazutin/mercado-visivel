@@ -301,13 +301,13 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
 }) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generatingContent, setGeneratingContent] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetch(`/api/checklists?leadId=${leadId}`)
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data?.items) {
-          // Normalize: JSONB uses concluida, legacy uses completed
           const normalized = data.items.map((i: any) => ({
             ...i,
             completed: i.completed ?? i.concluida ?? false,
@@ -352,8 +352,6 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
 
   const completed = items.filter(i => i.completed).length;
   const total = items.length;
-
-  const [generatingContent, setGeneratingContent] = useState<Record<string, boolean>>({});
 
   const generateContent = async (itemIdx: number, contentType: string) => {
     const key = `${itemIdx}-${contentType}`;
