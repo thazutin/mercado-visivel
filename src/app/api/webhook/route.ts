@@ -147,25 +147,39 @@ export async function POST(req: NextRequest) {
       // ─── 4. Trigger plan generation (waitUntil keeps process alive) ───
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://virolocal.com";
 
-      waitUntil(
-        fetch(`${baseUrl}/api/plan/generate`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-internal-secret": process.env.INTERNAL_API_SECRET || "viro-internal",
-          },
-          body: JSON.stringify({ leadId }),
-        })
-        .then(async (res) => {
-          const text = await res.text();
-          if (!res.ok) {
-            console.error(`[Webhook] plan/generate FAILED: ${res.status} — ${text.slice(0, 500)}`);
-          } else {
-            console.log(`[Webhook] plan/generate OK: ${res.status} — ${text.slice(0, 200)}`);
+      // Trigger plan generation com retry (até 3 tentativas, backoff 10s/30s)
+      waitUntil((async () => {
+        const MAX_RETRIES = 3;
+        const DELAYS = [0, 10_000, 30_000]; // retry after 10s, 30s
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+          if (attempt > 0) {
+            console.log(`[Webhook] Plan retry ${attempt}/${MAX_RETRIES} in ${DELAYS[attempt] / 1000}s...`);
+            await new Promise(r => setTimeout(r, DELAYS[attempt]));
           }
-        })
-        .catch((err) => console.error("[Webhook] Plan generation trigger failed:", err))
-      );
+          try {
+            const res = await fetch(`${baseUrl}/api/plan/generate`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-internal-secret": process.env.INTERNAL_API_SECRET || "viro-internal",
+              },
+              body: JSON.stringify({ leadId }),
+              signal: AbortSignal.timeout(120_000), // 2min timeout per attempt
+            });
+            const text = await res.text();
+            if (res.ok) {
+              console.log(`[Webhook] plan/generate OK (attempt ${attempt + 1}): ${res.status}`);
+              return; // Success — exit retry loop
+            }
+            console.error(`[Webhook] plan/generate FAILED (attempt ${attempt + 1}): ${res.status} — ${text.slice(0, 300)}`);
+          } catch (err) {
+            console.error(`[Webhook] Plan trigger failed (attempt ${attempt + 1}):`, (err as Error).message);
+          }
+        }
+        // All retries failed — mark plan as error so dashboard can show retry button
+        console.error(`[Webhook] Plan generation FAILED after ${MAX_RETRIES} attempts for ${leadId}`);
+        await supabase.from("leads").update({ plan_status: "error" }).eq("id", leadId);
+      })());
 
       console.log(`[Webhook] Plan generation triggered (waitUntil) for ${leadId}`);
 

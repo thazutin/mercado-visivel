@@ -161,7 +161,7 @@ export default function PostPaymentScreen({ product, region }: Props) {
               { icon: "📊", text: "Diagnóstico por canal sendo gerado" },
               { icon: "📋", text: "Plano de ação com itens priorizados" },
               { icon: "📝", text: "Amostra de conteúdos prontos para publicar" },
-              { icon: "📧", text: "Email de aviso quando estiver pronto — até 15 minutos" },
+              { icon: "📧", text: "Email de aviso quando estiver pronto — 2-3 minutos" },
             ].map((item, i) => (
               <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <span style={{ fontSize: 16, lineHeight: "22px", flexShrink: 0 }}>{item.icon}</span>

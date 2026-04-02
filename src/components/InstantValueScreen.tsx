@@ -398,7 +398,10 @@ export default function InstantValueScreen({ product, region, results: initialRe
             </div>
             {(() => {
               const atual = results.influencePercent || 0;
-              const potencial = Math.min(atual + 35, 85);
+              // Usar influenciaMeta do pipeline (baseado em alavancas reais) em vez de +35 fixo
+              const potencial = proj?.influenciaMeta
+                ? Math.min(proj.influenciaMeta, 85)
+                : Math.min(atual + 35, 85);
               return (
                 <div style={{ position: "relative", padding: "0 8px" }}>
                   {/* Régua */}
@@ -500,6 +503,8 @@ export default function InstantValueScreen({ product, region, results: initialRe
           if (competitorCount > 0) parts.push(`Você compete com ${competitorCount} negócio${competitorCount !== 1 ? 's' : ''} por essa atenção.`);
 
 
+
+
           if (oportunidade > 0) parts.push(`Há oportunidade de capturar mais demanda.`);
           return parts.length > 0 ? (
             <div style={{ background: V.tealWash, borderRadius: 10, padding: "12px 14px", marginBottom: 12, border: `1px solid rgba(15,118,110,0.12)` }}>
@@ -509,6 +514,9 @@ export default function InstantValueScreen({ product, region, results: initialRe
         })()}
 
         {/* Accordion 1 — Tamanho do mercado */}
+
+
+
 
 
         <Expandable title={`Tamanho do mercado potencial — ${hasAudiencia ? fmtPop(aud!.audienciaTarget) + ' ' + audienciaUnit : hasVolume ? '~' + fmtPop(Math.round(totalVolumeInt * 3)) + ' ' + audienciaUnit + ' (estimado)' : 'dados insuficientes'}`} icon="">
@@ -546,6 +554,17 @@ export default function InstantValueScreen({ product, region, results: initialRe
                   ℹ️ Para {results.demandType === 'local_workers' ? 'negócios que atendem trabalhadores' : 'negócios com demanda turística'}, a demanda real vem de {results.demandType === 'local_workers' ? 'quem trabalha na região' : 'visitantes'}.
                 </div>
               )}
+              {/* Mapa de raio — só para negócios locais com lat/lng */}
+              {results.lat && results.lng && !isNacional && (
+                <div style={{ marginTop: 12, borderRadius: 8, overflow: "hidden", border: `1px solid ${V.fog}` }}>
+                  <img
+                    src={`https://maps.googleapis.com/maps/api/staticmap?center=${results.lat},${results.lng}&zoom=${(aud.raioKm || raioKm) <= 2 ? 15 : (aud.raioKm || raioKm) <= 5 ? 14 : 13}&size=560x200&scale=2&maptype=roadmap&markers=color:0xB45309|${results.lat},${results.lng}&path=color:0x0F766E80|weight:2|fillcolor:0x0F766E18|${generateCirclePath(results.lat, results.lng, aud.raioKm || raioKm)}&key=${typeof window !== 'undefined' ? '' : ''}${process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY || ''}`}
+                    alt={`Raio de ${aud.raioKm || raioKm}km`}
+                    style={{ width: "100%", height: "auto", display: "block" }}
+                    loading="lazy"
+                  />
+                </div>
+              )}
               <p style={{ fontSize: 10, color: V.ash, margin: "10px 0 0", fontFamily: V.mono }}>Fonte: IBGE{aud.ibgeAno ? ` ${aud.ibgeAno}` : ''} · Estimativa Virô</p>
             </div>
           ) : <p style={{ fontSize: 12, color: V.ash, margin: 0 }}>Dados indisponíveis.</p>}
@@ -554,12 +573,14 @@ export default function InstantValueScreen({ product, region, results: initialRe
         {/* Accordion 2 — Demanda ativa */}
 
 
+
+
         <Expandable title={`Demanda ativa — ${hasVolume ? fmtPop(totalVolumeInt) + ' buscas/mês' + (searchVolumeIsEstimate ? ' (estimativa)' : '') : 'sem dados de busca para este segmento'}`} icon="">
           <div style={{ background: V.amberWash, borderRadius: 8, padding: "8px 12px", marginBottom: 12, borderLeft: `3px solid ${V.amber}` }}>
             <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
               {results.demandType === 'ecommerce_national' || results.demandType === 'national_service'
                 ? `Volumes nacionais. Estimativa de alcance orgânico possível com posicionamento adequado.`
-                : `Volumes nacionais. O número de ${fmtPop(totalVolumeInt)} buscas/mês é estimado no raio de ${raioKm}km.`}
+                : `Volumes regionais. O número de ${fmtPop(totalVolumeInt)} buscas/mês é estimado com base na penetração da sua audiência no raio de ${raioKm}km do seu negócio.`}
             </p>
           </div>
           {allTermsSameVolume && (
@@ -576,6 +597,8 @@ export default function InstantValueScreen({ product, region, results: initialRe
         </Expandable>
 
         {/* Accordion 3 — Concorrência */}
+
+
 
 
         <Expandable title={`Concorrência — ${hasCi ? ci!.activeCompetitors + ' negócio' + (ci!.activeCompetitors !== 1 ? 's' : '') + (isNacional && ci!.activeCompetitors < 5 ? ' (parcial)' : ' mapeados') : 'mapeamento em andamento'}`} icon="">
@@ -749,7 +772,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
             }}>
               {loading ? "Redirecionando..." : "Gerar meu plano de ação →"}
             </button>
-            <p style={{ fontSize: 11, color: V.ash, margin: "8px 0 0" }}>Pronto em até 15 minutos · pagamento único</p>
+            <p style={{ fontSize: 11, color: V.ash, margin: "8px 0 0" }}>Pronto em 2-3 minutos · pagamento único</p>
           </div>
         )}
 

@@ -1252,7 +1252,22 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
             fontSize: 13, color: pollTimeout ? V.coral : V.amber, fontWeight: 500, lineHeight: 1.5,
           }}>
             {pollTimeout
-              ? "Está demorando mais que o esperado. Tente recarregar a página ou volte em alguns minutos."
+              ? <>
+                  Está demorando mais que o esperado.{' '}
+                  <button onClick={async () => {
+                    setPollTimeout(false);
+                    setPlanStatus("generating");
+                    try {
+                      await fetch('/api/plan/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-internal-secret': 'viro-internal' },
+                        body: JSON.stringify({ leadId: lead.id }),
+                      });
+                    } catch { /* polling will detect when ready */ }
+                  }} style={{ background: "none", border: "none", color: V.coral, textDecoration: "underline", cursor: "pointer", fontWeight: 700, fontSize: 13, padding: 0 }}>
+                    Tentar novamente →
+                  </button>
+                </>
               : "Montando seu plano agora — itens priorizados, relatório do mercado e conteúdos prontos. Leva 2-3 minutos."}
           </div>
         )}

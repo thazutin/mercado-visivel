@@ -117,7 +117,7 @@ export default function ResultadoClient({ product, region, leadId, results, name
             ✓ Recebi. Estou montando seu plano agora.
           </div>
           <p style={{ fontSize: 13, color: V.zinc, margin: "0 0 16px", lineHeight: 1.6 }}>
-            O básico bem feito, relatório do seu mercado e posts prontos em até 15 minutos.
+            O básico bem feito, relatório do seu mercado e posts prontos em 2-3 minutos.
           </p>
           <p style={{ fontSize: 11, color: V.ash, margin: "8px 0 0", textAlign: "center" }}>
             Seu painel fica disponível pelo link enviado por email. Guarde-o para acessar quando quiser.
