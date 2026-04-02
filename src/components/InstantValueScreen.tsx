@@ -505,6 +505,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
 
 
 
+
           if (oportunidade > 0) parts.push(`Há oportunidade de capturar mais demanda.`);
           return parts.length > 0 ? (
             <div style={{ background: V.tealWash, borderRadius: 10, padding: "12px 14px", marginBottom: 12, border: `1px solid rgba(15,118,110,0.12)` }}>
@@ -514,6 +515,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
         })()}
 
         {/* Accordion 1 — Tamanho do mercado */}
+
 
 
 
@@ -575,6 +577,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
 
 
 
+
         <Expandable title={`Demanda ativa — ${hasVolume ? fmtPop(totalVolumeInt) + ' buscas/mês' + (searchVolumeIsEstimate ? ' (estimativa)' : '') : 'sem dados de busca para este segmento'}`} icon="">
           <div style={{ background: V.amberWash, borderRadius: 8, padding: "8px 12px", marginBottom: 12, borderLeft: `3px solid ${V.amber}` }}>
             <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
@@ -597,6 +600,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
         </Expandable>
 
         {/* Accordion 3 — Concorrência */}
+
 
 
 
