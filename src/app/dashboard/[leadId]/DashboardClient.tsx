@@ -46,8 +46,8 @@ interface Props {
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "diagnostico", label: "Diagnóstico" },
-  { key: "estruturantes", label: "Seu Plano" },
-  { key: "semana", label: "Esta Semana" },
+  { key: "estruturantes", label: "Plano de Ação" },
+  { key: "semana", label: "Plano Semanal" },
 ];
 
 // ─── Accordion Section ───────────────────────────────────────────────

@@ -154,8 +154,9 @@ export async function POST(req: NextRequest) {
     console.log(`[Diagnose] audiencia object:`, JSON.stringify(pipelineResult.audiencia || null));
     console.log(`[Diagnose] volumes: totalMonthly=${pipelineResult.volumes?.totalMonthlyVolume}, termCount=${pipelineResult.volumes?.termVolumes?.length}`);
     const display = buildDisplayData(pipelineResult);
-    display.lat = formData.lat || null;
-    display.lng = formData.lng || null;
+    // Lat/lng: prioriza form (Places autocomplete), fallback pipeline (geocoding)
+    display.lat = formData.lat || (pipelineResult as any).pipelineLat || null;
+    display.lng = formData.lng || (pipelineResult as any).pipelineLng || null;
     console.log(`[Diagnose] buildDisplayData keys:`, Object.keys(display));
     console.log(`[Diagnose] display.totalVolume=${display.totalVolume}, display.audiencia=${JSON.stringify(display.audiencia)}, display.influencePercent=${display.influencePercent}, display.marketLow=${display.marketLow}, display.marketHigh=${display.marketHigh}`);
 

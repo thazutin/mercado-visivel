@@ -14,7 +14,7 @@ type TabKey = "resultado" | "plano" | "semanal";
 const TABS: { key: TabKey; label: string; locked: false | 1 | 2 }[] = [
   { key: "resultado", label: "Diagnóstico", locked: false },
   { key: "plano", label: "Plano de Ação", locked: 1 },
-  { key: "semanal", label: "Semanal", locked: 2 },
+  { key: "semanal", label: "Plano Semanal", locked: 2 },
 ];
 
 interface Props {

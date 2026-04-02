@@ -707,6 +707,8 @@ Responda APENAS em JSON, sem markdown:
 
 
 
+
+
         35_000,
         "Maps",
       )
@@ -730,6 +732,8 @@ Responda APENAS em JSON, sem markdown:
                 throw err;
               }
             })(),
+
+
 
 
 
@@ -1657,6 +1661,9 @@ Responda APENAS em JSON, sem markdown:
     enrichmentStatus,
     // @ts-ignore
     enrichmentPending,
+    // @ts-ignore — lat/lng resolvido pelo pipeline (geocoding fallback)
+    pipelineLat: pipelineLat || null,
+    pipelineLng: pipelineLng || null,
   };
 
   console.log(

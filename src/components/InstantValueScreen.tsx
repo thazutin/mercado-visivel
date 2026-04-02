@@ -509,6 +509,8 @@ export default function InstantValueScreen({ product, region, results: initialRe
 
 
 
+
+
           if (oportunidade > 0) parts.push(`Há oportunidade de capturar mais demanda.`);
           return parts.length > 0 ? (
             <div style={{ background: V.tealWash, borderRadius: 10, padding: "12px 14px", marginBottom: 12, border: `1px solid rgba(15,118,110,0.12)` }}>
@@ -518,6 +520,10 @@ export default function InstantValueScreen({ product, region, results: initialRe
         })()}
 
         {/* Accordion 1 — Tamanho do mercado */}
+
+
+
+
 
 
 
@@ -568,7 +574,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
               {results.lat && results.lng && !isNacional && (
                 <div style={{ marginTop: 12, borderRadius: 8, overflow: "hidden", border: `1px solid ${V.fog}` }}>
                   <img
-                    src={`https://maps.googleapis.com/maps/api/staticmap?center=${results.lat},${results.lng}&zoom=${(aud.raioKm || raioKm) <= 2 ? 15 : (aud.raioKm || raioKm) <= 5 ? 14 : 13}&size=560x200&scale=2&maptype=roadmap&markers=color:0xB45309|${results.lat},${results.lng}&path=color:0x0F766E80|weight:2|fillcolor:0x0F766E18|${generateCirclePath(results.lat, results.lng, aud.raioKm || raioKm)}&key=${typeof window !== 'undefined' ? '' : ''}${process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY || ''}`}
+                    src={`https://maps.googleapis.com/maps/api/staticmap?center=${results.lat},${results.lng}&zoom=${(aud.raioKm || raioKm) <= 2 ? 15 : (aud.raioKm || raioKm) <= 5 ? 14 : 13}&size=560x200&scale=2&maptype=roadmap&markers=color:0xB45309|${results.lat},${results.lng}&path=color:0x0F766E80|weight:2|fillcolor:0x0F766E18|${generateCirclePath(results.lat, results.lng, aud.raioKm || raioKm)}&key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY || ''}`}
                     alt={`Raio de ${aud.raioKm || raioKm}km`}
                     style={{ width: "100%", height: "auto", display: "block" }}
                     loading="lazy"
@@ -581,6 +587,8 @@ export default function InstantValueScreen({ product, region, results: initialRe
         </Expandable>
 
         {/* Accordion 2 — Demanda ativa */}
+
+
 
 
 
@@ -611,6 +619,8 @@ export default function InstantValueScreen({ product, region, results: initialRe
         </Expandable>
 
         {/* Accordion 3 — Concorrência */}
+
+
 
 
 
