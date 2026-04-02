@@ -158,11 +158,43 @@ function Chip({ children, color = V.ash }: { children: React.ReactNode; color?: 
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
-export default function InstantValueScreen({ product, region, results, onCheckout, loading, leadId, hideCTA, hideWorkRoutes, name }: Props) {
+export default function InstantValueScreen({ product, region, results: initialResults, onCheckout, loading, leadId, hideCTA, hideWorkRoutes, name }: Props) {
   const [show, setShow] = useState(false);
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
+  const [results, setResults] = useState(initialResults);
+  const [enriching, setEnriching] = useState(
+    (initialResults as any).enrichmentStatus === 'pending'
+  );
   useEffect(() => { setTimeout(() => setShow(true), 100); }, []);
+
+  // Poll for enrichment updates when data is still being collected
+  useEffect(() => {
+    if (!enriching || !leadId) return;
+    let attempts = 0;
+    const poll = setInterval(async () => {
+      attempts++;
+      try {
+        const res = await fetch(`/api/diagnose?leadId=${leadId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.results && data.results.enrichmentStatus === 'complete') {
+            setResults(data.results);
+            setEnriching(false);
+            clearInterval(poll);
+          } else if (data.results) {
+            // Update with whatever new data arrived
+            setResults(data.results);
+          }
+        }
+      } catch { /* ignore */ }
+      if (attempts >= 12) { // 2 min max
+        setEnriching(false);
+        clearInterval(poll);
+      }
+    }, 10_000);
+    return () => clearInterval(poll);
+  }, [enriching, leadId]);
 
   const termCount = results.termGeneration?.count || results.terms.length;
   const hasVolume = results.totalVolume > 0;
@@ -319,7 +351,13 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         )}
         {nenhumEncontrado && (
           <div style={{ background: "#FFF3E0", borderRadius: 10, padding: "10px 14px", marginBottom: 16, border: "1px solid #FFB74D", fontSize: 12, color: "#BF360C", lineHeight: 1.5 }}>
-            ⚠️ Não encontramos seu negócio online. O plano parte do zero.
+            Não encontramos seu negócio online. O plano parte do zero.
+          </div>
+        )}
+        {enriching && (
+          <div style={{ background: V.amberWash, borderRadius: 10, padding: "10px 14px", marginBottom: 16, border: `1px solid rgba(180,83,9,0.15)`, fontSize: 12, color: V.amber, lineHeight: 1.5, display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ width: 12, height: 12, border: `2px solid ${V.fog}`, borderTopColor: V.amber, borderRadius: "50%", animation: "spin 0.8s linear infinite", flexShrink: 0 }} />
+            Coletando dados de Instagram, posicionamento no Google e visibilidade em IA. Atualizamos automaticamente.
           </div>
         )}
 
@@ -460,6 +498,8 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           else if (hasVolume && isB2B) parts.push(`Há demanda ativa de ${fmtPop(totalVolumeInt)} buscas/mês no seu segmento.`);
           if (hasVolume && audienciaTotal > 0) parts.push(`Há ${fmtPop(totalVolumeInt)} buscas ativas por mês com intenção de compra.`);
           if (competitorCount > 0) parts.push(`Você compete com ${competitorCount} negócio${competitorCount !== 1 ? 's' : ''} por essa atenção.`);
+
+
           if (oportunidade > 0) parts.push(`Há oportunidade de capturar mais demanda.`);
           return parts.length > 0 ? (
             <div style={{ background: V.tealWash, borderRadius: 10, padding: "12px 14px", marginBottom: 12, border: `1px solid rgba(15,118,110,0.12)` }}>
@@ -469,6 +509,8 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         })()}
 
         {/* Accordion 1 — Tamanho do mercado */}
+
+
         <Expandable title={`Tamanho do mercado potencial — ${hasAudiencia ? fmtPop(aud!.audienciaTarget) + ' ' + audienciaUnit : hasVolume ? '~' + fmtPop(Math.round(totalVolumeInt * 3)) + ' ' + audienciaUnit + ' (estimado)' : 'dados insuficientes'}`} icon="">
           {results.maps?.found && (
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${V.fog}` }}>
@@ -510,6 +552,8 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         </Expandable>
 
         {/* Accordion 2 — Demanda ativa */}
+
+
         <Expandable title={`Demanda ativa — ${hasVolume ? fmtPop(totalVolumeInt) + ' buscas/mês' + (searchVolumeIsEstimate ? ' (estimativa)' : '') : 'sem dados de busca para este segmento'}`} icon="">
           <div style={{ background: V.amberWash, borderRadius: 8, padding: "8px 12px", marginBottom: 12, borderLeft: `3px solid ${V.amber}` }}>
             <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
@@ -532,6 +576,8 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         </Expandable>
 
         {/* Accordion 3 — Concorrência */}
+
+
         <Expandable title={`Concorrência — ${hasCi ? ci!.activeCompetitors + ' negócio' + (ci!.activeCompetitors !== 1 ? 's' : '') + (isNacional && ci!.activeCompetitors < 5 ? ' (parcial)' : ' mapeados') : 'mapeamento em andamento'}`} icon="">
           {hasCi ? (
             <div>
@@ -557,6 +603,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         {/* Accordion B2B — Empresas no mercado (somente B2B) */}
         {isB2B && (results as any).b2bCompanies?.companies?.length > 0 && (
           <Expandable title={`🏢 Empresas no seu mercado — ${(results as any).b2bCompanies.totalInRegion} mapeadas`} icon="">
+
             <div>
               <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 10px", lineHeight: 1.5 }}>
                 Empresas do mesmo setor na sua região. O plano de ação traz estratégias de abordagem.

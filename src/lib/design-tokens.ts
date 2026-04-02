@@ -2,6 +2,8 @@
 // Importar em todos os componentes em vez de definir V inline
 
 export const V = {
+
+
   // Neutros — Stone palette (warm, professional)
   night: "#1C1917",
   graphite: "#292524",
@@ -12,6 +14,7 @@ export const V = {
   fog: "#E7E5E3",
   cloud: "#F5F5F4",
   white: "#FAFAF9",
+
 
   // Marca — da logo Virô (marrom/dourado)
   amber: "#B45309",
