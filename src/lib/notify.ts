@@ -160,13 +160,9 @@ export async function notifyDiagnosisReady(opts: {
   const displayName = opts.name || product;
   const demandType = opts.demandType || 'local_residents';
 
-  const heroLabel = demandType === 'ecommerce_national' || demandType === 'national_service'
-    ? 'buscas mensais que ainda não chegam até você'
-    : demandType === 'tourist_flow'
-    ? 'visitantes por mês que ainda não te consideram'
-    : demandType === 'local_workers'
-    ? 'pessoas que trabalham no seu raio e ainda não te conhecem'
-    : 'pessoas no seu raio que ainda não te consideram';
+  const isB2B = opts.isB2B || demandType === 'national_service';
+  const heroUnit = isB2B ? 'empresas' : 'pessoas';
+  const heroLabel = `${heroUnit} a mais por mês conhecendo o seu negócio`;
 
   const subject = familiasGap > 0
     ? `${displayName}, encontrei +${familiasGap.toLocaleString('pt-BR')} — veja o que fazer`

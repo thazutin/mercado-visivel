@@ -5,21 +5,21 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 :root {
-  --ember: #D4582A;
-  --ember-light: #E8784A;
-  --ember-glow: rgba(212, 88, 42, 0.12);
-  --vero-blue: #1A3A4A;
-  --vero-teal: #2B6B7C;
-  --vero-light: #E8F1F4;
-  --vero-glow: rgba(43, 107, 124, 0.10);
-  --dark: #141210;
-  --warm-black: #1E1C19;
-  --charcoal: #2A2724;
-  --stone: #8C8578;
-  --sand: #B8AFA4;
-  --cream: #F0ECE4;
-  --paper: #F7F5F0;
-  --white: #FEFEFE;
+  --ember: #B45309;
+  --ember-light: #D97706;
+  --ember-glow: rgba(180, 83, 9, 0.10);
+  --vero-blue: #1C1917;
+  --vero-teal: #0F766E;
+  --vero-light: #F5F5F4;
+  --vero-glow: rgba(15, 118, 110, 0.08);
+  --dark: #1C1917;
+  --warm-black: #292524;
+  --charcoal: #292524;
+  --stone: #78716C;
+  --sand: #A8A29E;
+  --cream: #F5F5F4;
+  --paper: #FAFAF9;
+  --white: #FAFAF9;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -33,14 +33,7 @@ body {
   overflow-x: hidden;
 }
 
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.02'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 1000;
-}
+/* Noise texture removido — visual mais limpo e profissional */
 
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(16px); }
