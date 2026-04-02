@@ -415,18 +415,18 @@ export default function InstantValueScreen({ product, region, results: initialRe
                     <div style={{ position: "absolute", left: `${atual}%`, top: -5, transform: "translateX(-50%)", width: 16, height: 16, borderRadius: "50%", background: V.teal, border: `2px solid ${V.white}`, boxShadow: "0 1px 3px rgba(0,0,0,0.12)", zIndex: 2 }} />
                     <div style={{ position: "absolute", left: `${potencial}%`, top: -4, transform: "translateX(-50%)", width: 14, height: 14, borderRadius: "50%", background: V.white, border: `2px dashed ${V.amber}`, zIndex: 1 }} />
                   </div>
-                  {/* Labels abaixo dos dots */}
-                  <div style={{ position: "relative", height: 44, marginTop: 8 }}>
-                    <div style={{ position: "absolute", left: `${tooClose ? 0 : atualPos}%`, transform: tooClose ? "none" : "translateX(-50%)", textAlign: tooClose ? "left" : "center" }}>
-                      <div style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.teal, lineHeight: 1 }}>{atual}</div>
-                      <div style={{ fontFamily: V.mono, fontSize: 8, color: V.ash, marginTop: 2 }}>Você hoje</div>
+                  {/* Labels — posicionados abaixo dos dots, inline */}
+                  <div style={{ position: "relative", height: 28, marginTop: 10 }}>
+                    <div style={{ position: "absolute", left: `${atualPos}%`, transform: "translateX(-50%)", display: "flex", alignItems: "baseline", gap: 3, whiteSpace: "nowrap" }}>
+                      <span style={{ fontFamily: V.display, fontSize: 18, fontWeight: 800, color: V.teal }}>{atual}</span>
+                      <span style={{ fontFamily: V.mono, fontSize: 8, color: V.ash }}>hoje</span>
                     </div>
-                    <div style={{ position: "absolute", right: tooClose ? 0 : undefined, left: tooClose ? undefined : `${potencialPos}%`, transform: tooClose ? "none" : "translateX(-50%)", textAlign: tooClose ? "right" : "center" }}>
-                      <div style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.amber, lineHeight: 1 }}>{potencial}</div>
-                      <div style={{ fontFamily: V.mono, fontSize: 8, color: V.ash, marginTop: 2 }}>Potencial</div>
+                    <div style={{ position: "absolute", left: `${potencialPos}%`, transform: "translateX(-50%)", display: "flex", alignItems: "baseline", gap: 3, whiteSpace: "nowrap" }}>
+                      <span style={{ fontFamily: V.display, fontSize: 18, fontWeight: 800, color: V.amber }}>{potencial}</span>
+                      <span style={{ fontFamily: V.mono, fontSize: 8, color: V.ash }}>potencial</span>
                     </div>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
                     <span style={{ fontFamily: V.mono, fontSize: 8, color: V.mist }}>0</span>
                     <span style={{ fontFamily: V.mono, fontSize: 8, color: V.mist }}>100</span>
                   </div>
@@ -452,11 +452,11 @@ export default function InstantValueScreen({ product, region, results: initialRe
             <div key={i} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "12px 14px", marginBottom: 8 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: V.night }}>{p.icon} {p.label}</span>
-                <span style={{ fontSize: 16, fontWeight: 800, color: p.color }}>{p.score}</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: V.night }}>{p.score}</span>
               </div>
               {/* Mini-régua do pilar */}
               <div style={{ position: "relative", height: 4, background: V.fog, borderRadius: 2, marginBottom: 8, overflow: "visible" }}>
-                <div style={{ position: "absolute", left: 0, top: 0, height: "100%", borderRadius: 2, background: `linear-gradient(90deg, ${p.color} ${(p.score / pilarPotencial) * 100}%, ${V.amberSoft} 100%)`, width: `${pilarPotencial}%`, transition: "width 0.6s ease" }} />
+                <div style={{ position: "absolute", left: 0, top: 0, height: "100%", borderRadius: 2, background: `linear-gradient(90deg, ${p.color}90 ${(p.score / pilarPotencial) * 100}%, ${V.amberSoft}60 100%)`, width: `${pilarPotencial}%`, transition: "width 0.6s ease" }} />
                 <div style={{ position: "absolute", left: `${p.score}%`, top: -3, transform: "translateX(-50%)", width: 10, height: 10, borderRadius: "50%", background: p.color, border: `2px solid ${V.white}`, boxShadow: "0 0 2px rgba(0,0,0,0.15)", zIndex: 2 }} />
                 <div style={{ position: "absolute", left: `${pilarPotencial}%`, top: -2, transform: "translateX(-50%)", width: 8, height: 8, borderRadius: "50%", background: V.white, border: `1.5px dashed ${V.amber}`, zIndex: 1 }} />
               </div>
