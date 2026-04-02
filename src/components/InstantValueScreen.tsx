@@ -622,6 +622,9 @@ export default function InstantValueScreen({ product, region, results: initialRe
               {ci!.competitors.filter(c => c.hasWebsite || c.hasInstagram).slice(0, 6).map((c, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0", fontSize: 12, color: V.zinc, borderBottom: `1px solid ${V.fog}` }}>
                   <span style={{ flex: 1 }}>{c.name}</span>
+                  {(c as any).distanceKm != null && !isNacional && (
+                    <span style={{ fontFamily: V.mono, fontSize: 9, color: V.zinc }}>{(c as any).distanceKm}km</span>
+                  )}
                   {c.rating && <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash }}>★{c.rating}</span>}
                 </div>
               ))}

@@ -21,6 +21,9 @@ export interface CompetitorDetail {
   mapsPosition?: number;
   rating?: number;
   reviewCount?: number;
+  lat?: number | null;
+  lng?: number | null;
+  distanceKm?: number | null;
 }
 
 /**
@@ -32,22 +35,42 @@ export interface CompetitorDetail {
  * - 200–500 → equilibrado (amarelo)
  * - < 200 → saturado (vermelho)
  */
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export function calcularIndiceSaturacao(
   mapsResults: any[],
   totalSearchVolume: number,
+  businessLat?: number | null,
+  businessLng?: number | null,
 ): CompetitionIndex {
   // Extrai concorrentes do resultado do Maps scraper
-  const competitors: CompetitorDetail[] = mapsResults.map((r: any, i: number) => ({
-    name: r.title || r.name || r.businessName || `Concorrente ${i + 1}`,
-    hasWebsite: !!(r.website || r.url || r.site),
-    hasInstagram: !!(
-      r.instagram_url || r.instagramUrl ||
-      (typeof r.socialMedia === 'object' && r.socialMedia?.instagram)
-    ),
-    mapsPosition: i + 1,
-    rating: r.rating || r.totalScore || undefined,
-    reviewCount: r.reviewCount || r.reviewsCount || r.reviews || undefined,
-  }));
+  const competitors: CompetitorDetail[] = mapsResults.map((r: any, i: number) => {
+    const cLat = r.lat || null;
+    const cLng = r.lng || null;
+    const distanceKm = (businessLat && businessLng && cLat && cLng)
+      ? Math.round(haversineKm(businessLat, businessLng, cLat, cLng) * 10) / 10
+      : null;
+    return {
+      name: r.title || r.name || r.businessName || `Concorrente ${i + 1}`,
+      hasWebsite: !!(r.website || r.url || r.site),
+      hasInstagram: !!(
+        r.instagram_url || r.instagramUrl ||
+        (typeof r.socialMedia === 'object' && r.socialMedia?.instagram)
+      ),
+      mapsPosition: i + 1,
+      rating: r.rating || r.totalScore || undefined,
+      reviewCount: r.reviewCount || r.reviewsCount || r.reviews || undefined,
+      lat: cLat,
+      lng: cLng,
+      distanceKm,
+    };
+  });
 
   const totalCompetitors = competitors.length;
   const activeCompetitors = competitors.filter(c => c.hasWebsite || c.hasInstagram).length;
