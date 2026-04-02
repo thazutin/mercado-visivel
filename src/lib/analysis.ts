@@ -673,7 +673,7 @@ Responda APENAS em JSON, sem markdown:
               }
             }
           })(),
-          30_000,
+          20_000,
           "SERP",
         )
       );
@@ -697,7 +697,7 @@ Responda APENAS em JSON, sem markdown:
             throw err;
           }
         })(),
-        45_000,
+        25_000,
         "Maps",
       )
     );
@@ -720,7 +720,7 @@ Responda APENAS em JSON, sem markdown:
                 throw err;
               }
             })(),
-            60_000,
+            30_000,
             "Instagram",
           )
         : Promise.resolve([])
