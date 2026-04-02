@@ -81,8 +81,13 @@ export async function POST(req: NextRequest) {
       lead = { id: "temp_" + Date.now() };
     }
 
-    // 2. Roda pipeline (síncrono — Vercel aguarda até maxDuration=180s)
-    const pipelineResult = await runInstantAnalysis(formData, locale);
+    // 2. Roda pipeline (síncrono — com safety timeout de 150s antes do Vercel matar em 180s)
+    const pipelineResult = await Promise.race([
+      runInstantAnalysis(formData, locale),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Pipeline timeout: 150s exceeded')), 150_000)
+      ),
+    ]);
     pipelineResult.leadId = lead.id;
 
     // 3. Salva diagnóstico

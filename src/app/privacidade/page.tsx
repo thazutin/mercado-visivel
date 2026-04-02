@@ -5,19 +5,11 @@ export const metadata: Metadata = {
   description: "Política de Privacidade da plataforma Virô (Mercado Visível). Saiba como coletamos, usamos e protegemos seus dados.",
 };
 
-const V = {
-  night: "#161618",
-  zinc: "#6E6E78",
-  ash: "#9E9EA8",
-  fog: "#EAEAEE",
-  white: "#FEFEFF",
-  amber: "#CF8523",
-  font: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-};
+import { V } from "@/lib/design-tokens";
 
 export default function PrivacidadePage() {
   return (
-    <main style={{ background: V.white, minHeight: "100vh", fontFamily: V.font, color: V.night }}>
+    <main style={{ background: V.white, minHeight: "100vh", fontFamily: V.body, color: V.night }}>
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "60px 24px 80px" }}>
         <a href="/" style={{ fontSize: 14, color: V.ash, textDecoration: "none", display: "inline-block", marginBottom: 32 }}>
           ← Voltar ao início

@@ -11,6 +11,7 @@ import { waitUntil } from "@vercel/functions";
 import { notifyFullDiagnosisReady } from "@/lib/notify";
 import { runPostDiagnosisEnrichment } from "@/lib/analysis";
 import { generateRelatorioSetorial } from "@/lib/pipeline/relatorio-setorial";
+import { generateMacroContext } from "@/lib/pipeline/macro-context";
 
 export const maxDuration = 800;
 
@@ -92,11 +93,7 @@ export async function POST(req: NextRequest) {
     const [itensResult, relatorioResult, macroResult] = await Promise.allSettled([
       generateItensEstruturantes(claude, context, levers, breakdown, lead.client_type || 'b2c'),
       stagger(2000).then(() => generateRelatorioSetorial(lead.product, lead.region, lead.client_type || 'b2c')),
-      stagger(4000).then(() => claude.messages.create({
-        model: 'claude-haiku-4-5-20251001', max_tokens: 1200, temperature: 0.3,
-        system: 'Responda APENAS com JSON válido.',
-        messages: [{ role: 'user', content: `Em 3-4 frases diretas, descreva o cenário atual do mercado de "${lead.product}" em ${shortRegionGen}. Inclua: tendências recentes, nível de digitalização do setor, e 1 oportunidade específica. Sem jargão. JSON: {"summary":"...","indicators":[],"outlook":"neutral","key_opportunity":"..."}` }],
-      })),
+      stagger(4000).then(() => generateMacroContext(lead.product, lead.region, lead.client_type || 'b2c')),
     ]);
     console.log(`[PlanGen] Escalonado concluído em ${Date.now() - t0}ms`);
 
@@ -110,16 +107,28 @@ export async function POST(req: NextRequest) {
     if (relatorioResult.status === 'rejected') console.error('[PlanGen] Relatório falhou (non-fatal):', (relatorioResult as any).reason);
     else console.log(`[PlanGen] Relatório OK (${Date.now() - t0}ms)`);
 
-    // Macro context
+    // Macro context (agora via web search real)
     let macroContext: any = { summary: 'Contexto não disponível.', indicators: [], outlook: 'neutral', key_opportunity: '' };
     if (macroResult.status === 'fulfilled') {
-      const cenText = macroResult.value.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
-      try { macroContext = extractJson(cenText); }
-      catch { macroContext = { summary: cenText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim().slice(0, 500), indicators: [], outlook: 'neutral', key_opportunity: '' }; }
+      macroContext = macroResult.value;
       if (diagnosisId) await supabase.from('diagnoses').update({ macro_context: macroContext }).eq('id', diagnosisId);
-      console.log(`[PlanGen] Macro OK (${Date.now() - t0}ms)`);
+      console.log(`[PlanGen] Macro OK (confidence=${macroContext.confidence}, sources=${macroContext.sources?.length || 0}) (${Date.now() - t0}ms)`);
     } else {
       console.error('[PlanGen] Macro falhou (non-fatal):', (macroResult as any).reason);
+    }
+
+    // 4b. Validação pós-geração — garantir qualidade mínima dos itens
+    const GENERIC_TITLES = ['melhore sua presença online', 'aumente sua visibilidade', 'invista em marketing digital', 'crie conteúdo relevante'];
+    let validationIssues = 0;
+    for (const item of itensEstruturantes.items) {
+      const titleLower = (item.titulo || item.title || '').toLowerCase();
+      const isGeneric = GENERIC_TITLES.some(g => titleLower.includes(g));
+      const hasSteps = Array.isArray(item.how_to_steps) && item.how_to_steps.length >= 2;
+      const hasKeywords = Array.isArray(item.keywords) && item.keywords.length >= 3;
+      if (isGeneric || !hasSteps || !hasKeywords) validationIssues++;
+    }
+    if (validationIssues > 0) {
+      console.warn(`[PlanGen] Validation: ${validationIssues}/${itensEstruturantes.items.length} itens com qualidade baixa (genéricos, sem steps ou keywords)`);
     }
 
     // 5. Salvar plan no Supabase

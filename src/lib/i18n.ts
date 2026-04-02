@@ -38,7 +38,7 @@ export const dictionaries: Record<Locale, any> = {
       { step: "01", title: "Responde o formulário", desc: "2 minutos. O que você faz, onde atua, como te encontram hoje.", tag: "grátis" },
       { step: "02", title: "A análise roda em tempo real", desc: "Cruzamos busca, posicionamento e concorrência ao redor de você. Tudo automático." },
       { step: "03", title: "Você vê o resultado", desc: "Termos de busca reais, volume, influência e onde você aparece (ou não).", tag: "grátis" },
-      { step: "04", title: "Desbloqueia o diagnóstico completo", desc: "Diagnóstico + plano de 12 semanas + briefing semanal personalizado. R$999 único.", tag: "R$999" },
+      { step: "04", title: "Gera seu plano de ação", desc: "Plano personalizado com ações práticas, na ordem certa para o seu negócio. R$497 único.", tag: "R$497" },
     ],
     // ─── Form ───
     formTitle: "Seu mercado em 2 minutos",
@@ -106,9 +106,9 @@ export const dictionaries: Record<Locale, any> = {
     // ─── Context / Pricing ───
     contextLabel: "o que Virô desbloqueia",
     contextP1: "O resultado mostra onde você está. O plano completo mostra como mudar — com acompanhamento por 90 dias.",
-    contextP2: "Diagnóstico completo + plano de 90 dias + 12 briefings semanais. Baseado em dados reais.",
+    contextP2: "Diagnóstico detalhado + plano de ação + briefing semanal. Baseado em dados reais.",
     contextPrice: "Pacote Virô Completo",
-    contextPriceValue: "R$ 397",
+    contextPriceValue: "R$ 497",
     contextRecurring: "Pagamento único · tudo incluso",
     contextRecurringValue: "diagnóstico + plano + 12 briefings",
 
@@ -127,7 +127,7 @@ export const dictionaries: Record<Locale, any> = {
     resultTermsTitle: "TERMOS DE BUSCA REAIS",
     resultCtaTitle: "Esse mercado existe. Ele não depende de você — já está lá.",
     resultCtaText: "A pergunta é: como aumentar a probabilidade de que, quando alguém nesse mercado precisar do que você oferece, seu negócio seja lembrado? Não existe garantia — mas existe um plano baseado em evidência.",
-    resultCtaButton: "Desbloquear o como",
+    resultCtaButton: "Gerar meu plano de ação",
     resultUnlockLabel: "O QUE VIRÔ DESBLOQUEIA",
     resultUnlockItems: [
       "Posicionamento completo vs concorrentes reais",
@@ -177,7 +177,7 @@ export const dictionaries: Record<Locale, any> = {
       "Mapeando termos de busca na sua região...",
       "Analisando volume de demanda...",
       "Calculando mercado disponível...",
-      "Medindo sua influência digital...",
+      "Medindo sua posição competitiva...",
       "Preparando seu resultado...",
     ],
   },

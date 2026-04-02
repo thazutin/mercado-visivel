@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 
-const V = {
-  night: "#161618", zinc: "#6E6E78", ash: "#9E9EA8",
-  fog: "#EAEAEE", cloud: "#F4F4F7", white: "#FEFEFF",
-  amber: "#CF8523", teal: "#2D9B83", coral: "#D9534F",
-};
+import { V } from "@/lib/design-tokens";
 
 interface Lead {
   id: string; email: string; whatsapp: string; product: string; region: string;

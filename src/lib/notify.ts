@@ -443,7 +443,7 @@ function diagnosisEmailHtml(opts: {
         <div style="font-size:36px;font-weight:700;color:${influenceColor};line-height:1;margin-bottom:6px;">
           ${influencePercent}%
         </div>
-        <div style="font-size:12px;color:#888880;">Influência Digital</div>
+        <div style="font-size:12px;color:#888880;">Posição Competitiva</div>
       </div>
       ${formattedVolume ? `
       <div style="flex:1;background:#F7F5F2;border-radius:12px;padding:20px 16px;text-align:center;">

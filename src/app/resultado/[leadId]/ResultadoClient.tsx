@@ -7,22 +7,15 @@ import InstantValueScreen from "@/components/InstantValueScreen";
 import PostPaymentScreen from "@/components/PostPaymentScreen";
 import { LockedTab } from "@/components/dashboard/LockedTab";
 import { NelsonLogo } from "@/components/NelsonLogo";
-
-const V = {
-  night: "#161618", zinc: "#888880", ash: "#888880",
-  fog: "#E8E4DE", cloud: "#F7F5F2", white: "#FFFFFF",
-  amber: "#CF8523", teal: "#1D9E75",
-  display: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-  mono: "'JetBrains Mono', 'SF Mono', monospace",
-};
+import { V } from "@/lib/design-tokens";
 
 type TabKey = "resultado" | "diagnostico" | "checklist" | "conteudos";
 
 const TABS: { key: TabKey; label: string; locked: false | 1 | 2 }[] = [
-  { key: "resultado", label: "Diagnóstico inicial", locked: false },
-  { key: "diagnostico", label: "Diagnóstico completo", locked: 1 },
-  { key: "checklist", label: "Seu Plano", locked: 1 },
-  { key: "conteudos", label: "Conteúdos semanais", locked: 2 },
+  { key: "resultado", label: "Diagnóstico", locked: false },
+  { key: "diagnostico", label: "Plano de Ação", locked: 1 },
+  { key: "checklist", label: "Checklist", locked: 1 },
+  { key: "conteudos", label: "Conteúdos", locked: 2 },
 ];
 
 interface Props {
@@ -152,7 +145,7 @@ export default function ResultadoClient({ product, region, leadId, results, name
             <NelsonLogo size={40} />
           </div>
           <h1 style={{ fontSize: 20, fontWeight: 700, color: V.night, margin: "0 0 4px" }}>
-            {product} · {shortRegion}
+            {name && name.trim() ? name.trim() : product} · {shortRegion}
           </h1>
           <p style={{ fontSize: 13, color: V.ash, margin: 0 }}>
             Seu diagnóstico de visibilidade
@@ -192,7 +185,7 @@ export default function ResultadoClient({ product, region, leadId, results, name
         {tab === "diagnostico" && (
           <LockedTab
             lockLevel={1}
-            ctaLabel="Desbloquear por R$497"
+            ctaLabel="Gerar meu plano de ação · R$497"
             ctaUrl="#"
             leadId={leadId}
           />
@@ -202,7 +195,7 @@ export default function ResultadoClient({ product, region, leadId, results, name
         {tab === "checklist" && (
           <LockedTab
             lockLevel={1}
-            ctaLabel="Desbloquear por R$497"
+            ctaLabel="Gerar meu plano de ação · R$497"
             ctaUrl="#"
             leadId={leadId}
           />

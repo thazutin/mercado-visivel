@@ -2,24 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-const V = {
-  night: "#161618",
-  graphite: "#232326",
-  slate: "#3A3A40",
-  zinc: "#6E6E78",
-  ash: "#9E9EA8",
-  mist: "#C8C8D0",
-  fog: "#EAEAEE",
-  cloud: "#F4F4F7",
-  white: "#FEFEFF",
-  amber: "#CF8523",
-  amberWash: "rgba(207,133,35,0.08)",
-  teal: "#2D9B83",
-  tealWash: "rgba(45,155,131,0.08)",
-  display: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-  body: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-  mono: "'JetBrains Mono', 'SF Mono', monospace",
-};
+import { V } from "@/lib/design-tokens";
 
 const facts = [
   { text: "46% de todas as buscas no Google têm intenção local.", source: "Google" },

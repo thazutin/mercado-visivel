@@ -9,21 +9,7 @@
 
 import { useState } from "react";
 
-const V = {
-  night: "#161618",
-  graphite: "#232326",
-  slate: "#3A3A40",
-  zinc: "#6E6E78",
-  ash: "#9E9EA8",
-  fog: "#EAEAEE",
-  cloud: "#F4F4F7",
-  white: "#FEFEFF",
-  amber: "#CF8523",
-  teal: "#2D9B83",
-  coral: "#D9534F",
-  display: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-  mono: "'JetBrains Mono', 'SF Mono', monospace",
-};
+import { V } from "@/lib/design-tokens";
 
 interface TaskContentButtonProps {
   /** Task ID — either UUID (from plan_tasks) or "leadId:weekIndex" for weeklyPlan tasks */

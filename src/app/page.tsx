@@ -6,20 +6,7 @@ import InstantValueScreen from "@/components/InstantValueScreen";
 import { initialFormData, type LeadFormData, stepValidation } from "@/lib/schema";
 import { dictionaries, type Locale } from "@/lib/i18n";
 import { NelsonLogo } from "@/components/NelsonLogo";
-
-
-// ─── Design Tokens ─────────────────────────────────────────────────
-const V = {
-  night: "#161618", graphite: "#232326", slate: "#E8E4DE",
-  zinc: "#888880", ash: "#888880", mist: "#C8C8D0",
-  fog: "#E8E4DE", cloud: "#F7F5F2", white: "#FFFFFF",
-  amber: "#CF8523", amberSoft: "#E6A445", amberWash: "rgba(207,133,35,0.06)",
-  teal: "#1D9E75", tealWash: "rgba(29,158,117,0.08)",
-  coral: "#D9534F",
-  display: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-  body: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-  mono: "'JetBrains Mono', 'SF Mono', monospace",
-};
+import { V } from "@/lib/design-tokens";
 
 const inputStyle: React.CSSProperties = {
   width: "100%", padding: "14px 16px", borderRadius: 10,
@@ -758,7 +745,7 @@ export default function Home() {
             { icon: "📋", title: "Você informa seu negócio", text: "Nome, segmento e endereço. Leva menos de 1 minuto." },
             { icon: "🔍", title: "Virô analisa seu mercado em tempo real", text: "Cruzamos Google, Maps, Instagram, IA e IBGE para mapear sua posição, seus concorrentes e sua oportunidade." },
             { icon: "📊", title: "Você recebe o diagnóstico grátis", text: "Quantos clientes você pode ter a mais por mês, quem disputa com você e o que está te impedindo de crescer." },
-            { icon: "🔓", title: "Desbloqueie o plano personalizado — R$497", text: "Passo a passo do que fazer em cada pilar: ser encontrável, construir credibilidade e participar da cultura do seu mercado." },
+            { icon: "📝", title: "Gere seu plano de ação — R$497", text: "Passo a passo do que fazer em cada pilar: ser encontrável, construir credibilidade e participar da cultura do seu mercado." },
             { icon: "🔄", title: "Mantenha-se relevante toda semana — R$99/mês", text: "Insights do seu mercado + conteúdos prontos toda sexta. Sem ação contínua, a tendência é entropia." },
           ].map((step, i) => (
             <div key={i} style={{ background: V.white, borderRadius: 14, padding: "20px 20px", border: `1px solid ${V.fog}`, display: "flex", gap: 16, alignItems: "flex-start" }}>
@@ -852,7 +839,7 @@ export default function Home() {
               + 3 briefings completos para agência ou produtora
             </p>
             <p style={{ fontSize: 11, color: V.ash, margin: 0, fontFamily: V.mono }}>
-              Disponível após o Diagnóstico Completo · Cancele quando quiser · sem multa
+              Disponível após o Plano de Ação · Cancele quando quiser · sem multa
             </p>
           </div>
           <span style={{ fontFamily: V.mono, fontSize: 9, color: "#8B5CF6", background: "rgba(139,92,246,0.08)", padding: "3px 8px", borderRadius: 100, fontWeight: 600, flexShrink: 0 }}>R$99/mês</span>

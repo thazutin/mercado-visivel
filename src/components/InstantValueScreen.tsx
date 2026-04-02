@@ -4,19 +4,7 @@ import { useState, useEffect } from "react";
 import AnimatedCounter from "./AnimatedCounter";
 import FeedbackWidget from "./FeedbackWidget";
 import { NelsonLogo } from "./NelsonLogo";
-
-const V = {
-  night: "#161618", graphite: "#232326", slate: "#E8E4DE",
-  zinc: "#888880", ash: "#888880", mist: "#C8C8D0",
-  fog: "#E8E4DE", cloud: "#F7F5F2", white: "#FFFFFF",
-  amber: "#CF8523", amberSoft: "#E6A445",
-  amberWash: "rgba(207,133,35,0.06)",
-  teal: "#1D9E75", tealWash: "rgba(29,158,117,0.08)",
-  coral: "#D9534F", coralWash: "rgba(217,83,79,0.06)",
-  display: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-  body: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-  mono: "'JetBrains Mono', 'SF Mono', monospace",
-};
+import { V } from "@/lib/design-tokens";
 
 interface TermData { term: string; volume: number; cpc: number; position: string; intent?: string; serpFeatures?: string[]; }
 interface Results {
@@ -192,7 +180,8 @@ export default function InstantValueScreen({ product, region, results, onCheckou
   const hasProj = proj && (proj.gapCaptura > 0 || (proj.gapMensal && proj.gapMensal > 0)) && proj.mercadoTotal > 0;
   const ci = results.competitionIndex;
   const hasCi = ci && (ci.totalSearchVolume > 0 || ci.totalCompetitors > 0);
-  const isB2B = results.clientType === 'b2b' || results.demandType === 'national_service' || results.demandType === 'ecommerce_national';
+  const isB2B = results.clientType === 'b2b' || results.demandType === 'national_service'
+    || (results.projecaoFinanceira?.demandType === 'national_service');
   const isB2G = results.clientType === 'b2g';
   const isNacional = /brasil|nacional/i.test(results.audiencia?.municipioNome || '');
   const isNacionalAny = isNacional;
@@ -437,7 +426,12 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           if (audienciaTotal > 0) parts.push(`Seu mercado potencial é de ${fmtPop(audienciaTotal)} ${audienciaUnit}.`);
           if (hasVolume) parts.push(`Destas, há ${results.totalVolume.toLocaleString('pt-BR')} buscas ativas por mês com intenção de compra.`);
           if (competitorCount > 0) parts.push(`Você compete com ${competitorCount} negócio${competitorCount !== 1 ? 's' : ''} por essa atenção.`);
-          if (pontoForte && pontoForte.score > 0) parts.push(`Você já faz bem ${pontoForte.label.toLowerCase()} e tem oportunidade clara em ${maiorGap.label.toLowerCase()}.`);
+          const pilarNatural: Record<string, string> = {
+            'seja encontrável': 'ser encontrado',
+            'construa credibilidade': 'construir credibilidade',
+            'participe da cultura': 'participar da cultura digital',
+          };
+          if (pontoForte && pontoForte.score > 0) parts.push(`Você já faz bem em ${pilarNatural[pontoForte.label.toLowerCase()] || pontoForte.label.toLowerCase()} e tem oportunidade clara em ${pilarNatural[maiorGap.label.toLowerCase()] || maiorGap.label.toLowerCase()}.`);
           return parts.length > 0 ? (
             <div style={{ background: V.tealWash, borderRadius: 10, padding: "12px 14px", marginBottom: 12, border: `1px solid rgba(29,158,117,0.15)` }}>
               <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.6 }}>{parts.join(' ')}</p>
@@ -446,7 +440,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         })()}
 
         {/* Accordion 1 — Tamanho do mercado */}
-        <Expandable title={`👥 Tamanho do mercado potencial — ${hasAudiencia ? fmtPop(aud!.audienciaTarget) + ' ' + audienciaUnit : '—'}`} icon="">
+        <Expandable title={`👥 Tamanho do mercado potencial — ${hasAudiencia ? fmtPop(aud!.audienciaTarget) + ' ' + audienciaUnit : hasVolume ? '~' + fmtPop(results.totalVolume * 3) + ' ' + audienciaUnit + ' (estimado)' : 'dados insuficientes'}`} icon="">
           {results.maps?.found && (
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${V.fog}` }}>
               <div style={{ width: 48, height: 48, borderRadius: "50%", background: V.teal, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -487,7 +481,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         </Expandable>
 
         {/* Accordion 2 — Demanda ativa */}
-        <Expandable title={`🔍 Demanda ativa — ${hasVolume ? results.totalVolume.toLocaleString('pt-BR') + ' buscas/mês' + (searchVolumeIsEstimate ? ' (estimativa)' : '') : '—'}`} icon="">
+        <Expandable title={`🔍 Demanda ativa — ${hasVolume ? results.totalVolume.toLocaleString('pt-BR') + ' buscas/mês' + (searchVolumeIsEstimate ? ' (estimativa)' : '') : 'sem dados de busca para este segmento'}`} icon="">
           <div style={{ background: V.amberWash, borderRadius: 8, padding: "8px 12px", marginBottom: 12, borderLeft: `3px solid ${V.amber}` }}>
             <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
               {results.demandType === 'ecommerce_national' || results.demandType === 'national_service'
@@ -504,7 +498,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         </Expandable>
 
         {/* Accordion 3 — Concorrência */}
-        <Expandable title={`🏪 Concorrência — ${hasCi ? ci!.activeCompetitors + ' negócios' : '—'}`} icon="">
+        <Expandable title={`🏪 Concorrência — ${hasCi ? ci!.activeCompetitors + ' negócio' + (ci!.activeCompetitors !== 1 ? 's' : '') + ' mapeados' : 'mapeamento em andamento'}`} icon="">
           {hasCi ? (
             <div>
               <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px" }}>{ci!.activeCompetitors} negócio{ci!.activeCompetitors !== 1 ? 's' : ''} disputando atenção com você.</p>
@@ -520,6 +514,36 @@ export default function InstantValueScreen({ product, region, results, onCheckou
             </div>
           ) : <p style={{ fontSize: 12, color: V.ash, margin: 0 }}>Dados indisponíveis.</p>}
         </Expandable>
+
+        {/* Accordion B2B — Empresas no mercado (somente B2B) */}
+        {isB2B && (results as any).b2bCompanies?.companies?.length > 0 && (
+          <Expandable title={`🏢 Empresas no seu mercado — ${(results as any).b2bCompanies.totalInRegion} mapeadas`} icon="">
+            <div>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 10px", lineHeight: 1.5 }}>
+                Empresas do mesmo setor na sua região. O plano de ação traz estratégias de abordagem.
+              </p>
+              {((results as any).b2bCompanies.companies as any[]).slice(0, 8).map((c: any, i: number) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: `1px solid ${V.fog}`, fontSize: 12 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, color: V.night, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {c.nomeFantasia || c.razaoSocial}
+                    </div>
+                    <div style={{ fontSize: 10, color: V.ash }}>
+                      {c.porte !== 'N/I' && <span>{c.porte} · </span>}
+                      {c.municipio}{c.uf ? ` - ${c.uf}` : ''}
+                    </div>
+                  </div>
+                  {c.email && (
+                    <span style={{ fontFamily: V.mono, fontSize: 9, color: V.teal, flexShrink: 0 }}>✉</span>
+                  )}
+                </div>
+              ))}
+              <p style={{ fontSize: 10, color: V.ash, margin: "10px 0 0", fontFamily: V.mono }}>
+                Fonte: {(results as any).b2bCompanies.source}
+              </p>
+            </div>
+          </Expandable>
+        )}
 
         {/* Accordion 4 — O que faz bem e oportunidades */}
         <Expandable title="✅ O que faz bem e oportunidades" icon="">

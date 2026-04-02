@@ -31,15 +31,7 @@ function formatLocationDisplay(address: string): string {
   return parts[0] || address;
 }
 
-const V = {
-  night: "#161618", graphite: "#232326", slate: "#E8E4DE",
-  zinc: "#888880", ash: "#888880", fog: "#E8E4DE",
-  cloud: "#F7F5F2", white: "#FFFFFF", amber: "#CF8523",
-  teal: "#1D9E75", coral: "#D9534F", coralWash: "rgba(217,83,79,0.06)",
-  mist: "#C8C8D0", amberWash: "rgba(207,133,35,0.06)",
-  display: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-  mono: "'JetBrains Mono', 'SF Mono', monospace",
-};
+import { V } from "@/lib/design-tokens";
 
 type TabKey = "diagnostico" | "estruturantes" | "semana";
 type Tier = "free" | "paid" | "subscriber";
@@ -1315,7 +1307,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
         {tab === "estruturantes" && (
           <div>
             {tier === "free" ? (
-              <LockedTab lockLevel={1} ctaLabel="Desbloquear por R$497" ctaUrl="#" leadId={lead.id} />
+              <LockedTab lockLevel={1} ctaLabel="Gerar meu plano de ação · R$497" ctaUrl="#" leadId={lead.id} />
             ) : (
               <ItensEstruturantesTab
                 leadId={lead.id}
@@ -1330,7 +1322,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
         {tab === "semana" && (
           <div>
             {tier === "free" ? (
-              <LockedTab lockLevel={1} ctaLabel="Desbloquear por R$497" ctaUrl="#" leadId={lead.id} />
+              <LockedTab lockLevel={1} ctaLabel="Gerar meu plano de ação · R$497" ctaUrl="#" leadId={lead.id} />
             ) : !planReady ? (
               <Spinner text="Buscando o que mudou no seu mercado esta semana..." />
             ) : (

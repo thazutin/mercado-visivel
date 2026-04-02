@@ -534,6 +534,16 @@ async function inferirFinanceiro(
   businessCategory: string,
   region: string,
 ): Promise<{ ticketMedio: number; taxaConversao: number; ticketRationale: string }> {
+  // Prioridade 1: tabela curada de benchmarks (instantâneo, custo zero)
+  const { getFinancialBenchmark } = await import('@/config/sector-benchmarks');
+  const benchmark = getFinancialBenchmark(businessCategory);
+  if (benchmark.fromBenchmark) {
+    console.log(`[Financeiro] Benchmark encontrado para "${businessCategory}": ticket=${benchmark.ticketMedio}, conversão=${benchmark.taxaConversao}`);
+    return benchmark;
+  }
+
+  // Prioridade 2: Claude Haiku (fallback para categorias não mapeadas)
+  console.log(`[Financeiro] Categoria "${businessCategory}" não mapeada, usando Claude Haiku...`);
   try {
     const { default: Anthropic } = await import('@anthropic-ai/sdk');
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
