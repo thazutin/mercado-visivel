@@ -336,10 +336,10 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
   const summary = activePlan?.content?.itensEstrurantesSummary || '';
 
   const PILAR_MAP: Record<string, { label: string; color: string; icon: string }> = {
-    descoberta: { label: 'Seja Encontrável', color: V.teal, icon: '🔍' },
-    credibilidade: { label: 'Construa Credibilidade', color: V.amber, icon: '⭐' },
-    reputacao: { label: 'Construa Credibilidade', color: V.amber, icon: '⭐' },
-    presenca: { label: 'Participe da Cultura', color: '#8B5CF6', icon: '📣' },
+    descoberta: { label: 'Visibilidade', color: V.teal, icon: '🔍' },
+    credibilidade: { label: 'Credibilidade', color: V.amber, icon: '⭐' },
+    reputacao: { label: 'Credibilidade', color: V.amber, icon: '⭐' },
+    presenca: { label: 'Presença Digital', color: '#8B5CF6', icon: '📣' },
   };
 
   const sorted = [...items].sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
@@ -1353,8 +1353,8 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
             ) : (
               <div>
                 {/* Foco da semana baseado no plano */}
-                {activePlan?.content?.itensEstruturantes && activePlan.content.itensEstruturantes.length > 0 && (() => {
-                  const pendentes = activePlan.content.itensEstruturantes.filter((i: any) => !i.concluida);
+                {activePlan?.content?.itensEstruturantes && activePlan?.content?.itensEstruturantes.length > 0 && (() => {
+                  const pendentes = activePlan?.content?.itensEstruturantes.filter((i: any) => !i.concluida);
                   const pilarFoco = pendentes[0]?.pilar || pendentes[0]?.dimensao || 'Descoberta';
                   const acaoFoco = pendentes[0]?.titulo || '';
                   return pilarFoco ? (
@@ -1368,7 +1368,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
 
                 {/* Semana 0: item do plano para não-assinantes */}
                 {tier !== 'subscriber' && activePlan?.content?.itensEstruturantes && (() => {
-                  const semana0 = activePlan.content.itensEstruturantes.find((i: any) => (i.prazo || '').toLowerCase().includes('semana'));
+                  const semana0 = activePlan?.content?.itensEstruturantes.find((i: any) => (i.prazo || '').toLowerCase().includes('semana'));
                   if (!semana0) return null;
                   return (
                     <div style={{ background: V.white, border: `1px solid ${V.fog}`, borderRadius: 12, padding: "16px", marginBottom: 16 }}>
@@ -1399,16 +1399,16 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
                       { key: 'briefing_equipe', label: 'Para sua equipe' },
                       { key: 'briefing_agencia', label: 'Para agência ou parceiro' },
                       { key: 'briefing_afiliado', label: 'Para afiliado ou distribuidor' },
-                    ].filter(b => activePlan.content.relatorioSetorial.briefings[b.key]).map(({ key, label }) => (
+                    ].filter(b => activePlan?.content?.relatorioSetorial.briefings[b.key]).map(({ key, label }) => (
                       <div key={key} style={{ background: V.white, border: `1px solid ${V.fog}`, borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                           <span style={{ fontSize: 12, fontWeight: 600, color: V.night }}>{label}</span>
-                          <button onClick={() => navigator.clipboard.writeText(activePlan.content.relatorioSetorial.briefings[key])}
+                          <button onClick={() => navigator.clipboard.writeText(activePlan?.content?.relatorioSetorial.briefings[key])}
                             style={{ fontSize: 11, color: V.amber, background: "none", border: `1px solid ${V.amber}`, borderRadius: 4, padding: "3px 8px", cursor: "pointer" }}>
                             Copiar
                           </button>
                         </div>
-                        <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.6 }}>{activePlan.content.relatorioSetorial.briefings[key]}</p>
+                        <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.6 }}>{activePlan?.content?.relatorioSetorial.briefings[key]}</p>
                       </div>
                     ))}
                   </div>
