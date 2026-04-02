@@ -21,6 +21,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 200, mid: 450, high: 1200 },
     taxaConversao: { low: 0.025, mid: 0.040, high: 0.065 },
     targetPercentage: { b2c: 0.08, b2b: 0.02 },
+    targetProfile: 'Mulheres 25-55 interessadas em cuidados estéticos',
     source: 'Benchmark setorial saúde estética 2024',
   },
   {
@@ -29,6 +30,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 150, mid: 350, high: 800 },
     taxaConversao: { low: 0.030, mid: 0.050, high: 0.075 },
     targetPercentage: { b2c: 0.12, b2b: 0.01 },
+    targetProfile: 'Adultos e famílias buscando tratamento dentário',
     source: 'Benchmark setorial odontologia 2024',
   },
   {
@@ -37,6 +39,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 80, mid: 200, high: 500 },
     taxaConversao: { low: 0.035, mid: 0.055, high: 0.080 },
     targetPercentage: { b2c: 0.15, b2b: 0.01 },
+    targetProfile: 'Donos de pets buscando veterinário próximo',
     source: 'IBGE POF 2024 — despesa com animais',
   },
   {
@@ -45,6 +48,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 150, mid: 300, high: 600 },
     taxaConversao: { low: 0.020, mid: 0.035, high: 0.055 },
     targetPercentage: { b2c: 0.06, b2b: 0.03 },
+    targetProfile: 'Adultos 25-50 buscando acompanhamento psicológico',
     source: 'Benchmark setorial saúde mental 2024',
   },
   {
@@ -53,6 +57,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 200, mid: 400, high: 1000 },
     taxaConversao: { low: 0.025, mid: 0.045, high: 0.070 },
     targetPercentage: { b2c: 0.10, b2b: 0.01 },
+    targetProfile: 'Adultos buscando consulta médica especializada',
     source: 'Benchmark setorial saúde 2024',
   },
 
@@ -63,6 +68,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 500, mid: 2000, high: 8000 },
     taxaConversao: { low: 0.015, mid: 0.030, high: 0.050 },
     targetPercentage: { b2c: 0.04, b2b: 0.08 },
+    targetProfile: 'Pessoas e empresas com demandas jurídicas',
     source: 'Benchmark setorial jurídico 2024',
   },
   {
@@ -71,6 +77,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 300, mid: 800, high: 2500 },
     taxaConversao: { low: 0.020, mid: 0.035, high: 0.055 },
     targetPercentage: { b2c: 0.02, b2b: 0.15 },
+    targetProfile: 'Empresas e autônomos que precisam de contador',
     source: 'Benchmark setorial contábil 2024',
   },
   {
@@ -79,6 +86,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 1500, mid: 5000, high: 20000 },
     taxaConversao: { low: 0.015, mid: 0.025, high: 0.040 },
     targetPercentage: { b2c: 0.03, b2b: 0.05 },
+    targetProfile: 'Proprietários planejando reforma ou construção',
     source: 'Benchmark setorial arquitetura 2024',
   },
   {
@@ -87,6 +95,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 1000, mid: 3000, high: 15000 },
     taxaConversao: { low: 0.010, mid: 0.025, high: 0.040 },
     targetPercentage: { b2c: 0.01, b2b: 0.10 },
+    targetProfile: 'Empresas buscando consultoria especializada',
     source: 'Benchmark setorial consultoria 2024',
   },
   {
@@ -95,6 +104,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 800, mid: 2500, high: 10000 },
     taxaConversao: { low: 0.015, mid: 0.030, high: 0.050 },
     targetPercentage: { b2c: 0.01, b2b: 0.12 },
+    targetProfile: 'Empresas buscando agência de marketing',
     source: 'Benchmark setorial marketing 2024',
   },
 
@@ -105,6 +115,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 80, mid: 180, high: 400 },
     taxaConversao: { low: 0.035, mid: 0.055, high: 0.080 },
     targetPercentage: { b2c: 0.12, b2b: 0.01 },
+    targetProfile: 'Adultos 18-50 buscando atividade física na região',
     source: 'IBGE POF 2024 — despesa com atividade física',
   },
   {
@@ -113,6 +124,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 40, mid: 100, high: 250 },
     taxaConversao: { low: 0.040, mid: 0.065, high: 0.095 },
     targetPercentage: { b2c: 0.20, b2b: 0.01 },
+    targetProfile: 'Moradores da região que frequentam salão regularmente',
     source: 'IBGE POF 2024 — despesa com cuidados pessoais',
   },
   {
@@ -121,6 +133,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 100, mid: 250, high: 600 },
     taxaConversao: { low: 0.025, mid: 0.040, high: 0.060 },
     targetPercentage: { b2c: 0.05, b2b: 0.02 },
+    targetProfile: 'Adultos interessados em bem-estar e relaxamento',
     source: 'Benchmark setorial bem-estar 2024',
   },
 
@@ -131,6 +144,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 30, mid: 60, high: 150 },
     taxaConversao: { low: 0.045, mid: 0.070, high: 0.100 },
     targetPercentage: { b2c: 0.25, b2b: 0.02 },
+    targetProfile: 'Moradores e trabalhadores que almoçam ou jantam fora',
     source: 'IBGE POF 2024 — despesa com alimentação fora',
   },
   {
@@ -139,6 +153,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 15, mid: 35, high: 80 },
     taxaConversao: { low: 0.050, mid: 0.075, high: 0.110 },
     targetPercentage: { b2c: 0.30, b2b: 0.02 },
+    targetProfile: 'Moradores e trabalhadores que frequentam cafés e padarias',
     source: 'IBGE POF 2024 — despesa com alimentação fora',
   },
   {
@@ -147,6 +162,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 25, mid: 50, high: 100 },
     taxaConversao: { low: 0.040, mid: 0.065, high: 0.090 },
     targetPercentage: { b2c: 0.20, b2b: 0.03 },
+    targetProfile: 'Moradores da região que pedem delivery regularmente',
     source: 'Benchmark setorial food delivery 2024',
   },
 
@@ -157,6 +173,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 200, mid: 600, high: 2500 },
     taxaConversao: { low: 0.015, mid: 0.030, high: 0.050 },
     targetPercentage: { b2c: 0.10, b2b: 0.05 },
+    targetProfile: 'Pais e adultos buscando cursos e capacitação',
     source: 'Benchmark setorial educação 2024',
   },
   {
@@ -165,6 +182,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 800, mid: 1800, high: 4000 },
     taxaConversao: { low: 0.020, mid: 0.035, high: 0.055 },
     targetPercentage: { b2c: 0.05, b2b: 0.01 },
+    targetProfile: 'Famílias com filhos de 0-6 anos buscando escola',
     source: 'IBGE POF 2024 — despesa com educação',
   },
 
@@ -175,6 +193,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 2000, mid: 8000, high: 30000 },
     taxaConversao: { low: 0.020, mid: 0.035, high: 0.055 },
     targetPercentage: { b2c: 0.06, b2b: 0.04 },
+    targetProfile: 'Proprietários planejando reforma ou obra',
     source: 'Benchmark setorial construção 2024',
   },
   {
@@ -183,6 +202,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 8000, mid: 18000, high: 45000 },
     taxaConversao: { low: 0.015, mid: 0.025, high: 0.040 },
     targetPercentage: { b2c: 0.03, b2b: 0.08 },
+    targetProfile: 'Proprietários interessados em reduzir conta de energia',
     source: 'Benchmark setorial energia solar 2024',
   },
   {
@@ -191,6 +211,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 100, mid: 300, high: 800 },
     taxaConversao: { low: 0.035, mid: 0.055, high: 0.080 },
     targetPercentage: { b2c: 0.10, b2b: 0.08 },
+    targetProfile: 'Residências e empresas que contratam limpeza',
     source: 'Benchmark setorial serviços domésticos 2024',
   },
 
@@ -201,6 +222,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 1500, mid: 5000, high: 15000 },
     taxaConversao: { low: 0.010, mid: 0.020, high: 0.035 },
     targetPercentage: { b2c: 0.04, b2b: 0.02 },
+    targetProfile: 'Pessoas buscando comprar, vender ou alugar imóvel',
     source: 'Benchmark setorial imobiliário 2024',
   },
 
@@ -211,6 +233,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 50, mid: 150, high: 500 },
     taxaConversao: { low: 0.015, mid: 0.025, high: 0.040 },
     targetPercentage: { b2c: 0.10, b2b: 0.03 },
+    targetProfile: 'Consumidores online interessados no segmento',
     source: 'Benchmark setorial e-commerce 2024',
   },
   {
@@ -219,6 +242,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 30, mid: 80, high: 250 },
     taxaConversao: { low: 0.040, mid: 0.060, high: 0.085 },
     targetPercentage: { b2c: 0.20, b2b: 0.03 },
+    targetProfile: 'Moradores e passantes que compram na região',
     source: 'IBGE POF 2024 — despesa com comércio',
   },
   {
@@ -227,6 +251,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 80, mid: 200, high: 600 },
     taxaConversao: { low: 0.020, mid: 0.035, high: 0.055 },
     targetPercentage: { b2c: 0.15, b2b: 0.02 },
+    targetProfile: 'Consumidores de moda na região ou online',
     source: 'IBGE POF 2024 — despesa com vestuário',
   },
 
@@ -237,6 +262,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 500, mid: 2000, high: 10000 },
     taxaConversao: { low: 0.010, mid: 0.020, high: 0.035 },
     targetPercentage: { b2c: 0.01, b2b: 0.15 },
+    targetProfile: 'Empresas que precisam de soluções de tecnologia',
     source: 'Benchmark setorial SaaS Brasil 2024',
   },
 
@@ -247,6 +273,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 150, mid: 500, high: 2000 },
     taxaConversao: { low: 0.035, mid: 0.055, high: 0.080 },
     targetPercentage: { b2c: 0.15, b2b: 0.05 },
+    targetProfile: 'Motoristas buscando manutenção veicular na região',
     source: 'Benchmark setorial automotivo 2024',
   },
 
@@ -257,6 +284,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 150, mid: 400, high: 1200 },
     taxaConversao: { low: 0.025, mid: 0.040, high: 0.060 },
     targetPercentage: { b2c: 0.08, b2b: 0.03 },
+    targetProfile: 'Visitantes e turistas buscando hospedagem',
     source: 'Benchmark setorial turismo 2024',
   },
 
@@ -267,6 +295,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 500, mid: 3000, high: 15000 },
     taxaConversao: { low: 0.015, mid: 0.030, high: 0.050 },
     targetPercentage: { b2c: 0.04, b2b: 0.03 },
+    targetProfile: 'Pessoas organizando eventos e celebrações',
     source: 'Benchmark setorial eventos 2024',
   },
 
@@ -277,6 +306,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     ticketMedio: { low: 200, mid: 600, high: 2000 },
     taxaConversao: { low: 0.020, mid: 0.035, high: 0.055 },
     targetPercentage: { b2c: 0.06, b2b: 0.10 },
+    targetProfile: 'Empresas e residências buscando segurança',
     source: 'Benchmark setorial segurança 2024',
   },
 ];

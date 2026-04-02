@@ -44,7 +44,7 @@ export default async function ResultadoPage({ params }: { params: { leadId: stri
   const supabase = getSupabase();
 
   const { data: lead } = await supabase
-    .from("leads").select("id, product, region, email, status, paid_at, name").eq("id", leadId).single();
+    .from("leads").select("id, product, region, email, status, paid_at, name, diagnosis_display").eq("id", leadId).single();
 
   if (!lead) {
     return <ErrorScreen title="Resultado não encontrado" subtitle="Não encontramos nenhum diagnóstico com esse link. Ele pode ter expirado ou sido removido." />;
@@ -53,6 +53,12 @@ export default async function ResultadoPage({ params }: { params: { leadId: stri
   // Se já pagou, redireciona para o dashboard
   if (lead.paid_at) {
     redirect(`/dashboard/${leadId}`);
+  }
+
+  // Prioridade 1: usar diagnosis_display do lead (dados completos do buildDisplayData)
+  // Prioridade 2: fallback para raw_data da diagnoses table (dados parciais)
+  if (lead.diagnosis_display && Object.keys(lead.diagnosis_display).length > 0) {
+    return <ResultadoClient product={lead.product} region={lead.region} leadId={leadId} results={lead.diagnosis_display} name={lead.name} />;
   }
 
   const { data: diagnosis } = await supabase

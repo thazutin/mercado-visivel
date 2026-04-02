@@ -476,7 +476,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
         {!hideCTA && (
           <div style={{ background: V.night, borderRadius: 10, padding: "16px", marginBottom: 16, marginTop: 8, textAlign: "center" }}>
             <p style={{ fontSize: 12, color: V.mist, margin: "0 0 10px", lineHeight: 1.5 }}>
-              O diagnóstico gratuito mostra uma ação por pilar. O plano completo traz 15 ações priorizadas, na ordem certa.
+              O diagnóstico gratuito mostra uma ação por pilar. O plano completo traz 15 ações priorizadas, na ordem certa, e com conteúdo pronto para você copiar e colar nos canais.
             </p>
             <button onClick={() => onCheckout(couponApplied ? coupon : undefined)} disabled={loading} style={{
               width: "100%", padding: "12px", borderRadius: 8, border: "none",
