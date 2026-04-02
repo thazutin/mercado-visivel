@@ -1293,54 +1293,11 @@ Responda APENAS em JSON, sem markdown:
   })();
 
   // =========================================================================
-  // STEP 4b — AI Visibility Check (DataForSEO SERP real)
+  // STEP 4b — AI Visibility Check — MOVIDO PARA BACKGROUND (economiza ~20s)
+  // Será preenchido no background enrichment (waitUntil) se não disponível
   // =========================================================================
   let aiVisibility: { score: number; summary: string; likelyMentioned: boolean; factors: any[]; competitorMentions: any[]; processingTimeMs: number } | null = null;
-  try {
-    const hasSite = !!(formData.site && formData.site.length > 3);
-
-    // businessName: nome real do negócio via Maps (primário) ou null
-    const mapsBusinessName = mapsPresence?.found ? (mapsPresence as any).businessName || null : null;
-
-    // DataForSEO client para SERP de descoberta
-    const dataForSEOClient = (process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD)
-      ? createDataForSEOClient({
-          login: process.env.DATAFORSEO_LOGIN,
-          password: process.env.DATAFORSEO_PASSWORD,
-        })
-      : undefined;
-
-    // Perplexity AI client para verificar menções em respostas de IA (5 dimensões geográficas)
-    const perplexityClient = process.env.PERPLEXITY_API_KEY
-      ? createPerplexityAIVisibilityChecker(claude)
-      : undefined;
-
-    console.log(`[pipeline] município usado em AI Visibility:`, extractedCity);
-    aiVisibility = await withTimeout(
-      executeAIVisibilityCheck(
-        input.product,
-        resolvedRegion,
-        mapsBusinessName,                          // nome real do Maps
-        businessHandle || null,                    // handle do Instagram como fallback
-        hasSite,
-        mapsPresence?.found || false,
-        mapsPresence?.rating || null,
-        mapsPresence?.reviewCount || null,
-        serpPositions.filter(sp => sp.position && sp.position <= 10).length,
-        serpPositions.length,
-        (formData.competitors || []).filter(c => c.name && c.name.length > 1),
-        dataForSEOClient ? { getKeywordVolumes: dataForSEOClient } : undefined,
-        undefined,                                 // claude client deprecated em v2
-        perplexityClient,
-      ),
-      20_000,
-      "AI Visibility",
-    );
-    sourcesUsed.push("ai_visibility");
-    console.log(`[Pipeline] AI Visibility OK: score=${aiVisibility.score}, mentioned=${aiVisibility.likelyMentioned}, method=${(aiVisibility as any)._raw?.matchMethod}`);
-  } catch (err) {
-    console.warn("[Pipeline] AI Visibility failed/skipped:", (err as Error).message);
-  }
+  // Skip AI Visibility no fast path — será rodado no background enrichment
 
   // =========================================================================
   // STEP 4 — Composite Influence (4D model — needs aiVisibility)
@@ -1381,11 +1338,11 @@ Responda APENAS em JSON, sem markdown:
   }
 
   // =========================================================================
-  // STEP 5 — Gap Analysis + Work Routes (Claude with real data + AI visibility)
+  // STEP 5 — Gap Analysis + Work Routes (Claude — timeout 12s for fast path)
   // =========================================================================
   let step5: Step5Output;
   try {
-    step5 = await executeStep5(input, step1, step2, step3, step4, claude, {
+    step5 = await withTimeout(executeStep5(input, step1, step2, step3, step4, claude, {
       model: "claude-sonnet-4-5-20250929",
       aiVisibility: aiVisibility ? {
         score: aiVisibility.score,
@@ -1399,7 +1356,7 @@ Responda APENAS em JSON, sem markdown:
         totalCompetitors: competitionIndex.totalCompetitors,
       } : null,
       pncp: pncpData,
-    });
+    }), 15_000, "GapAnalysis");
     sourcesUsed.push("claude_gap_analysis");
     console.log(`[Pipeline] Step 5 OK: gap analysis + work routes complete`);
   } catch (err) {
