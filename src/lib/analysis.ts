@@ -1661,6 +1661,9 @@ Responda APENAS em JSON, sem markdown:
     enrichmentStatus,
     // @ts-ignore
     enrichmentPending,
+    // @ts-ignore — lat/lng resolvido pelo pipeline (geocoding fallback)
+    pipelineLat: pipelineLat || null,
+    pipelineLng: pipelineLng || null,
   };
 
   console.log(
