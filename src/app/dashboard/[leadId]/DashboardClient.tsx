@@ -333,7 +333,7 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
   if (!planReady) return <Spinner text="Identificando o que precisa estar no lugar primeiro..." />;
   if (loading) return <Spinner text="Um segundo..." />;
 
-  const summary = activePlan?.content?.itensEstrurantesSummary || '';
+  const summary = plan?.content?.itensEstrurantesSummary || '';
 
   const PILAR_MAP: Record<string, { label: string; color: string; icon: string }> = {
     descoberta: { label: 'Visibilidade', color: V.teal, icon: '🔍' },
@@ -1337,7 +1337,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
               <ItensEstruturantesTab
                 leadId={lead.id}
                 planReady={planReady}
-                plan={plan}
+                plan={activePlan}
               />
             )}
           </div>
