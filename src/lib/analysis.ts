@@ -1282,16 +1282,26 @@ Responda APENAS em JSON, sem markdown:
       }
     }
 
-    // FIX 3 — Fallback after retry: use population-based estimate
+    // FIX 3 — Fallback after retry: use benchmark if available, then population-based estimate
     audienciaIsEstimate = true;
     const isNac = /brasil.*nacional|nacional|todo o brasil/i.test(input.region);
+    let fallbackPct = isNac ? 1.0 : 0.15;
+    let fallbackProfile = inferredClientType === 'b2b' ? 'empresas brasileiras no segmento' : 'consumidores no mercado local';
+    try {
+      const { findBenchmark } = await import('./pipeline/../config/sector-benchmarks');
+      const bench = findBenchmark(input.product, input.differentiator);
+      if (bench) {
+        fallbackPct = inferredClientType === 'b2b' ? bench.targetPercentage.b2b : bench.targetPercentage.b2c;
+        fallbackProfile = bench.targetProfile;
+      }
+    } catch { /* ignore */ }
     const fallbackTarget: AudienciaTarget = {
       audienciaTarget: isNac
         ? (inferredClientType === 'b2b' ? 1500000 : 5000000)
-        : Math.round(estimada.populacaoRaio * 0.15),
-      targetProfile: inferredClientType === 'b2b' ? 'empresas brasileiras no segmento' : 'consumidores no mercado local',
-      estimatedPercentage: isNac ? 100 : 15,
-      rationale: 'Estimativa padrão — Claude indisponível',
+        : Math.round(estimada.populacaoRaio * fallbackPct),
+      targetProfile: fallbackProfile,
+      estimatedPercentage: Math.round(fallbackPct * 100),
+      rationale: 'Estimativa por benchmark setorial',
     } as any;
     return { estimada, target: fallbackTarget };
   })();
