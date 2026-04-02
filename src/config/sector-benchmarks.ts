@@ -35,7 +35,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
   },
   {
     category: 'veterinaria',
-    keywords: ['veterin', 'pet', 'animal', 'cachorro', 'gato', 'petshop', 'banho e tosa'],
+    keywords: ['veterin', '\\bpet\\b', 'animal', 'cachorro', 'gato', 'petshop', 'banho e tosa'],
     ticketMedio: { low: 80, mid: 200, high: 500 },
     taxaConversao: { low: 0.035, mid: 0.055, high: 0.080 },
     targetPercentage: { b2c: 0.15, b2b: 0.01 },
@@ -129,7 +129,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
   },
   {
     category: 'spa_massagem',
-    keywords: ['spa', 'massag', 'relaxa', 'bem-estar', 'day spa'],
+    keywords: ['\\bspa\\b', 'massag', 'relaxa', 'bem-estar', 'day spa'],
     ticketMedio: { low: 100, mid: 250, high: 600 },
     taxaConversao: { low: 0.025, mid: 0.040, high: 0.060 },
     targetPercentage: { b2c: 0.05, b2b: 0.02 },
@@ -258,7 +258,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
   // ═══ TECNOLOGIA ═══
   {
     category: 'ti_software',
-    keywords: ['software', 'sistem', 'app', 'saas', 'tecnolog', 'TI', 'desenvolv', 'programaç'],
+    keywords: ['software', 'sistem', '\\bapp\\b', 'saas', 'tecnolog', '\\bTI\\b', 'desenvolv', 'programaç'],
     ticketMedio: { low: 500, mid: 2000, high: 10000 },
     taxaConversao: { low: 0.010, mid: 0.020, high: 0.035 },
     targetPercentage: { b2c: 0.01, b2b: 0.15 },
@@ -291,7 +291,7 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
   // ═══ EVENTOS ═══
   {
     category: 'eventos_festas',
-    keywords: ['event', 'festa', 'casament', 'buffet', 'decoraç.*event', 'DJ', 'fotógraf'],
+    keywords: ['event', 'festa', 'casament', 'buffet', 'decoraç.*event', '\\bDJ\\b', 'fotógraf'],
     ticketMedio: { low: 500, mid: 3000, high: 15000 },
     taxaConversao: { low: 0.015, mid: 0.030, high: 0.050 },
     targetPercentage: { b2c: 0.04, b2b: 0.03 },

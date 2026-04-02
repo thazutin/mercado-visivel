@@ -488,6 +488,24 @@ async function inferirTargetAudiencia(
   populacaoRaio: number,
   ticketMedio?: number,
 ): Promise<{ percentualMin: number; percentualMax: number; percentualBase: number; rationale: string; targetProfile: string }> {
+  // Prioridade 1: benchmark curado (instantâneo, custo zero)
+  try {
+    const { findBenchmark } = await import('@/config/sector-benchmarks');
+    const bench = findBenchmark(businessCategory);
+    if (bench) {
+      const pct = bench.targetPercentage.b2c;
+      console.log(`[Target/ibge] Benchmark: ${bench.category} → ${(pct * 100).toFixed(1)}% (${bench.targetProfile})`);
+      return {
+        percentualMin: pct * 0.6,
+        percentualMax: pct * 1.5,
+        percentualBase: pct,
+        rationale: `Benchmark setorial: ${(pct * 100).toFixed(1)}% da população no raio`,
+        targetProfile: bench.targetProfile,
+      };
+    }
+  } catch { /* benchmark import failed, continue to Claude */ }
+
+  // Prioridade 2: Claude Haiku
   try {
     const { default: Anthropic } = await import('@anthropic-ai/sdk');
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
