@@ -57,7 +57,50 @@ export async function GET(req: NextRequest) {
   // ─── 2. Process each lead sequentially ───
   for (const lead of subscribers) {
     try {
-      // 1. Gerar relatório setorial da semana
+      // 0. Re-scrape Instagram (dados frescos para contexto)
+      let instagramData: any = null;
+      try {
+        const { data: diag } = await supabase
+          .from("diagnoses")
+          .select("raw_data")
+          .eq("lead_id", lead.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        const igProfile = diag?.raw_data?.influence?.rawInstagram?.profile;
+        if (igProfile?.handle) {
+          console.log(`[Cron/Contents] Re-scraping Instagram @${igProfile.handle}...`);
+          try {
+            const { createApifyInstagramScraper } = await import("@/lib/pipeline/external-services");
+            const apifyConfig = process.env.APIFY_API_TOKEN ? { token: process.env.APIFY_API_TOKEN, cache: null } : null;
+            if (apifyConfig) {
+              const scraper = createApifyInstagramScraper(apifyConfig as any);
+              const profiles = await Promise.race([
+                scraper([igProfile.handle]),
+                new Promise<any[]>(resolve => setTimeout(() => resolve([]), 30_000)),
+              ]);
+              if (profiles?.[0]) {
+                const p = profiles[0];
+                instagramData = {
+                  handle: igProfile.handle,
+                  followers: p.followers || igProfile.followers,
+                  engagementRate: p.engagementRate || igProfile.engagementRate,
+                  recentPosts: (p.recentPosts || []).slice(0, 5).map((post: any) => ({
+                    caption: post.caption || '',
+                    date: post.timestamp || '',
+                  })),
+                };
+                console.log(`[Cron/Contents] Instagram OK: @${igProfile.handle}, ${instagramData.recentPosts.length} posts`);
+              }
+            }
+          } catch (igErr) {
+            console.warn(`[Cron/Contents] Instagram scrape failed (non-fatal):`, (igErr as Error).message);
+          }
+        }
+      } catch { /* ignore diagnosis fetch failure */ }
+
+      // 1. Gerar relatório setorial da semana (com dados de Instagram)
       let relatorioSetorial = null;
       try {
         console.log(`[Cron/Contents] Gerando relatório setorial para lead ${lead.id}...`);
@@ -65,6 +108,7 @@ export async function GET(req: NextRequest) {
           lead.product || '',
           lead.region || '',
           lead.client_type || 'b2c',
+          instagramData,
         );
         console.log(`[Cron/Contents] Relatório setorial OK: "${relatorioSetorial?.destaque?.slice(0, 60)}"`);
 

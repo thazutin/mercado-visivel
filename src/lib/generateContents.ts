@@ -129,7 +129,13 @@ Os conteúdos devem endereçar indiretamente essas lacunas — ex: se a lacuna �
 avaliações no Maps", gere um post que incentive clientes a deixar avaliação.`
   : ''}
 
-Gere um post para cada canal abaixo:
+ARCO NARRATIVO DA SEMANA (os 4 posts devem formar uma sequência estratégica):
+- Post 1 (instagram_feed, segunda): AUTORIDADE — dado de mercado ou insight que posiciona o negócio como referência
+- Post 2 (google_business, quarta): PROVA SOCIAL — depoimento, resultado real, antes/depois, números concretos
+- Post 3 (instagram_feed, sexta): OPORTUNIDADE — conectado ao que está acontecendo esta semana no mercado/sazonalidade
+- Post 4 (instagram_stories): BASTIDORES — humaniza o negócio, mostra equipe/processo/dia-a-dia
+
+Specs por canal:
 ${Object.entries(CHANNEL_SPECS)
   .map(([key, ch]) => `- ${ch.label} (channel_key: "${key}"): ${ch.spec}`)
   .join('\n')}
@@ -153,7 +159,8 @@ Responda APENAS em JSON válido. Sem markdown, sem texto antes ou depois.
 
   const response = await getAnthropic().messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 2000,
+    max_tokens: 2500,
+    temperature: 0.6,
     messages: [{ role: 'user', content: prompt }],
   })
 

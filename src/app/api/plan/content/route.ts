@@ -34,32 +34,44 @@ export async function POST(req: NextRequest) {
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-  const prompt = `Você é um especialista em marketing local para "${lead.product}" em ${shortRegion}.
-Negócio: ${negocio}
-Score atual: ${display?.influencePercent || 0}/100
-Principais gaps: ${display?.influenceBreakdown4D ? `D1=${display.influenceBreakdown4D.d1_descoberta || 0} D2=${display.influenceBreakdown4D.d2_credibilidade || 0} D3=${display.influenceBreakdown4D.d3_presenca || 0}` : 'N/A'}
+  const ci = display?.competitionIndex;
+  const aud = display?.audiencia;
+  const totalVol = display?.totalVolume || 0;
 
-Item do plano: "${item.titulo || item.title}"
-Descrição: "${item.descricao || item.description}"
+  const prompt = `Você é um diretor de conteúdo especialista no mercado de "${lead.product}" em ${shortRegion}.
+
+CONTEXTO DO NEGÓCIO:
+- Nome: ${negocio}
+- Posição competitiva: ${display?.influencePercent || 0}/100
+- Visibilidade: ${display?.influenceBreakdown4D?.d1_descoberta || 0}/100
+- Credibilidade: ${display?.influenceBreakdown4D?.d2_credibilidade || 0}/100
+- Presença Digital: ${display?.influenceBreakdown4D?.d3_presenca || 0}/100
+- Reputação: ${display?.influenceBreakdown4D?.d4_reputacao || 0}/100
+${ci ? `- Concorrentes mapeados: ${ci.activeCompetitors} (mercado ${ci.label})` : ''}
+${totalVol ? `- Buscas mensais no segmento: ${totalVol.toLocaleString('pt-BR')}` : ''}
+${aud ? `- Audiência estimada: ${aud.audienciaTarget?.toLocaleString('pt-BR') || '?'} ${aud.targetProfile || 'pessoas'}` : ''}
+${display?.maps?.rating ? `- Google Maps: ★${display.maps.rating} (${display.maps.reviewCount} avaliações)` : ''}
+
+AÇÃO DO PLANO: "${item.titulo || item.title}"
+POR QUÊ: "${item.descricao || item.description}"
 Keywords: ${(item.keywords || []).join(', ') || 'N/A'}
-Gancho: "${item.content_hook || ''}"
 
 ${contentType === 'blog' || contentType === 'both' ? `
-Gere um BLOG POST:
-- Título SEO (max 60 chars)
+Gere um BLOG POST de alta qualidade:
+- Título SEO (max 60 chars) que inclua a região
 - Meta description (max 155 chars)
-- Texto de 300-500 palavras em primeira pessoa do negócio
-- Tom direto e prático, sem jargão de marketing
-- Use as keywords naturalmente no texto
+- Texto de 400-600 palavras em primeira pessoa do negócio
+- OBRIGATÓRIO: cite pelo menos 2 dados reais (ex: "${totalVol} buscas/mês", "${ci?.activeCompetitors || '?'} concorrentes", "★${display?.maps?.rating || '?'}")
+- Tom direto e prático — como um especialista explicando para um amigo
 - Conecte à realidade local de ${shortRegion}
 ` : ''}
 ${contentType === 'instagram' || contentType === 'both' ? `
-Gere um POST DE INSTAGRAM:
-- Legenda de até 150 palavras
-- 5 hashtags relevantes
-- Sugestão de visual (1 frase descrevendo a imagem ideal)
-- Hook forte na primeira linha
-- Tom próximo, como se falasse com vizinhos
+Gere um POST DE INSTAGRAM profissional:
+- Legenda de até 200 palavras
+- Hook forte: comece com um número real ou pergunta provocativa
+- 5 hashtags regionais relevantes
+- Sugestão de visual (1 frase descrevendo a imagem/vídeo ideal)
+- CTA natural (não "clique no link da bio")
 ` : ''}
 
 Retorne JSON:
@@ -72,7 +84,7 @@ Retorne JSON:
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
-      temperature: 0.3,
+      temperature: 0.5,
       system: 'Responda APENAS com JSON válido.',
       messages: [{ role: 'user', content: prompt }],
     });

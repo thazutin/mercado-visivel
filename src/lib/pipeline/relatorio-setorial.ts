@@ -8,6 +8,7 @@ export async function generateRelatorioSetorial(
   product: string,
   region: string,
   clientType: string,
+  instagramData?: { handle?: string; recentPosts?: { caption: string; date?: string }[]; followers?: number; engagementRate?: number } | null,
 ): Promise<any> {
   const claudeClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
   const shortRegion = region.split(',')[0].trim();
@@ -36,17 +37,22 @@ Foque em dados verificáveis com fonte.`,
       .join('\n')
       .slice(0, 3000);
 
-    // Etapa 2: Síntese com exigência de dados reais
+    // Contexto de Instagram (se disponível)
+    const igContext = instagramData?.recentPosts?.length
+      ? `\n\nÚLTIMOS POSTS DO INSTAGRAM (@${instagramData.handle || '?'}, ${instagramData.followers?.toLocaleString('pt-BR') || '?'} seguidores, engagement ${((instagramData.engagementRate || 0) * 100).toFixed(1)}%):\n${instagramData.recentPosts.slice(0, 5).map((p, i) => `${i + 1}. ${p.caption?.slice(0, 150) || '(sem legenda)'}${p.date ? ` (${p.date})` : ''}`).join('\n')}`
+      : '';
+
+    // Etapa 2: Síntese com Sonnet (qualidade importa) + dados de Instagram
     const synthesisResponse = await claudeClient.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1500,
-      temperature: 0.2,
-      system: 'Responda APENAS com JSON válido.',
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2000,
+      temperature: 0.3,
+      system: 'Responda APENAS com JSON válido. Seja um analista de mercado senior.',
       messages: [{
         role: 'user',
         content: `Com base APENAS nos dados encontrados sobre "${product}" em ${geoContext}:
 
-${searchContext}
+${searchContext}${igContext}
 
 Retorne JSON:
 {
@@ -97,18 +103,38 @@ NÃO invente tendências ou percentuais sem fonte.`,
     // Etapa 3: Gerar briefings para distribuição
     try {
       const resBriefings = await claudeClient.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 800,
-        system: 'Responda APENAS com JSON válido.',
-        messages: [{ role: 'user', content: `Com base neste contexto:
-Destaque: ${relatorio.destaque}
-Oportunidade: ${relatorio.oportunidade_da_semana}
-Negócio: ${product} em ${geoContext}
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        temperature: 0.6,
+        system: 'Responda APENAS com JSON válido. Você é um diretor de conteúdo que conhece o negócio profundamente.',
+        messages: [{ role: 'user', content: `Contexto desta semana para "${product}" em ${geoContext}:
 
-Gere 3 briefings:
-- briefing_equipe (tom operacional, max 80 palavras): o que fazer esta semana e por quê
-- briefing_agencia (tom estratégico, max 120 palavras): contexto, oportunidade, direcionamento
-- briefing_afiliado (tom comercial, max 80 palavras): por que é bom momento para indicar
+DESTAQUE: ${relatorio.destaque}
+OPORTUNIDADE: ${relatorio.oportunidade_da_semana}
+CONTEXTO COMPETITIVO: ${relatorio.contexto_competitivo || 'N/A'}
+TENDÊNCIAS: ${(relatorio.tendencias || []).map((t: any) => t.titulo).join(', ') || 'N/A'}
+${igContext || ''}
+
+Gere 3 briefings DETALHADOS e ACIONÁVEIS:
+
+1. briefing_equipe (200+ palavras, tom operacional):
+   - O que mudou no mercado esta semana
+   - 3-5 ações concretas com prazo (ex: "até quinta-feira")
+   - Métricas para acompanhar
+   - Por que cada ação importa agora
+
+2. briefing_agencia (250+ palavras, tom estratégico):
+   - Cenário competitivo atualizado
+   - Oportunidade de posicionamento identificada
+   - Direcionamento de conteúdo com formatos específicos
+   - Referências de abordagem (sem mencionar marcas)
+   - KPIs esperados
+
+3. briefing_afiliado (200+ palavras, tom comercial):
+   - Por que é bom momento para indicar este negócio
+   - Argumentos de venda baseados em dados reais
+   - Perfil do cliente ideal para indicação
+   - Comissão/benefício para o afiliado
 
 JSON: {"briefing_equipe":"...","briefing_agencia":"...","briefing_afiliado":"..."}` }],
       });
