@@ -47,7 +47,7 @@ interface Props {
 const TABS: { key: TabKey; label: string }[] = [
   { key: "diagnostico", label: "Diagnóstico" },
   { key: "estruturantes", label: "Plano de Ação" },
-  { key: "semana", label: "Plano Semanal" },
+  { key: "semana", label: "Ações Semanais" },
 ];
 
 // ─── Accordion Section ───────────────────────────────────────────────
@@ -407,7 +407,13 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
                 fontFamily: V.mono, fontSize: 9, padding: "2px 6px",
                 borderRadius: 100, background: V.fog, color: V.ash,
               }}>
-                {item.deadline || item.prazo}
+                {(() => {
+                  const p = (item.deadline || item.prazo || '').toLowerCase();
+                  if (p.includes('semana')) return '~15 min';
+                  if (p.includes('mês') || p.includes('mes')) return '~1 hora';
+                  if (p.includes('3 meses')) return '~2-3 horas';
+                  return p;
+                })()}
               </span>
             </div>
             {item.description && (
@@ -456,21 +462,22 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
               </div>
             )}
 
-            {/* Content generation buttons */}
-            {planReady && !item.completed && (
-              <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-                {!item.generated_blog && (
-                  <button onClick={() => generateContent(itemIdx, 'blog')} disabled={generatingContent[`${itemIdx}-blog`]}
-                    style={{ fontSize: 11, color: V.teal, background: "none", border: `1px solid ${V.teal}`, borderRadius: 6, padding: "4px 10px", cursor: "pointer", opacity: generatingContent[`${itemIdx}-blog`] ? 0.5 : 1 }}>
-                    {generatingContent[`${itemIdx}-blog`] ? 'Gerando...' : '📝 Gerar texto blog'}
-                  </button>
-                )}
-                {!item.generated_instagram && (
-                  <button onClick={() => generateContent(itemIdx, 'instagram')} disabled={generatingContent[`${itemIdx}-instagram`]}
-                    style={{ fontSize: 11, color: "#8B5CF6", background: "none", border: "1px solid #8B5CF6", borderRadius: 6, padding: "4px 10px", cursor: "pointer", opacity: generatingContent[`${itemIdx}-instagram`] ? 0.5 : 1 }}>
-                    {generatingContent[`${itemIdx}-instagram`] ? 'Gerando...' : '📸 Gerar post Instagram'}
-                  </button>
-                )}
+            {/* Contextual content generation button */}
+            {planReady && !item.completed && !item.generated_blog && (
+              <div style={{ marginTop: 8 }}>
+                <button onClick={() => generateContent(itemIdx, 'both')} disabled={generatingContent[`${itemIdx}-both`]}
+                  style={{ fontSize: 12, color: V.night, background: V.cloud, border: `1px solid ${V.fog}`, borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontWeight: 600, opacity: generatingContent[`${itemIdx}-both`] ? 0.5 : 1, width: "100%" }}>
+                  {generatingContent[`${itemIdx}-both`] ? 'Gerando conteúdo...' : (() => {
+                    const t = (item.title || '').toLowerCase();
+                    if (/avalia[çc]/i.test(t) || /responder/i.test(t)) return 'Gerar respostas';
+                    if (/youtube|canal|vídeo|video/i.test(t)) return 'Gerar roteiros';
+                    if (/instagram|post|conteúdo|conteudo/i.test(t)) return 'Gerar posts';
+                    if (/blog|artigo|seo/i.test(t)) return 'Gerar textos';
+                    if (/whatsapp|mensag/i.test(t)) return 'Gerar mensagens';
+                    if (/google|maps|ficha/i.test(t)) return 'Gerar descrições';
+                    return 'Gerar conteúdo';
+                  })()}
+                </button>
               </div>
             )}
 
@@ -1303,26 +1310,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
               <p style={{ fontSize: 13, color: V.ash }}>Diagnóstico não disponível.</p>
             )}
 
-            {/* Diagnóstico aprofundado (pago) */}
-            {tier !== "free" && planReady && (
-              <>
-                <PilaresScoreCard
-                  breakdown={lead.diagnosis_display?.influenceBreakdown4D || lead.diagnosis_display?.influenceBreakdown}
-                  levers={lead.diagnosis_display?.influenceBreakdown?.levers || lead.diagnosis_display?.influenceBreakdown4D?.levers || []}
-                  clientType={lead.client_type}
-                />
-                <DiagnosticoAprofundado
-                  macroContext={diagnosis?.macro_context}
-                  seasonality={diagnosis?.seasonality}
-                  display={lead.diagnosis_display}
-                />
-                <InfluenceChart
-                  snapshots={snapshots}
-                  currentScore={lead.diagnosis_display?.influencePercent || 0}
-                  product={lead.product}
-                />
-              </>
-            )}
+            {/* Bloco de conteúdo pós-pagamento removido — simplificado */}
           </div>
         )}
 
@@ -1341,63 +1329,28 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
           </div>
         )}
 
-        {/* ═══ TAB: ESTA SEMANA ═══ */}
+        {/* ═══ TAB: AÇÕES SEMANAIS ═══ */}
         {tab === "semana" && (
           <div>
-            {tier === "free" ? (
-              <LockedTab lockLevel={1} ctaLabel="Gerar meu plano de ação · R$497" ctaUrl="#" leadId={lead.id} />
+            {tier !== "subscriber" ? (
+              <LockedTab lockLevel={2} ctaLabel="Assinar por R$99/mês" ctaUrl="#" leadId={lead.id} />
             ) : !planReady ? (
-              <Spinner text="Buscando o que mudou no seu mercado esta semana..." />
+              <Spinner text="Preparando suas ações semanais..." />
             ) : (
               <div>
-                {/* Foco da semana baseado no plano */}
-                {activePlan?.content?.itensEstruturantes && activePlan?.content?.itensEstruturantes.length > 0 && (() => {
-                  const pendentes = activePlan?.content?.itensEstruturantes.filter((i: any) => !i.concluida);
-                  const pilarFoco = pendentes[0]?.pilar || pendentes[0]?.dimensao || 'Descoberta';
-                  const acaoFoco = pendentes[0]?.titulo || '';
-                  return pilarFoco ? (
-                    <div style={{ background: "#FAF8F5", borderLeft: `3px solid ${V.amber}`, borderRadius: "0 8px 8px 0", padding: "14px 16px", marginBottom: 16 }}>
-                      <p style={{ fontSize: 10, color: V.amber, fontWeight: 600, letterSpacing: "0.08em", margin: "0 0 4px" }}>FOCO DESTA SEMANA</p>
-                      <p style={{ fontSize: 14, fontWeight: 600, color: V.night, margin: "0 0 4px" }}>{pilarFoco}</p>
-                      {acaoFoco && <p style={{ fontSize: 12, color: V.ash, margin: 0 }}>Próxima atividade: {acaoFoco}</p>}
-                    </div>
-                  ) : null;
-                })()}
-
-                {/* Semana 0: item do plano para não-assinantes */}
-                {tier !== 'subscriber' && activePlan?.content?.itensEstruturantes && (() => {
-                  const semana0 = activePlan?.content?.itensEstruturantes.find((i: any) => (i.prazo || '').toLowerCase().includes('semana'));
-                  if (!semana0) return null;
-                  return (
-                    <div style={{ background: V.white, border: `1px solid ${V.fog}`, borderRadius: 12, padding: "16px", marginBottom: 16 }}>
-                      <p style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, letterSpacing: "0.08em", margin: "0 0 8px" }}>SUA AÇÃO DESTA SEMANA</p>
-                      <p style={{ fontSize: 14, fontWeight: 600, color: V.night, margin: "0 0 6px" }}>{semana0.titulo}</p>
-                      {semana0.how_to_steps?.length > 0 && (
-                        <ol style={{ margin: "0 0 8px", padding: "0 0 0 16px", fontSize: 12, color: V.night, lineHeight: 1.6 }}>
-                          {semana0.how_to_steps.map((s: string, si: number) => <li key={si}>{s}</li>)}
-                        </ol>
-                      )}
-                      {semana0.content_hook && <p style={{ fontSize: 12, color: V.amber, margin: "0 0 8px", fontWeight: 500 }}>💡 {semana0.content_hook}</p>}
-                      {semana0.whatsapp_template && (
-                        <div style={{ background: "rgba(37,211,102,0.06)", borderLeft: "3px solid #25D366", borderRadius: "0 8px 8px 0", padding: "8px 10px", marginBottom: 8 }}>
-                          <p style={{ fontSize: 11, color: V.night, margin: 0, lineHeight: 1.5 }}>{semana0.whatsapp_template}</p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-
                 <RelatorioSetorialBlock relatorio={activePlan?.content?.relatorioSetorial} />
 
-                {/* Briefings para distribuição */}
+                <Section title="Posts desta semana" defaultOpen={true}>
+                  <ContentsSection leadId={lead.id} tier={tier} />
+                </Section>
+
                 {activePlan?.content?.relatorioSetorial?.briefings && (
-                  <div style={{ marginBottom: 16 }}>
-                    <p style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.08em", marginBottom: 12 }}>BRIEFINGS PARA DISTRIBUIÇÃO</p>
+                  <Section title="Briefings" defaultOpen={false}>
                     {[
                       { key: 'briefing_equipe', label: 'Para sua equipe' },
                       { key: 'briefing_agencia', label: 'Para agência ou parceiro' },
                       { key: 'briefing_afiliado', label: 'Para afiliado ou distribuidor' },
-                    ].filter(b => activePlan?.content?.relatorioSetorial?.briefings[b.key]).map(({ key, label }) => (
+                    ].filter(b => activePlan?.content?.relatorioSetorial?.briefings?.[b.key]).map(({ key, label }) => (
                       <div key={key} style={{ background: V.white, border: `1px solid ${V.fog}`, borderRadius: 8, padding: "14px 16px", marginBottom: 8 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                           <span style={{ fontSize: 12, fontWeight: 600, color: V.night }}>{label}</span>
@@ -1406,59 +1359,24 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
                             Copiar
                           </button>
                         </div>
-                        <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.6 }}>{activePlan?.content?.relatorioSetorial?.briefings[key]}</p>
+                        <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.6 }}>{activePlan?.content?.relatorioSetorial?.briefings?.[key]}</p>
                       </div>
                     ))}
-                  </div>
+                  </Section>
                 )}
 
-                <Section title="Posts desta semana" defaultOpen={true}>
-                  <ContentsSection leadId={lead.id} tier={tier} />
-                </Section>
-                <div style={{ background: V.white, borderRadius: 12,
-                  padding: "16px 18px", marginTop: 16,
-                  border: `1px solid ${V.fog}` }}>
-                  <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
-                    letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>
-                    Próximas semanas
-                  </div>
-                  <p style={{ fontSize: 13, color: V.night, margin: "0 0 12px",
-                    lineHeight: 1.6 }}>
-                    Toda sexta-feira: novo contexto de mercado, posts atualizados e briefings conectados ao que está acontecendo no seu setor esta semana.
-                  </p>
-                  <p style={{ fontSize: 12, color: V.ash, margin: "0 0 12px" }}>
-                    R$ 99/mês · cancele quando quiser
-                  </p>
+                <div style={{ textAlign: "center", marginTop: 12, fontSize: 11, color: V.ash }}>
+                  Assinatura mensal · R$99/mês ·{' '}
                   <button onClick={async () => {
                     try {
-                      const res = await fetch("/api/checkout/subscription", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: lead.id }) });
+                      const res = await fetch('/api/checkout/portal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ leadId: lead.id }) });
                       const data = await res.json();
                       if (data.url) window.location.href = data.url;
                     } catch { /* ignore */ }
-                  }} style={{ display: "block", width: "100%", background: V.amber, color: V.white,
-                    textAlign: "center", padding: "12px", borderRadius: 8, border: "none",
-                    fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
-                    Assinar atualização semanal
+                  }} style={{ color: V.amber, textDecoration: "underline", background: "none", border: "none", cursor: "pointer", fontSize: 11, padding: 0 }}>
+                    Gerenciar assinatura →
                   </button>
                 </div>
-                {tier === "subscriber" && (
-                  <div style={{ textAlign: "center", marginTop: 12, fontSize: 11, color: V.ash }}>
-                    Assinatura mensal · R$99/mês ·{' '}
-                    <button onClick={async () => {
-                      try {
-                        const res = await fetch('/api/checkout/portal', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ leadId: lead.id }),
-                        });
-                        const data = await res.json();
-                        if (data.url) window.location.href = data.url;
-                      } catch { /* ignore */ }
-                    }} style={{ color: V.amber, textDecoration: "underline", background: "none", border: "none", cursor: "pointer", fontSize: 11, padding: 0 }}>
-                      Gerenciar assinatura →
-                    </button>
-                  </div>
-                )}
               </div>
             )}
           </div>

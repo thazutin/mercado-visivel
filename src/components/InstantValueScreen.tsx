@@ -300,13 +300,13 @@ export default function InstantValueScreen({ product, region, results: initialRe
   const allLevers = (bd as any)?.levers || (results as any).influenceBreakdown?.levers || [];
 
   const pilarCards = [
-    { icon: "🔍", label: "Visibilidade", score: Math.round(d1f), color: V.teal, dim: "descoberta",
+    { icon: "🔍", label: "Visibilidade", score: Math.round(d1f), color: "#5BA89D", dim: "descoberta",
       detail: results.maps?.found ? `Maps: ★ ${results.maps.rating} · ${results.maps.reviewCount} avaliações` : "Não encontrado no Google Maps",
       status: pilar1Status, fallback: "Otimizar perfil no Google Meu Negócio com fotos e descrição completa" },
-    { icon: "⭐", label: "Credibilidade", score: Math.round((d2f + d4f) / 2), color: V.amber, dim: "credibilidade",
+    { icon: "⭐", label: "Credibilidade", score: Math.round((d2f + d4f) / 2), color: "#C4934A", dim: "credibilidade",
       detail: results.maps?.reviewCount ? `${results.maps.reviewCount} avaliações · ★ ${results.maps.rating}` : "Sem avaliações detectadas",
       status: pilar2Status, fallback: "Solicitar avaliações dos últimos 20 clientes via WhatsApp" },
-    { icon: "📣", label: "Presença Digital", score: Math.round(d3f), color: "#8B5CF6", dim: "presenca",
+    { icon: "📣", label: "Presença Digital", score: Math.round(d3f), color: "#9B8AB8", dim: "presenca",
       detail: igData?.handle ? `@${igData.handle} · ${igData.followers?.toLocaleString('pt-BR')} seguidores` : "Presença digital não detectada",
       status: pilar3Status, fallback: "Publicar 2 posts/semana respondendo dúvidas frequentes do seu público" },
   ];
@@ -415,11 +415,11 @@ export default function InstantValueScreen({ product, region, results: initialRe
                     <div style={{ position: "absolute", left: `${atual}%`, top: -5, transform: "translateX(-50%)", width: 16, height: 16, borderRadius: "50%", background: V.teal, border: `2px solid ${V.white}`, boxShadow: "0 1px 3px rgba(0,0,0,0.12)", zIndex: 2 }} />
                     <div style={{ position: "absolute", left: `${potencial}%`, top: -4, transform: "translateX(-50%)", width: 14, height: 14, borderRadius: "50%", background: V.white, border: `2px dashed ${V.amber}`, zIndex: 1 }} />
                   </div>
-                  {/* Labels — posicionados abaixo dos dots, inline */}
+                  {/* Labels — "hoje" à esquerda do número, "potencial" à direita */}
                   <div style={{ position: "relative", height: 28, marginTop: 10 }}>
                     <div style={{ position: "absolute", left: `${atualPos}%`, transform: "translateX(-50%)", display: "flex", alignItems: "baseline", gap: 3, whiteSpace: "nowrap" }}>
-                      <span style={{ fontFamily: V.display, fontSize: 18, fontWeight: 800, color: V.teal }}>{atual}</span>
                       <span style={{ fontFamily: V.mono, fontSize: 8, color: V.ash }}>hoje</span>
+                      <span style={{ fontFamily: V.display, fontSize: 18, fontWeight: 800, color: V.teal }}>{atual}</span>
                     </div>
                     <div style={{ position: "absolute", left: `${potencialPos}%`, transform: "translateX(-50%)", display: "flex", alignItems: "baseline", gap: 3, whiteSpace: "nowrap" }}>
                       <span style={{ fontFamily: V.display, fontSize: 18, fontWeight: 800, color: V.amber }}>{potencial}</span>
