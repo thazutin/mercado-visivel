@@ -1282,6 +1282,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
                 leadId={lead.id}
                 hideCTA
                 hideWorkRoutes
+                name={lead.name}
               />
             ) : (
               <p style={{ fontSize: 13, color: V.ash }}>Diagnóstico não disponível.</p>

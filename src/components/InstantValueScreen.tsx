@@ -96,7 +96,7 @@ interface Results {
   } | null;
   demandType?: string;
 }
-interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; leadId?: string; hideCTA?: boolean; hideWorkRoutes?: boolean; }
+interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; leadId?: string; hideCTA?: boolean; hideWorkRoutes?: boolean; name?: string; }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -170,7 +170,7 @@ function Chip({ children, color = V.ash }: { children: React.ReactNode; color?: 
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
-export default function InstantValueScreen({ product, region, results, onCheckout, loading, leadId, hideCTA, hideWorkRoutes }: Props) {
+export default function InstantValueScreen({ product, region, results, onCheckout, loading, leadId, hideCTA, hideWorkRoutes, name }: Props) {
   const [show, setShow] = useState(false);
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
@@ -197,7 +197,10 @@ export default function InstantValueScreen({ product, region, results, onCheckou
   const isNacional = /brasil|nacional/i.test(results.audiencia?.municipioNome || '');
   const isNacionalAny = isNacional;
   const isB2BNacional = isB2B && isNacional;
+  const displayName = name && name.trim() ? name.trim() : product;
   const audienciaLabel = isB2G ? 'órgãos públicos potenciais' : isB2B ? 'empresas no seu mercado' : 'pessoas no seu mercado';
+  const searchVolumeIsEstimate = (results as any).searchVolumeIsEstimate || false;
+  const audienciaIsEstimate = (results as any).audienciaIsEstimate || false;
   const audienciaUnit = isB2G ? 'órgãos' : isB2B ? 'empresas' : 'pessoas';
 
   const audSublabel = aud
@@ -295,7 +298,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           <div style={{ marginBottom: 12, display: "flex", justifyContent: "center" }}>
             <NelsonLogo size={48} />
           </div>
-          <p style={{ fontSize: 13, color: V.ash, margin: 0 }}>{product} · {shortRegion}</p>
+          <p style={{ fontSize: 13, color: V.ash, margin: 0 }}>{displayName} · {shortRegion}</p>
         </div>
 
         {/* Chips de fontes */}
@@ -335,32 +338,19 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                 <div style={{ fontSize: 64, fontWeight: 900, color: V.teal, lineHeight: 1, fontFamily: V.display, letterSpacing: "-0.03em", marginBottom: 8 }}>
                   +{oportunidade > 0 ? oportunidade.toLocaleString('pt-BR') : '—'}
                 </div>
-                <div style={{ fontSize: 15, color: V.mist, lineHeight: 1.5, maxWidth: 280, margin: "0 auto 16px" }}>
-                  {isB2B ? 'empresas' : 'pessoas'} a mais por mês conhecendo você<br/>
-                  <strong style={{ color: V.white }}>sem investimento adicional em mídia</strong>
+                <div style={{ fontSize: 15, color: V.mist, lineHeight: 1.5, maxWidth: 300, margin: "0 auto 16px" }}>
+                  {isB2B ? 'empresas' : 'pessoas'} a mais por mês conhecendo o seu negócio
                 </div>
               </>
             )}
-            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.04em" }}>
-              {proj?.mercadoLabel || (isNacionalAny ? 'Mercado nacional' : `Raio de ${raioKm}km · ${shortRegion}`)}
-            </div>
-          </div>
-          <div style={{ background: V.cloud, borderRadius: 10, padding: "12px 16px", border: `1px solid ${V.fog}` }}>
-            <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.6, textAlign: "center" }}>
-              {isNacionalAny
-                ? `No mercado nacional de ${product}, centenas de ${isB2B ? 'empresas' : 'players'} competem pela mesma atenção. Seu plano mostra como aumentar essa posição.`
-                : audienciaTotal > 0
-                ? `De ${audienciaTotal.toLocaleString('pt-BR')} ${isB2B ? 'empresas' : 'pessoas'} no seu mercado, você chega hoje a ${familiasAtual.toLocaleString('pt-BR')}. Com as ações certas, passa a ${familiasPotencial.toLocaleString('pt-BR')}.`
-                : `Você disputa ${results.influencePercent}% do seu mercado hoje. Com as ações certas, pode disputar mais.`}
-            </p>
           </div>
         </div>
 
         {/* ═══════════════ BLOCO 2 — RÉGUA VOCÊ ESTÁ AQUI ═══════════════ */}
         {!nenhumEncontrado && (
           <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "20px 18px", marginBottom: 16 }}>
-            <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 14, textAlign: "center" }}>
-              Sua posição digital
+            <div style={{ fontFamily: V.display, fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 14, textAlign: "center" }}>
+              Qual fatia do seu mercado você disputa hoje?
             </div>
             {(() => {
               const atual = results.influencePercent || 0;
@@ -384,7 +374,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
                     </div>
                     <div style={{ position: "absolute", left: `${potencial}%`, transform: "translateX(-50%)", textAlign: "center" }}>
                       <div style={{ fontFamily: V.display, fontSize: 18, fontWeight: 800, color: V.amber, lineHeight: 1 }}>{potencial}</div>
-                      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, marginTop: 2, whiteSpace: "nowrap" }}>Potencial</div>
+                      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, marginTop: 2, whiteSpace: "nowrap" }}>Potencial com a Virô</div>
                     </div>
                   </div>
                   {/* Escala 0 e 100 */}
@@ -404,16 +394,27 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         </div>
 
         <div style={{ fontSize: 11, color: V.ash, marginBottom: 12, paddingLeft: 4, lineHeight: 1.5 }}>
-          Recomendações gerais. Seu plano personalizado considera os gaps reais do seu negócio.
+          Estas são as alavancas do seu mercado. O plano completo traz ações específicas para o seu negócio, na ordem certa.
         </div>
 
         {pilarCards.map((p, i) => {
           const lever = allLevers.find((l: any) => l.dimension === p.dim || (p.dim === 'credibilidade' && l.dimension === 'reputacao'));
+          const pilarPotencial = Math.min(p.score + 35, 85);
           return (
             <div key={i} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "12px 14px", marginBottom: 8 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: V.night }}>{p.icon} {p.label}</span>
                 <span style={{ fontSize: 16, fontWeight: 800, color: p.color }}>{p.score}</span>
+              </div>
+              {/* Mini-régua do pilar */}
+              <div style={{ position: "relative", height: 4, background: V.fog, borderRadius: 2, marginBottom: 8, overflow: "visible" }}>
+                <div style={{ position: "absolute", left: 0, top: 0, height: "100%", borderRadius: 2, background: `linear-gradient(90deg, ${p.color} ${(p.score / pilarPotencial) * 100}%, ${V.amberSoft} 100%)`, width: `${pilarPotencial}%`, transition: "width 0.6s ease" }} />
+                <div style={{ position: "absolute", left: `${p.score}%`, top: -3, transform: "translateX(-50%)", width: 10, height: 10, borderRadius: "50%", background: p.color, border: `2px solid ${V.white}`, boxShadow: "0 0 2px rgba(0,0,0,0.15)", zIndex: 2 }} />
+                <div style={{ position: "absolute", left: `${pilarPotencial}%`, top: -2, transform: "translateX(-50%)", width: 8, height: 8, borderRadius: "50%", background: V.white, border: `1.5px dashed ${V.amber}`, zIndex: 1 }} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <span style={{ fontFamily: V.mono, fontSize: 8, color: V.ash }}>Hoje: {p.score}</span>
+                <span style={{ fontFamily: V.mono, fontSize: 8, color: V.amber }}>Meta: {pilarPotencial}</span>
               </div>
               <p style={{ fontSize: 12, color: V.night, margin: "0 0 6px", lineHeight: 1.5, fontWeight: 500 }}>{lever?.action || p.fallback}</p>
               <div style={{ padding: "4px 8px", background: p.status.bg, borderRadius: 4, fontSize: 10, color: p.status.color, fontWeight: 500 }}>{p.status.text}</div>
@@ -423,8 +424,26 @@ export default function InstantValueScreen({ product, region, results, onCheckou
 
         {/* ═══════════════ BLOCO 4 — POR QUE ACREDITAMOS ═══════════════ */}
         <div style={{ fontSize: 13, fontWeight: 600, color: V.amber, marginBottom: 8, paddingLeft: 4, marginTop: 16 }}>
-          Por que acreditamos nessa oportunidade
+          Por que acreditamos nessa oportunidade?
         </div>
+
+        {/* Resumo antes dos acordeões */}
+        {(() => {
+          const sortedPilars = [...pilarCards].sort((a, b) => b.score - a.score);
+          const pontoForte = sortedPilars[0];
+          const maiorGap = sortedPilars[sortedPilars.length - 1];
+          const competitorCount = ci?.activeCompetitors || 0;
+          const parts: string[] = [];
+          if (audienciaTotal > 0) parts.push(`Seu mercado potencial é de ${fmtPop(audienciaTotal)} ${audienciaUnit}.`);
+          if (hasVolume) parts.push(`Destas, há ${results.totalVolume.toLocaleString('pt-BR')} buscas ativas por mês com intenção de compra.`);
+          if (competitorCount > 0) parts.push(`Você compete com ${competitorCount} negócio${competitorCount !== 1 ? 's' : ''} por essa atenção.`);
+          if (pontoForte && pontoForte.score > 0) parts.push(`Você já faz bem ${pontoForte.label.toLowerCase()} e tem oportunidade clara em ${maiorGap.label.toLowerCase()}.`);
+          return parts.length > 0 ? (
+            <div style={{ background: V.tealWash, borderRadius: 10, padding: "12px 14px", marginBottom: 12, border: `1px solid rgba(29,158,117,0.15)` }}>
+              <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.6 }}>{parts.join(' ')}</p>
+            </div>
+          ) : null;
+        })()}
 
         {/* Accordion 1 — Tamanho do mercado */}
         <Expandable title={`👥 Tamanho do mercado potencial — ${hasAudiencia ? fmtPop(aud!.audienciaTarget) + ' ' + audienciaUnit : '—'}`} icon="">
@@ -442,8 +461,8 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           {aud && aud.populacaoRaio > 0 ? (
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
-                <span style={{ fontSize: 12, color: V.zinc }}>{isB2B ? 'Base de empresas' : 'População no raio'}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{fmtPop(aud.populacaoRaio)} {audienciaUnit}{aud.raioKm && aud.densidade !== "nacional" ? ` em ${aud.raioKm}km` : ''}</span>
+                <span style={{ fontSize: 12, color: V.zinc }}>{isB2B && isNacional ? 'Empresas no mercado-alvo' : isB2B ? 'Base de empresas' : `Pessoas no raio de ${aud.raioKm || raioKm}km`}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{fmtPop(aud.populacaoRaio)} {audienciaUnit}{audienciaIsEstimate ? ' (estimativa setorial)' : ''}</span>
               </div>
               {aud.targetProfile && (
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
@@ -454,7 +473,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               {aud.audienciaTarget > 0 && (
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0" }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>Audiência estimada</span>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: V.teal }}>~{fmtPop(aud.audienciaTarget)} {audienciaUnit}</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: V.teal }}>~{fmtPop(aud.audienciaTarget)} {audienciaUnit}{audienciaIsEstimate ? ' (estimativa)' : ''}</span>
                 </div>
               )}
               {(results.demandType === 'local_workers' || results.demandType === 'tourist_flow') && (
@@ -468,7 +487,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         </Expandable>
 
         {/* Accordion 2 — Demanda ativa */}
-        <Expandable title={`🔍 Demanda ativa — ${hasVolume ? results.totalVolume.toLocaleString('pt-BR') + ' buscas/mês' : '—'}`} icon="">
+        <Expandable title={`🔍 Demanda ativa — ${hasVolume ? results.totalVolume.toLocaleString('pt-BR') + ' buscas/mês' + (searchVolumeIsEstimate ? ' (estimativa)' : '') : '—'}`} icon="">
           <div style={{ background: V.amberWash, borderRadius: 8, padding: "8px 12px", marginBottom: 12, borderLeft: `3px solid ${V.amber}` }}>
             <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
               {results.demandType === 'ecommerce_national' || results.demandType === 'national_service'
@@ -502,12 +521,12 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           ) : <p style={{ fontSize: 12, color: V.ash, margin: 0 }}>Dados indisponíveis.</p>}
         </Expandable>
 
-        {/* Accordion 4 — O que você já faz bem */}
-        <Expandable title="✅ O que você já faz bem" icon="">
-          {fontesEncontradas.length > 0 ? (
+        {/* Accordion 4 — O que faz bem e oportunidades */}
+        <Expandable title="✅ O que faz bem e oportunidades" icon="">
+          {fontesEncontradas.length > 0 || pilarCards.some(p => p.score >= 40) ? (
             <div>
               {fontesEncontradas.map((fonte: any, i: number) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < fontesEncontradas.length - 1 ? `1px solid ${V.fog}` : "none" }}>
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
                   <span style={{ fontSize: 14 }}>✓</span>
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 600, color: V.night }}>{fonte.label}</div>
@@ -527,6 +546,25 @@ export default function InstantValueScreen({ product, region, results, onCheckou
               <p style={{ fontSize: 11, color: V.teal, margin: "10px 0 0", fontWeight: 500 }}>
                 Esses são os alicerces. O plano parte do que já funciona para acelerar o crescimento.
               </p>
+
+              {/* Oportunidades — 2 pilares com menor score */}
+              {(() => {
+                const oportunidades = [...pilarCards].sort((a, b) => a.score - b.score).slice(0, 2);
+                return oportunidades.length > 0 ? (
+                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${V.fog}` }}>
+                    <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 8 }}>Oportunidades</div>
+                    {oportunidades.map((p, i) => (
+                      <div key={`opp-${i}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: i < oportunidades.length - 1 ? `1px solid ${V.fog}` : "none" }}>
+                        <span style={{ fontSize: 14 }}>{p.icon}</span>
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: V.night }}>{p.label} — {p.score}/100</div>
+                          <div style={{ fontSize: 11, color: V.ash }}>{p.detail}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null;
+              })()}
             </div>
           ) : (
             <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.6 }}>

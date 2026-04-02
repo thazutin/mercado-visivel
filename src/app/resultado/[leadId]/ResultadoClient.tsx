@@ -30,9 +30,10 @@ interface Props {
   region: string;
   leadId: string;
   results: any;
+  name?: string;
 }
 
-export default function ResultadoClient({ product, region, leadId, results }: Props) {
+export default function ResultadoClient({ product, region, leadId, results, name }: Props) {
   const [tab, setTab] = useState<TabKey>("resultado");
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -183,6 +184,7 @@ export default function ResultadoClient({ product, region, leadId, results }: Pr
             leadId={leadId}
             hideCTA
             hideWorkRoutes
+            name={name}
           />
         )}
 

@@ -44,7 +44,7 @@ export default async function ResultadoPage({ params }: { params: { leadId: stri
   const supabase = getSupabase();
 
   const { data: lead } = await supabase
-    .from("leads").select("id, product, region, email, status, paid_at").eq("id", leadId).single();
+    .from("leads").select("id, product, region, email, status, paid_at, name").eq("id", leadId).single();
 
   if (!lead) {
     return <ErrorScreen title="Resultado não encontrado" subtitle="Não encontramos nenhum diagnóstico com esse link. Ele pode ter expirado ou sido removido." />;
@@ -66,7 +66,7 @@ export default async function ResultadoPage({ params }: { params: { leadId: stri
   const raw = diagnosis.raw_data || {};
   const display = buildDisplay(raw);
 
-  return <ResultadoClient product={lead.product} region={lead.region} leadId={leadId} results={display} />;
+  return <ResultadoClient product={lead.product} region={lead.region} leadId={leadId} results={display} name={lead.name} />;
 }
 
 function buildDisplay(raw: any) {

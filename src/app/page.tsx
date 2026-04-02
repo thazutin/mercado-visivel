@@ -269,6 +269,7 @@ export default function Home() {
         onCheckout={handleCheckout}
         loading={checkoutLoading}
         leadId={leadId}
+        name={formData.businessName}
       />
     );
   }
