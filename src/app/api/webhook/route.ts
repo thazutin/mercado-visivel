@@ -227,5 +227,54 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // ─── invoice.payment_succeeded (renovação mensal) ────────────────────────────
+
+  if (event.type === "invoice.payment_succeeded") {
+    const invoice = event.data.object as any;
+    // Só notificar renovações (não a primeira cobrança)
+    if (invoice.billing_reason === "subscription_cycle") {
+      const subscriptionId = invoice.subscription;
+      console.log(`[Webhook] Subscription renewal: ${subscriptionId}`);
+
+      try {
+        const { data: lead } = await supabase
+          .from("leads")
+          .select("id, email, name, product, region")
+          .eq("subscription_stripe_id", subscriptionId)
+          .single();
+
+        if (lead?.email) {
+          const { sendEmail, emailShell } = await import("@/lib/notify");
+          const firstName = (lead.name || '').split(' ')[0] || 'Olá';
+          const dashboardUrl = `https://virolocal.com/dashboard/${lead.id}`;
+
+          await sendEmail({
+            to: lead.email,
+            subject: `${firstName}, sua assinatura Virô foi renovada.`,
+            html: emailShell(`
+              <h1 style="font-size:22px;color:#161618;margin:0 0 16px;line-height:1.3;">
+                Assinatura renovada com sucesso.
+              </h1>
+              <p style="font-size:15px;color:#888880;line-height:1.7;margin:0 0 24px;">
+                Seu acesso às Ações Semanais para <strong style="color:#161618;">${lead.product}</strong> em <strong style="color:#161618;">${(lead.region || '').split(',')[0].trim()}</strong> continua ativo.
+              </p>
+              <div style="text-align:center;margin:0 0 28px;">
+                <a href="${dashboardUrl}" style="background:#161618;color:#FEFEFF;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;display:inline-block;">
+                  Acessar painel
+                </a>
+              </div>
+              <p style="font-size:13px;color:#888880;line-height:1.6;margin:0;">
+                Seus conteúdos semanais continuam sendo gerados toda sexta-feira.
+              </p>
+            `),
+          });
+          console.log(`[Webhook] Renewal email sent to ${lead.email}`);
+        }
+      } catch (err) {
+        console.error("[Webhook] Renewal notification failed:", err);
+      }
+    }
+  }
+
   return NextResponse.json({ ok: true });
 }

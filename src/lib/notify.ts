@@ -364,7 +364,7 @@ export async function notifyClosure(opts: {
 
 // ─── Email templates ─────────────────────────────────────────────────────────
 
-function emailShell(content: string): string {
+export function emailShell(content: string): string {
   return `
     <div style="font-family:-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;background:#F7F5F2;">
       <div style="text-align:center;margin-bottom:32px;">
