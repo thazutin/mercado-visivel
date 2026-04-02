@@ -104,13 +104,13 @@ export const dictionaries: Record<Locale, any> = {
     step4WhatsappHint: "Para enviarmos o resultado e o briefing semanal.",
 
     // ─── Context / Pricing ───
-    contextLabel: "o que Virô desbloqueia",
-    contextP1: "O resultado mostra onde você está. O plano completo mostra como mudar — com acompanhamento por 90 dias.",
-    contextP2: "Diagnóstico detalhado + plano de ação + briefing semanal. Baseado em dados reais.",
-    contextPrice: "Pacote Virô Completo",
+    contextLabel: "o que Virô entrega",
+    contextP1: "O diagnóstico mostra onde você está. O plano de ação mostra o que fazer — na ordem certa, com conteúdo pronto.",
+    contextP2: "Diagnóstico detalhado + 15 ações priorizadas + conteúdo pronto para copiar e colar. Baseado em dados reais.",
+    contextPrice: "Plano de Ação",
     contextPriceValue: "R$ 497",
-    contextRecurring: "Pagamento único · tudo incluso",
-    contextRecurringValue: "diagnóstico + plano + 12 briefings",
+    contextRecurring: "Pagamento único",
+    contextRecurringValue: "diagnóstico + plano de ação + conteúdo pronto",
 
     // ─── Footer ───
     footer: "Virô · inteligência de mercado local · virolocal.com",
@@ -374,7 +374,7 @@ export const dictionaries: Record<Locale, any> = {
       { step: "01", title: "Completa el formulario", desc: "2 minutos. Qué haces, dónde operas, cómo te encuentran hoy.", tag: "gratis" },
       { step: "02", title: "El análisis corre en tiempo real", desc: "Cruzamos búsqueda, posicionamiento y competencia a tu alrededor. Todo automático." },
       { step: "03", title: "Ves el resultado", desc: "Términos de búsqueda reales, volumen, influencia y dónde apareces (o no).", tag: "gratis" },
-      { step: "04", title: "Desbloquea el diagnóstico completo", desc: "Diagnóstico + plan de 12 semanas + briefing semanal personalizado. $199 único.", tag: "$199" },
+      { step: "04", title: "Genera tu plan de acción", desc: "15 acciones priorizadas + contenido listo para copiar y pegar. $199 único.", tag: "$199" },
     ],
     formTitle: "Tu mercado en 2 minutos",
     formSub: "Tómate tu tiempo. Cada campo mejora el análisis.",
@@ -435,7 +435,7 @@ export const dictionaries: Record<Locale, any> = {
     step4WhatsappHint: "Para enviarte el resultado y el briefing semanal.",
 
     contextLabel: "lo que Virô desbloquea",
-    contextP1: "El resultado gratuito muestra dónde estás. El diagnóstico completo muestra por qué y qué hacer — con seguimiento por 12 semanas.",
+    contextP1: "El resultado gratuito muestra dónde estás. El plan de acción muestra qué hacer — con contenido listo para copiar y pegar.",
     contextP2: "Diagnóstico completo, mapa competitivo, plan de acción de 12 semanas y briefing semanal con lo que cambió en tu mercado. Todo basado en datos reales de tu zona.",
     contextPrice: "Paquete Virô Completo",
     contextPriceValue: "$199 USD",
