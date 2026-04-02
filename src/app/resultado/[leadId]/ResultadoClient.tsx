@@ -129,9 +129,8 @@ export default function ResultadoClient({ product, region, leadId, results, name
 
           <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24, textAlign: "left" }}>
             {[
-              { label: "Diagnóstico por canal", status: "generating" },
-              { label: "Plano de ação priorizado", status: "generating" },
-              { label: "Relatório do seu mercado", status: "generating" },
+              { label: "Diagnóstico completo" },
+              { label: "Plano de ação" },
             ].map((item, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: V.white, borderRadius: 8, border: `1px solid ${V.fog}` }}>
                 <div style={{

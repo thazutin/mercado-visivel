@@ -1288,7 +1288,7 @@ Responda APENAS em JSON, sem markdown:
     let fallbackPct = isNac ? 1.0 : 0.15;
     let fallbackProfile = inferredClientType === 'b2b' ? 'empresas brasileiras no segmento' : 'consumidores no mercado local';
     try {
-      const { findBenchmark } = await import('./pipeline/../config/sector-benchmarks');
+      const { findBenchmark } = await import('@/config/sector-benchmarks');
       const bench = findBenchmark(input.product, input.differentiator);
       if (bench) {
         fallbackPct = inferredClientType === 'b2b' ? bench.targetPercentage.b2b : bench.targetPercentage.b2c;
