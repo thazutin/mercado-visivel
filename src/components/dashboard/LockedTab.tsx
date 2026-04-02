@@ -14,9 +14,12 @@ interface Props {
 export function LockedTab({ lockLevel, ctaLabel, ctaUrl, leadId }: Props) {
   const [loading, setLoading] = useState(false);
 
+  const [error, setError] = useState("");
+
   async function handleClick() {
     if (!leadId) return;
     setLoading(true);
+    setError("");
     try {
       const endpoint = lockLevel === 2 ? "/api/checkout/subscription" : "/api/checkout";
       const body = lockLevel === 2
@@ -28,10 +31,15 @@ export function LockedTab({ lockLevel, ctaLabel, ctaUrl, leadId }: Props) {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (data.url) window.location.href = data.url;
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError(data.error || "Erro ao iniciar pagamento. Tente novamente.");
+        setLoading(false);
+      }
     } catch (err) {
       console.error("Checkout error:", err);
-    } finally {
+      setError("Erro de conexão. Tente novamente.");
       setLoading(false);
     }
   }
@@ -141,8 +149,11 @@ export function LockedTab({ lockLevel, ctaLabel, ctaUrl, leadId }: Props) {
                 opacity: loading ? 0.7 : 1, transition: "opacity 0.15s",
               }}
             >
-              {loading ? "Redirecionando..." : ctaLabel}
+              {loading ? "Redirecionando ao pagamento..." : ctaLabel}
             </button>
+            {error && (
+              <p style={{ fontSize: 12, color: V.coral, marginTop: 8 }}>{error}</p>
+            )}
           ) : (
             <a
               href={ctaUrl}
