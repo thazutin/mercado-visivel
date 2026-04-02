@@ -460,6 +460,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
           else if (hasVolume && isB2B) parts.push(`Há demanda ativa de ${fmtPop(totalVolumeInt)} buscas/mês no seu segmento.`);
           if (hasVolume && audienciaTotal > 0) parts.push(`Há ${fmtPop(totalVolumeInt)} buscas ativas por mês com intenção de compra.`);
           if (competitorCount > 0) parts.push(`Você compete com ${competitorCount} negócio${competitorCount !== 1 ? 's' : ''} por essa atenção.`);
+
           if (oportunidade > 0) parts.push(`Há oportunidade de capturar mais demanda.`);
           return parts.length > 0 ? (
             <div style={{ background: V.tealWash, borderRadius: 10, padding: "12px 14px", marginBottom: 12, border: `1px solid rgba(15,118,110,0.12)` }}>
@@ -469,6 +470,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         })()}
 
         {/* Accordion 1 — Tamanho do mercado */}
+
         <Expandable title={`Tamanho do mercado potencial — ${hasAudiencia ? fmtPop(aud!.audienciaTarget) + ' ' + audienciaUnit : hasVolume ? '~' + fmtPop(Math.round(totalVolumeInt * 3)) + ' ' + audienciaUnit + ' (estimado)' : 'dados insuficientes'}`} icon="">
           {results.maps?.found && (
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${V.fog}` }}>
@@ -510,6 +512,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         </Expandable>
 
         {/* Accordion 2 — Demanda ativa */}
+
         <Expandable title={`Demanda ativa — ${hasVolume ? fmtPop(totalVolumeInt) + ' buscas/mês' + (searchVolumeIsEstimate ? ' (estimativa)' : '') : 'sem dados de busca para este segmento'}`} icon="">
           <div style={{ background: V.amberWash, borderRadius: 8, padding: "8px 12px", marginBottom: 12, borderLeft: `3px solid ${V.amber}` }}>
             <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
@@ -532,6 +535,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         </Expandable>
 
         {/* Accordion 3 — Concorrência */}
+
         <Expandable title={`Concorrência — ${hasCi ? ci!.activeCompetitors + ' negócio' + (ci!.activeCompetitors !== 1 ? 's' : '') + (isNacional && ci!.activeCompetitors < 5 ? ' (parcial)' : ' mapeados') : 'mapeamento em andamento'}`} icon="">
           {hasCi ? (
             <div>
@@ -557,6 +561,7 @@ export default function InstantValueScreen({ product, region, results, onCheckou
         {/* Accordion B2B — Empresas no mercado (somente B2B) */}
         {isB2B && (results as any).b2bCompanies?.companies?.length > 0 && (
           <Expandable title={`🏢 Empresas no seu mercado — ${(results as any).b2bCompanies.totalInRegion} mapeadas`} icon="">
+
             <div>
               <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 10px", lineHeight: 1.5 }}>
                 Empresas do mesmo setor na sua região. O plano de ação traz estratégias de abordagem.
