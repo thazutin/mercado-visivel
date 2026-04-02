@@ -1303,6 +1303,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
                 onCheckout={() => {}}
                 leadId={lead.id}
                 hideCTA
+                seasonality={diagnosis?.seasonality}
                 hideWorkRoutes
                 name={lead.name}
               />

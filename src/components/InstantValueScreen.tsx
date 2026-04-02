@@ -84,7 +84,7 @@ interface Results {
   } | null;
   demandType?: string;
 }
-interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; leadId?: string; hideCTA?: boolean; hideWorkRoutes?: boolean; name?: string; }
+interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; leadId?: string; hideCTA?: boolean; hideWorkRoutes?: boolean; name?: string; seasonality?: any; }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -158,7 +158,7 @@ function Chip({ children, color = V.ash }: { children: React.ReactNode; color?: 
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
-export default function InstantValueScreen({ product, region, results: initialResults, onCheckout, loading, leadId, hideCTA, hideWorkRoutes, name }: Props) {
+export default function InstantValueScreen({ product, region, results: initialResults, onCheckout, loading, leadId, hideCTA, hideWorkRoutes, name, seasonality }: Props) {
   const [show, setShow] = useState(false);
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
@@ -617,6 +617,34 @@ export default function InstantValueScreen({ product, region, results: initialRe
               <span style={{ fontFamily: V.mono, fontSize: 11, color: V.ash, width: 50, textAlign: "right" }}>{allTermsSameVolume ? '—' : t.volume > 0 ? fmtPop(Math.round(t.volume)) : "—"}</span>
             </div>
           ))}
+          {/* Sazonalidade — volume de busca por mês */}
+          {seasonality?.months?.length > 0 && seasonality.months.some((m: any) => m.volume > 0) && (() => {
+            const maxVol = Math.max(...seasonality.months.map((x: any) => x.volume));
+            return (
+              <div style={{ marginTop: 16, paddingTop: 12, borderTop: `1px solid ${V.fog}` }}>
+                <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", marginBottom: 8 }}>
+                  SAZONALIDADE · VOLUME DE BUSCA POR MÊS
+                </div>
+                <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 48 }}>
+                  {seasonality.months.map((m: any) => {
+                    const height = maxVol > 0 ? Math.max((m.volume / maxVol) * 48, 3) : 3;
+                    const isPeak = m.month === seasonality.peak_month;
+                    const isLow = m.month === seasonality.low_month;
+                    return (
+                      <div key={m.month} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                        <div style={{ width: "100%", height, background: isPeak ? V.amber : isLow ? V.mist : V.fog, borderRadius: "2px 2px 0 0", transition: "height 0.3s" }} />
+                        <span style={{ fontSize: 7, color: V.ash, fontFamily: V.mono }}>{m.month?.slice(0, 3)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontSize: 9, color: V.ash }}>
+                  <span>Pico: <strong style={{ color: V.night }}>{seasonality.peak_month}</strong></span>
+                  <span>Menor: <strong style={{ color: V.night }}>{seasonality.low_month}</strong></span>
+                </div>
+              </div>
+            );
+          })()}
         </Expandable>
 
         {/* Accordion 3 — Concorrência */}
