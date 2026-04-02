@@ -9,13 +9,12 @@ import { LockedTab } from "@/components/dashboard/LockedTab";
 import { NelsonLogo } from "@/components/NelsonLogo";
 import { V } from "@/lib/design-tokens";
 
-type TabKey = "resultado" | "diagnostico" | "checklist" | "conteudos";
+type TabKey = "resultado" | "plano" | "semanal";
 
 const TABS: { key: TabKey; label: string; locked: false | 1 | 2 }[] = [
   { key: "resultado", label: "Diagnóstico", locked: false },
-  { key: "diagnostico", label: "Plano de Ação", locked: 1 },
-  { key: "checklist", label: "Checklist", locked: 1 },
-  { key: "conteudos", label: "Conteúdos", locked: 2 },
+  { key: "plano", label: "Plano de Ação", locked: 1 },
+  { key: "semanal", label: "Semanal", locked: 2 },
 ];
 
 interface Props {
@@ -67,7 +66,12 @@ export default function ResultadoClient({ product, region, leadId, results, name
         }
       } catch { /* ignora */ }
     }, 3_000);
-    const timeout = setTimeout(() => { clearInterval(poll); setShowPostPayment(false); }, 5 * 60_000);
+    // NUNCA voltar para tela grátis após pagamento — redirecionar para dashboard
+    const timeout = setTimeout(() => {
+      clearInterval(poll);
+      // Redireciona para dashboard mesmo sem plano pronto — dashboard tem seu próprio polling
+      window.location.href = `/dashboard/${leadId}`;
+    }, 5 * 60_000);
     return () => { clearInterval(poll); clearTimeout(timeout); };
   }, [showPostPayment, leadId]);
 
@@ -94,6 +98,8 @@ export default function ResultadoClient({ product, region, leadId, results, name
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
+  const shortRegion = region.split(",")[0].trim();
+
   if (showPostPayment) {
     if (planReady) {
       return (
@@ -108,32 +114,45 @@ export default function ResultadoClient({ product, region, leadId, results, name
     }
     return (
       <div style={{ minHeight: "100vh", background: V.cloud, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 20px" }}>
-        <div style={{ textAlign: "center", maxWidth: 400 }}>
-          <div style={{
-            background: "rgba(207,133,35,0.08)", border: "1px solid rgba(207,133,35,0.2)",
-            borderRadius: 12, padding: "16px 20px", marginBottom: 20,
-            fontSize: 14, color: V.amber, fontWeight: 600, lineHeight: 1.5,
-          }}>
-            ✓ Recebi. Estou montando seu plano agora.
+        <div style={{ textAlign: "center", maxWidth: 420 }}>
+          <div style={{ marginBottom: 24 }}>
+            <NelsonLogo size={48} />
           </div>
-          <p style={{ fontSize: 13, color: V.zinc, margin: "0 0 16px", lineHeight: 1.6 }}>
-            O básico bem feito, relatório do seu mercado e posts prontos em 2-3 minutos.
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: V.night, margin: "0 0 8px" }}>
+            Pagamento confirmado
+          </h2>
+          <p style={{ fontSize: 14, color: V.zinc, margin: "0 0 24px", lineHeight: 1.6 }}>
+            Estamos gerando seu diagnóstico completo e plano de ação para{" "}
+            <strong style={{ color: V.night }}>{product}</strong> em{" "}
+            <strong style={{ color: V.night }}>{shortRegion}</strong>.
           </p>
-          <p style={{ fontSize: 11, color: V.ash, margin: "8px 0 0", textAlign: "center" }}>
-            Seu painel fica disponível pelo link enviado por email. Guarde-o para acessar quando quiser.
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24, textAlign: "left" }}>
+            {[
+              { label: "Diagnóstico por canal", status: "generating" },
+              { label: "Plano de ação priorizado", status: "generating" },
+              { label: "Relatório do seu mercado", status: "generating" },
+            ].map((item, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: V.white, borderRadius: 8, border: `1px solid ${V.fog}` }}>
+                <div style={{
+                  width: 16, height: 16, border: `2px solid ${V.fog}`,
+                  borderTopColor: V.amber, borderRadius: "50%",
+                  animation: "spin 0.8s linear infinite", flexShrink: 0,
+                }} />
+                <span style={{ fontSize: 13, color: V.night, fontWeight: 500 }}>{item.label}</span>
+              </div>
+            ))}
+          </div>
+
+          <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.6 }}>
+            Leva 2-3 minutos. Você será redirecionado automaticamente.
+            <br />Também enviamos o link por email.
           </p>
-          <div style={{
-            width: 28, height: 28, border: `3px solid ${V.fog}`,
-            borderTopColor: V.amber, borderRadius: "50%",
-            animation: "spin 0.8s linear infinite", margin: "0 auto 12px",
-          }} />
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       </div>
     );
   }
-
-  const shortRegion = region.split(",")[0].trim();
 
   return (
     <div style={{ minHeight: "100vh", background: V.cloud, padding: "40px 20px" }}>
@@ -181,8 +200,8 @@ export default function ResultadoClient({ product, region, leadId, results, name
           />
         )}
 
-        {/* Tab: Diagnóstico (locked) */}
-        {tab === "diagnostico" && (
+        {/* Tab: Plano de Ação (locked) */}
+        {tab === "plano" && (
           <LockedTab
             lockLevel={1}
             ctaLabel="Gerar meu plano de ação · R$497"
@@ -191,18 +210,8 @@ export default function ResultadoClient({ product, region, leadId, results, name
           />
         )}
 
-        {/* Tab: Checklist (locked) */}
-        {tab === "checklist" && (
-          <LockedTab
-            lockLevel={1}
-            ctaLabel="Gerar meu plano de ação · R$497"
-            ctaUrl="#"
-            leadId={leadId}
-          />
-        )}
-
-        {/* Tab: Conteúdos (locked) */}
-        {tab === "conteudos" && (
+        {/* Tab: Semanal (locked) */}
+        {tab === "semanal" && (
           <LockedTab
             lockLevel={2}
             ctaLabel="Assinar por R$99/mês"

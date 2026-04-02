@@ -175,7 +175,20 @@ export async function POST(req: NextRequest) {
       console.error("[Diagnose] update lead display failed:", err);
     }
 
-    // 7. Notifica por WhatsApp + email (await para garantir que Vercel não mata antes de completar)
+    // 7. Notifica por WhatsApp + email — usa o MESMO número que o hero do relatório
+    const proj = display.projecaoFinanceira;
+    const audienciaTotal = display.audiencia?.audienciaTarget || 0;
+    const emailFamiliasAtual = proj?.familiasAtual != null
+      ? Math.min(proj.familiasAtual, audienciaTotal)
+      : Math.round(audienciaTotal * (display.influencePercent / 100));
+    const emailFamiliasPotencial = proj?.familiasPotencial != null
+      ? Math.min(proj.familiasPotencial, audienciaTotal)
+      : Math.round(audienciaTotal * (Math.min(display.influencePercent + 10, 100) / 100));
+    let emailOportunidade = Math.max(0, emailFamiliasPotencial - emailFamiliasAtual);
+    if (emailOportunidade <= 0 && audienciaTotal > 0) {
+      emailOportunidade = proj?.familiasGap || Math.max(1, Math.round(audienciaTotal * 0.10));
+    }
+
     try {
       await notifyDiagnosisReady({
         email: formData.email,
@@ -185,7 +198,7 @@ export async function POST(req: NextRequest) {
         region: formData.region,
         influencePercent: Math.round(pipelineResult.influence.influence.totalInfluence),
         searchVolume: pipelineResult.volumes.totalMonthlyVolume || 0,
-        projecaoFinanceira: sanitizeProjecao((pipelineResult as any).projecaoFinanceira),
+        projecaoFinanceira: { ...(sanitizeProjecao((pipelineResult as any).projecaoFinanceira) || {}), familiasGap: emailOportunidade },
         name: formData.businessName || formData.product,
         demandType: (pipelineResult as any).demandType || 'local_residents',
       });
