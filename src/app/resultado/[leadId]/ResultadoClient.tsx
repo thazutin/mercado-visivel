@@ -192,10 +192,18 @@ export default function ResultadoClient({ product, region, leadId, results, name
             product={product}
             region={region}
             results={results}
-            onCheckout={() => {}}
+            onCheckout={async (coupon) => {
+              try {
+                const res = await fetch('/api/checkout', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ lead_id: leadId, email: '', locale: 'pt', coupon }),
+                });
+                const data = await res.json();
+                if (data.url) window.location.href = data.url;
+              } catch { /* ignore */ }
+            }}
             leadId={leadId}
-            hideCTA
-            hideWorkRoutes
             name={name}
           />
         )}
