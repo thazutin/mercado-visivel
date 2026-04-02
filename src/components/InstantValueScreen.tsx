@@ -413,19 +413,19 @@ export default function InstantValueScreen({ product, region, results: initialRe
                     {/* Marcador potencial */}
                     <div style={{ position: "absolute", left: `${potencial}%`, top: -4, transform: "translateX(-50%)", width: 16, height: 16, borderRadius: "50%", background: V.white, border: `2px dashed ${V.amber}`, zIndex: 1 }} />
                   </div>
-                  {/* Labels */}
-                  <div style={{ position: "relative", marginTop: 14 }}>
-                    <div style={{ position: "absolute", left: `${atual}%`, transform: "translateX(-50%)", textAlign: "center" }}>
+                  {/* Labels — layout flexível para evitar sobreposição */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: 14, padding: "0 4px" }}>
+                    <div style={{ textAlign: "left" }}>
                       <div style={{ fontFamily: V.display, fontSize: 18, fontWeight: 800, color: V.teal, lineHeight: 1 }}>{atual}</div>
-                      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, marginTop: 2, whiteSpace: "nowrap" }}>Você hoje</div>
+                      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, marginTop: 2 }}>Você hoje</div>
                     </div>
-                    <div style={{ position: "absolute", left: `${potencial}%`, transform: "translateX(-50%)", textAlign: "center" }}>
+                    <div style={{ textAlign: "right" }}>
                       <div style={{ fontFamily: V.display, fontSize: 18, fontWeight: 800, color: V.amber, lineHeight: 1 }}>{potencial}</div>
-                      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, marginTop: 2, whiteSpace: "nowrap" }}>Potencial com a Virô</div>
+                      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, marginTop: 2 }}>Potencial com Virô</div>
                     </div>
                   </div>
                   {/* Escala 0 e 100 */}
-                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 36 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
                     <span style={{ fontFamily: V.mono, fontSize: 9, color: V.mist }}>0</span>
                     <span style={{ fontFamily: V.mono, fontSize: 9, color: V.mist }}>100</span>
                   </div>
