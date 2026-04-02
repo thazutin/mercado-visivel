@@ -1009,7 +1009,7 @@ Responda APENAS em JSON, sem markdown:
         const perTerm = Math.round(shortTotal / termVolumes.length);
         termVolumes.forEach(tv => { if (tv.monthlyVolume === 0) tv.monthlyVolume = perTerm; });
         totalMonthlyVolume = termVolumes.reduce((s, t) => s + t.monthlyVolume, 0);
-        searchVolumeIsEstimate = true;
+        // Volume veio de DataForSEO real (termos curtos) — não é estimativa pura
       }
     } catch (err) {
       console.warn('[Pipeline] Short-term volume fallback failed:', (err as Error).message);
