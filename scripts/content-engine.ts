@@ -10,7 +10,7 @@ import * as fs from 'fs';
 
 // ─── CONFIGURATION ───────────────────────────────────────────────────────────
 const CITY = 'São Paulo';
-const CATEGORY = 'padaria'; // Match against SECTOR_BENCHMARKS categories
+const CATEGORY = 'pizzaria';
 const MAX_BUSINESSES = 5;
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.GOOGLE_API_KEY_SERVER || '';
 const OUTPUT_DIR = path.join(process.cwd(), 'output', 'cards');
@@ -105,25 +105,61 @@ async function fetchPlaces(category: string, city: string): Promise<PlaceResult[
   return places;
 }
 
-// ─── 2. STREET VIEW PULLER ──────────────────────────────────────────────────
+// ─── 2. PHOTO FETCHER (Places Photo > Street View fallback) ─────────────────
 
-async function fetchStreetView(lat: number, lng: number): Promise<Buffer | null> {
-  // First check metadata to see if Street View is available
-  const metaUrl = `https://maps.googleapis.com/maps/api/streetview/metadata?location=${lat},${lng}&key=${GOOGLE_API_KEY}`;
-  const metaRes = await fetch(metaUrl);
-  const meta = await metaRes.json();
+async function fetchBusinessPhoto(place: PlaceResult): Promise<Buffer | null> {
+  // Prioridade 1: Google Places Photo (foto real do negócio, não da rua)
+  try {
+    const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=photos&key=${GOOGLE_API_KEY}`;
+    const detailsRes = await fetch(detailsUrl);
+    const details = await detailsRes.json();
+    const photoRef = details.result?.photos?.[0]?.photo_reference;
 
-  if (meta.status !== 'OK') {
+    if (photoRef) {
+      const photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=1080&maxheight=1080&photo_reference=${photoRef}&key=${GOOGLE_API_KEY}`;
+      const photoRes = await fetch(photoUrl);
+      if (photoRes.ok) {
+        const buf = Buffer.from(await photoRes.arrayBuffer());
+        if (buf.length > 5000) { // valid image
+          console.log(`   📸 Places Photo OK (${Math.round(buf.length / 1024)}KB)`);
+          return buf;
+        }
+      }
+    }
+  } catch { /* fallback to Street View */ }
+
+  // Prioridade 2: Street View (fachada da rua)
+  try {
+    const metaUrl = `https://maps.googleapis.com/maps/api/streetview/metadata?location=${place.lat},${place.lng}&source=outdoor&key=${GOOGLE_API_KEY}`;
+    const metaRes = await fetch(metaUrl);
+    const meta = await metaRes.json();
+
+    if (meta.status !== 'OK') return null;
+
+    // Calcular heading: câmera aponta da posição do Street View para o negócio
+    const svLat = meta.location?.lat || place.lat;
+    const svLng = meta.location?.lng || place.lng;
+    const heading = calculateHeading(svLat, svLng, place.lat, place.lng);
+
+    const imgUrl = `https://maps.googleapis.com/maps/api/streetview?size=1080x1080&location=${place.lat},${place.lng}&fov=80&heading=${heading}&pitch=5&source=outdoor&key=${GOOGLE_API_KEY}`;
+    const imgRes = await fetch(imgUrl);
+    if (!imgRes.ok) return null;
+
+    const buf = Buffer.from(await imgRes.arrayBuffer());
+    console.log(`   🏠 Street View OK (${Math.round(buf.length / 1024)}KB)`);
+    return buf;
+  } catch {
     return null;
   }
+}
 
-  const imgUrl = `https://maps.googleapis.com/maps/api/streetview?size=1080x1080&location=${lat},${lng}&fov=90&heading=0&pitch=0&key=${GOOGLE_API_KEY}`;
-  const imgRes = await fetch(imgUrl);
-
-  if (!imgRes.ok) return null;
-
-  const arrayBuffer = await imgRes.arrayBuffer();
-  return Buffer.from(arrayBuffer);
+function calculateHeading(fromLat: number, fromLng: number, toLat: number, toLng: number): number {
+  const dLng = (toLng - fromLng) * Math.PI / 180;
+  const lat1 = fromLat * Math.PI / 180;
+  const lat2 = toLat * Math.PI / 180;
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  return ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
 }
 
 // ─── 3. VIRÔ ANALYZER (simplified standalone) ───────────────────────────────
@@ -203,43 +239,53 @@ function buildCardHTML(place: PlaceResult, analysis: AnalysisResult, streetViewB
     body {
       width: 1080px; height: 1080px; overflow: hidden;
       font-family: 'Inter', -apple-system, sans-serif;
+      background: #161618;
+    }
+    .photo {
+      width: 100%; height: 580px;
       background: url(data:image/jpeg;base64,${streetViewBase64}) center/cover no-repeat;
+      position: relative;
     }
-    .overlay {
-      width: 100%; height: 100%;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,0.88) 65%, rgba(0,0,0,0.92) 100%);
-      display: flex; flex-direction: column; justify-content: space-between;
-      padding: 60px;
+    .photo-overlay {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 200px;
+      background: linear-gradient(to bottom, rgba(22,22,24,0) 0%, rgba(22,22,24,1) 100%);
     }
-    .logo { display: flex; align-items: baseline; gap: 10px; }
-    .logo-name { font-size: 28px; font-weight: 700; color: #FFFFFF; }
-    .logo-tag { font-size: 14px; color: #CF8523; letter-spacing: 0.1em; text-transform: uppercase; }
-    .business { margin-top: auto; padding-bottom: 20px; }
-    .biz-name { font-size: 48px; font-weight: 900; color: #FFFFFF; line-height: 1.15; margin-bottom: 8px;
+    .photo-logo {
+      position: absolute; top: 30px; left: 40px;
+      display: flex; align-items: baseline; gap: 8px;
+    }
+    .logo-name { font-size: 24px; font-weight: 700; color: #FFFFFF; text-shadow: 0 1px 8px rgba(0,0,0,0.5); }
+    .logo-tag { font-size: 12px; color: #CF8523; letter-spacing: 0.1em; text-transform: uppercase; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+    .content {
+      padding: 0 48px 40px;
+      display: flex; flex-direction: column; height: 500px;
+      margin-top: -40px; position: relative; z-index: 2;
+    }
+    .biz-name { font-size: 40px; font-weight: 900; color: #FFFFFF; line-height: 1.15; margin-bottom: 4px;
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .biz-address { font-size: 22px; color: #A0A0A0; }
-    .separator { width: 100%; height: 2px; background: #CF8523; margin: 24px 0; }
-    .metrics { display: flex; flex-direction: column; gap: 16px; }
-    .metric { font-size: 26px; color: #FFFFFF; display: flex; align-items: center; gap: 14px; }
-    .metric-icon { font-size: 26px; flex-shrink: 0; width: 36px; text-align: center; }
-    .cta { margin-top: auto; }
-    .cta-main { font-size: 32px; font-weight: 700; color: #FFFFFF; line-height: 1.4; }
-    .cta-link { font-size: 24px; color: #CF8523; margin-top: 16px; }
-    .footer { font-size: 16px; color: #A0A0A0; text-align: center; margin-top: 24px; }
+    .biz-address { font-size: 18px; color: #A0A0A0; margin-bottom: 16px; }
+    .separator { width: 100%; height: 2px; background: #CF8523; margin: 0 0 16px; }
+    .metrics { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+    .metric { font-size: 22px; color: #FFFFFF; display: flex; align-items: center; gap: 12px; }
+    .metric-icon { font-size: 20px; flex-shrink: 0; width: 28px; text-align: center; }
+    .separator2 { width: 100%; height: 2px; background: #CF8523; margin: 0 0 16px; }
+    .cta-main { font-size: 28px; font-weight: 700; color: #FFFFFF; line-height: 1.35; }
+    .cta-link { font-size: 20px; color: #CF8523; margin-top: 10px; }
+    .footer { font-size: 14px; color: #666; text-align: center; margin-top: auto; }
   </style>
 </head>
 <body>
-  <div class="overlay">
-    <div class="logo">
+  <div class="photo">
+    <div class="photo-logo">
       <span class="logo-name">virô</span>
       <span class="logo-tag">inteligência local</span>
     </div>
+    <div class="photo-overlay"></div>
+  </div>
 
-    <div class="business">
-      <div class="biz-name">${escapeHtml(place.name)}</div>
-      <div class="biz-address">${escapeHtml(shortAddress)}</div>
-    </div>
-
+  <div class="content">
+    <div class="biz-name">${escapeHtml(place.name)}</div>
+    <div class="biz-address">${escapeHtml(shortAddress)}</div>
     <div class="separator"></div>
 
     <div class="metrics">
@@ -253,20 +299,18 @@ function buildCardHTML(place: PlaceResult, analysis: AnalysisResult, streetViewB
       </div>
       <div class="metric">
         <span class="metric-icon">🏪</span>
-        <span>${analysis.competitors_count} concorrentes diretos na região</span>
+        <span>${analysis.competitors_count} concorrentes na região</span>
       </div>
       <div class="metric">
         <span class="metric-icon">📈</span>
-        <span>Oportunidade: +${analysis.opportunity_customers} clientes/mês sem investimento</span>
+        <span>+${analysis.opportunity_customers} clientes/mês sem investimento</span>
       </div>
     </div>
 
-    <div class="separator"></div>
+    <div class="separator2"></div>
 
-    <div class="cta">
-      <div class="cta-main">Tem oportunidade aqui.<br>E no seu negócio também.</div>
-      <div class="cta-link">Desbloqueie o como → virolocal.com</div>
-    </div>
+    <div class="cta-main">Tem oportunidade aqui.<br>E no seu negócio também.</div>
+    <div class="cta-link">Saiba quanto e como capturar → virolocal.com</div>
 
     <div class="footer">Análise gerada por Virô</div>
   </div>
@@ -328,17 +372,17 @@ async function main() {
 
     try {
       // 2. Street View
-      console.log(`${idx} Buscando Street View para: ${place.name}...`);
-      const streetViewBuf = await fetchStreetView(place.lat, place.lng);
+      console.log(`${idx} Buscando foto para: ${place.name}...`);
+      const photoBuf = await fetchBusinessPhoto(place);
 
-      if (!streetViewBuf) {
-        console.log(`${idx} ⚠️ Sem Street View — pulando`);
+      if (!photoBuf) {
+        console.log(`${idx} ⚠️ Sem foto disponível — pulando`);
         skipped++;
         await sleep(200);
         continue;
       }
 
-      const streetViewBase64 = streetViewBuf.toString('base64');
+      const streetViewBase64 = photoBuf.toString('base64');
 
       // 3. Analyze
       console.log(`${idx} Rodando análise Virô...`);
