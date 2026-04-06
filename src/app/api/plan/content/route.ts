@@ -9,13 +9,12 @@ function getSupabase() {
 
 export async function POST(req: NextRequest) {
   const { leadId, itemIndex, contentType } = await req.json();
-  if (!leadId || itemIndex == null || !contentType) {
-    return NextResponse.json({ error: 'leadId, itemIndex and contentType required' }, { status: 400 });
+  if (!leadId || itemIndex == null) {
+    return NextResponse.json({ error: 'leadId and itemIndex required' }, { status: 400 });
   }
 
   const supabase = getSupabase();
 
-  // Load lead + checklist
   const { data: lead } = await supabase.from('leads').select('*').eq('id', leadId).single();
   if (!lead || lead.plan_status !== 'ready') {
     return NextResponse.json({ error: 'Lead not found or plan not ready' }, { status: 404 });
@@ -31,61 +30,177 @@ export async function POST(req: NextRequest) {
   const display = lead.diagnosis_display as any;
   const shortRegion = (lead.region || '').split(',')[0].trim();
   const negocio = lead.name || lead.product;
+  const actionTitle = (item.titulo || item.title || '').toLowerCase();
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
   const ci = display?.competitionIndex;
-  const aud = display?.audiencia;
+  const maps = display?.maps;
   const totalVol = display?.totalVolume || 0;
 
-  const prompt = `Você é um diretor de conteúdo especialista no mercado de "${lead.product}" em ${shortRegion}.
+  // ─── Detect action type and build contextual prompt ───
+  const contextBlock = `NEGÓCIO: ${negocio} (${lead.product}) em ${shortRegion}
+Google Maps: ${maps?.found ? `★${maps.rating} · ${maps.reviewCount} avaliações` : 'não encontrado'}
+Concorrentes: ${ci?.activeCompetitors || '?'} mapeados
+Buscas/mês: ${totalVol.toLocaleString('pt-BR')}
+Ação: "${item.titulo || item.title}"
+Por quê: "${item.descricao || item.description}"`;
 
-CONTEXTO DO NEGÓCIO:
-- Nome: ${negocio}
-- Posição competitiva: ${display?.influencePercent || 0}/100
-- Visibilidade: ${display?.influenceBreakdown4D?.d1_descoberta || 0}/100
-- Credibilidade: ${display?.influenceBreakdown4D?.d2_credibilidade || 0}/100
-- Presença Digital: ${display?.influenceBreakdown4D?.d3_presenca || 0}/100
-- Reputação: ${display?.influenceBreakdown4D?.d4_reputacao || 0}/100
-${ci ? `- Concorrentes mapeados: ${ci.activeCompetitors} (mercado ${ci.label})` : ''}
-${totalVol ? `- Buscas mensais no segmento: ${totalVol.toLocaleString('pt-BR')}` : ''}
-${aud ? `- Audiência estimada: ${aud.audienciaTarget?.toLocaleString('pt-BR') || '?'} ${aud.targetProfile || 'pessoas'}` : ''}
-${display?.maps?.rating ? `- Google Maps: ★${display.maps.rating} (${display.maps.reviewCount} avaliações)` : ''}
+  let prompt: string;
 
-AÇÃO DO PLANO: "${item.titulo || item.title}"
-POR QUÊ: "${item.descricao || item.description}"
-Keywords: ${(item.keywords || []).join(', ') || 'N/A'}
+  if (/responder.*review|responder.*avalia/i.test(actionTitle)) {
+    // ─── REVIEWS: gerar respostas prontas ───
+    prompt = `${contextBlock}
 
-${contentType === 'blog' || contentType === 'both' ? `
-Gere um BLOG POST de alta qualidade:
-- Título SEO (max 60 chars) que inclua a região
-- Meta description (max 155 chars)
-- Texto de 400-600 palavras em primeira pessoa do negócio
-- OBRIGATÓRIO: cite pelo menos 2 dados reais (ex: "${totalVol} buscas/mês", "${ci?.activeCompetitors || '?'} concorrentes", "★${display?.maps?.rating || '?'}")
-- Tom direto e prático — como um especialista explicando para um amigo
-- Conecte à realidade local de ${shortRegion}
-` : ''}
-${contentType === 'instagram' || contentType === 'both' ? `
-Gere um POST DE INSTAGRAM profissional:
-- Legenda de até 200 palavras
-- Hook forte: comece com um número real ou pergunta provocativa
-- 5 hashtags regionais relevantes
-- Sugestão de visual (1 frase descrevendo a imagem/vídeo ideal)
-- CTA natural (não "clique no link da bio")
-` : ''}
+Você é um especialista em reputação online. O negócio "${negocio}" tem ${maps?.reviewCount || 0} avaliações no Google Maps com nota ★${maps?.rating || '?'}.
 
-Retorne JSON:
-{
-  ${contentType === 'blog' || contentType === 'both' ? '"blog": {"title":"...","meta_description":"...","body":"..."},' : ''}
-  ${contentType === 'instagram' || contentType === 'both' ? '"instagram": {"caption":"...","hashtags":["..."],"visual_suggestion":"..."}' : ''}
-}`;
+Gere 10 RESPOSTAS PRONTAS para reviews do Google Maps que o dono pode copiar e colar. Cubra:
+- 3 respostas para avaliações 5 estrelas (agradecimento personalizado)
+- 3 respostas para avaliações 4 estrelas (agradecimento + convite para voltar)
+- 2 respostas para avaliações 3 estrelas (empatia + compromisso de melhoria)
+- 2 respostas para avaliações 1-2 estrelas (pedido de desculpas + solução + contato)
+
+Cada resposta deve:
+- Mencionar o nome do negócio "${negocio}"
+- Ser personalizada (não genérica)
+- Ter 2-4 frases
+- Tom profissional mas humano
+
+JSON: {"type":"review_responses","title":"Respostas para avaliações do Google","items":[{"rating":5,"context":"Cliente elogiou o produto/serviço","response":"texto pronto para copiar"},...],"tips":["dica prática 1","dica prática 2"]}`;
+
+  } else if (/foto|imagem|visual/i.test(actionTitle)) {
+    // ─── FOTOS: checklist de fotos necessárias ───
+    prompt = `${contextBlock}
+
+Você é um fotógrafo profissional especializado em negócios locais. O negócio "${negocio}" (${lead.product}) precisa melhorar suas fotos no Google Maps.
+
+Gere um CHECKLIST DE FOTOS que o dono deve tirar e publicar. Para cada foto:
+- O que fotografar (específico para ${lead.product})
+- Enquadramento e iluminação ideal
+- Dica prática de como captar com celular
+
+Cubra: fachada, interior, equipe, produto/serviço principal, detalhes, ambiente, bastidores.
+
+JSON: {"type":"photo_checklist","title":"Fotos para o perfil do Google Maps","items":[{"foto":"Fachada do estabelecimento","como_captar":"Tire de frente, durante o dia, com a placa visível...","dica":"Use modo HDR do celular para equilibrar sombras"},...],"tips":["dica geral 1","dica geral 2"]}`;
+
+  } else if (/qr\s*code|pesquisa|feedback|nps/i.test(actionTitle)) {
+    // ─── QR CODE / PESQUISA: passo-a-passo prático ───
+    prompt = `${contextBlock}
+
+Você é um especialista em experiência do cliente. O negócio "${negocio}" quer implementar um sistema de coleta de feedback/avaliações.
+
+Gere um GUIA PRÁTICO completo:
+1. Como gerar o QR code (ferramenta gratuita, passo-a-passo)
+2. Onde colocar (locais estratégicos no estabelecimento)
+3. O que perguntar (perguntas prontas)
+4. Como analisar as respostas
+5. Como transformar feedback em ação
+
+JSON: {"type":"practical_guide","title":"Guia: Sistema de feedback com QR Code","steps":[{"step":"1. Gerar QR Code","detail":"Acesse google.com/maps, busque seu negócio, clique em Compartilhar...","tools":"Google Maps, QR Code Generator (gratuito)"},...],"templates":["texto pronto 1 para plaquinha","texto pronto 2"],"tips":["dica 1","dica 2"]}`;
+
+  } else if (/instagram|perfil|bio|post|stories|reels/i.test(actionTitle)) {
+    // ─── INSTAGRAM: bio + primeiros posts ───
+    prompt = `${contextBlock}
+
+Você é um social media manager especialista em negócios locais. O negócio "${negocio}" (${lead.product}) precisa configurar/melhorar seu Instagram.
+
+Gere:
+1. BIO PRONTA (150 chars max) com localização, proposta de valor e CTA
+2. Nome de usuário sugerido (3 opções)
+3. 5 PRIMEIROS POSTS com legenda completa + hashtags + sugestão de visual
+4. Calendário sugerido (dia e horário para cada post)
+
+Os posts devem seguir arco: apresentação → produto → bastidores → prova social → oferta.
+
+JSON: {"type":"instagram_setup","title":"Setup do Instagram","bio":"bio pronta","username_options":["opção1","opção2","opção3"],"posts":[{"order":1,"theme":"Apresentação","caption":"legenda completa","hashtags":["#tag1"],"visual":"descrição da foto/vídeo","best_day":"segunda 19h"},...],"tips":["dica 1","dica 2"]}`;
+
+  } else if (/site|página|landing|cardápio|menu/i.test(actionTitle)) {
+    // ─── SITE: estrutura + textos prontos ───
+    prompt = `${contextBlock}
+
+Você é um web designer especialista em sites para negócios locais. O negócio "${negocio}" (${lead.product}) precisa criar um site simples.
+
+Gere a ESTRUTURA COMPLETA do site com textos prontos:
+1. Página inicial: headline, sub-headline, CTA
+2. Sobre: texto institucional (200 palavras)
+3. Serviços/Cardápio: estrutura de categorias
+4. Contato: informações essenciais
+5. SEO: title tag, meta description, palavras-chave
+
+Todos os textos devem estar prontos para copiar e colar.
+
+JSON: {"type":"site_structure","title":"Estrutura do site","pages":[{"page":"Início","headline":"...","subheadline":"...","cta":"...","body":"texto completo"},...],"seo":{"title_tag":"...","meta_description":"...","keywords":["..."]},"tips":["dica 1","dica 2"]}`;
+
+  } else if (/google|maps|ficha|título|descri[cç]/i.test(actionTitle)) {
+    // ─── GOOGLE MAPS: textos para o perfil ───
+    prompt = `${contextBlock}
+
+Você é um especialista em Google Meu Negócio. O negócio "${negocio}" (${lead.product}) precisa otimizar seu perfil.
+
+Gere TEXTOS PRONTOS para o perfil:
+1. Título otimizado (inclua categoria + localização)
+2. Descrição do negócio (750 chars, com palavras-chave)
+3. 5 Posts do Google Business (1 por semana)
+4. Categorias sugeridas (principal + secundárias)
+5. Atributos recomendados
+
+JSON: {"type":"maps_optimization","title":"Otimização do Google Maps","profile":{"title":"...","description":"...","categories":["principal","secundária1"],"attributes":["Wi-Fi","Estacionamento"]},"posts":[{"title":"...","body":"...","cta":"Saiba mais"},...],"tips":["dica 1","dica 2"]}`;
+
+  } else if (/youtube|canal|vídeo|video|roteiro/i.test(actionTitle)) {
+    // ─── YOUTUBE: roteiros prontos ───
+    prompt = `${contextBlock}
+
+Você é um roteirista de conteúdo para YouTube especializado em negócios locais.
+
+Gere uma SÉRIE DE 5 VÍDEOS com roteiros semi-prontos:
+- Cada vídeo: título, duração sugerida, gancho (primeiros 10s), roteiro (bullet points), CTA
+- Temas conectados ao negócio "${negocio}" e ao segmento "${lead.product}"
+- Formato: educativo + demonstrativo (mostrar o dia-a-dia)
+
+JSON: {"type":"youtube_series","title":"Série YouTube: ${negocio}","videos":[{"order":1,"title":"...","duration":"3-5 min","hook":"primeiros 10 segundos","script_points":["ponto 1","ponto 2"],"cta":"...","thumbnail_idea":"..."},...],"tips":["dica 1","dica 2"]}`;
+
+  } else if (/whatsapp|mensag|comunica/i.test(actionTitle)) {
+    // ─── WHATSAPP: templates de mensagem ───
+    prompt = `${contextBlock}
+
+Você é um especialista em comunicação por WhatsApp para negócios locais.
+
+Gere 8 TEMPLATES DE MENSAGEM prontos para copiar:
+1. Boas-vindas (primeiro contato)
+2. Confirmação de agendamento/pedido
+3. Lembrete (24h antes)
+4. Pós-atendimento (pedido de feedback)
+5. Promoção/oferta especial
+6. Reativação de cliente inativo
+7. Resposta a dúvida frequente
+8. Encerramento de atendimento
+
+JSON: {"type":"whatsapp_templates","title":"Templates WhatsApp","templates":[{"scenario":"Boas-vindas","message":"texto pronto","when_to_use":"Quando cliente entra em contato pela primeira vez"},...],"tips":["dica 1","dica 2"]}`;
+
+  } else {
+    // ─── GENÉRICO: guia prático de execução ───
+    prompt = `${contextBlock}
+
+Você é um consultor de marketing local. O dono do negócio "${negocio}" precisa executar esta ação: "${item.titulo || item.title}".
+
+Gere um GUIA PRÁTICO DE EXECUÇÃO com:
+1. 5-8 passos detalhados (cada passo = o que fazer + como fazer + quanto tempo leva)
+2. Templates/textos prontos para copiar (quando aplicável)
+3. Ferramentas recomendadas (gratuitas quando possível)
+4. Erros comuns a evitar
+5. Como medir o resultado
+
+NÃO gere blog post ou post de Instagram. Gere o COMO FAZER da ação.
+
+JSON: {"type":"practical_guide","title":"Guia: ${item.titulo || item.title}","steps":[{"step":"1. Passo","detail":"Explicação detalhada de como fazer","time":"15 min","tools":"ferramenta X (gratuita)"},...],"templates":["texto pronto 1"],"tips":["dica 1","dica 2"]}`;
+  }
 
   try {
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 2000,
+      max_tokens: 3000,
       temperature: 0.5,
-      system: 'Responda APENAS com JSON válido.',
+      system: 'Responda APENAS com JSON válido. Gere conteúdo PRÁTICO e ACIONÁVEL — o dono do negócio precisa poder copiar, colar e executar.',
       messages: [{ role: 'user', content: prompt }],
     });
 
@@ -99,8 +214,10 @@ Retorne JSON:
     updatedItems[itemIndex] = {
       ...updatedItems[itemIndex],
       content_generated: true,
-      generated_blog: content.blog || null,
-      generated_instagram: content.instagram || null,
+      generated_content: content,
+      // Keep legacy fields for backward compat
+      generated_blog: content.type === 'blog' ? content : null,
+      generated_instagram: content.type === 'instagram' ? content : null,
     };
 
     await supabase.from('checklists').update({ items: updatedItems }).eq('lead_id', leadId);

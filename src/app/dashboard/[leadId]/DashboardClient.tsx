@@ -365,8 +365,9 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
       if (res.ok) {
         setItems(prev => prev.map((it, idx) => idx === itemIdx ? {
           ...it, content_generated: true,
-          generated_blog: data.content?.blog || it.generated_blog,
-          generated_instagram: data.content?.instagram || it.generated_instagram,
+          generated_content: data.content,
+          generated_blog: data.content?.blog || data.content?.type === 'blog' ? data.content : it.generated_blog,
+          generated_instagram: data.content?.instagram || data.content?.type === 'instagram' ? data.content : it.generated_instagram,
         } : it));
       } else {
         const errDetail = data.detail || data.error || '';
@@ -449,32 +450,103 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
               </div>
             )}
 
-            {/* Generated content — collapsible */}
-            {(item.generated_blog || item.generated_instagram) && (
-              <Section title="Conteúdo gerado" defaultOpen={false}>
-                {item.generated_blog && (
-                  <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontFamily: V.mono, fontSize: 9, color: V.teal, letterSpacing: "0.06em", marginBottom: 6 }}>BLOG POST</div>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: V.night, margin: "0 0 4px" }}>{item.generated_blog.title}</p>
-                    <p style={{ fontSize: 11, color: V.ash, margin: "0 0 8px", fontStyle: "italic" }}>{item.generated_blog.meta_description}</p>
-                    <p style={{ fontSize: 12, color: V.night, margin: "0 0 8px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{item.generated_blog.body}</p>
-                    <button onClick={() => navigator.clipboard.writeText(`${item.generated_blog.title}\n\n${item.generated_blog.body}`)} style={{ fontSize: 11, color: V.teal, background: "none", border: `1px solid ${V.teal}`, borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Copiar blog</button>
-                  </div>
-                )}
-                {item.generated_instagram && (
-                  <div>
-                    <div style={{ fontFamily: V.mono, fontSize: 9, color: V.slate, letterSpacing: "0.06em", marginBottom: 6 }}>POST INSTAGRAM</div>
-                    <p style={{ fontSize: 12, color: V.night, margin: "0 0 6px", lineHeight: 1.6 }}>{item.generated_instagram.caption}</p>
-                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" as const, marginBottom: 6 }}>
-                      {(item.generated_instagram.hashtags || []).map((h: string, hi: number) => (
-                        <span key={hi} style={{ fontSize: 10, color: V.slate, background: `${V.slate}12`, padding: "1px 6px", borderRadius: 4 }}>{h}</span>
-                      ))}
+            {/* Generated content — new format (execution guide) */}
+            {(item.generated_content || item.generated_blog || item.generated_instagram) && (() => {
+              const gc = item.generated_content;
+              if (!gc) {
+                // Legacy format fallback
+                return (
+                  <Section title="Conteúdo gerado" defaultOpen={false}>
+                    {item.generated_blog && <p style={{ fontSize: 12, color: V.night, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{item.generated_blog.body || item.generated_blog.title}</p>}
+                    {item.generated_instagram && <p style={{ fontSize: 12, color: V.night, lineHeight: 1.6 }}>{item.generated_instagram.caption}</p>}
+                  </Section>
+                );
+              }
+              // Flatten all copyable content for "copy all" button
+              const allText = [
+                gc.title,
+                ...(gc.items || []).map((it: any) => it.response || it.foto || it.message || it.caption || it.detail || ''),
+                ...(gc.steps || []).map((s: any) => `${s.step}: ${s.detail}`),
+                ...(gc.templates || []),
+                ...(gc.posts || []).map((p: any) => p.caption || p.body || ''),
+              ].filter(Boolean).join('\n\n');
+
+              return (
+                <Section title={gc.title || 'Conteúdo gerado'} defaultOpen={false}>
+                  {/* Steps */}
+                  {gc.steps?.map((s: any, si: number) => (
+                    <div key={si} style={{ padding: "10px 0", borderBottom: si < gc.steps.length - 1 ? `1px solid ${V.fog}` : "none" }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: V.night, marginBottom: 4 }}>{s.step}</div>
+                      <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.6 }}>{s.detail}</p>
+                      {s.tools && <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontFamily: V.mono }}>{s.tools}</p>}
+                      {s.time && <span style={{ fontSize: 9, color: V.ash, fontFamily: V.mono }}>{s.time}</span>}
                     </div>
-                    <button onClick={() => navigator.clipboard.writeText(item.generated_instagram.caption)} style={{ fontSize: 11, color: V.slate, background: "none", border: `1px solid ${V.slate}`, borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Copiar legenda</button>
+                  ))}
+                  {/* Items (reviews, photos, posts, templates, videos) */}
+                  {gc.items?.map((it: any, ii: number) => (
+                    <div key={ii} style={{ padding: "10px 0", borderBottom: ii < gc.items.length - 1 ? `1px solid ${V.fog}` : "none" }}>
+                      {it.rating != null && <span style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, marginRight: 6 }}>★{it.rating}</span>}
+                      {it.context && <span style={{ fontSize: 11, color: V.ash }}>{it.context}</span>}
+                      {it.foto && <div style={{ fontSize: 13, fontWeight: 600, color: V.night, marginBottom: 2 }}>{it.foto}</div>}
+                      {it.como_captar && <p style={{ fontSize: 12, color: V.zinc, margin: "2px 0", lineHeight: 1.5 }}>{it.como_captar}</p>}
+                      {it.scenario && <div style={{ fontSize: 12, fontWeight: 600, color: V.night, marginBottom: 2 }}>{it.scenario}</div>}
+                      {it.when_to_use && <p style={{ fontSize: 10, color: V.ash, margin: "0 0 4px" }}>{it.when_to_use}</p>}
+                      {(it.response || it.message || it.caption) && (
+                        <div style={{ background: V.cloud, borderRadius: 6, padding: "8px 10px", marginTop: 4 }}>
+                          <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.5 }}>{it.response || it.message || it.caption}</p>
+                          <button onClick={() => navigator.clipboard.writeText(it.response || it.message || it.caption)} style={{ fontSize: 10, color: V.teal, background: "none", border: "none", cursor: "pointer", padding: "4px 0", fontWeight: 600 }}>Copiar</button>
+                        </div>
+                      )}
+                      {it.dica && <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontStyle: "italic" }}>{it.dica}</p>}
+                    </div>
+                  ))}
+                  {/* Posts (Instagram setup, YouTube) */}
+                  {gc.posts?.map((p: any, pi: number) => (
+                    <div key={pi} style={{ padding: "10px 0", borderBottom: pi < gc.posts.length - 1 ? `1px solid ${V.fog}` : "none" }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: V.night, marginBottom: 2 }}>{p.title || p.theme || `Post ${p.order || pi + 1}`}</div>
+                      {p.caption && <p style={{ fontSize: 12, color: V.zinc, margin: "2px 0", lineHeight: 1.5 }}>{p.caption}</p>}
+                      {p.body && <p style={{ fontSize: 12, color: V.zinc, margin: "2px 0", lineHeight: 1.5 }}>{p.body}</p>}
+                      {p.hook && <p style={{ fontSize: 11, color: V.amber, margin: "2px 0" }}>Hook: {p.hook}</p>}
+                      {p.script_points && <ul style={{ margin: "4px 0", paddingLeft: 16, fontSize: 11, color: V.zinc }}>{p.script_points.map((sp: string, spi: number) => <li key={spi}>{sp}</li>)}</ul>}
+                      {(p.caption || p.body) && <button onClick={() => navigator.clipboard.writeText(p.caption || p.body)} style={{ fontSize: 10, color: V.teal, background: "none", border: "none", cursor: "pointer", padding: "2px 0", fontWeight: 600 }}>Copiar</button>}
+                    </div>
+                  ))}
+                  {/* Templates */}
+                  {gc.templates?.map((t: any, ti: number) => (
+                    <div key={ti} style={{ background: V.cloud, borderRadius: 6, padding: "8px 10px", marginBottom: 6 }}>
+                      <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.5 }}>{typeof t === 'string' ? t : t.message || t.text || JSON.stringify(t)}</p>
+                      <button onClick={() => navigator.clipboard.writeText(typeof t === 'string' ? t : t.message || t.text || '')} style={{ fontSize: 10, color: V.teal, background: "none", border: "none", cursor: "pointer", padding: "2px 0", fontWeight: 600 }}>Copiar</button>
+                    </div>
+                  ))}
+                  {/* Bio (Instagram setup) */}
+                  {gc.bio && (
+                    <div style={{ background: V.cloud, borderRadius: 6, padding: "8px 10px", marginBottom: 8 }}>
+                      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, marginBottom: 4 }}>BIO</div>
+                      <p style={{ fontSize: 12, color: V.night, margin: 0 }}>{gc.bio}</p>
+                      <button onClick={() => navigator.clipboard.writeText(gc.bio)} style={{ fontSize: 10, color: V.teal, background: "none", border: "none", cursor: "pointer", padding: "2px 0", fontWeight: 600 }}>Copiar bio</button>
+                    </div>
+                  )}
+                  {/* Profile (Maps optimization) */}
+                  {gc.profile && (
+                    <div style={{ marginBottom: 8 }}>
+                      {gc.profile.title && <div style={{ background: V.cloud, borderRadius: 6, padding: "8px 10px", marginBottom: 4 }}><div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>TÍTULO</div><p style={{ fontSize: 12, color: V.night, margin: "2px 0" }}>{gc.profile.title}</p><button onClick={() => navigator.clipboard.writeText(gc.profile.title)} style={{ fontSize: 10, color: V.teal, background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>Copiar</button></div>}
+                      {gc.profile.description && <div style={{ background: V.cloud, borderRadius: 6, padding: "8px 10px" }}><div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>DESCRIÇÃO</div><p style={{ fontSize: 12, color: V.night, margin: "2px 0", lineHeight: 1.5 }}>{gc.profile.description}</p><button onClick={() => navigator.clipboard.writeText(gc.profile.description)} style={{ fontSize: 10, color: V.teal, background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>Copiar</button></div>}
+                    </div>
+                  )}
+                  {/* Tips */}
+                  {gc.tips?.length > 0 && (
+                    <div style={{ marginTop: 8, padding: "8px 10px", background: V.amberWash, borderRadius: 6, borderLeft: `3px solid ${V.amber}` }}>
+                      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, marginBottom: 4 }}>DICAS</div>
+                      {gc.tips.map((tip: string, ti: number) => <p key={ti} style={{ fontSize: 11, color: V.night, margin: "2px 0", lineHeight: 1.5 }}>{tip}</p>)}
+                    </div>
+                  )}
+                  {/* Copy all button */}
+                  <div style={{ marginTop: 10, textAlign: "right" }}>
+                    <button onClick={() => navigator.clipboard.writeText(allText)} style={{ fontSize: 11, color: V.night, background: V.cloud, border: `1px solid ${V.fog}`, borderRadius: 6, padding: "6px 12px", cursor: "pointer", fontWeight: 600 }}>Copiar tudo</button>
                   </div>
-                )}
-              </Section>
-            )}
+                </Section>
+              );
+            })()}
             {item.verification && !item.completed && (
               <p style={{ fontSize: 11, color: V.teal, margin: 0,
                 fontWeight: 500 }}>
