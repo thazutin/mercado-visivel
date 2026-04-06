@@ -415,16 +415,12 @@ export default function InstantValueScreen({ product, region, results: initialRe
                     <div style={{ position: "absolute", left: `${atual}%`, top: -5, transform: "translateX(-50%)", width: 16, height: 16, borderRadius: "50%", background: V.teal, border: `2px solid ${V.white}`, boxShadow: "0 1px 3px rgba(0,0,0,0.12)", zIndex: 2 }} />
                     <div style={{ position: "absolute", left: `${potencial}%`, top: -4, transform: "translateX(-50%)", width: 14, height: 14, borderRadius: "50%", background: V.white, border: `2px dashed ${V.amber}`, zIndex: 1 }} />
                   </div>
-                  {/* Labels — dois blocos fixos nos extremos, sem sobreposição */}
-                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12 }}>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
-                      <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>hoje</span>
-                      <span style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: V.teal, lineHeight: 1 }}>{atual}</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
-                      <span style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: V.amber, lineHeight: 1 }}>{potencial}</span>
-                      <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>potencial</span>
-                    </div>
+                  {/* Labels — centralizado entre os dois pontos */}
+                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 8, marginTop: 12 }}>
+                    <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>hoje</span>
+                    <span style={{ fontFamily: V.display, fontSize: 24, fontWeight: 800, color: V.teal, lineHeight: 1 }}>{atual}</span>
+                    <span style={{ fontFamily: V.display, fontSize: 24, fontWeight: 800, color: V.amber, lineHeight: 1, marginLeft: 8 }}>{potencial}</span>
+                    <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>potencial</span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
                     <span style={{ fontFamily: V.mono, fontSize: 8, color: V.mist }}>0</span>
