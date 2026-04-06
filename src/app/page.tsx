@@ -444,7 +444,50 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ═══ SECTION 2 — MOCKUP ESTÁTICO DO RESULTADO ═══ */}
+      {/* ═══ SECTION 2 — COMO FUNCIONA ═══ */}
+      <Section bg={V.cloud}>
+        <SectionLabel>como funciona</SectionLabel>
+        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 32px", lineHeight: 1.25 }}>
+          Como funciona
+        </h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {[
+            { title: "Você informa seu negócio", text: "Nome, segmento e endereço. Leva menos de 1 minuto." },
+            { title: "Virô analisa seu mercado em tempo real", text: "Cruzamos Google, Maps, Instagram, IA e IBGE para mapear sua posição, seus concorrentes e sua oportunidade." },
+            { title: "Você recebe o diagnóstico grátis", text: "Quantos clientes você pode ter a mais por mês, quem disputa com você e o que está te impedindo de crescer." },
+            { title: "Gere seu plano de ação — R$497", text: "15 ações priorizadas com conteúdo pronto para copiar e colar. Na ordem certa para o seu negócio." },
+            { title: "Mantenha-se relevante toda semana — R$99/mês", text: "Contexto do mercado + conteúdos prontos toda sexta. Sem ação contínua, a tendência é entropia." },
+          ].map((step, i) => (
+            <div key={i} style={{ background: V.white, borderRadius: 14, padding: "20px 20px", border: `1px solid ${V.fog}`, display: "flex", gap: 16, alignItems: "flex-start" }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 700, color: i < 3 ? V.amber : V.teal, background: i < 3 ? V.amberWash : V.tealWash, width: 28, height: 28, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                  {i + 1}
+                </span>
+              </div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: V.night, marginBottom: 4 }}>{step.title}</div>
+                <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: 0 }}>{step.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* ═══ SECTION 3 — PARA QUEM É ═══ */}
+      <Section bg={V.white}>
+        <SectionLabel>é para mim?</SectionLabel>
+        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
+          Feito para negócios locais
+        </h2>
+        <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: "0 0 12px" }}>
+          Lojas, clínicas, escolas, restaurantes, estúdios, consultórios e prestadores de serviço. Com ou sem presença digital hoje.
+        </p>
+        <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: 0 }}>
+          Se você quer saber quantos clientes estão te ignorando por falta de visibilidade — e o que fazer para mudar isso sem gastar mais em mídia — Virô é para você.
+        </p>
+      </Section>
+
+      {/* ═══ SECTION 4 — O QUE VOCÊ VAI VER (tabs visuais) ═══ */}
       <Section bg={V.white}>
         <div style={{ textAlign: "center", marginBottom: 36 }}>
           <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 10px", lineHeight: 1.25 }}>
@@ -734,125 +777,40 @@ export default function Home() {
         </div>
       </Section>
 
-      {/* ═══ SECTION 3 — COMO FUNCIONA ═══ */}
+      {/* ═══ SECTION 5 — O QUE VOCÊ RECEBE (simplificado) ═══ */}
       <Section bg={V.cloud}>
-        <SectionLabel>como funciona</SectionLabel>
-        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 32px", lineHeight: 1.25 }}>
-          Como funciona
+        <SectionLabel>o que você recebe</SectionLabel>
+        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 28px", lineHeight: 1.25 }}>
+          Três níveis de profundidade
         </h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {[
-            { icon: "📋", title: "Você informa seu negócio", text: "Nome, segmento e endereço. Leva menos de 1 minuto." },
-            { icon: "🔍", title: "Virô analisa seu mercado em tempo real", text: "Cruzamos Google, Maps, Instagram, IA e IBGE para mapear sua posição, seus concorrentes e sua oportunidade." },
-            { icon: "📊", title: "Você recebe o diagnóstico grátis", text: "Quantos clientes você pode ter a mais por mês, quem disputa com você e o que está te impedindo de crescer." },
-            { icon: "📝", title: "Gere seu plano de ação — R$497", text: "Passo a passo do que fazer em cada pilar: ser encontrável, construir credibilidade e participar da cultura do seu mercado." },
-            { icon: "🔄", title: "Mantenha-se relevante toda semana — R$99/mês", text: "Insights do seu mercado + conteúdos prontos toda sexta. Sem ação contínua, a tendência é entropia." },
-          ].map((step, i) => (
-            <div key={i} style={{ background: V.white, borderRadius: 14, padding: "20px 20px", border: `1px solid ${V.fog}`, display: "flex", gap: 16, alignItems: "flex-start" }}>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
-                <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 700, color: i < 3 ? V.amber : V.teal, background: i < 3 ? V.amberWash : V.tealWash, width: 28, height: 28, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-                  {i + 1}
-                </span>
-              </div>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: V.night, marginBottom: 4 }}>{step.title}</div>
-                <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: 0 }}>{step.text}</p>
-              </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Grátis */}
+          <div style={{ background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`, padding: "24px", overflow: "hidden" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.teal, letterSpacing: "0.06em", fontWeight: 600 }}>DIAGNÓSTICO · 30 SEGUNDOS</span>
+              <span style={{ fontFamily: V.mono, fontSize: 11, color: V.teal, fontWeight: 700 }}>Grátis</span>
             </div>
-          ))}
-        </div>
-      </Section>
-
-      {/* ═══ SECTION — É PARA MIM? ═══ */}
-      <Section bg={V.white}>
-        <SectionLabel>é para mim?</SectionLabel>
-        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
-          Feito para negócios locais
-        </h2>
-        <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: "0 0 12px" }}>
-          Lojas, clínicas, escolas, restaurantes, estúdios, consultórios e prestadores de serviço. Com ou sem presença digital hoje.
-        </p>
-        <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: 0 }}>
-          Se você quer saber quantos clientes estão te ignorando por falta de visibilidade — e o que fazer para mudar isso sem gastar mais em mídia — a Virô é para você.
-        </p>
-      </Section>
-
-      {/* ═══ SECTION 4 — MAPA COMPLETO ═══ */}
-      <Section bg={V.white}>
-        <SectionLabel>o que você vai receber</SectionLabel>
-        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 32px", lineHeight: 1.25 }}>
-          Seu mapa completo para capturar mais clientes
-        </h2>
-
-        {/* Bloco 1 — Diagnóstico Grátis */}
-        <div style={{ marginBottom: 32 }}>
-          <p style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.teal, fontWeight: 600, margin: "0 0 10px" }}>
-            Diagnóstico · Grátis · 30 segundos
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {[
-              { title: "Oportunidade identificada", desc: "Quantos clientes a mais você pode ter por mês — número real baseado no seu mercado" },
-              { title: "Posição competitiva", desc: "Sua nota de 0 a 100 comparada com concorrentes reais no seu raio" },
-              { title: "3 pilares analisados", desc: "Visibilidade, Credibilidade e Presença Digital — com score e primeira ação em cada" },
-              { title: "Mercado mapeado", desc: "Volume de busca, audiência estimada, concorrentes e sazonalidade do segmento" },
-            ].map((item, i) => (
-              <div key={i} style={{ padding: "14px 16px", borderRadius: 12, border: `1px solid ${V.teal}30`, background: V.cloud, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 2 }}>{item.title}</div>
-                  <p style={{ fontSize: 12, color: V.zinc, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
-                </div>
-                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.teal, background: `${V.teal}12`, padding: "3px 8px", borderRadius: 100, fontWeight: 600, flexShrink: 0 }}>Grátis</span>
-              </div>
-            ))}
+            <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 6px" }}>Quantos clientes você pode ter a mais por mês.</p>
+            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: 0 }}>Posição competitiva, 3 pilares com score, mercado mapeado (buscas, audiência, concorrentes, sazonalidade). Resultado em 30 segundos.</p>
           </div>
-        </div>
-
-        {/* Bloco 2 — Plano de Ação R$497 */}
-        <div style={{ marginBottom: 32 }}>
-          <p style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.amber, fontWeight: 600, margin: "0 0 10px" }}>
-            Plano de Ação · R$497 · Pagamento único
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {[
-              { title: "15 ações priorizadas", desc: "O que fazer, por quê e quanto tempo leva — na ordem certa para o seu negócio" },
-              { title: "Conteúdo pronto por ação", desc: "Clique no botão e receba textos, respostas ou roteiros prontos para copiar e colar" },
-              { title: "Relatório do seu mercado", desc: "Tendências reais, oportunidade da semana e contexto competitivo atualizado" },
-              { title: "Dados que justificam cada ação", desc: "Buscas/mês, concorrentes, rating, audiência — tudo conectado ao seu plano" },
-            ].map((item, i) => (
-              <div key={i} style={{ padding: "14px 16px", borderRadius: 12, border: `2px solid ${V.amber}`, background: V.white, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 2 }}>{item.title}</div>
-                  <p style={{ fontSize: 12, color: V.zinc, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
-                </div>
-                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, background: V.amberWash, padding: "3px 8px", borderRadius: 100, fontWeight: 600, flexShrink: 0 }}>R$497</span>
-              </div>
-            ))}
+          {/* R$497 */}
+          <div style={{ background: V.white, borderRadius: 14, border: `2px solid ${V.amber}`, padding: "24px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.06em", fontWeight: 600 }}>PLANO DE AÇÃO · PAGAMENTO ÚNICO</span>
+              <span style={{ fontFamily: V.mono, fontSize: 11, color: V.amber, fontWeight: 700 }}>R$497</span>
+            </div>
+            <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 6px" }}>15 ações priorizadas com conteúdo pronto.</p>
+            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: 0 }}>Cada ação tem o que fazer, por quê, quanto tempo leva e um botão que gera o conteúdo pronto — respostas para reviews, textos para o site, roteiros, templates. Copie e cole.</p>
           </div>
-        </div>
-
-        {/* Bloco 3 — Ações Semanais R$99/mês */}
-        <div>
-          <p style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: "#78716C", fontWeight: 600, margin: "0 0 10px" }}>
-            Ações Semanais · R$99/mês · Cancele quando quiser
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {[
-              { title: "Contexto semanal do mercado", desc: "Relatório atualizado toda sexta com tendências, oportunidades e o que seus concorrentes estão fazendo" },
-              { title: "5 posts prontos para publicar", desc: "Arco narrativo da semana: autoridade, prova social, oportunidade e bastidores — personalizados para seu negócio" },
-              { title: "3 briefings estratégicos", desc: "Para sua equipe (operacional), agência (estratégico) e parceiros (comercial) — conectados ao contexto da semana" },
-            ].map((item, i) => (
-              <div key={i} style={{ padding: "14px 16px", borderRadius: 12, border: "2px solid #78716C", background: V.white, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 2 }}>{item.title}</div>
-                  <p style={{ fontSize: 12, color: V.zinc, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
-                </div>
-                <span style={{ fontFamily: V.mono, fontSize: 9, color: "#78716C", background: "rgba(120,113,108,0.08)", padding: "3px 8px", borderRadius: 100, fontWeight: 600, flexShrink: 0 }}>R$99/mês</span>
-              </div>
-            ))}
+          {/* R$99/mês */}
+          <div style={{ background: V.white, borderRadius: 14, border: `1px solid ${V.slate}40`, padding: "24px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.slate, letterSpacing: "0.06em", fontWeight: 600 }}>AÇÕES SEMANAIS · CANCELE QUANDO QUISER</span>
+              <span style={{ fontFamily: V.mono, fontSize: 11, color: V.slate, fontWeight: 700 }}>R$99/mês</span>
+            </div>
+            <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 6px" }}>Contexto do mercado + conteúdos prontos toda sexta.</p>
+            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: 0 }}>Indicadores macro, movimentações do setor, oportunidades da semana. 5 posts com arco narrativo + 3 briefings estratégicos (equipe, agência, parceiro). Requer Plano de Ação.</p>
           </div>
-          <p style={{ fontSize: 11, color: V.ash, margin: "8px 0 0", fontFamily: V.mono, textAlign: "center" }}>
-            Requer Plano de Ação · Cancele quando quiser · sem multa
-          </p>
         </div>
       </Section>
 
@@ -863,13 +821,14 @@ export default function Home() {
           Dados reais do seu mercado
         </h2>
         <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: "0 0 28px" }}>
-          A Virô cruza 9 fontes em tempo real para montar a leitura do seu mercado local. Tudo coletado no momento da análise.
+          Não adivinhamos — coletamos. Virô cruza 12 fontes de dados reais para montar a leitura do seu mercado. Isso é o que nos diferencia de ferramentas genéricas de IA.
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
           {[
-            "Google Search", "Google Maps", "Google Ads",
+            "Google Search", "Google Maps", "Google Places API", "Google Ads",
             "Instagram", "Perplexity AI", "DataForSEO",
-            "IBGE", "PNCP", "Claude AI",
+            "IBGE", "PNCP", "Brasil.io", "CNPJ.ws",
+            "Claude AI", "fal.ai",
           ].map((source, i) => (
             <span key={i} style={{
               fontFamily: V.mono, fontSize: 11, letterSpacing: "0.02em",
