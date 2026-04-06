@@ -502,7 +502,7 @@ export default function Home() {
         <div style={{ border: `1px solid ${V.fog}`, borderRadius: 16, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,0.06)" }}>
           {/* ─── BLOCO 1: DIAGNÓSTICO ─── */}
           <div style={{ background: V.night, padding: "32px 24px", textAlign: "center" }}>
-            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.08em", marginBottom: 16 }}>DIAGNÓSTICO GRATUITO · 30 SEGUNDOS</div>
+            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.08em", marginBottom: 16 }}>DIAGNÓSTICO GRATUITO · 60 SEGUNDOS · EXEMPLO ILUSTRATIVO</div>
             <div style={{ fontSize: 56, fontWeight: 800, color: V.amber, lineHeight: 1, fontFamily: V.display, marginBottom: 8 }}>+153</div>
             <div style={{ fontSize: 16, color: V.mist, marginBottom: 20 }}>pessoas a mais por mês conhecendo o seu negócio</div>
             <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 20px", textAlign: "left" }}>
@@ -517,7 +517,7 @@ export default function Home() {
           {/* ─── BLOCO 2: PLANO DE AÇÃO ─── */}
           <div style={{ padding: "24px", borderTop: `2px solid ${V.amber}` }}>
             <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.06em", marginBottom: 12 }}>PLANO DE AÇÃO · R$497</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, marginBottom: 16 }}>15 ações priorizadas com conteúdo pronto</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, marginBottom: 16 }}>15 ações priorizadas com conteúdo pronto — para copiar e colar</div>
 
             {/* Exemplo de ação COM conteúdo gerado */}
             <div style={{ background: V.cloud, borderRadius: 12, padding: "16px", marginBottom: 12 }}>
@@ -555,7 +555,7 @@ export default function Home() {
           {/* ─── BLOCO 3: AÇÕES SEMANAIS ─── */}
           <div style={{ padding: "24px", borderTop: `2px solid ${V.slate}`, background: V.cloud }}>
             <div style={{ fontFamily: V.mono, fontSize: 10, color: V.slate, letterSpacing: "0.06em", marginBottom: 12 }}>AÇÕES SEMANAIS · R$99/MÊS</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, marginBottom: 12 }}>Toda sexta-feira no seu painel</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, marginBottom: 12 }}>Toda sexta-feira no seu painel — para copiar e colar</div>
 
             {/* Preview de post semanal */}
             <div style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "14px", marginBottom: 10 }}>
@@ -574,7 +574,7 @@ export default function Home() {
             <div style={{ display: "flex", gap: 8 }}>
               <div style={{ flex: 1, background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px", textAlign: "center" }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: V.night }}>5</div>
-                <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono }}>posts prontos</div>
+                <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono }}>posts prontos com imagens</div>
               </div>
               <div style={{ flex: 1, background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px", textAlign: "center" }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: V.night }}>3</div>
