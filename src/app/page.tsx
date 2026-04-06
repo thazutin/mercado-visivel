@@ -487,293 +487,86 @@ export default function Home() {
         </p>
       </Section>
 
-      {/* ═══ SECTION 4 — O QUE VOCÊ VAI VER (tabs visuais) ═══ */}
+      {/* ═══ SECTION 4 — O QUE VOCÊ VAI VER ═══ */}
       <Section bg={V.white}>
+        <SectionLabel>exemplo real</SectionLabel>
         <div style={{ textAlign: "center", marginBottom: 36 }}>
           <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 10px", lineHeight: 1.25 }}>
-            O que você vai ver no seu diagnóstico
+            O que você recebe em 30 segundos
           </h2>
           <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.6, margin: 0 }}>
-            Sua visibilidade, sua concorrência e onde está a oportunidade.
+            Dados reais do seu mercado. Não genéricos — seus.
           </p>
         </div>
 
-        {/* Mockup container */}
+        {/* Mockup — reflete o produto real */}
         <div style={{
           border: `1px solid ${V.fog}`, borderRadius: 16, overflow: "hidden",
-          boxShadow: "0 8px 40px rgba(0,0,0,0.06)", position: "relative",
+          boxShadow: "0 8px 40px rgba(0,0,0,0.06)",
         }}>
-          {/* Mockup label */}
-          <div style={{ background: V.cloud, padding: "10px 18px", borderBottom: `1px solid ${V.fog}`, display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ background: V.cloud, padding: "10px 18px", borderBottom: `1px solid ${V.fog}` }}>
             <span style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.ash }}>
-              EXEMPLO DE RESULTADO
+              EXEMPLO · CLÍNICA DE ESTÉTICA · AV. PAULISTA
             </span>
           </div>
 
-          <div style={{ padding: "20px 18px 0" }}>
-            {/* Mockup header */}
-            <div style={{ marginBottom: 20 }}>
-              <span style={{ fontSize: 12, color: V.ash }}>Clínica de estética · Av. Paulista, São Paulo</span>
-            </div>
-
-            {/* BLOCO 1 — Oportunidade */}
-            <div style={{ background: "#0A0A0C", borderRadius: 14, padding: "24px 18px",
-              marginBottom: 10, textAlign: "center" }}>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9,
-                color: "#6E6E78", letterSpacing: "0.08em", textTransform: "uppercase" as const,
-                marginBottom: 14 }}>
+          <div style={{ padding: "24px 20px" }}>
+            {/* Hero — Oportunidade */}
+            <div style={{ background: V.night, borderRadius: 14, padding: "24px 18px", marginBottom: 12, textAlign: "center" }}>
+              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12 }}>
                 Oportunidade identificada
               </div>
-              <div style={{ fontSize: 56, fontWeight: 900, color: "#0F766E", lineHeight: 1,
-                fontFamily: "'Satoshi', sans-serif", letterSpacing: "-0.03em", marginBottom: 8 }}>
-                +4.860
+              <div style={{ fontSize: 48, fontWeight: 800, color: V.amber, lineHeight: 1, fontFamily: V.display, letterSpacing: "-0.03em", marginBottom: 8 }}>
+                +153
               </div>
-              <div style={{ fontSize: 14, color: "#C8C8D0", lineHeight: 1.5,
-                maxWidth: 260, margin: "0 auto 14px" }}>
-                pessoas a mais por mês conhecendo você<br/>
-                <strong style={{ color: "#FEFEFF" }}>sem investimento adicional em mídia</strong>
-              </div>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
-                color: "#6E6E78", letterSpacing: "0.04em" }}>
-                Raio de 3km · Av. Paulista, São Paulo
+              <div style={{ fontSize: 14, color: V.mist, lineHeight: 1.5 }}>
+                pessoas a mais por mês conhecendo o seu negócio
               </div>
             </div>
 
-            {/* Contexto rápido */}
-            <div style={{ background: "#F5F3EF", borderRadius: 10, padding: "12px 14px",
-              marginBottom: 10, border: "1px solid #E8E4DC" }}>
-              <p style={{ fontSize: 12, color: "#6E6E78", margin: 0, lineHeight: 1.6,
-                textAlign: "center" }}>
-                De <strong style={{ color: "#1A1A1C" }}>18.000 pessoas</strong> no seu mercado,
-                você disputa hoje por <strong style={{ color: "#1A1A1C" }}>18%</strong> — 3.240 pessoas.
-                Com as ações certas, chega a <strong style={{ color: "#0F766E" }}>45% — 8.100 pessoas</strong>.
-              </p>
+            {/* Slider — Posição competitiva */}
+            <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "18px 16px", marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: V.night, marginBottom: 12, textAlign: "center" }}>Qual fatia do seu mercado você disputa hoje?</div>
+              <div style={{ position: "relative", height: 6, background: V.fog, borderRadius: 3, marginBottom: 8 }}>
+                <div style={{ position: "absolute", left: 0, top: 0, height: "100%", borderRadius: 3, background: `linear-gradient(90deg, ${V.teal}90, ${V.amberSoft}70)`, width: "42%" }} />
+                <div style={{ position: "absolute", left: "29%", top: -5, width: 16, height: 16, borderRadius: "50%", background: V.teal, border: `2px solid ${V.white}`, boxShadow: "0 1px 3px rgba(0,0,0,0.12)" }} />
+                <div style={{ position: "absolute", left: "42%", top: -4, width: 14, height: 14, borderRadius: "50%", background: V.white, border: `2px dashed ${V.amber}` }} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                <span><span style={{ color: V.ash, fontSize: 9 }}>hoje </span><span style={{ fontWeight: 800, color: V.teal, fontSize: 18 }}>29</span></span>
+                <span><span style={{ fontWeight: 800, color: V.amber, fontSize: 18 }}>42</span><span style={{ color: V.ash, fontSize: 9 }}> potencial</span></span>
+              </div>
             </div>
 
-            {/* BLOCO 2 — Por que essa oportunidade existe */}
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9,
-              color: "#9E9EA8", letterSpacing: "0.08em", textTransform: "uppercase" as const,
-              marginBottom: 8, paddingLeft: 2, marginTop: 4 }}>
-              Por que essa oportunidade existe
-            </div>
-
-            <div style={{ background: "#FFFFFF", borderRadius: 10, padding: "12px 14px",
-              border: "1px solid #E8E4DC", marginBottom: 6,
-              display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 12, color: "#6E6E78" }}>🏙️ Mercado no raio</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "#1A1A1C" }}>~18 mil pessoas</span>
-            </div>
-
-            <div style={{ background: "#FFFFFF", borderRadius: 10, padding: "12px 14px",
-              border: "1px solid #E8E4DC", marginBottom: 6,
-              display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 12, color: "#6E6E78" }}>🔍 Demanda ativa</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "#1A1A1C" }}>3.200 buscas/mês</span>
-            </div>
-
-            <div style={{ background: "#FFFFFF", borderRadius: 10, padding: "12px 14px",
-              border: "1px solid #E8E4DC", marginBottom: 6,
-              display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 12, color: "#6E6E78" }}>🏪 Concorrência</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "#C9913A" }}>12 negócios</span>
-            </div>
-
-            <div style={{ background: "#FFFFFF", borderRadius: 10, padding: "12px 14px",
-              border: "1px solid #E8E4DC", marginBottom: 10,
-              display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 12, color: "#6E6E78" }}>📊 Sua posição</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "#0F766E" }}>18% do mercado</span>
-            </div>
-
-            {/* BLOCO 3 — Como aumentar essa posição */}
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9,
-              color: "#9E9EA8", letterSpacing: "0.08em", textTransform: "uppercase" as const,
-              marginBottom: 8, paddingLeft: 2 }}>
-              Como aumentar essa posição
-            </div>
-
+            {/* Pilares — Como chegar lá */}
+            <div style={{ fontSize: 12, fontWeight: 600, color: V.slate, marginBottom: 8 }}>Como chegar lá</div>
             {[
-              { icon: "🔍", label: "Visibilidade", color: "#0F766E",
-                status: "⚠️ Não encontrado no Google Maps",
-                acao: "→ Criar perfil no Google Meu Negócio com fotos, horário e categoria" },
-              { icon: "⭐", label: "Credibilidade", color: "#C9913A",
-                status: "⚠️ Poucas avaliações — prioridade alta",
-                acao: "→ Pedir avaliação para os últimos 20 clientes via WhatsApp esta semana" },
-              { icon: "📣", label: "Presença Digital", color: "#78716C",
-                status: "⚠️ Presença digital parada",
-                acao: "→ 2 posts/semana respondendo perguntas reais que clientes fazem" },
-            ].map((pilar, i) => (
-              <div key={i} style={{ background: "#FFFFFF", borderRadius: 10,
-                padding: "10px 14px", border: "1px solid #E8E4DC",
-                marginBottom: 6 }}>
-                <div style={{ display: "flex", justifyContent: "space-between",
-                  alignItems: "center", marginBottom: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#1A1A1C" }}>
-                    {pilar.icon} {pilar.label}
-                  </span>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: 9, color: "#FFFFFF", background: "#C9913A",
-                    padding: "2px 7px", borderRadius: 100, fontWeight: 600 }}>
-                    No plano
-                  </span>
-                </div>
-                <div style={{ fontSize: 11, color: "#C9913A", fontWeight: 500 }}>
-                  {pilar.status}
-                </div>
-                <div style={{ fontSize: 11, color: "#4A4A52", marginTop: 6,
-                  paddingTop: 6, borderTop: "1px solid #E8E4DC" }}>
-                  {pilar.acao}
-                </div>
+              { label: "Visibilidade", score: 21, color: V.teal, action: "Adicionar descrição detalhada no Google Meu Negócio" },
+              { label: "Credibilidade", score: 48, color: V.amber, action: "Criar rotina de resposta às avaliações — 100% em 24h" },
+              { label: "Presença Digital", score: 0, color: V.slate, action: "Criar perfil profissional no Instagram" },
+            ].map((p, i) => (
+              <div key={i} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "12px 14px", marginBottom: 6 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: V.night, marginBottom: 4 }}>{p.label}: <span style={{ color: p.color }}>{p.score}</span></div>
+                <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>{p.action}</p>
               </div>
             ))}
 
-          </div>
-
-          {/* Content preview */}
-          <div style={{ padding: "14px 18px 0" }}>
-            <p style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.ash, margin: "0 0 10px" }}>
-              Exemplo de conteúdo — Credibilidade
-            </p>
-            <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, overflow: "hidden" }}>
-
-              {/* Channel badge */}
-              <div style={{ padding: "12px 14px 0" }}>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px",
-                  borderRadius: 100, background: "rgba(225,48,108,0.08)", fontSize: 11,
-                  fontWeight: 500, color: "#E1306C", marginBottom: 10 }}>
-                  📸 Instagram Feed
-                </div>
+            {/* Mercado potencial */}
+            <div style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "14px", marginTop: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 6 }}>
+                <span style={{ color: V.zinc }}>Mercado potencial</span>
+                <span style={{ fontWeight: 700, color: V.night }}>2 mil pessoas</span>
               </div>
-
-              {/* Card tipográfico editorial */}
-              <div style={{ margin: "0 14px", borderRadius: 12, overflow: "hidden",
-                aspectRatio: "1/1", position: "relative",
-                background: "linear-gradient(160deg, #1A1A1A 0%, #2D1A0E 100%)" }}>
-
-                {/* Faixa de acento superior */}
-                <div style={{
-                  position: "absolute", top: 0, left: 0, right: 0, height: 3,
-                  background: "linear-gradient(90deg, #292524, #3D2B1F)",
-                }} />
-
-                {/* Logo + nome */}
-                <div style={{
-                  position: "absolute", top: 18, left: 20,
-                  display: "flex", alignItems: "center", gap: 8,
-                }}>
-                  <div style={{
-                    width: 26, height: 26, borderRadius: 6,
-                    background: "#C9913A",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    <span style={{ fontSize: 11, fontWeight: 900, color: "#FEFEFF",
-                      fontFamily: "'Satoshi', sans-serif" }}>E</span>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: "#FEFEFF",
-                      letterSpacing: "0.1em", textTransform: "uppercase" as const,
-                      fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>
-                      ESTÉTICA PAULISTA
-                    </div>
-                    <div style={{ fontSize: 9, color: "rgba(255,255,255,0.4)",
-                      fontFamily: "'JetBrains Mono', monospace", marginTop: 2 }}>
-                      Av. Paulista, 1.200 · SP
-                    </div>
-                  </div>
-                </div>
-
-                {/* Métrica central */}
-                <div style={{
-                  position: "absolute", top: "50%", left: "50%",
-                  transform: "translate(-50%, -60%)",
-                  textAlign: "center", width: "80%",
-                }}>
-                  <div style={{
-                    fontSize: 72, fontWeight: 900, color: "#FEFEFF",
-                    lineHeight: 1, letterSpacing: "-0.04em",
-                    fontFamily: "'Satoshi', sans-serif",
-                  }}>
-                    88
-                  </div>
-                  <div style={{
-                    fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.5)",
-                    letterSpacing: "0.12em", textTransform: "uppercase" as const,
-                    fontFamily: "'JetBrains Mono', monospace", marginTop: 6,
-                  }}>
-                    AVALIAÇÕES NO GOOGLE
-                  </div>
-                  <div style={{
-                    width: 32, height: 2,
-                    background: "linear-gradient(90deg, #292524, #3D2B1F)",
-                    borderRadius: 1, margin: "12px auto 0",
-                  }} />
-                </div>
-
-                {/* Linha de rodapé */}
-                <div style={{
-                  position: "absolute", bottom: 20, left: 20, right: 20,
-                }}>
-                  <p style={{
-                    fontSize: 13, fontWeight: 700, color: "#FEFEFF",
-                    lineHeight: 1.3, margin: "0 0 10px",
-                    letterSpacing: "-0.01em", fontFamily: "'Satoshi', sans-serif",
-                  }}>
-                    88 clientes avaliaram. Média 4.9★.
-                    Obrigada pela confiança.
-                  </p>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <div style={{ width: 6, height: 6, borderRadius: "50%",
-                      background: "#C9913A", flexShrink: 0 }} />
-                    <span style={{ fontSize: 9, color: "rgba(255,255,255,0.5)",
-                      fontFamily: "'JetBrains Mono', monospace",
-                      letterSpacing: "0.06em", textTransform: "uppercase" as const }}>
-                      AV. PAULISTA · SÃO PAULO
-                    </span>
-                  </div>
-                </div>
-
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 6 }}>
+                <span style={{ color: V.zinc }}>Demanda ativa</span>
+                <span style={{ fontWeight: 700, color: V.night }}>350 buscas/mês</span>
               </div>
-
-              {/* Legenda */}
-              <div style={{ padding: "12px 14px 0" }}>
-                <p style={{ fontSize: 12, color: V.zinc, lineHeight: 1.7, margin: "0 0 8px" }}>
-                  Cada avaliação é uma porta aberta para quem ainda não te conhece. 88 clientes disseram que valeu. O próximo pode ser você. ⭐
-                </p>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                <span style={{ color: V.zinc }}>Concorrência</span>
+                <span style={{ fontWeight: 700, color: V.night }}>14 negócios mapeados</span>
               </div>
-
-              {/* Hashtags */}
-              <div style={{ padding: "0 14px 10px", display: "flex", flexWrap: "wrap", gap: 4 }}>
-                {["#estéticapaulista", "#googlereviews", "#clientessatisfeitos", "#SãoPaulo"].map((tag) => (
-                  <span key={tag} style={{ fontSize: 10, color: V.teal, background: V.tealWash,
-                    padding: "2px 8px", borderRadius: 6 }}>{tag}</span>
-                ))}
-              </div>
-
-              {/* Meta: dica estratégica */}
-              <div style={{ margin: "0 14px 14px", padding: "10px 12px",
-                background: V.cloud, borderRadius: 8,
-                borderLeft: `3px solid ${V.amber}` }}>
-                <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
-                  <strong style={{ color: V.night }}>Por que este conteúdo:</strong> transforma suas avaliações do Google em prova social no Instagram — quem busca vê nos dois lugares.
-                </p>
-              </div>
-
-              {/* Footer */}
-              <div style={{ padding: "0 14px 12px", display: "flex", justifyContent: "flex-end" }}>
-                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash,
-                  background: V.cloud, padding: "3px 8px", borderRadius: 6 }}>
-                  Gerado pela Virô
-                </span>
-              </div>
-
             </div>
           </div>
-
-          {/* Blur fade at bottom */}
-          <div style={{
-            height: 32,
-            background: "linear-gradient(to bottom, rgba(254,254,255,0) 0%, rgba(254,254,255,1) 100%)",
-          }} />
         </div>
       </Section>
 
