@@ -75,21 +75,36 @@ export async function POST(req: NextRequest) {
           metadata: { stripe_subscription_id: session.subscription },
         });
 
-        // Notifica que assinatura está ativa (conteúdos já existem da amostra)
+        // Gerar primeiro batch de conteúdos semanais imediatamente
         if (email) {
           const { data: lead } = await supabase
             .from("leads")
-            .select("name")
+            .select("name, product, region, client_type")
             .eq("id", leadId)
             .single();
 
-          notifyWeeklyContents({
-            leadId,
-            email,
-            name: lead?.name || "",
-          }).catch((err) =>
-            console.error("[Webhook] notifyWeeklyContents failed:", err)
-          );
+          // Trigger content generation (fire-and-forget)
+          waitUntil((async () => {
+            try {
+              const { generateRelatorioSetorial } = await import("@/lib/pipeline/relatorio-setorial");
+              const { triggerContentGenerationWithContext } = await import("@/lib/generateContents");
+
+              const relatorio = await generateRelatorioSetorial(
+                lead?.product || '', lead?.region || '', lead?.client_type || 'b2c'
+              );
+              await triggerContentGenerationWithContext(leadId, relatorio);
+              console.log(`[Webhook] First weekly content generated for subscriber ${leadId}`);
+            } catch (err) {
+              console.error("[Webhook] First content generation failed:", err);
+            }
+
+            // Notifica
+            notifyWeeklyContents({
+              leadId,
+              email,
+              name: lead?.name || "",
+            }).catch((err) => console.error("[Webhook] notifyWeeklyContents failed:", err));
+          })());
         }
       } catch (err) {
         console.error("[Webhook] Subscription processing error:", err);

@@ -48,7 +48,7 @@ export interface GenerateResult {
 
 // ─── Specs por canal ──────────────────────────────────────────────────────────
 
-const CHANNEL_SPECS: Record<string, { label: string; spec: string }> = {
+const CHANNEL_SPECS_B2C: Record<string, { label: string; spec: string }> = {
   instagram_feed: {
     label: 'Instagram Feed',
     spec: 'Legenda entre 150-300 palavras. Tom conversacional. 4-6 hashtags locais no final. CTA claro (ex: "nos chama no WhatsApp", "vem nos visitar").',
@@ -65,6 +65,38 @@ const CHANNEL_SPECS: Record<string, { label: string; spec: string }> = {
     label: 'WhatsApp Status',
     spec: 'Máximo 3 linhas. Tom amigável e próximo. Um emoji no máximo. CTA simples (ex: "manda mensagem!").',
   },
+};
+
+const CHANNEL_SPECS_B2B: Record<string, { label: string; spec: string }> = {
+  linkedin_post: {
+    label: 'LinkedIn Post',
+    spec: '200-400 palavras. Tom profissional mas acessível. Comece com dado ou insight. Termine com pergunta ou CTA para DM. 3-5 hashtags de nicho.',
+  },
+  linkedin_article: {
+    label: 'LinkedIn Article',
+    spec: '400-600 palavras. Artigo de autoridade. Baseado em dados reais. Estrutura: gancho → contexto → solução → CTA. Tom de especialista.',
+  },
+  google_business: {
+    label: 'Google Business',
+    spec: '100-150 palavras. Foque em credenciais e resultados. Mencione a cidade/região de atuação. CTA para agendamento ou contato.',
+  },
+  email_newsletter: {
+    label: 'Email Newsletter',
+    spec: 'Subject line (max 50 chars) + corpo de 200-300 palavras. Valor primeiro, venda depois. Um insight útil + CTA claro. Tom consultivo.',
+  },
+};
+
+function getChannelSpecs(clientType: string, hasLinkedIn: boolean, hasInstagram: boolean): Record<string, { label: string; spec: string }> {
+  if (clientType === 'b2b') {
+    // B2B: LinkedIn-first se declarado, senão adapta
+    if (hasLinkedIn) return CHANNEL_SPECS_B2B;
+    if (hasInstagram) return {
+      ...CHANNEL_SPECS_B2C,
+      linkedin_post: CHANNEL_SPECS_B2B.linkedin_post, // adiciona LinkedIn mesmo sem declarar
+    };
+    return CHANNEL_SPECS_B2B; // default B2B
+  }
+  return CHANNEL_SPECS_B2C; // B2C
 }
 
 // ─── Geração via Claude ───────────────────────────────────────────────────────
@@ -83,7 +115,13 @@ export async function generateContentsForLead(
   const lowScore =
     lead.influence_score != null && lead.influence_score < 50
 
-  const prompt = `Você é especialista em marketing local para pequenas empresas brasileiras.
+  // Canais adaptáveis ao tipo de negócio
+  const clientType = (lead as any).client_type || 'b2c';
+  const hasLinkedIn = !!(lead as any).linkedin;
+  const hasInstagram = !!(lead as any).instagram;
+  const CHANNEL_SPECS = getChannelSpecs(clientType, hasLinkedIn, hasInstagram);
+
+  const prompt = `Você é especialista em marketing ${clientType === 'b2b' ? 'B2B' : 'local'} para ${clientType === 'b2b' ? 'empresas' : 'pequenas empresas'} brasileiras.
 
 Negócio: ${lead.name}
 Segmento: ${lead.segment}
@@ -181,6 +219,11 @@ export async function saveGeneratedContents(
   tone: string,
   objective: string
 ): Promise<void> {
+  // Calcula week_number (semana do ano)
+  const now = new Date();
+  const jan1 = new Date(now.getFullYear(), 0, 1);
+  const weekNumber = Math.ceil(((now.getTime() - jan1.getTime()) / 86400000 + jan1.getDay() + 1) / 7);
+
   const rows = result.posts.map((p) => ({
     lead_id: leadId,
     channel: p.channel,
@@ -195,13 +238,16 @@ export async function saveGeneratedContents(
     tone,
     objective,
     status: 'draft',
+    week_number: weekNumber,
+    generation_date: now.toISOString().split('T')[0],
   }))
 
-  // Idempotência: deleta conteúdos existentes antes de inserir (evita duplicados em reprocessamento)
+  // Deleta apenas conteúdos DA MESMA SEMANA (não histórico)
   await getSupabaseAdmin()
     .from('generated_contents')
     .delete()
     .eq('lead_id', leadId)
+    .eq('week_number', weekNumber)
 
   const { error } = await getSupabaseAdmin()
     .from('generated_contents')

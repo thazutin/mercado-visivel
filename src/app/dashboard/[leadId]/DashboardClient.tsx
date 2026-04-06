@@ -1156,16 +1156,20 @@ function ContentCard({ c, leadId }: { c: any; leadId: string }) {
 // ─── Contents Section ────────────────────────────────────────────────
 function ContentsSection({ leadId, tier }: { leadId: string; tier: Tier }) {
   const [contents, setContents] = useState<any[]>([]);
+  const [allWeeks, setAllWeeks] = useState<number[]>([]);
+  const [allByWeek, setAllByWeek] = useState<Record<number, any[]>>({});
   const [loading, setLoading] = useState(true);
   const [polling, setPolling] = useState(false);
 
   const fetchContents = useCallback(async () => {
     try {
-      const res = await fetch(`/api/contents?leadId=${leadId}`);
+      const res = await fetch(`/api/contents?leadId=${leadId}&all=true`);
       if (res.ok) {
         const data = await res.json();
         const items = data.contents || [];
         setContents(items);
+        if (data.weeks) setAllWeeks(data.weeks);
+        if (data.byWeek) setAllByWeek(data.byWeek);
         return items;
       }
     } catch { /* ignore */ } finally { setLoading(false); }
@@ -1195,13 +1199,24 @@ function ContentsSection({ leadId, tier }: { leadId: string; tier: Tier }) {
     return <p style={{ fontSize: 13, color: V.ash, textAlign: "center", padding: "24px 0" }}>Nenhum conteúdo gerado ainda.</p>;
   }
 
+  // Próxima sexta-feira
+  const nextFriday = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + ((5 - d.getDay() + 7) % 7 || 7));
+    return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+  })();
+
+  const latestWeek = allWeeks[0] || 0;
+  const latestContents = allByWeek[latestWeek] || contents;
+  const olderWeeks = allWeeks.slice(1);
+
   if (tier === "paid") {
     return (
       <div>
         <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 10 }}>
-          Semana 1
+          Semana {latestWeek || 1}
         </div>
-        {contents.map((c: any) => <ContentCard key={c.id} c={c} leadId={leadId} />)}
+        {latestContents.map((c: any) => <ContentCard key={c.id} c={c} leadId={leadId} />)}
         <div style={{
           background: "rgba(45,155,131,0.06)", border: "1px solid rgba(45,155,131,0.15)",
           borderRadius: 12, padding: "18px 20px", marginTop: 8, textAlign: "center",
@@ -1229,19 +1244,36 @@ function ContentsSection({ leadId, tier }: { leadId: string; tier: Tier }) {
     );
   }
 
-  const nextFriday = new Date();
-  nextFriday.setDate(nextFriday.getDate() + ((5 - nextFriday.getDay() + 7) % 7 || 7));
-  const nextFridayStr = nextFriday.toLocaleDateString("pt-BR", { day: "numeric", month: "long" });
+  const nextFridayStr = nextFriday;
 
   return (
     <div>
       <div style={{
-        background: "rgba(45,155,131,0.06)", border: "1px solid rgba(45,155,131,0.15)",
-        borderRadius: 10, padding: "12px 16px", marginBottom: 16, fontSize: 12, color: V.teal, fontWeight: 500,
+        background: V.amberWash, border: `1px solid ${V.amber}30`,
+        borderRadius: 10, padding: "12px 16px", marginBottom: 16, fontSize: 12, color: V.amber, fontWeight: 500,
       }}>
-        Próximos conteúdos: sexta-feira, {nextFridayStr}
+        Próximo update: sexta-feira, {nextFridayStr}
       </div>
-      {contents.map((c: any) => <ContentCard key={c.id} c={c} leadId={leadId} />)}
+
+      {/* Semana atual */}
+      <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.05em", marginBottom: 10 }}>
+        SEMANA {latestWeek || '—'}
+      </div>
+      {latestContents.map((c: any) => <ContentCard key={c.id} c={c} leadId={leadId} />)}
+
+      {/* Histórico de semanas anteriores */}
+      {olderWeeks.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.05em", marginBottom: 8 }}>
+            SEMANAS ANTERIORES
+          </div>
+          {olderWeeks.map(wk => (
+            <Section key={wk} title={`Semana ${wk}`} defaultOpen={false}>
+              {(allByWeek[wk] || []).map((c: any) => <ContentCard key={c.id} c={c} leadId={leadId} />)}
+            </Section>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -16,18 +16,29 @@ export async function generateRelatorioSetorial(
   const geoContext = isNacional ? 'Brasil' : shortRegion;
 
   try {
-    // Etapa 1: Web search para dados reais
+    // Etapa 1: Web search expandido — 3 dimensões (macro, setor, local)
+    const dataRef = new Date().toLocaleDateString('pt-BR');
     const searchResponse = await claudeClient.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 800,
+      max_tokens: 1200,
       tools: [{ type: "web_search_20250305" as any, name: "web_search" }],
       messages: [{
         role: 'user',
-        content: `Busque dados REAIS desta semana sobre "${product}" em ${geoContext}:
-1. "${product} Brasil 2026" — tendências recentes
-2. "mercado ${product} ${geoContext}" — dados atuais
-3. Feriados ou eventos relevantes para ${product} nos próximos 7 dias
-Foque em dados verificáveis com fonte.`,
+        content: `Busque dados REAIS e RECENTES (última semana) em 3 dimensões:
+
+MACRO (indicadores econômicos Brasil):
+- "indicadores econômicos Brasil ${dataRef}" — Selic, inflação, câmbio, PIB
+- Impacto prático para donos de pequenos negócios
+
+SETOR (${product}):
+- "${product} tendências notícias Brasil ${dataRef}" — novos players, casos de sucesso, movimentações relevantes
+- Algum negócio de ${product} que se destacou esta semana no Brasil?
+
+LOCAL (${geoContext}):
+- "eventos feriados ${geoContext} ${dataRef}" — o que está acontecendo na região esta semana
+- Sazonalidade: é período de alta ou baixa para ${product}?
+
+Foque em dados verificáveis com fonte. Busque pelo menos 2 dados de cada dimensão.`,
       }],
     });
 
@@ -54,14 +65,22 @@ Foque em dados verificáveis com fonte.`,
 
 ${searchContext}${igContext}
 
-Retorne JSON:
+Retorne JSON com 3 blocos (MACRO, SETOR, LOCAL):
 {
-  "titulo": "O mercado de ${product} em ${geoContext}",
+  "titulo": "Mercado de ${product} — semana de ${dataRef}",
   "destaque": "insight mais importante — 1 frase com dado real e fonte",
+  "macro": {
+    "resumo": "O que mudou nos indicadores econômicos e como impacta o empreendedor de ${product}",
+    "indicadores": [{"nome":"Selic","valor":"X%","impacto":"O que significa para o negócio"}]
+  },
   "tendencias": [{"titulo":"...","descricao":"...","relevancia":"alta|media|baixa","acao_sugerida":"..."}],
-  "oportunidade_da_semana": "ação específica baseada no que está acontecendo",
-  "contexto_competitivo": "o que players do setor estão fazendo",
-  "data_ref": "${new Date().toLocaleDateString('pt-BR')}",
+  "oportunidade_da_semana": "ação específica baseada no que está acontecendo AGORA",
+  "contexto_competitivo": "movimentações de players do setor — algum caso de destaque esta semana?",
+  "local": {
+    "eventos": "eventos, feriados ou sazonalidade relevante para ${geoContext} esta semana",
+    "clima": "se relevante para o negócio"
+  },
+  "data_ref": "${dataRef}",
   "fontes_resumo": "fontes consultadas",
   "confianca": "alta|media|baixa"
 }
@@ -115,26 +134,25 @@ CONTEXTO COMPETITIVO: ${relatorio.contexto_competitivo || 'N/A'}
 TENDÊNCIAS: ${(relatorio.tendencias || []).map((t: any) => t.titulo).join(', ') || 'N/A'}
 ${igContext || ''}
 
-Gere 3 briefings DETALHADOS e ACIONÁVEIS:
+Gere 3 briefings CLIENT-FACING (temas que interessam ao PÚBLICO do negócio, não ao dono):
 
 1. briefing_equipe (200+ palavras, tom operacional):
-   - O que mudou no mercado esta semana
+   - O que a equipe deve destacar no atendimento esta semana e por quê
    - 3-5 ações concretas com prazo (ex: "até quinta-feira")
    - Métricas para acompanhar
    - Por que cada ação importa agora
 
 2. briefing_agencia (250+ palavras, tom estratégico):
-   - Cenário competitivo atualizado
-   - Oportunidade de posicionamento identificada
-   - Direcionamento de conteúdo com formatos específicos
-   - Referências de abordagem (sem mencionar marcas)
-   - KPIs esperados
+   - Que conteúdo produzir esta semana e POR QUE o público se interessa
+   - Dados de mercado que justificam cada peça (ex: "N buscas/mês por X")
+   - Formatos específicos (reels, carrossel, stories, artigo)
+   - Tom e referências visuais
 
 3. briefing_afiliado (200+ palavras, tom comercial):
-   - Por que é bom momento para indicar este negócio
-   - Argumentos de venda baseados em dados reais
-   - Perfil do cliente ideal para indicação
-   - Comissão/benefício para o afiliado
+   - Contexto de mercado que justifica indicar este negócio agora
+   - Argumentos client-facing para o potencial cliente
+   - Perfil ideal de quem indicar
+   - Dados que comprovam o momento
 
 JSON: {"briefing_equipe":"...","briefing_agencia":"...","briefing_afiliado":"..."}` }],
       });
