@@ -415,19 +415,17 @@ export default function InstantValueScreen({ product, region, results: initialRe
                     <div style={{ position: "absolute", left: `${atual}%`, top: -5, transform: "translateX(-50%)", width: 16, height: 16, borderRadius: "50%", background: V.teal, border: `2px solid ${V.white}`, boxShadow: "0 1px 3px rgba(0,0,0,0.12)", zIndex: 2 }} />
                     <div style={{ position: "absolute", left: `${potencial}%`, top: -4, transform: "translateX(-50%)", width: 14, height: 14, borderRadius: "50%", background: V.white, border: `2px dashed ${V.amber}`, zIndex: 1 }} />
                   </div>
-                  {/* Labels — número centralizado abaixo do ponto, texto ao lado */}
-                  <div style={{ position: "relative", height: 32, marginTop: 12 }}>
-                    <div style={{ position: "absolute", left: `${atualPos}%`, transform: "translateX(-50%)", textAlign: "center", whiteSpace: "nowrap" }}>
-                      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 4 }}>
-                        <span style={{ fontFamily: V.mono, fontSize: 8, color: V.ash }}>hoje</span>
-                        <span style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.teal, lineHeight: 1 }}>{atual}</span>
-                      </div>
+                  {/* Labels — número alinhado com ponto, texto ao lado */}
+                  <div style={{ position: "relative", height: 28, marginTop: 10 }}>
+                    {/* Hoje: texto à esquerda, número centralizado no ponto */}
+                    <div style={{ position: "absolute", left: `${atualPos}%`, whiteSpace: "nowrap" }}>
+                      <span style={{ fontFamily: V.mono, fontSize: 8, color: V.ash, position: "absolute", right: "calc(100% + 4px)", top: 6 }}>hoje</span>
+                      <span style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.teal, lineHeight: 1, transform: "translateX(-50%)", display: "inline-block" }}>{atual}</span>
                     </div>
-                    <div style={{ position: "absolute", left: `${potencialPos}%`, transform: "translateX(-50%)", textAlign: "center", whiteSpace: "nowrap" }}>
-                      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 4 }}>
-                        <span style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.amber, lineHeight: 1 }}>{potencial}</span>
-                        <span style={{ fontFamily: V.mono, fontSize: 8, color: V.ash }}>potencial</span>
-                      </div>
+                    {/* Potencial: número centralizado no ponto, texto à direita */}
+                    <div style={{ position: "absolute", left: `${potencialPos}%`, whiteSpace: "nowrap" }}>
+                      <span style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.amber, lineHeight: 1, transform: "translateX(-50%)", display: "inline-block" }}>{potencial}</span>
+                      <span style={{ fontFamily: V.mono, fontSize: 8, color: V.ash, position: "absolute", left: "calc(100% + 4px)", top: 6 }}>potencial</span>
                     </div>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
@@ -454,19 +452,25 @@ export default function InstantValueScreen({ product, region, results: initialRe
           const pilarPotencial = Math.min(p.score + 35, 85);
           return (
             <div key={i} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "12px 14px", marginBottom: 8 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              {/* Título + score próximos */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: V.night }}>{p.icon} {p.label}</span>
-                <span style={{ fontSize: 16, fontWeight: 700, color: V.night }}>{p.score}</span>
+                <span style={{ fontSize: 18, fontWeight: 800, color: p.color }}>{p.score}</span>
               </div>
               {/* Mini-régua do pilar */}
-              <div style={{ position: "relative", height: 4, background: V.fog, borderRadius: 2, marginBottom: 8, overflow: "visible" }}>
-                <div style={{ position: "absolute", left: 0, top: 0, height: "100%", borderRadius: 2, background: `linear-gradient(90deg, ${p.color}90 ${(p.score / pilarPotencial) * 100}%, ${V.amberSoft}60 100%)`, width: `${pilarPotencial}%`, transition: "width 0.6s ease" }} />
-                <div style={{ position: "absolute", left: `${p.score}%`, top: -3, transform: "translateX(-50%)", width: 10, height: 10, borderRadius: "50%", background: p.color, border: `2px solid ${V.white}`, boxShadow: "0 0 2px rgba(0,0,0,0.15)", zIndex: 2 }} />
+              <div style={{ position: "relative", height: 4, background: V.fog, borderRadius: 2, overflow: "visible" }}>
+                <div style={{ position: "absolute", left: 0, top: 0, height: "100%", borderRadius: 2, background: `linear-gradient(90deg, ${p.color}80 ${(p.score / pilarPotencial) * 100}%, ${V.amberSoft}50 100%)`, width: `${pilarPotencial}%`, transition: "width 0.6s ease" }} />
+                <div style={{ position: "absolute", left: `${p.score}%`, top: -3, transform: "translateX(-50%)", width: 10, height: 10, borderRadius: "50%", background: p.color, border: `2px solid ${V.white}`, boxShadow: "0 0 2px rgba(0,0,0,0.12)", zIndex: 2 }} />
                 <div style={{ position: "absolute", left: `${pilarPotencial}%`, top: -2, transform: "translateX(-50%)", width: 8, height: 8, borderRadius: "50%", background: V.white, border: `1.5px dashed ${V.amber}`, zIndex: 1 }} />
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                <span style={{ fontFamily: V.mono, fontSize: 8, color: V.ash }}>Hoje: {p.score}</span>
-                <span style={{ fontFamily: V.mono, fontSize: 8, color: V.amber }}>Meta: {pilarPotencial}</span>
+              {/* Hoje / Meta alinhados com pontos */}
+              <div style={{ position: "relative", height: 16, marginTop: 4, marginBottom: 8 }}>
+                <div style={{ position: "absolute", left: `${Math.max(p.score, 3)}%`, transform: "translateX(-50%)", whiteSpace: "nowrap" }}>
+                  <span style={{ fontFamily: V.mono, fontSize: 8, color: V.ash }}>Hoje: {p.score}</span>
+                </div>
+                <div style={{ position: "absolute", left: `${Math.min(pilarPotencial, 97)}%`, transform: "translateX(-50%)", whiteSpace: "nowrap" }}>
+                  <span style={{ fontFamily: V.mono, fontSize: 8, color: V.amber }}>Meta: {pilarPotencial}</span>
+                </div>
               </div>
               <p style={{ fontSize: 12, color: V.night, margin: "0 0 6px", lineHeight: 1.5, fontWeight: 500 }}>{lever?.action || p.fallback}</p>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
