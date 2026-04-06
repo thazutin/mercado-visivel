@@ -369,7 +369,7 @@ export default function Home() {
             Seu próximo cliente já está <span style={{ color: V.amber }}>procurando o que você faz</span>.
           </h1>
           <p style={{ fontSize: 15, color: V.ash, lineHeight: 1.6, margin: 0 }}>
-            Com a Virô você vê quantos são e o que fazer para ser a escolha óbvia — em 60 segundos, grátis.
+            Veja quantos são e o que fazer para ser a escolha óbvia — em 60 segundos, grátis.
           </p>
         </div>
       </div>
