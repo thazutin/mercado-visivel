@@ -8,7 +8,7 @@ import { V } from "@/lib/design-tokens";
 const CHANNEL_CONFIG: Record<string, { label: string; color: string }> = {
   google_maps: { label: "Google Maps", color: V.teal },
   instagram: { label: "Instagram", color: "#E1306C" },
-  geral: { label: "Geral", color: "#8B5CF6" },
+  geral: { label: "Geral", color: "#78716C" },
 };
 
 export interface PlanTask {

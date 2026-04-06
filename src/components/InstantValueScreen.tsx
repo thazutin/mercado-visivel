@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import AnimatedCounter from "./AnimatedCounter";
 import FeedbackWidget from "./FeedbackWidget";
 import { NelsonLogo } from "./NelsonLogo";
-import { V } from "@/lib/design-tokens";
+import { V, ICONS, PILAR_COLORS } from "@/lib/design-tokens";
 
 interface TermData { term: string; volume: number; cpc: number; position: string; intent?: string; serpFeatures?: string[]; }
 interface Results {
@@ -300,13 +300,13 @@ export default function InstantValueScreen({ product, region, results: initialRe
   const allLevers = (bd as any)?.levers || (results as any).influenceBreakdown?.levers || [];
 
   const pilarCards = [
-    { icon: "🔍", label: "Visibilidade", score: Math.round(d1f), color: "#5BA89D", dim: "descoberta",
+    { icon: ICONS.visibilidade, label: "Visibilidade", score: Math.round(d1f), color: PILAR_COLORS.visibilidade, dim: "descoberta",
       detail: results.maps?.found ? `Maps: ★ ${results.maps.rating} · ${results.maps.reviewCount} avaliações` : "Não encontrado no Google Maps",
       status: pilar1Status, fallback: "Otimizar perfil no Google Meu Negócio com fotos e descrição completa" },
-    { icon: "⭐", label: "Credibilidade", score: Math.round((d2f + d4f) / 2), color: "#C4934A", dim: "credibilidade",
+    { icon: ICONS.credibilidade, label: "Credibilidade", score: Math.round((d2f + d4f) / 2), color: PILAR_COLORS.credibilidade, dim: "credibilidade",
       detail: results.maps?.reviewCount ? `${results.maps.reviewCount} avaliações · ★ ${results.maps.rating}` : "Sem avaliações detectadas",
       status: pilar2Status, fallback: "Solicitar avaliações dos últimos 20 clientes via WhatsApp" },
-    { icon: "📣", label: "Presença Digital", score: Math.round(d3f), color: "#9B8AB8", dim: "presenca",
+    { icon: ICONS.presencaDigital, label: "Presença Digital", score: Math.round(d3f), color: PILAR_COLORS.presencaDigital, dim: "presenca",
       detail: igData?.handle ? `@${igData.handle} · ${igData.followers?.toLocaleString('pt-BR')} seguidores` : "Presença digital não detectada",
       status: pilar3Status, fallback: "Publicar 2 posts/semana respondendo dúvidas frequentes do seu público" },
   ];
@@ -380,7 +380,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
               </>
             ) : (
               <>
-                <div style={{ fontSize: 56, fontWeight: 800, color: "#2DD4A8", lineHeight: 1, fontFamily: V.display, letterSpacing: "-0.03em", marginBottom: 8 }}>
+                <div style={{ fontSize: 56, fontWeight: 800, color: "#C9913A", lineHeight: 1, fontFamily: V.display, letterSpacing: "-0.03em", marginBottom: 8 }}>
                   +{oportunidade > 0 ? oportunidade.toLocaleString('pt-BR') : '—'}
                 </div>
                 <div style={{ fontSize: 15, color: V.mist, lineHeight: 1.5, maxWidth: 300, margin: "0 auto 16px" }}>
@@ -451,7 +451,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
           const lever = allLevers.find((l: any) => l.dimension === p.dim || (p.dim === 'credibilidade' && l.dimension === 'reputacao'));
           const pilarPotencial = Math.min(p.score + 35, 85);
           return (
-            <div key={i} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "12px 14px", marginBottom: 8 }}>
+            <div key={i} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "16px 18px", marginBottom: 10 }}>
               {/* Título + score próximos */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: V.night }}>{p.icon} {p.label}</span>

@@ -6,7 +6,7 @@ import InstantValueScreen from "@/components/InstantValueScreen";
 import { initialFormData, type LeadFormData, stepValidation } from "@/lib/schema";
 import { dictionaries, type Locale } from "@/lib/i18n";
 import { NelsonLogo } from "@/components/NelsonLogo";
-import { V } from "@/lib/design-tokens";
+import { V, ICONS, PILAR_COLORS } from "@/lib/design-tokens";
 
 const inputStyle: React.CSSProperties = {
   width: "100%", padding: "14px 16px", borderRadius: 10,
@@ -481,7 +481,7 @@ export default function Home() {
                 marginBottom: 14 }}>
                 Oportunidade identificada
               </div>
-              <div style={{ fontSize: 56, fontWeight: 900, color: "#2D9B83", lineHeight: 1,
+              <div style={{ fontSize: 56, fontWeight: 900, color: "#0F766E", lineHeight: 1,
                 fontFamily: "'Satoshi', sans-serif", letterSpacing: "-0.03em", marginBottom: 8 }}>
                 +4.860
               </div>
@@ -503,7 +503,7 @@ export default function Home() {
                 textAlign: "center" }}>
                 De <strong style={{ color: "#1A1A1C" }}>18.000 pessoas</strong> no seu mercado,
                 você disputa hoje por <strong style={{ color: "#1A1A1C" }}>18%</strong> — 3.240 pessoas.
-                Com as ações certas, chega a <strong style={{ color: "#2D9B83" }}>45% — 8.100 pessoas</strong>.
+                Com as ações certas, chega a <strong style={{ color: "#0F766E" }}>45% — 8.100 pessoas</strong>.
               </p>
             </div>
 
@@ -532,14 +532,14 @@ export default function Home() {
               border: "1px solid #E8E4DC", marginBottom: 6,
               display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: 12, color: "#6E6E78" }}>🏪 Concorrência</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "#CF8523" }}>12 negócios</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#C9913A" }}>12 negócios</span>
             </div>
 
             <div style={{ background: "#FFFFFF", borderRadius: 10, padding: "12px 14px",
               border: "1px solid #E8E4DC", marginBottom: 10,
               display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: 12, color: "#6E6E78" }}>📊 Sua posição</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: "#2D9B83" }}>18% do mercado</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#0F766E" }}>18% do mercado</span>
             </div>
 
             {/* BLOCO 3 — Como aumentar essa posição */}
@@ -550,13 +550,13 @@ export default function Home() {
             </div>
 
             {[
-              { icon: "🔍", label: "Visibilidade", color: "#2D9B83",
+              { icon: "🔍", label: "Visibilidade", color: "#0F766E",
                 status: "⚠️ Não encontrado no Google Maps",
                 acao: "→ Criar perfil no Google Meu Negócio com fotos, horário e categoria" },
-              { icon: "⭐", label: "Credibilidade", color: "#CF8523",
+              { icon: "⭐", label: "Credibilidade", color: "#C9913A",
                 status: "⚠️ Poucas avaliações — prioridade alta",
                 acao: "→ Pedir avaliação para os últimos 20 clientes via WhatsApp esta semana" },
-              { icon: "📣", label: "Presença Digital", color: "#8B5CF6",
+              { icon: "📣", label: "Presença Digital", color: "#78716C",
                 status: "⚠️ Presença digital parada",
                 acao: "→ 2 posts/semana respondendo perguntas reais que clientes fazem" },
             ].map((pilar, i) => (
@@ -569,12 +569,12 @@ export default function Home() {
                     {pilar.icon} {pilar.label}
                   </span>
                   <span style={{ fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: 9, color: "#FFFFFF", background: "#CF8523",
+                    fontSize: 9, color: "#FFFFFF", background: "#C9913A",
                     padding: "2px 7px", borderRadius: 100, fontWeight: 600 }}>
                     No plano
                   </span>
                 </div>
-                <div style={{ fontSize: 11, color: "#CF8523", fontWeight: 500 }}>
+                <div style={{ fontSize: 11, color: "#C9913A", fontWeight: 500 }}>
                   {pilar.status}
                 </div>
                 <div style={{ fontSize: 11, color: "#4A4A52", marginTop: 6,
@@ -610,7 +610,7 @@ export default function Home() {
                 {/* Faixa de acento superior */}
                 <div style={{
                   position: "absolute", top: 0, left: 0, right: 0, height: 3,
-                  background: "linear-gradient(90deg, #FF3366, #FF6B35)",
+                  background: "linear-gradient(90deg, #292524, #3D2B1F)",
                 }} />
 
                 {/* Logo + nome */}
@@ -620,7 +620,7 @@ export default function Home() {
                 }}>
                   <div style={{
                     width: 26, height: 26, borderRadius: 6,
-                    background: "#FF3366",
+                    background: "#C9913A",
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}>
                     <span style={{ fontSize: 11, fontWeight: 900, color: "#FEFEFF",
@@ -661,7 +661,7 @@ export default function Home() {
                   </div>
                   <div style={{
                     width: 32, height: 2,
-                    background: "linear-gradient(90deg, #FF3366, #FF6B35)",
+                    background: "linear-gradient(90deg, #292524, #3D2B1F)",
                     borderRadius: 1, margin: "12px auto 0",
                   }} />
                 </div>
@@ -680,7 +680,7 @@ export default function Home() {
                   </p>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <div style={{ width: 6, height: 6, borderRadius: "50%",
-                      background: "#FF3366", flexShrink: 0 }} />
+                      background: "#C9913A", flexShrink: 0 }} />
                     <span style={{ fontSize: 9, color: "rgba(255,255,255,0.5)",
                       fontFamily: "'JetBrains Mono', monospace",
                       letterSpacing: "0.06em", textTransform: "uppercase" as const }}>
@@ -832,7 +832,7 @@ export default function Home() {
 
         {/* Bloco 3 — Ações Semanais R$99/mês */}
         <div>
-          <p style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: "#8B5CF6", fontWeight: 600, margin: "0 0 10px" }}>
+          <p style={{ fontFamily: V.mono, fontSize: 10, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: "#78716C", fontWeight: 600, margin: "0 0 10px" }}>
             Ações Semanais · R$99/mês · Cancele quando quiser
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -841,12 +841,12 @@ export default function Home() {
               { title: "5 posts prontos para publicar", desc: "Arco narrativo da semana: autoridade, prova social, oportunidade e bastidores — personalizados para seu negócio" },
               { title: "3 briefings estratégicos", desc: "Para sua equipe (operacional), agência (estratégico) e parceiros (comercial) — conectados ao contexto da semana" },
             ].map((item, i) => (
-              <div key={i} style={{ padding: "14px 16px", borderRadius: 12, border: "2px solid #8B5CF6", background: V.white, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+              <div key={i} style={{ padding: "14px 16px", borderRadius: 12, border: "2px solid #78716C", background: V.white, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 2 }}>{item.title}</div>
                   <p style={{ fontSize: 12, color: V.zinc, lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
                 </div>
-                <span style={{ fontFamily: V.mono, fontSize: 9, color: "#8B5CF6", background: "rgba(139,92,246,0.08)", padding: "3px 8px", borderRadius: 100, fontWeight: 600, flexShrink: 0 }}>R$99/mês</span>
+                <span style={{ fontFamily: V.mono, fontSize: 9, color: "#78716C", background: "rgba(120,113,108,0.08)", padding: "3px 8px", borderRadius: 100, fontWeight: 600, flexShrink: 0 }}>R$99/mês</span>
               </div>
             ))}
           </div>

@@ -31,7 +31,7 @@ function formatLocationDisplay(address: string): string {
   return parts[0] || address;
 }
 
-import { V } from "@/lib/design-tokens";
+import { V, ICONS } from "@/lib/design-tokens";
 
 type TabKey = "diagnostico" | "estruturantes" | "semana";
 type Tier = "free" | "paid" | "subscriber";
@@ -336,10 +336,10 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
   const summary = plan?.content?.itensEstrurantesSummary || '';
 
   const PILAR_MAP: Record<string, { label: string; color: string; icon: string }> = {
-    descoberta: { label: 'Visibilidade', color: V.teal, icon: '🔍' },
-    credibilidade: { label: 'Credibilidade', color: V.amber, icon: '⭐' },
-    reputacao: { label: 'Credibilidade', color: V.amber, icon: '⭐' },
-    presenca: { label: 'Presença Digital', color: '#8B5CF6', icon: '📣' },
+    descoberta: { label: 'Visibilidade', color: V.teal, icon: ICONS.visibilidade },
+    credibilidade: { label: 'Credibilidade', color: V.amber, icon: ICONS.credibilidade },
+    reputacao: { label: 'Credibilidade', color: V.amber, icon: ICONS.credibilidade },
+    presenca: { label: 'Presença Digital', color: V.slate, icon: ICONS.presencaDigital },
   };
 
   const sorted = [...items].sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
@@ -463,17 +463,17 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
             {/* Generated instagram content */}
             {item.generated_instagram && (
               <div style={{ background: V.cloud, borderRadius: 8, padding: "10px 12px", marginTop: 8 }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: "#8B5CF6", marginBottom: 6 }}>📸 POST INSTAGRAM GERADO</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: "#78716C", marginBottom: 6 }}>📸 POST INSTAGRAM GERADO</div>
                 <p style={{ fontSize: 12, color: V.night, margin: "0 0 6px", lineHeight: 1.6 }}>{item.generated_instagram.caption}</p>
                 <div style={{ display: "flex", gap: 4, flexWrap: "wrap" as const, marginBottom: 6 }}>
                   {(item.generated_instagram.hashtags || []).map((h: string, hi: number) => (
-                    <span key={hi} style={{ fontSize: 10, color: "#8B5CF6", background: "rgba(139,92,246,0.08)", padding: "1px 6px", borderRadius: 4 }}>{h}</span>
+                    <span key={hi} style={{ fontSize: 10, color: "#78716C", background: "rgba(139,92,246,0.08)", padding: "1px 6px", borderRadius: 4 }}>{h}</span>
                   ))}
                 </div>
                 {item.generated_instagram.visual_suggestion && (
                   <p style={{ fontSize: 11, color: V.ash, margin: "0 0 6px", fontStyle: "italic" }}>🖼 {item.generated_instagram.visual_suggestion}</p>
                 )}
-                <button onClick={() => navigator.clipboard.writeText(item.generated_instagram.caption)} style={{ fontSize: 10, color: "#8B5CF6", background: "none", border: "1px solid #8B5CF6", borderRadius: 4, padding: "3px 8px", cursor: "pointer" }}>Copiar legenda</button>
+                <button onClick={() => navigator.clipboard.writeText(item.generated_instagram.caption)} style={{ fontSize: 10, color: "#78716C", background: "none", border: "1px solid #78716C", borderRadius: 4, padding: "3px 8px", cursor: "pointer" }}>Copiar legenda</button>
               </div>
             )}
             {item.verification && !item.completed && (
@@ -550,7 +550,7 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
         <>
           {renderGrupo('encontravel', grupos.encontravel, 'Seja Encontrável', '🔍', V.teal)}
           {renderGrupo('credibilidade', grupos.credibilidade, 'Construa Credibilidade', '⭐', V.amber)}
-          {renderGrupo('cultura', grupos.cultura, 'Participe da Cultura', '📣', '#8B5CF6')}
+          {renderGrupo('cultura', grupos.cultura, 'Presença Digital', '📣', '#78716C')}
           {ungrouped.length > 0 && renderGrupo('outros', ungrouped, 'Outros', '📋', V.ash)}
         </>
       )}
@@ -681,10 +681,10 @@ function PilaresScoreCard({ breakdown, levers, clientType }: {
     },
     {
       id: 'cultura',
-      label: 'Participe da Cultura',
+      label: 'Presença Digital',
       icon: '📣',
       score: Math.round(d3),
-      color: '#8B5CF6',
+      color: '#78716C',
       desc: 'Conteúdo, menções, alcance, parcerias',
       dimensoes: ['presenca'],
     },
@@ -940,7 +940,7 @@ function LeversCard({ levers }: { levers: any[] }) {
         O que move seu score de influência
       </div>
       {levers.map((lever: any, i: number) => {
-        const dimColor = lever.dimension === 'alcance' ? '#8B5CF6'
+        const dimColor = lever.dimension === 'alcance' ? '#78716C'
           : lever.dimension === 'descoberta' ? '#2D9B83' : '#CF8523';
         const dimLabel = lever.dimension === 'alcance' ? 'Alcance'
           : lever.dimension === 'descoberta' ? 'Descoberta' : 'Credibilidade';
