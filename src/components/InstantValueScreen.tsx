@@ -415,15 +415,17 @@ export default function InstantValueScreen({ product, region, results: initialRe
                     <div style={{ position: "absolute", left: `${atual}%`, top: -5, transform: "translateX(-50%)", width: 16, height: 16, borderRadius: "50%", background: V.teal, border: `2px solid ${V.white}`, boxShadow: "0 1px 3px rgba(0,0,0,0.12)", zIndex: 2 }} />
                     <div style={{ position: "absolute", left: `${potencial}%`, top: -4, transform: "translateX(-50%)", width: 14, height: 14, borderRadius: "50%", background: V.white, border: `2px dashed ${V.amber}`, zIndex: 1 }} />
                   </div>
-                  {/* Labels — número alinhado com ponto, texto ao lado */}
+                  {/* Labels — NÚMERO centralizado no ponto, texto ao lado */}
                   <div style={{ position: "relative", height: 28, marginTop: 10 }}>
-                    <div style={{ position: "absolute", left: `${atualPos}%`, transform: "translateX(-50%)", display: "flex", alignItems: "baseline", gap: 4, whiteSpace: "nowrap" }}>
-                      <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>hoje</span>
-                      <span style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.teal, lineHeight: 1 }}>{atual}</span>
+                    {/* Hoje */}
+                    <div style={{ position: "absolute", left: `${atualPos}%`, whiteSpace: "nowrap" }}>
+                      <span style={{ position: "absolute", right: 4, top: 5, fontFamily: V.mono, fontSize: 9, color: V.ash }}>hoje</span>
+                      <span style={{ display: "block", transform: "translateX(-50%)", fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.teal, lineHeight: 1 }}>{atual}</span>
                     </div>
-                    <div style={{ position: "absolute", left: `${potencialPos}%`, transform: "translateX(-50%)", display: "flex", alignItems: "baseline", gap: 4, whiteSpace: "nowrap" }}>
-                      <span style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.amber, lineHeight: 1 }}>{potencial}</span>
-                      <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>potencial</span>
+                    {/* Potencial */}
+                    <div style={{ position: "absolute", left: `${potencialPos}%`, whiteSpace: "nowrap" }}>
+                      <span style={{ display: "block", transform: "translateX(-50%)", fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.amber, lineHeight: 1 }}>{potencial}</span>
+                      <span style={{ position: "absolute", left: 4, top: 5, fontFamily: V.mono, fontSize: 9, color: V.ash }}>potencial</span>
                     </div>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
