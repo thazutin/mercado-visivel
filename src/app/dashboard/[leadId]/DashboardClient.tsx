@@ -435,17 +435,7 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
               <div style={{ marginTop: 8 }}>
                 <button onClick={() => generateContent(itemIdx, 'both')} disabled={generatingContent[`${itemIdx}-both`]}
                   style={{ fontSize: 12, color: V.night, background: V.cloud, border: `1px solid ${V.fog}`, borderRadius: 8, padding: "10px 14px", cursor: "pointer", fontWeight: 600, opacity: generatingContent[`${itemIdx}-both`] ? 0.5 : 1, width: "100%" }}>
-                  {generatingContent[`${itemIdx}-both`] ? 'Gerando conteúdo (~1 min)...' : (() => {
-                    const t = (item.title || '').toLowerCase();
-                    if (/avalia[çc]/i.test(t) || /responder/i.test(t)) return 'Gerar respostas';
-                    if (/youtube|canal|vídeo|video/i.test(t)) return 'Gerar roteiros';
-                    if (/instagram|post|conteúdo|conteudo/i.test(t)) return 'Gerar posts';
-                    if (/blog|artigo|seo/i.test(t)) return 'Gerar textos';
-                    if (/whatsapp|mensag/i.test(t)) return 'Gerar mensagens';
-                    if (/google|maps|ficha|título/i.test(t)) return 'Gerar descrições';
-                    if (/página|pagina|site|landing/i.test(t)) return 'Gerar textos';
-                    return 'Gerar conteúdo';
-                  })()}
+                  {generatingContent[`${itemIdx}-both`] ? 'Gerando conteúdo (~1 min)...' : 'Gerar conteúdo'}
                 </button>
               </div>
             )}
@@ -531,6 +521,42 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
                     <div style={{ marginBottom: 8 }}>
                       {gc.profile.title && <div style={{ background: V.cloud, borderRadius: 6, padding: "8px 10px", marginBottom: 4 }}><div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>TÍTULO</div><p style={{ fontSize: 12, color: V.night, margin: "2px 0" }}>{gc.profile.title}</p><button onClick={() => navigator.clipboard.writeText(gc.profile.title)} style={{ fontSize: 10, color: V.teal, background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>Copiar</button></div>}
                       {gc.profile.description && <div style={{ background: V.cloud, borderRadius: 6, padding: "8px 10px" }}><div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>DESCRIÇÃO</div><p style={{ fontSize: 12, color: V.night, margin: "2px 0", lineHeight: 1.5 }}>{gc.profile.description}</p><button onClick={() => navigator.clipboard.writeText(gc.profile.description)} style={{ fontSize: 10, color: V.teal, background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>Copiar</button></div>}
+                    </div>
+                  )}
+                  {/* Tips */}
+                  {/* External links */}
+                  {gc.external_links?.length > 0 && (
+                    <div style={{ marginTop: 8, marginBottom: 8 }}>
+                      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", marginBottom: 6 }}>FERRAMENTAS RECOMENDADAS</div>
+                      {gc.external_links.map((link: any, li: number) => (
+                        <div key={li} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: li < gc.external_links.length - 1 ? `1px solid ${V.fog}` : "none" }}>
+                          <div>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: V.night }}>{link.name}</span>
+                            {link.why && <span style={{ fontSize: 11, color: V.ash, marginLeft: 6 }}>— {link.why}</span>}
+                          </div>
+                          {link.url && <a href={link.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: V.teal, textDecoration: "none", fontWeight: 600 }}>Acessar →</a>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {/* Pages (site structure) */}
+                  {gc.pages?.map((pg: any, pi: number) => (
+                    <div key={pi} style={{ padding: "10px 0", borderBottom: pi < gc.pages.length - 1 ? `1px solid ${V.fog}` : "none" }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: V.night, marginBottom: 4 }}>{pg.page}</div>
+                      {pg.headline && <p style={{ fontSize: 13, fontWeight: 700, color: V.night, margin: "0 0 2px" }}>{pg.headline}</p>}
+                      {pg.subheadline && <p style={{ fontSize: 11, color: V.ash, margin: "0 0 4px" }}>{pg.subheadline}</p>}
+                      {pg.body && <p style={{ fontSize: 12, color: V.zinc, margin: "4px 0", lineHeight: 1.6 }}>{pg.body}</p>}
+                      {pg.cta && <span style={{ fontSize: 11, color: V.teal, fontWeight: 600 }}>CTA: {pg.cta}</span>}
+                      {(pg.headline || pg.body) && <button onClick={() => navigator.clipboard.writeText([pg.headline, pg.subheadline, pg.body, pg.cta].filter(Boolean).join('\n'))} style={{ fontSize: 10, color: V.teal, background: "none", border: "none", cursor: "pointer", padding: "2px 0", marginLeft: 8, fontWeight: 600 }}>Copiar</button>}
+                    </div>
+                  ))}
+                  {/* SEO */}
+                  {gc.seo && (
+                    <div style={{ background: V.cloud, borderRadius: 6, padding: "8px 10px", marginTop: 8 }}>
+                      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, marginBottom: 4 }}>SEO</div>
+                      {gc.seo.title_tag && <p style={{ fontSize: 12, color: V.night, margin: "2px 0" }}><strong>Title:</strong> {gc.seo.title_tag}</p>}
+                      {gc.seo.meta_description && <p style={{ fontSize: 11, color: V.zinc, margin: "2px 0" }}><strong>Description:</strong> {gc.seo.meta_description}</p>}
+                      <button onClick={() => navigator.clipboard.writeText(`${gc.seo.title_tag}\n${gc.seo.meta_description}`)} style={{ fontSize: 10, color: V.teal, background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>Copiar SEO</button>
                     </div>
                   )}
                   {/* Tips */}

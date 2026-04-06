@@ -30,7 +30,10 @@ export async function POST(req: NextRequest) {
   const display = lead.diagnosis_display as any;
   const shortRegion = (lead.region || '').split(',')[0].trim();
   const negocio = lead.name || lead.product;
+  // Match contra título + descrição para detecção mais precisa
   const actionTitle = (item.titulo || item.title || '').toLowerCase();
+  const actionDesc = (item.descricao || item.description || '').toLowerCase();
+  const actionFull = `${actionTitle} ${actionDesc}`;
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
@@ -48,7 +51,7 @@ Por quê: "${item.descricao || item.description}"`;
 
   let prompt: string;
 
-  if (/responder.*review|responder.*avalia/i.test(actionTitle)) {
+  if (/responder.*review|responder.*avalia|template.*resposta|review.*resposta|avalia[çc]|review.*google/i.test(actionFull)) {
     // ─── REVIEWS: gerar respostas prontas ───
     prompt = `${contextBlock}
 
@@ -68,7 +71,7 @@ Cada resposta deve:
 
 JSON: {"type":"review_responses","title":"Respostas para avaliações do Google","items":[{"rating":5,"context":"Cliente elogiou o produto/serviço","response":"texto pronto para copiar"},...],"tips":["dica prática 1","dica prática 2"]}`;
 
-  } else if (/foto|imagem|visual/i.test(actionTitle)) {
+  } else if (/foto|imagem|visual/i.test(actionFull)) {
     // ─── FOTOS: checklist de fotos necessárias ───
     prompt = `${contextBlock}
 
@@ -83,7 +86,7 @@ Cubra: fachada, interior, equipe, produto/serviço principal, detalhes, ambiente
 
 JSON: {"type":"photo_checklist","title":"Fotos para o perfil do Google Maps","items":[{"foto":"Fachada do estabelecimento","como_captar":"Tire de frente, durante o dia, com a placa visível...","dica":"Use modo HDR do celular para equilibrar sombras"},...],"tips":["dica geral 1","dica geral 2"]}`;
 
-  } else if (/qr\s*code|pesquisa|feedback|nps/i.test(actionTitle)) {
+  } else if (/qr\s*code|pesquisa|feedback|nps/i.test(actionFull)) {
     // ─── QR CODE / PESQUISA: passo-a-passo prático ───
     prompt = `${contextBlock}
 
@@ -98,7 +101,7 @@ Gere um GUIA PRÁTICO completo:
 
 JSON: {"type":"practical_guide","title":"Guia: Sistema de feedback com QR Code","steps":[{"step":"1. Gerar QR Code","detail":"Acesse google.com/maps, busque seu negócio, clique em Compartilhar...","tools":"Google Maps, QR Code Generator (gratuito)"},...],"templates":["texto pronto 1 para plaquinha","texto pronto 2"],"tips":["dica 1","dica 2"]}`;
 
-  } else if (/instagram|perfil|bio|post|stories|reels/i.test(actionTitle)) {
+  } else if (/instagram|perfil|bio|post|stories|reels/i.test(actionFull)) {
     // ─── INSTAGRAM: bio + primeiros posts ───
     prompt = `${contextBlock}
 
@@ -114,24 +117,36 @@ Os posts devem seguir arco: apresentação → produto → bastidores → prova 
 
 JSON: {"type":"instagram_setup","title":"Setup do Instagram","bio":"bio pronta","username_options":["opção1","opção2","opção3"],"posts":[{"order":1,"theme":"Apresentação","caption":"legenda completa","hashtags":["#tag1"],"visual":"descrição da foto/vídeo","best_day":"segunda 19h"},...],"tips":["dica 1","dica 2"]}`;
 
-  } else if (/site|página|landing|cardápio|menu/i.test(actionTitle)) {
-    // ─── SITE: estrutura + textos prontos ───
+  } else if (/site|página|landing|cardápio|menu|pedido.*online|delivery.*site|sistema.*pedido/i.test(actionFull)) {
+    // ─── SITE / SISTEMA ONLINE: estrutura + como criar + links externos ───
     prompt = `${contextBlock}
 
-Você é um web designer especialista em sites para negócios locais. O negócio "${negocio}" (${lead.product}) precisa criar um site simples.
+Você é um consultor digital especialista em presença online para negócios locais. O negócio "${negocio}" (${lead.product}) em ${shortRegion} precisa criar ou melhorar sua presença online.
 
-Gere a ESTRUTURA COMPLETA do site com textos prontos:
-1. Página inicial: headline, sub-headline, CTA
-2. Sobre: texto institucional (200 palavras)
-3. Serviços/Cardápio: estrutura de categorias
-4. Contato: informações essenciais
-5. SEO: title tag, meta description, palavras-chave
+Gere um GUIA PRÁTICO com:
 
-Todos os textos devem estar prontos para copiar e colar.
+1. QUAL PLATAFORMA USAR (recomende 2-3 opções com prós/contras):
+   - Para sites simples: Carrd.co (grátis), Google Sites (grátis), Wix (freemium)
+   - Para cardápio/delivery: iFood Portal, Goomer (gratuito para cardápio digital), Anota AI
+   - Para e-commerce: Nuvemshop, Shopify, WooCommerce
+   Recomende a MELHOR opção para ${lead.product} em ${shortRegion}.
 
-JSON: {"type":"site_structure","title":"Estrutura do site","pages":[{"page":"Início","headline":"...","subheadline":"...","cta":"...","body":"texto completo"},...],"seo":{"title_tag":"...","meta_description":"...","keywords":["..."]},"tips":["dica 1","dica 2"]}`;
+2. ESTRUTURA DO SITE com textos prontos para cada página:
+   - Página inicial: headline, sub-headline, CTA, seções
+   - Sobre: texto institucional (200 palavras)
+   - Serviços/Cardápio: categorias sugeridas
+   - Contato: informações essenciais + WhatsApp + Google Maps embed
 
-  } else if (/google|maps|ficha|título|descri[cç]/i.test(actionTitle)) {
+3. SEO BÁSICO: title tag, meta description, palavras-chave locais
+
+4. INTEGRAÇÕES ESSENCIAIS:
+   - WhatsApp Business (botão flutuante)
+   - Google My Business (link bidirecional)
+   - Instagram (feed embed ou link)
+
+JSON: {"type":"site_structure","title":"Como criar o site de ${negocio}","steps":[{"step":"1. Escolher plataforma","detail":"Recomendação + link + por quê","tools":"nome (link)","time":"30 min"}],"pages":[{"page":"Início","headline":"...","subheadline":"...","cta":"...","body":"texto completo"}],"seo":{"title_tag":"...","meta_description":"...","keywords":["..."]},"external_links":[{"name":"Carrd.co","url":"https://carrd.co","why":"Site simples gratuito"}],"tips":["dica 1","dica 2"]}`;
+
+  } else if (/google|maps|ficha|título|descri[cç]/i.test(actionFull)) {
     // ─── GOOGLE MAPS: textos para o perfil ───
     prompt = `${contextBlock}
 
@@ -146,7 +161,7 @@ Gere TEXTOS PRONTOS para o perfil:
 
 JSON: {"type":"maps_optimization","title":"Otimização do Google Maps","profile":{"title":"...","description":"...","categories":["principal","secundária1"],"attributes":["Wi-Fi","Estacionamento"]},"posts":[{"title":"...","body":"...","cta":"Saiba mais"},...],"tips":["dica 1","dica 2"]}`;
 
-  } else if (/youtube|canal|vídeo|video|roteiro/i.test(actionTitle)) {
+  } else if (/youtube|canal|vídeo|video|roteiro/i.test(actionFull)) {
     // ─── YOUTUBE: roteiros prontos ───
     prompt = `${contextBlock}
 
@@ -159,7 +174,7 @@ Gere uma SÉRIE DE 5 VÍDEOS com roteiros semi-prontos:
 
 JSON: {"type":"youtube_series","title":"Série YouTube: ${negocio}","videos":[{"order":1,"title":"...","duration":"3-5 min","hook":"primeiros 10 segundos","script_points":["ponto 1","ponto 2"],"cta":"...","thumbnail_idea":"..."},...],"tips":["dica 1","dica 2"]}`;
 
-  } else if (/whatsapp|mensag|comunica/i.test(actionTitle)) {
+  } else if (/whatsapp|mensag|comunica/i.test(actionFull)) {
     // ─── WHATSAPP: templates de mensagem ───
     prompt = `${contextBlock}
 
@@ -191,8 +206,9 @@ Gere um GUIA PRÁTICO DE EXECUÇÃO com:
 5. Como medir o resultado
 
 NÃO gere blog post ou post de Instagram. Gere o COMO FAZER da ação.
+Se recomendar ferramentas externas, inclua links reais (URLs completas).
 
-JSON: {"type":"practical_guide","title":"Guia: ${item.titulo || item.title}","steps":[{"step":"1. Passo","detail":"Explicação detalhada de como fazer","time":"15 min","tools":"ferramenta X (gratuita)"},...],"templates":["texto pronto 1"],"tips":["dica 1","dica 2"]}`;
+JSON: {"type":"practical_guide","title":"Guia: ${item.titulo || item.title}","steps":[{"step":"1. Passo","detail":"Explicação detalhada de como fazer","time":"15 min","tools":"ferramenta X (gratuita)"},...],"templates":["texto pronto 1"],"external_links":[{"name":"Ferramenta","url":"https://...","why":"motivo"}],"tips":["dica 1","dica 2"]}`;
   }
 
   try {
