@@ -417,15 +417,13 @@ export default function InstantValueScreen({ product, region, results: initialRe
                   </div>
                   {/* Labels — número alinhado com ponto, texto ao lado */}
                   <div style={{ position: "relative", height: 28, marginTop: 10 }}>
-                    {/* Hoje: texto à esquerda, número centralizado no ponto */}
-                    <div style={{ position: "absolute", left: `${atualPos}%`, whiteSpace: "nowrap" }}>
-                      <span style={{ fontFamily: V.mono, fontSize: 8, color: V.ash, position: "absolute", right: "calc(100% + 4px)", top: 6 }}>hoje</span>
-                      <span style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.teal, lineHeight: 1, transform: "translateX(-50%)", display: "inline-block" }}>{atual}</span>
+                    <div style={{ position: "absolute", left: `${atualPos}%`, transform: "translateX(-50%)", display: "flex", alignItems: "baseline", gap: 4, whiteSpace: "nowrap" }}>
+                      <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>hoje</span>
+                      <span style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.teal, lineHeight: 1 }}>{atual}</span>
                     </div>
-                    {/* Potencial: número centralizado no ponto, texto à direita */}
-                    <div style={{ position: "absolute", left: `${potencialPos}%`, whiteSpace: "nowrap" }}>
-                      <span style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.amber, lineHeight: 1, transform: "translateX(-50%)", display: "inline-block" }}>{potencial}</span>
-                      <span style={{ fontFamily: V.mono, fontSize: 8, color: V.ash, position: "absolute", left: "calc(100% + 4px)", top: 6 }}>potencial</span>
+                    <div style={{ position: "absolute", left: `${potencialPos}%`, transform: "translateX(-50%)", display: "flex", alignItems: "baseline", gap: 4, whiteSpace: "nowrap" }}>
+                      <span style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.amber, lineHeight: 1 }}>{potencial}</span>
+                      <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>potencial</span>
                     </div>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
@@ -452,10 +450,10 @@ export default function InstantValueScreen({ product, region, results: initialRe
           const pilarPotencial = Math.min(p.score + 35, 85);
           return (
             <div key={i} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "16px 18px", marginBottom: 10 }}>
-              {/* Título + score próximos */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: V.night }}>{p.icon} {p.label}</span>
-                <span style={{ fontSize: 18, fontWeight: 800, color: p.color }}>{p.score}</span>
+              {/* Título com score integrado */}
+              <div style={{ marginBottom: 4 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>{p.icon} {p.label}: </span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: p.color }}>{p.score}</span>
               </div>
               {/* Mini-régua do pilar */}
               <div style={{ position: "relative", height: 4, background: V.fog, borderRadius: 2, overflow: "visible" }}>
@@ -630,12 +628,12 @@ export default function InstantValueScreen({ product, region, results: initialRe
             const maxVol = Math.max(...seasonality.months.map((x: any) => x.volume));
             return (
               <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${V.fog}` }}>
-                <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", marginBottom: 12 }}>
+                <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", marginBottom: 14 }}>
                   VOLUME DE BUSCA POR MÊS
                 </div>
-                <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 64 }}>
+                <div style={{ display: "flex", alignItems: "flex-end", gap: 5, height: 80 }}>
                   {seasonality.months.map((m: any) => {
-                    const height = maxVol > 0 ? Math.max((m.volume / maxVol) * 64, 4) : 4;
+                    const height = maxVol > 0 ? Math.max((m.volume / maxVol) * 80, 4) : 4;
                     const isPeak = m.month === seasonality.peak_month;
                     return (
                       <div key={m.month} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>

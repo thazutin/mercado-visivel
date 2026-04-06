@@ -449,32 +449,31 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
               </div>
             )}
 
-            {/* Generated blog content */}
-            {item.generated_blog && (
-              <div style={{ background: V.cloud, borderRadius: 8, padding: "10px 12px", marginTop: 8 }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: V.teal, marginBottom: 6 }}>📝 BLOG POST GERADO</div>
-                <p style={{ fontSize: 13, fontWeight: 600, color: V.night, margin: "0 0 4px" }}>{item.generated_blog.title}</p>
-                <p style={{ fontSize: 11, color: V.ash, margin: "0 0 8px", fontStyle: "italic" }}>{item.generated_blog.meta_description}</p>
-                <p style={{ fontSize: 12, color: V.night, margin: "0 0 6px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{item.generated_blog.body}</p>
-                <button onClick={() => navigator.clipboard.writeText(`${item.generated_blog.title}\n\n${item.generated_blog.body}`)} style={{ fontSize: 10, color: V.teal, background: "none", border: `1px solid ${V.teal}`, borderRadius: 4, padding: "3px 8px", cursor: "pointer" }}>Copiar blog</button>
-              </div>
-            )}
-
-            {/* Generated instagram content */}
-            {item.generated_instagram && (
-              <div style={{ background: V.cloud, borderRadius: 8, padding: "10px 12px", marginTop: 8 }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: "#78716C", marginBottom: 6 }}>📸 POST INSTAGRAM GERADO</div>
-                <p style={{ fontSize: 12, color: V.night, margin: "0 0 6px", lineHeight: 1.6 }}>{item.generated_instagram.caption}</p>
-                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" as const, marginBottom: 6 }}>
-                  {(item.generated_instagram.hashtags || []).map((h: string, hi: number) => (
-                    <span key={hi} style={{ fontSize: 10, color: "#78716C", background: "rgba(139,92,246,0.08)", padding: "1px 6px", borderRadius: 4 }}>{h}</span>
-                  ))}
-                </div>
-                {item.generated_instagram.visual_suggestion && (
-                  <p style={{ fontSize: 11, color: V.ash, margin: "0 0 6px", fontStyle: "italic" }}>🖼 {item.generated_instagram.visual_suggestion}</p>
+            {/* Generated content — collapsible */}
+            {(item.generated_blog || item.generated_instagram) && (
+              <Section title="Conteúdo gerado" defaultOpen={false}>
+                {item.generated_blog && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontFamily: V.mono, fontSize: 9, color: V.teal, letterSpacing: "0.06em", marginBottom: 6 }}>BLOG POST</div>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: V.night, margin: "0 0 4px" }}>{item.generated_blog.title}</p>
+                    <p style={{ fontSize: 11, color: V.ash, margin: "0 0 8px", fontStyle: "italic" }}>{item.generated_blog.meta_description}</p>
+                    <p style={{ fontSize: 12, color: V.night, margin: "0 0 8px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{item.generated_blog.body}</p>
+                    <button onClick={() => navigator.clipboard.writeText(`${item.generated_blog.title}\n\n${item.generated_blog.body}`)} style={{ fontSize: 11, color: V.teal, background: "none", border: `1px solid ${V.teal}`, borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Copiar blog</button>
+                  </div>
                 )}
-                <button onClick={() => navigator.clipboard.writeText(item.generated_instagram.caption)} style={{ fontSize: 10, color: "#78716C", background: "none", border: "1px solid #78716C", borderRadius: 4, padding: "3px 8px", cursor: "pointer" }}>Copiar legenda</button>
-              </div>
+                {item.generated_instagram && (
+                  <div>
+                    <div style={{ fontFamily: V.mono, fontSize: 9, color: V.slate, letterSpacing: "0.06em", marginBottom: 6 }}>POST INSTAGRAM</div>
+                    <p style={{ fontSize: 12, color: V.night, margin: "0 0 6px", lineHeight: 1.6 }}>{item.generated_instagram.caption}</p>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" as const, marginBottom: 6 }}>
+                      {(item.generated_instagram.hashtags || []).map((h: string, hi: number) => (
+                        <span key={hi} style={{ fontSize: 10, color: V.slate, background: `${V.slate}12`, padding: "1px 6px", borderRadius: 4 }}>{h}</span>
+                      ))}
+                    </div>
+                    <button onClick={() => navigator.clipboard.writeText(item.generated_instagram.caption)} style={{ fontSize: 11, color: V.slate, background: "none", border: `1px solid ${V.slate}`, borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Copiar legenda</button>
+                  </div>
+                )}
+              </Section>
             )}
             {item.verification && !item.completed && (
               <p style={{ fontSize: 11, color: V.teal, margin: 0,
@@ -1307,7 +1306,9 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
               <Spinner text="Preparando suas ações semanais..." />
             ) : (
               <div>
-                <RelatorioSetorialBlock relatorio={activePlan?.content?.relatorioSetorial} />
+                <Section title="Contexto Semanal" defaultOpen={false}>
+                  <RelatorioSetorialBlock relatorio={activePlan?.content?.relatorioSetorial} />
+                </Section>
 
                 <Section title="Posts desta semana" defaultOpen={true}>
                   <ContentsSection leadId={lead.id} tier={tier} />
