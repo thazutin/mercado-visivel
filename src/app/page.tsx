@@ -487,107 +487,134 @@ export default function Home() {
         </p>
       </Section>
 
-      {/* ═══ SECTION 4 — O QUE VOCÊ VAI VER ═══ */}
+      {/* ═══ SECTION 4 — EXEMPLO REAL ═══ */}
       <Section bg={V.white}>
         <SectionLabel>exemplo real</SectionLabel>
         <div style={{ textAlign: "center", marginBottom: 36 }}>
           <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 10px", lineHeight: 1.25 }}>
-            O que você recebe em 30 segundos
+            O que acontece quando você roda o diagnóstico
           </h2>
           <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.6, margin: 0 }}>
-            Dados reais do seu mercado. Não genéricos — seus.
+            Dados reais. Ações concretas. Conteúdo pronto.
           </p>
         </div>
 
-        {/* Mockup — reflete o produto real */}
-        <div style={{
-          border: `1px solid ${V.fog}`, borderRadius: 16, overflow: "hidden",
-          boxShadow: "0 8px 40px rgba(0,0,0,0.06)",
-        }}>
-          <div style={{ background: V.cloud, padding: "10px 18px", borderBottom: `1px solid ${V.fog}` }}>
-            <span style={{ fontFamily: V.mono, fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase" as const, color: V.ash }}>
-              EXEMPLO · CLÍNICA DE ESTÉTICA · AV. PAULISTA
-            </span>
+        <div style={{ border: `1px solid ${V.fog}`, borderRadius: 16, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,0.06)" }}>
+          {/* ─── BLOCO 1: DIAGNÓSTICO ─── */}
+          <div style={{ background: V.night, padding: "32px 24px", textAlign: "center" }}>
+            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.08em", marginBottom: 16 }}>DIAGNÓSTICO GRATUITO · 30 SEGUNDOS</div>
+            <div style={{ fontSize: 56, fontWeight: 800, color: V.amber, lineHeight: 1, fontFamily: V.display, marginBottom: 8 }}>+153</div>
+            <div style={{ fontSize: 16, color: V.mist, marginBottom: 20 }}>pessoas a mais por mês conhecendo o seu negócio</div>
+            <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 20px", textAlign: "left" }}>
+              <p style={{ fontSize: 13, color: V.mist, lineHeight: 1.7, margin: 0 }}>
+                Seu mercado tem <strong style={{ color: V.white }}>2 mil pessoas</strong> no raio de 1km. Hoje você disputa <strong style={{ color: V.white }}>29%</strong> dessa atenção.
+                Com as ações certas, pode chegar a <strong style={{ color: V.amber }}>42%</strong> — sem investimento adicional em mídia.
+                São <strong style={{ color: V.amber }}>350 buscas por mês</strong> por esse serviço na sua região, com <strong style={{ color: V.white }}>14 concorrentes</strong> disputando.
+              </p>
+            </div>
           </div>
 
-          <div style={{ padding: "24px 20px" }}>
-            {/* ─── DIAGNÓSTICO (Grátis) ─── */}
-            <div style={{ fontFamily: V.mono, fontSize: 9, color: V.teal, letterSpacing: "0.06em", marginBottom: 8 }}>DIAGNÓSTICO · GRÁTIS</div>
+          {/* ─── BLOCO 2: PLANO DE AÇÃO ─── */}
+          <div style={{ padding: "24px", borderTop: `2px solid ${V.amber}` }}>
+            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.06em", marginBottom: 12 }}>PLANO DE AÇÃO · R$497</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, marginBottom: 16 }}>15 ações priorizadas com conteúdo pronto</div>
 
-            {/* Hero — Oportunidade */}
-            <div style={{ background: V.night, borderRadius: 14, padding: "24px 18px", marginBottom: 10, textAlign: "center" }}>
-              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12 }}>Oportunidade identificada</div>
-              <div style={{ fontSize: 48, fontWeight: 800, color: V.amber, lineHeight: 1, fontFamily: V.display, letterSpacing: "-0.03em", marginBottom: 8 }}>+153</div>
-              <div style={{ fontSize: 14, color: V.mist }}>pessoas a mais por mês conhecendo o seu negócio</div>
+            {/* Exemplo de ação COM conteúdo gerado */}
+            <div style={{ background: V.cloud, borderRadius: 12, padding: "16px", marginBottom: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>Responder 88 avaliações do Google</span>
+                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.white, padding: "2px 8px", borderRadius: 100 }}>~15 min</span>
+              </div>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 10px" }}>0% de resposta vs 85% dos concorrentes — respostas aumentam confiança em 40%.</p>
+              <div style={{ background: V.white, borderRadius: 8, padding: "12px", borderLeft: `3px solid ${V.amber}` }}>
+                <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, marginBottom: 6 }}>CONTEÚDO GERADO</div>
+                <p style={{ fontSize: 12, color: V.night, margin: "0 0 4px", lineHeight: 1.5 }}>
+                  <strong>★5 — Elogio ao produto:</strong> "Que bom que gostou da nossa margherita especial, João! A massa fermentada por 24h faz toda diferença. Esperamos você de volta!"
+                </p>
+                <p style={{ fontSize: 12, color: V.night, margin: "0 0 4px", lineHeight: 1.5 }}>
+                  <strong>★3 — Feedback construtivo:</strong> "Maria, obrigado pelo retorno. Sentimos muito pela demora na sexta — estávamos com casa cheia. Melhoramos o processo e adoraria que voltasse para conferir."
+                </p>
+                <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontStyle: "italic" }}>+ 86 respostas personalizadas prontas para copiar</p>
+              </div>
             </div>
 
-            {/* Dados resumo */}
-            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-              {[
-                { label: "Posição", value: "29/100" },
-                { label: "Mercado", value: "2 mil" },
-                { label: "Buscas", value: "350/mês" },
-                { label: "Concorrência", value: "14" },
-              ].map((d, i) => (
-                <div key={i} style={{ flex: 1, background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px 8px", textAlign: "center" }}>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: V.night }}>{d.value}</div>
-                  <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono }}>{d.label}</div>
-                </div>
-              ))}
+            {/* Segundo exemplo */}
+            <div style={{ background: V.cloud, borderRadius: 12, padding: "16px", marginBottom: 12 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 8 }}>Criar site simples com cardápio</div>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 10px" }}>67% dos clientes pesquisam cardápio online antes de pedir.</p>
+              <div style={{ background: V.white, borderRadius: 8, padding: "12px", borderLeft: `3px solid ${V.amber}` }}>
+                <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, marginBottom: 6 }}>CONTEÚDO GERADO</div>
+                <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.5 }}>
+                  Estrutura completa: página inicial com headline pronta, seção "Sobre" (200 palavras), cardápio por categorias, SEO local configurado. Plataforma recomendada: Carrd.co (gratuito).
+                </p>
+              </div>
+            </div>
+            <p style={{ fontSize: 10, color: V.ash, textAlign: "center", fontFamily: V.mono }}>+ 13 ações adicionais, cada uma com conteúdo pronto para copiar</p>
+          </div>
+
+          {/* ─── BLOCO 3: AÇÕES SEMANAIS ─── */}
+          <div style={{ padding: "24px", borderTop: `2px solid ${V.slate}`, background: V.cloud }}>
+            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.slate, letterSpacing: "0.06em", marginBottom: 12 }}>AÇÕES SEMANAIS · R$99/MÊS</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, marginBottom: 12 }}>Toda sexta-feira no seu painel</div>
+
+            {/* Preview de post semanal */}
+            <div style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "14px", marginBottom: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <span style={{ fontSize: 10, color: "#E1306C", fontWeight: 600, background: "rgba(225,48,108,0.08)", padding: "2px 8px", borderRadius: 100 }}>Instagram Feed</span>
+                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>segunda às 19h</span>
+              </div>
+              <p style={{ fontSize: 13, fontWeight: 700, color: V.night, margin: "0 0 6px", lineHeight: 1.4 }}>
+                São Paulo tem mais de 6 mil pizzarias, mas apenas 15% fazem massa fresca diariamente.
+              </p>
+              <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
+                Aqui na Aggregati, no coração do Sumarezinho, nossa massa é preparada toda manhã. Zero conservantes, zero pressa...
+              </p>
             </div>
 
-            {/* Pilares — só scores, sem ações */}
-            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-              {[
-                { label: "Visibilidade", score: 21, color: V.teal },
-                { label: "Credibilidade", score: 48, color: V.amber },
-                { label: "Presença Digital", score: 0, color: V.slate },
-              ].map((p, i) => (
-                <div key={i} style={{ flex: 1, background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px 8px", textAlign: "center" }}>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: p.color }}>{p.score}</div>
-                  <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono }}>{p.label}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Separador — PLANO DE AÇÃO */}
-            <div style={{ borderTop: `2px solid ${V.amber}`, paddingTop: 16, marginBottom: 10 }}>
-              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, letterSpacing: "0.06em", marginBottom: 8 }}>PLANO DE AÇÃO · R$497</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 8 }}>Como chegar lá — 15 ações priorizadas</div>
-              {[
-                { action: "Responder todas as 88 avaliações do Google", tag: "~15 min", detail: "0% de resposta vs 85% dos concorrentes" },
-                { action: "Adicionar 15 fotos profissionais no Maps", tag: "~1 hora", detail: "10 fotos vs concorrentes com 30+" },
-                { action: "Criar perfil profissional no Instagram", tag: "~1 hora", detail: "Presença Digital zerada — 350 buscas/mês sem você" },
-              ].map((item, i) => (
-                <div key={i} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "12px 14px", marginBottom: 6 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: V.night }}>{item.action}</span>
-                    <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.fog, padding: "2px 6px", borderRadius: 100 }}>{item.tag}</span>
-                  </div>
-                  <p style={{ fontSize: 11, color: V.zinc, margin: "0 0 6px" }}>{item.detail}</p>
-                  <div style={{ background: V.cloud, borderRadius: 6, padding: "8px 10px", textAlign: "center", fontSize: 12, fontWeight: 600, color: V.night }}>Gerar conteúdo</div>
-                </div>
-              ))}
-              <p style={{ fontSize: 10, color: V.ash, textAlign: "center", margin: "4px 0 0", fontFamily: V.mono }}>+ 12 ações adicionais no plano completo</p>
-            </div>
-
-            {/* Separador — AÇÕES SEMANAIS */}
-            <div style={{ borderTop: `2px solid ${V.slate}`, paddingTop: 16 }}>
-              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.slate, letterSpacing: "0.06em", marginBottom: 8 }}>AÇÕES SEMANAIS · R$99/MÊS</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 8 }}>Toda sexta-feira no seu painel</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {[
-                  "Contexto do mercado: indicadores macro, tendências do setor, oportunidades locais",
-                  "5 posts prontos: arco narrativo da semana — autoridade, prova social, bastidores",
-                  "3 briefings estratégicos: equipe, agência e parceiros — conectados ao momento",
-                ].map((text, i) => (
-                  <div key={i} style={{ background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px 14px", fontSize: 12, color: V.zinc, lineHeight: 1.5 }}>
-                    {text}
-                  </div>
-                ))}
+            <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ flex: 1, background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px", textAlign: "center" }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: V.night }}>5</div>
+                <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono }}>posts prontos</div>
+              </div>
+              <div style={{ flex: 1, background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px", textAlign: "center" }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: V.night }}>3</div>
+                <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono }}>briefings</div>
+              </div>
+              <div style={{ flex: 1, background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px", textAlign: "center" }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: V.night }}>1</div>
+                <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono }}>relatório mercado</div>
               </div>
             </div>
           </div>
+        </div>
+      </Section>
+
+      {/* ═══ CARROSSEL — Cards reais ═══ */}
+      <Section bg={V.cloud}>
+        <SectionLabel>negócios analisados</SectionLabel>
+        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
+          Oportunidades reais que encontramos
+        </h2>
+        <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.6, margin: "0 0 24px" }}>
+          Cada card foi gerado com dados reais. O seu negócio é o próximo.
+        </p>
+        <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 12, scrollSnapType: "x mandatory" as const }}>
+          {[
+            "ChIJ_57xDoFZzpQRMD6HedKuTS8",
+            "ChIJLfTYPcRZzpQRbhlYxQghM7U",
+            "ChIJn59eeNRZzpQRzedhoxyWCZc",
+            "ChIJoaNr7LJZzpQRHdkujlC1wKI",
+            "ChIJMeqxOtdZzpQRTl-pVPIQwNQ",
+          ].map((id) => (
+            <div key={id} style={{ flexShrink: 0, width: 280, scrollSnapAlign: "start" as const }}>
+              <img
+                src={`/cards/${id}.png`}
+                alt="Análise Virô"
+                style={{ width: "100%", borderRadius: 12, boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}
+                loading="lazy"
+              />
+            </div>
+          ))}
         </div>
       </Section>
 
