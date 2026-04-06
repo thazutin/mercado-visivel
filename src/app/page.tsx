@@ -511,59 +511,80 @@ export default function Home() {
           </div>
 
           <div style={{ padding: "24px 20px" }}>
+            {/* ─── DIAGNÓSTICO (Grátis) ─── */}
+            <div style={{ fontFamily: V.mono, fontSize: 9, color: V.teal, letterSpacing: "0.06em", marginBottom: 8 }}>DIAGNÓSTICO · GRÁTIS</div>
+
             {/* Hero — Oportunidade */}
-            <div style={{ background: V.night, borderRadius: 14, padding: "24px 18px", marginBottom: 12, textAlign: "center" }}>
-              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12 }}>
-                Oportunidade identificada
-              </div>
-              <div style={{ fontSize: 48, fontWeight: 800, color: V.amber, lineHeight: 1, fontFamily: V.display, letterSpacing: "-0.03em", marginBottom: 8 }}>
-                +153
-              </div>
-              <div style={{ fontSize: 14, color: V.mist, lineHeight: 1.5 }}>
-                pessoas a mais por mês conhecendo o seu negócio
-              </div>
+            <div style={{ background: V.night, borderRadius: 14, padding: "24px 18px", marginBottom: 10, textAlign: "center" }}>
+              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12 }}>Oportunidade identificada</div>
+              <div style={{ fontSize: 48, fontWeight: 800, color: V.amber, lineHeight: 1, fontFamily: V.display, letterSpacing: "-0.03em", marginBottom: 8 }}>+153</div>
+              <div style={{ fontSize: 14, color: V.mist }}>pessoas a mais por mês conhecendo o seu negócio</div>
             </div>
 
-            {/* Slider — Posição competitiva */}
-            <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "18px 16px", marginBottom: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: V.night, marginBottom: 12, textAlign: "center" }}>Qual fatia do seu mercado você disputa hoje?</div>
-              <div style={{ position: "relative", height: 6, background: V.fog, borderRadius: 3, marginBottom: 8 }}>
-                <div style={{ position: "absolute", left: 0, top: 0, height: "100%", borderRadius: 3, background: `linear-gradient(90deg, ${V.teal}90, ${V.amberSoft}70)`, width: "42%" }} />
-                <div style={{ position: "absolute", left: "29%", top: -5, width: 16, height: 16, borderRadius: "50%", background: V.teal, border: `2px solid ${V.white}`, boxShadow: "0 1px 3px rgba(0,0,0,0.12)" }} />
-                <div style={{ position: "absolute", left: "42%", top: -4, width: 14, height: 14, borderRadius: "50%", background: V.white, border: `2px dashed ${V.amber}` }} />
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
-                <span><span style={{ color: V.ash, fontSize: 9 }}>hoje </span><span style={{ fontWeight: 800, color: V.teal, fontSize: 18 }}>29</span></span>
-                <span><span style={{ fontWeight: 800, color: V.amber, fontSize: 18 }}>42</span><span style={{ color: V.ash, fontSize: 9 }}> potencial</span></span>
-              </div>
+            {/* Dados resumo */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+              {[
+                { label: "Posição", value: "29/100" },
+                { label: "Mercado", value: "2 mil" },
+                { label: "Buscas", value: "350/mês" },
+                { label: "Concorrência", value: "14" },
+              ].map((d, i) => (
+                <div key={i} style={{ flex: 1, background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px 8px", textAlign: "center" }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: V.night }}>{d.value}</div>
+                  <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono }}>{d.label}</div>
+                </div>
+              ))}
             </div>
 
-            {/* Pilares — Como chegar lá */}
-            <div style={{ fontSize: 12, fontWeight: 600, color: V.slate, marginBottom: 8 }}>Como chegar lá</div>
-            {[
-              { label: "Visibilidade", score: 21, color: V.teal, action: "Adicionar descrição detalhada no Google Meu Negócio" },
-              { label: "Credibilidade", score: 48, color: V.amber, action: "Criar rotina de resposta às avaliações — 100% em 24h" },
-              { label: "Presença Digital", score: 0, color: V.slate, action: "Criar perfil profissional no Instagram" },
-            ].map((p, i) => (
-              <div key={i} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "12px 14px", marginBottom: 6 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: V.night, marginBottom: 4 }}>{p.label}: <span style={{ color: p.color }}>{p.score}</span></div>
-                <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>{p.action}</p>
-              </div>
-            ))}
+            {/* Pilares — só scores, sem ações */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              {[
+                { label: "Visibilidade", score: 21, color: V.teal },
+                { label: "Credibilidade", score: 48, color: V.amber },
+                { label: "Presença Digital", score: 0, color: V.slate },
+              ].map((p, i) => (
+                <div key={i} style={{ flex: 1, background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px 8px", textAlign: "center" }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: p.color }}>{p.score}</div>
+                  <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono }}>{p.label}</div>
+                </div>
+              ))}
+            </div>
 
-            {/* Mercado potencial */}
-            <div style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "14px", marginTop: 8 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 6 }}>
-                <span style={{ color: V.zinc }}>Mercado potencial</span>
-                <span style={{ fontWeight: 700, color: V.night }}>2 mil pessoas</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 6 }}>
-                <span style={{ color: V.zinc }}>Demanda ativa</span>
-                <span style={{ fontWeight: 700, color: V.night }}>350 buscas/mês</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
-                <span style={{ color: V.zinc }}>Concorrência</span>
-                <span style={{ fontWeight: 700, color: V.night }}>14 negócios mapeados</span>
+            {/* Separador — PLANO DE AÇÃO */}
+            <div style={{ borderTop: `2px solid ${V.amber}`, paddingTop: 16, marginBottom: 10 }}>
+              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, letterSpacing: "0.06em", marginBottom: 8 }}>PLANO DE AÇÃO · R$497</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 8 }}>Como chegar lá — 15 ações priorizadas</div>
+              {[
+                { action: "Responder todas as 88 avaliações do Google", tag: "~15 min", detail: "0% de resposta vs 85% dos concorrentes" },
+                { action: "Adicionar 15 fotos profissionais no Maps", tag: "~1 hora", detail: "10 fotos vs concorrentes com 30+" },
+                { action: "Criar perfil profissional no Instagram", tag: "~1 hora", detail: "Presença Digital zerada — 350 buscas/mês sem você" },
+              ].map((item, i) => (
+                <div key={i} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "12px 14px", marginBottom: 6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: V.night }}>{item.action}</span>
+                    <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.fog, padding: "2px 6px", borderRadius: 100 }}>{item.tag}</span>
+                  </div>
+                  <p style={{ fontSize: 11, color: V.zinc, margin: "0 0 6px" }}>{item.detail}</p>
+                  <div style={{ background: V.cloud, borderRadius: 6, padding: "8px 10px", textAlign: "center", fontSize: 12, fontWeight: 600, color: V.night }}>Gerar conteúdo</div>
+                </div>
+              ))}
+              <p style={{ fontSize: 10, color: V.ash, textAlign: "center", margin: "4px 0 0", fontFamily: V.mono }}>+ 12 ações adicionais no plano completo</p>
+            </div>
+
+            {/* Separador — AÇÕES SEMANAIS */}
+            <div style={{ borderTop: `2px solid ${V.slate}`, paddingTop: 16 }}>
+              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.slate, letterSpacing: "0.06em", marginBottom: 8 }}>AÇÕES SEMANAIS · R$99/MÊS</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 8 }}>Toda sexta-feira no seu painel</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {[
+                  "Contexto do mercado: indicadores macro, tendências do setor, oportunidades locais",
+                  "5 posts prontos: arco narrativo da semana — autoridade, prova social, bastidores",
+                  "3 briefings estratégicos: equipe, agência e parceiros — conectados ao momento",
+                ].map((text, i) => (
+                  <div key={i} style={{ background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px 14px", fontSize: 12, color: V.zinc, lineHeight: 1.5 }}>
+                    {text}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
