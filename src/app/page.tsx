@@ -602,26 +602,10 @@ export default function Home() {
           {[
             // Pizzaria — São Paulo
             "ChIJT_hKLcBZzpQR_DXAu2tj7fg",
-            "ChIJJ--IeftXzpQRvnflvmEVs88",
-            "ChIJ-zbGG_tXzpQRT467rAOz9-o",
             "ChIJafL6lbRXzpQR_uL1LS6YHqM",
-            "ChIJn59eeNRZzpQRzedhoxyWCZc",
-            // Clínica estética
-            "ChIJwblXdZLPyJQRYEU85ldSb2Q",
-            "ChIJp53le3p_mQAR6Uu_9xqGECA",
-            "ChIJJ7pmDVYDFgcRR-_S9ByNa64",
-            // Odontologia
-            "ChIJu5DAGfhLxwcRpmbVia4U45E",
-            "ChIJrTSUUl5pzpQRpHoFGRlaonc",
-            "ChIJk3RVzU_PyJQRWR_qBDwiZ8c",
-            // Academia/Studio
-            "ChIJ816cuHJ_mQARkjl5jJbqOPo",
-            "ChIJs8aVd5kbFgcRVkhYkcpJ02U",
-            "ChIJKYhQyBVPxwcRb4Pd0Oi9ilY",
-            // Salão/Barbearia
-            "ChIJxVBhN1xpzpQRrO8GfQ9yBas",
-            "ChIJV2E7cDTHyJQReAGb4F_J2uk",
-            "ChIJ-2Fjej_VmwARfNQz2hTpBzk",
+            "ChIJJ--IeftXzpQRvnflvmEVs88",
+            "ChIJZ-k7vfxXzpQRaDkvzVYxJNc",
+            "ChIJO-3dqidazpQR8grH25DryHA",
           ].map((id) => (
             <div key={id} style={{ flexShrink: 0, width: 280, scrollSnapAlign: "start" as const }}>
               <img
