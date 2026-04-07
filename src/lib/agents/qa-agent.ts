@@ -49,7 +49,8 @@ export async function runDataChecks(): Promise<{ checks: CheckResult[]; testLead
       checks.push({ name: 'CHECK 1 — Pipeline', status: 'fail', detail: `API returned ${diagRes.status}: ${text.slice(0, 200)}`, durationMs: Date.now() - t0 });
     } else {
       const diagData = await diagRes.json();
-      testLeadId = diagData.leadId || null;
+      // /api/diagnose retorna `lead_id` (snake_case). Aceita ambos por defesa.
+      testLeadId = diagData.lead_id || diagData.leadId || null;
 
       if (!testLeadId) {
         checks.push({ name: 'CHECK 1 — Pipeline', status: 'fail', detail: 'API returned ok but no leadId', durationMs: Date.now() - t0 });
