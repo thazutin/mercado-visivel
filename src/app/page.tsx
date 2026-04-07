@@ -600,11 +600,12 @@ export default function Home() {
         </p>
         <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 12, scrollSnapType: "x mandatory" as const }}>
           {[
-            "ChIJ_57xDoFZzpQRMD6HedKuTS8",
-            "ChIJLfTYPcRZzpQRbhlYxQghM7U",
-            "ChIJn59eeNRZzpQRzedhoxyWCZc",
-            "ChIJoaNr7LJZzpQRHdkujlC1wKI",
-            "ChIJMeqxOtdZzpQRTl-pVPIQwNQ",
+            // Pizzaria — São Paulo
+            "ChIJT_hKLcBZzpQR_DXAu2tj7fg",
+            "ChIJafL6lbRXzpQR_uL1LS6YHqM",
+            "ChIJJ--IeftXzpQRvnflvmEVs88",
+            "ChIJZ-k7vfxXzpQRaDkvzVYxJNc",
+            "ChIJO-3dqidazpQR8grH25DryHA",
           ].map((id) => (
             <div key={id} style={{ flexShrink: 0, width: 280, scrollSnapAlign: "start" as const }}>
               <img

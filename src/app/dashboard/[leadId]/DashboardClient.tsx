@@ -1244,17 +1244,8 @@ function ContentsSection({ leadId, tier }: { leadId: string; tier: Tier }) {
     );
   }
 
-  const nextFridayStr = nextFriday;
-
   return (
     <div>
-      <div style={{
-        background: V.amberWash, border: `1px solid ${V.amber}30`,
-        borderRadius: 10, padding: "12px 16px", marginBottom: 16, fontSize: 12, color: V.amber, fontWeight: 500,
-      }}>
-        Próximo update: sexta-feira, {nextFridayStr}
-      </div>
-
       {/* Semana atual */}
       <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.05em", marginBottom: 10 }}>
         SEMANA {latestWeek || '—'}
@@ -1436,6 +1427,18 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
               <Spinner text="Preparando suas ações semanais..." />
             ) : (
               <div>
+                {/* Banner "Próximo update" — acima de todos os blocos, pois tudo se atualiza semanalmente */}
+                <div style={{
+                  background: V.amberWash, border: `1px solid ${V.amber}30`,
+                  borderRadius: 10, padding: "12px 16px", marginBottom: 16, fontSize: 12, color: V.amber, fontWeight: 500,
+                }}>
+                  Próximo update: {(() => {
+                    const d = new Date();
+                    d.setDate(d.getDate() + ((5 - d.getDay() + 7) % 7 || 7));
+                    return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+                  })()}
+                </div>
+
                 <Section title="Contexto Semanal" defaultOpen={false}>
                   <RelatorioSetorialBlock relatorio={activePlan?.content?.relatorioSetorial} />
                 </Section>

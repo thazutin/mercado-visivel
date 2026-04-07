@@ -101,22 +101,6 @@ Gere um GUIA PRÁTICO completo:
 
 JSON: {"type":"practical_guide","title":"Guia: Sistema de feedback com QR Code","steps":[{"step":"1. Gerar QR Code","detail":"Acesse google.com/maps, busque seu negócio, clique em Compartilhar...","tools":"Google Maps, QR Code Generator (gratuito)"},...],"templates":["texto pronto 1 para plaquinha","texto pronto 2"],"tips":["dica 1","dica 2"]}`;
 
-  } else if (/instagram|perfil|bio|post|stories|reels/i.test(actionFull)) {
-    // ─── INSTAGRAM: bio + primeiros posts ───
-    prompt = `${contextBlock}
-
-Você é um social media manager especialista em negócios locais. O negócio "${negocio}" (${lead.product}) precisa configurar/melhorar seu Instagram.
-
-Gere:
-1. BIO PRONTA (150 chars max) com localização, proposta de valor e CTA
-2. Nome de usuário sugerido (3 opções)
-3. 5 PRIMEIROS POSTS com legenda completa + hashtags + sugestão de visual
-4. Calendário sugerido (dia e horário para cada post)
-
-Os posts devem seguir arco: apresentação → produto → bastidores → prova social → oferta.
-
-JSON: {"type":"instagram_setup","title":"Setup do Instagram","bio":"bio pronta","username_options":["opção1","opção2","opção3"],"posts":[{"order":1,"theme":"Apresentação","caption":"legenda completa","hashtags":["#tag1"],"visual":"descrição da foto/vídeo","best_day":"segunda 19h"},...],"tips":["dica 1","dica 2"]}`;
-
   } else if (/site|página|landing|cardápio|menu|pedido.*online|delivery.*site|sistema.*pedido/i.test(actionFull)) {
     // ─── SITE / SISTEMA ONLINE: estrutura + como criar + links externos ───
     prompt = `${contextBlock}
@@ -146,8 +130,8 @@ Gere um GUIA PRÁTICO com:
 
 JSON: {"type":"site_structure","title":"Como criar o site de ${negocio}","steps":[{"step":"1. Escolher plataforma","detail":"Recomendação + link + por quê","tools":"nome (link)","time":"30 min"}],"pages":[{"page":"Início","headline":"...","subheadline":"...","cta":"...","body":"texto completo"}],"seo":{"title_tag":"...","meta_description":"...","keywords":["..."]},"external_links":[{"name":"Carrd.co","url":"https://carrd.co","why":"Site simples gratuito"}],"tips":["dica 1","dica 2"]}`;
 
-  } else if (/google|maps|ficha|título|descri[cç]/i.test(actionFull)) {
-    // ─── GOOGLE MAPS: textos para o perfil ───
+  } else if (/google\s*meu\s*neg[óo]cio|google\s*business|gmb|google\s*maps|google\s*ficha|maps\s*ficha|ficha\s*google|otimiza.*google|título.*google|descri[cç].*google|categoria.*google|gmn/i.test(actionFull)) {
+    // ─── GOOGLE MAPS / GMB: textos para o perfil ───
     prompt = `${contextBlock}
 
 Você é um especialista em Google Meu Negócio. O negócio "${negocio}" (${lead.product}) precisa otimizar seu perfil.
@@ -159,7 +143,23 @@ Gere TEXTOS PRONTOS para o perfil:
 4. Categorias sugeridas (principal + secundárias)
 5. Atributos recomendados
 
-JSON: {"type":"maps_optimization","title":"Otimização do Google Maps","profile":{"title":"...","description":"...","categories":["principal","secundária1"],"attributes":["Wi-Fi","Estacionamento"]},"posts":[{"title":"...","body":"...","cta":"Saiba mais"},...],"tips":["dica 1","dica 2"]}`;
+JSON: {"type":"maps_optimization","title":"Google Meu Negócio — textos prontos","profile":{"title":"...","description":"...","categories":["principal","secundária1"],"attributes":["Wi-Fi","Estacionamento"]},"posts":[{"title":"...","body":"...","cta":"Saiba mais"},...],"tips":["dica 1","dica 2"]}`;
+
+  } else if (/instagram|\binsta\b|bio.*instagram|stories|reels|hashtag/i.test(actionFull)) {
+    // ─── INSTAGRAM: bio + primeiros posts ───
+    prompt = `${contextBlock}
+
+Você é um social media manager especialista em negócios locais. O negócio "${negocio}" (${lead.product}) precisa configurar/melhorar seu Instagram.
+
+Gere:
+1. BIO PRONTA (150 chars max) com localização, proposta de valor e CTA
+2. Nome de usuário sugerido (3 opções)
+3. 5 PRIMEIROS POSTS com legenda completa + hashtags + sugestão de visual
+4. Calendário sugerido (dia e horário para cada post)
+
+Os posts devem seguir arco: apresentação → produto → bastidores → prova social → oferta.
+
+JSON: {"type":"instagram_setup","title":"Setup do Instagram","bio":"bio pronta","username_options":["opção1","opção2","opção3"],"posts":[{"order":1,"theme":"Apresentação","caption":"legenda completa","hashtags":["#tag1"],"visual":"descrição da foto/vídeo","best_day":"segunda 19h"},...],"tips":["dica 1","dica 2"]}`;
 
   } else if (/youtube|canal|vídeo|video|roteiro/i.test(actionFull)) {
     // ─── YOUTUBE: roteiros prontos ───

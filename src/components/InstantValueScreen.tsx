@@ -166,7 +166,17 @@ export default function InstantValueScreen({ product, region, results: initialRe
   const [enriching, setEnriching] = useState(
     (initialResults as any).enrichmentStatus === 'pending'
   );
+  const [enrichSecondsLeft, setEnrichSecondsLeft] = useState(120);
   useEffect(() => { setTimeout(() => setShow(true), 100); }, []);
+
+  // Countdown timer for enrichment ETA
+  useEffect(() => {
+    if (!enriching) return;
+    const tick = setInterval(() => {
+      setEnrichSecondsLeft(s => Math.max(0, s - 1));
+    }, 1000);
+    return () => clearInterval(tick);
+  }, [enriching]);
 
   // Poll for enrichment updates when data is still being collected
   useEffect(() => {
@@ -358,7 +368,16 @@ export default function InstantValueScreen({ product, region, results: initialRe
         {enriching && (
           <div style={{ background: V.amberWash, borderRadius: 10, padding: "10px 14px", marginBottom: 16, border: `1px solid rgba(180,83,9,0.15)`, fontSize: 12, color: V.amber, lineHeight: 1.5, display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ width: 12, height: 12, border: `2px solid ${V.fog}`, borderTopColor: V.amber, borderRadius: "50%", animation: "spin 0.8s linear infinite", flexShrink: 0 }} />
-            Coletando dados de Instagram, posicionamento no Google e visibilidade em IA. Atualizamos automaticamente.
+            <span>
+              Coletando dados de Instagram, posicionamento no Google e visibilidade em IA.{" "}
+              {enrichSecondsLeft > 0 ? (
+                <>
+                  Conclusão em <strong>~{Math.ceil(enrichSecondsLeft / 10) * 10}s</strong> — a página atualiza sozinha e os números podem mudar.
+                </>
+              ) : (
+                <>Finalizando — a página atualiza sozinha.</>
+              )}
+            </span>
           </div>
         )}
 
@@ -466,10 +485,13 @@ export default function InstantValueScreen({ product, region, results: initialRe
                   <span style={{ fontFamily: V.mono, fontSize: 8, color: V.amber }}>Meta: {pilarPotencial}</span>
                 </div>
               </div>
-              <p style={{ fontSize: 12, color: V.night, margin: "0 0 6px", lineHeight: 1.5, fontWeight: 500 }}>{lever?.action || p.fallback}</p>
+              <div style={{ display: "inline-block", padding: "2px 6px", background: V.amberWash, borderRadius: 3, fontSize: 8, color: V.amber, fontWeight: 700, fontFamily: V.mono, letterSpacing: "0.05em", marginTop: 4, marginBottom: 4 }}>AMOSTRA · 1 DE 5 AÇÕES</div>
+              <p style={{ fontSize: 12, color: V.night, margin: "0 0 4px", lineHeight: 1.5, fontWeight: 500 }}>{lever?.action || p.fallback}</p>
+              <p style={{ fontSize: 10, color: V.ash, margin: "0 0 6px", lineHeight: 1.4, fontStyle: "italic" }}>
+                No plano completo você recebe o passo-a-passo, textos prontos e ordem de execução.
+              </p>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div style={{ padding: "4px 8px", background: p.status.bg, borderRadius: 4, fontSize: 10, color: p.status.color, fontWeight: 500 }}>{p.status.text}</div>
-                <span style={{ fontSize: 9, color: V.ash, fontFamily: V.mono }}>1 de 5 ações no plano</span>
               </div>
             </div>
           );
