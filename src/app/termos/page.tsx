@@ -16,7 +16,7 @@ export default function TermosPage() {
         </a>
 
         <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Termos de Serviço</h1>
-        <p style={{ fontSize: 14, color: V.ash, marginBottom: 40 }}>Data de vigência: 10 de março de 2026</p>
+        <p style={{ fontSize: 14, color: V.ash, marginBottom: 40 }}>Data de vigência: 7 de abril de 2026</p>
 
         <section style={{ marginBottom: 36 }}>
           <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>1. O que é o Virô</h2>
@@ -36,6 +36,7 @@ export default function TermosPage() {
             <li><strong style={{ color: V.night }}>Diagnóstico gratuito de presença digital:</strong> score de influência por canal, comparativo com o mercado local e identificação de lacunas</li>
             <li><strong style={{ color: V.night }}>Diagnóstico completo pago:</strong> análise detalhada por canal (Google, Instagram, IA), dimensionamento de mercado, plano de ação com rotas priorizadas por prazo e esforço</li>
             <li><strong style={{ color: V.night }}>Módulo Google Ads:</strong> criação de rascunhos de campanhas de busca local e campanhas no Google Maps, com base nos termos de maior demanda do diagnóstico, diretamente na conta Google Ads do usuário</li>
+            <li><strong style={{ color: V.night }}>Módulo Google Business Profile (Agente Nelson para o Google Meu Negócio):</strong> após conexão via OAuth, o Virô executa, com aprovação do dono do negócio, ações no Perfil de Empresa do Google — publicação de Google Posts, resposta a avaliações e otimização da ficha (descrição, atributos, categorias, fotos, horários). Inclui janela de 30 dias de operação inclusa no diagnóstico completo pago.</li>
           </ul>
         </section>
 
@@ -48,6 +49,48 @@ export default function TermosPage() {
             sugerido. O usuário mantém controle total: os rascunhos são criados em estado pausado e o usuário
             decide quando e como ativar. O Virô pode, mediante solicitação, acompanhar e otimizar campanhas
             ativas como parte de serviços de consultoria contínua.
+          </p>
+        </section>
+
+        <section style={{ marginBottom: 36 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>3.1. Google Business Profile (Google Meu Negócio) e execução de ações</h2>
+          <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc, marginBottom: 12 }}>
+            O módulo de Google Business Profile (também referido como "Agente Nelson para Google Meu Negócio")
+            só é ativado após conexão explícita do usuário ao seu Perfil de Empresa via OAuth 2.0, com escopo{" "}
+            <code>https://www.googleapis.com/auth/business.manage</code>. Após a conexão, o Virô pode realizar
+            as seguintes categorias de ações na ficha do negócio do usuário:
+          </p>
+          <ul style={{ fontSize: 15, lineHeight: 1.8, color: V.zinc, paddingLeft: 20, marginBottom: 12 }}>
+            <li>Criar e publicar Google Posts (novidades, ofertas, eventos)</li>
+            <li>Gerar e publicar respostas a avaliações de clientes</li>
+            <li>Sugerir e aplicar atualizações em descrição, atributos, categorias, serviços, fotos e horários</li>
+            <li>Responder perguntas (Q&A) recebidas pela ficha</li>
+          </ul>
+          <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc, marginBottom: 12 }}>
+            <strong style={{ color: V.night }}>Aprovação do dono do negócio:</strong> por padrão, toda ação
+            requer aprovação humana antes de ser publicada. O usuário pode opcionalmente configurar regras de
+            auto-publicação para categorias específicas (por exemplo, "responder automaticamente avaliações
+            5 estrelas"), e essas regras podem ser desativadas a qualquer momento. Toda ação executada é
+            registrada em log auditável e pode ser revertida pelo usuário.
+          </p>
+          <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc, marginBottom: 12 }}>
+            <strong style={{ color: V.night }}>Janela inclusa no diagnóstico pago:</strong> a contratação do
+            diagnóstico completo (R$497) inclui 30 dias corridos de operação do agente Google Business Profile,
+            contados a partir da conexão da ficha. Após esse período, o agente é pausado. A continuidade da
+            operação ocorre por meio da assinatura mensal Virô (R$99/mês), que pode ser ativada a qualquer
+            momento durante ou após a janela inicial.
+          </p>
+          <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
+            <strong style={{ color: V.night }}>Limites de atuação:</strong> o Virô não modifica nome do negócio,
+            não transfere propriedade de fichas, não acessa faturamento, não publica conteúdo enganoso, não
+            responde a avaliações em nome do dono em situações de conflito sério (essas são escaladas para o
+            usuário), e não realiza nenhuma ação que viole as{" "}
+            <a href="https://support.google.com/business/answer/3038177" style={{ color: V.amber, textDecoration: "none" }}>
+              Diretrizes de Representação de Empresas no Google
+            </a>. O usuário pode revogar o acesso a qualquer momento em{" "}
+            <a href="https://myaccount.google.com/permissions" style={{ color: V.amber, textDecoration: "none" }}>
+              myaccount.google.com/permissions
+            </a>, o que pausa imediatamente toda a operação automatizada.
           </p>
         </section>
 
