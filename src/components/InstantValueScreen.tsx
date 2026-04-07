@@ -222,10 +222,18 @@ export default function InstantValueScreen({ product, region, results: initialRe
   const hasProj = proj && (proj.gapCaptura > 0 || (proj.gapMensal && proj.gapMensal > 0)) && proj.mercadoTotal > 0;
   const ci = results.competitionIndex;
   const hasCi = ci && (ci.totalSearchVolume > 0 || ci.totalCompetitors > 0);
-  const isB2B = results.clientType === 'b2b' || results.demandType === 'national_service'
-    || (results.projecaoFinanceira?.demandType === 'national_service');
+  // isB2B é estritamente "vende pra empresa" — NÃO confundir com escala nacional.
+  // Antes esse cálculo incluía demandType=national_service, que fazia leads
+  // b2c+nacional (ex: agência de intercâmbio) exibirem "empresas" em vez de
+  // "pessoas" no bloco de mercado potencial.
+  const isB2B = results.clientType === 'b2b';
   const isB2G = results.clientType === 'b2g';
-  const isNacional = /brasil|nacional/i.test(results.audiencia?.municipioNome || '');
+  // Escala nacional é independente do clientType — pode ser b2c+nacional, b2b+nacional, etc.
+  const isNacional = /brasil|nacional/i.test(results.audiencia?.municipioNome || '')
+    || results.demandType === 'national_service'
+    || results.demandType === 'ecommerce_national'
+    || (results.projecaoFinanceira?.demandType === 'national_service')
+    || (results.projecaoFinanceira?.demandType === 'ecommerce_national');
   const isNacionalAny = isNacional;
   const isB2BNacional = isB2B && isNacional;
   const displayName = name && name.trim() ? name.trim() : product;
@@ -575,7 +583,12 @@ export default function InstantValueScreen({ product, region, results: initialRe
           {aud && aud.populacaoRaio > 0 ? (
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
-                <span style={{ fontSize: 12, color: V.zinc }}>{isB2B && isNacional ? 'Empresas no mercado-alvo' : isB2B ? 'Base de empresas' : `Pessoas no raio de ${aud.raioKm || raioKm}km`}</span>
+                <span style={{ fontSize: 12, color: V.zinc }}>{
+                  isB2B && isNacional ? 'Empresas no mercado-alvo nacional'
+                  : isB2B ? 'Base de empresas no raio'
+                  : isNacional ? 'Pessoas no mercado-alvo nacional'
+                  : `Pessoas no raio de ${aud.raioKm || raioKm}km`
+                }</span>
                 <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{fmtPop(audDisplayPop)} {audienciaUnit}{audienciaIsEstimate ? ' (estimativa setorial)' : ''}</span>
               </div>
               {aud.targetProfile && (
