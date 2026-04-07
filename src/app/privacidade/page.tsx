@@ -16,7 +16,7 @@ export default function PrivacidadePage() {
         </a>
 
         <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>Política de Privacidade</h1>
-        <p style={{ fontSize: 14, color: V.ash, marginBottom: 40 }}>Data de vigência: 10 de março de 2026</p>
+        <p style={{ fontSize: 14, color: V.ash, marginBottom: 40 }}>Data de vigência: 7 de abril de 2026</p>
 
         <section style={{ marginBottom: 36 }}>
           <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>1. Quem somos</h2>
@@ -32,8 +32,10 @@ export default function PrivacidadePage() {
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
             Ao utilizar o Virô, coletamos as informações fornecidas diretamente por você no formulário de
             diagnóstico: nome do negócio, segmento de atuação, região, endereço de Instagram, número de
-            WhatsApp e endereço de e-mail. Caso você utilize o módulo Google Ads, solicitamos autorização de
-            acesso à sua conta via OAuth 2.0 — não armazenamos sua senha nem credenciais de acesso.
+            WhatsApp e endereço de e-mail. Caso você utilize os módulos opcionais de Google Ads ou{" "}
+            <strong style={{ color: V.night }}>Google Business Profile</strong>, solicitamos autorização de
+            acesso à sua respectiva conta via OAuth 2.0 — não armazenamos sua senha nem credenciais de acesso,
+            apenas os tokens de acesso necessários, criptografados, e revogáveis a qualquer momento.
           </p>
         </section>
 
@@ -41,9 +43,14 @@ export default function PrivacidadePage() {
           <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>3. Como usamos seus dados</h2>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
             Seus dados são utilizados exclusivamente para gerar o diagnóstico de mercado, enviar os resultados
-            por e-mail e WhatsApp, e, se autorizado, criar rascunhos de campanhas na sua conta Google Ads.{" "}
+            por e-mail e WhatsApp, e, se autorizado, criar rascunhos de campanhas na sua conta Google Ads e
+            executar ações aprovadas por você no seu Perfil de Empresa do Google (Google Business Profile).{" "}
             <strong style={{ color: V.night }}>Nunca vendemos, alugamos ou compartilhamos seus dados com
-            terceiros para fins comerciais.</strong>
+            terceiros para fins comerciais.</strong> Os dados obtidos via APIs Google (incluindo Google
+            Business Profile) são usados em conformidade com a{" "}
+            <a href="https://developers.google.com/terms/api-services-user-data-policy" style={{ color: V.amber, textDecoration: "none" }}>
+              Google API Services User Data Policy
+            </a>, incluindo os requisitos de Limited Use.
           </p>
         </section>
 
@@ -55,6 +62,7 @@ export default function PrivacidadePage() {
           <ul style={{ fontSize: 15, lineHeight: 1.8, color: V.zinc, paddingLeft: 20 }}>
             <li><strong style={{ color: V.night }}>Google Places API e Google Search</strong> — utilizadas para verificar presença do negócio no Google Maps e analisar resultados de busca locais.</li>
             <li><strong style={{ color: V.night }}>Google Ads API</strong> — utilizada, com autorização explícita do usuário via OAuth 2.0, para criar campanhas de busca local e campanhas no Google Maps com base nos dados do diagnóstico. O Virô cria rascunhos de campanhas em estado pausado na conta do usuário. O usuário mantém controle total sobre ativação, orçamento e veiculação. Não acessamos campanhas existentes sem solicitação, não realizamos lances automáticos e não armazenamos dados de desempenho de campanhas.</li>
+            <li><strong style={{ color: V.night }}>Google Business Profile API (Google Meu Negócio)</strong> — utilizada exclusivamente quando o usuário conecta seu Perfil de Empresa no Google via OAuth 2.0, com escopo <code>business.manage</code>. Após a conexão, o Virô pode, sempre com aprovação explícita do dono do negócio (ou conforme regras de auto-publicação que ele mesmo configurar): (i) criar e publicar Google Posts na ficha do negócio; (ii) gerar e publicar respostas a avaliações de clientes; (iii) sugerir e aplicar otimizações na descrição, atributos, categorias, serviços, fotos e horários do perfil. Não modificamos nome do negócio, propriedade da ficha, faturamento ou qualquer configuração sensível. Cada ação é registrada em log auditável e é reversível. O usuário pode revogar o acesso a qualquer momento em <a href="https://myaccount.google.com/permissions" style={{ color: V.amber, textDecoration: "none" }}>myaccount.google.com/permissions</a>, o que interrompe imediatamente toda a operação automatizada do Virô sobre sua ficha. Não compartilhamos nem agregamos dados do seu Perfil de Empresa com terceiros.</li>
             <li><strong style={{ color: V.night }}>Instagram</strong> — coletamos apenas dados públicos do perfil informado: número de seguidores, frequência de publicações e métricas de engajamento público.</li>
             <li><strong style={{ color: V.night }}>Perplexity AI</strong> — utilizada para verificar se o negócio aparece em respostas de ferramentas de inteligência artificial para buscas locais.</li>
             <li><strong style={{ color: V.night }}>DataForSEO</strong> — utilizada para análise de volume de busca e presença orgânica nos resultados do Google.</li>

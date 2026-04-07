@@ -384,6 +384,11 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
   };
 
   const renderItem = (item: any, itemIdx: number) => {
+    // Detecta se a ação envolve Google Meu Negócio / Google Business Profile
+    // (mesma lógica do detector em /api/plan/content para roteamento de conteúdo)
+    const _itemFull = `${item.title || item.titulo || ''} ${item.description || item.descricao || ''}`.toLowerCase();
+    const isGbpItem = /google\s*meu\s*neg[óo]cio|google\s*business|gmb|google\s*maps|maps\s*ficha|ficha\s*google|otimiza.*google|t[íi]tulo.*google|descri[cç].*google|categoria.*google|gmn|perfil.*google|google.*perfil/i.test(_itemFull);
+
     return (
       <div key={item.id} style={{
         background: item.completed ? "rgba(45,155,131,0.04)" : V.white,
@@ -428,6 +433,20 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
             </div>
             {item.description && (
               <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px", lineHeight: 1.5 }}>{item.description}</p>
+            )}
+
+            {/* Aviso "em breve Agente Nelson" — itens que envolvem Google Business Profile */}
+            {isGbpItem && (
+              <div style={{
+                display: "flex", gap: 8, alignItems: "flex-start",
+                background: V.amberWash, border: `1px solid ${V.amber}30`,
+                borderRadius: 8, padding: "8px 10px", marginBottom: 8,
+              }}>
+                <span style={{ fontSize: 14 }}>🪄</span>
+                <span style={{ fontSize: 11, color: V.amber, lineHeight: 1.5, fontWeight: 500 }}>
+                  <strong>Em breve:</strong> o Agente Nelson vai executar esta ação direto no seu Google Meu Negócio — sem você precisar copiar e colar.
+                </span>
+              </div>
             )}
 
             {/* Contextual content generation button — simplified */}
@@ -1089,6 +1108,10 @@ function ContentCard({ c, leadId }: { c: any; leadId: string }) {
     ? `${c.content}\n\n${c.hashtags.map((h: string) => h.startsWith("#") ? h : `#${h}`).join(" ")}`
     : c.content;
 
+  // Detecta conteúdos destinados ao Google Business Profile (Google Meu Negócio)
+  const isGbpContent = c.channel_key === "google_business" ||
+    /google\s*meu\s*neg[óo]cio|google\s*business|google\s*post/i.test(`${c.channel || ''} ${c.channel_key || ''}`);
+
   return (
     <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "16px 18px", marginBottom: 10 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
@@ -1097,6 +1120,18 @@ function ContentCard({ c, leadId }: { c: any; leadId: string }) {
         </div>
         {c.best_time && <span style={{ fontSize: 10, color: V.ash, fontFamily: V.mono }}>{c.best_time}</span>}
       </div>
+      {isGbpContent && (
+        <div style={{
+          display: "flex", gap: 8, alignItems: "flex-start",
+          background: V.amberWash, border: `1px solid ${V.amber}30`,
+          borderRadius: 8, padding: "8px 10px", marginBottom: 10,
+        }}>
+          <span style={{ fontSize: 14 }}>🪄</span>
+          <span style={{ fontSize: 11, color: V.amber, lineHeight: 1.5, fontWeight: 500 }}>
+            <strong>Em breve:</strong> o Agente Nelson vai publicar este conteúdo direto no seu Google Meu Negócio — sem você precisar copiar e colar.
+          </span>
+        </div>
+      )}
       {c.hook && (
         <div style={{ fontSize: 15, fontWeight: 700, color: V.night, lineHeight: 1.4, marginBottom: 10 }}>
           {c.hook}
