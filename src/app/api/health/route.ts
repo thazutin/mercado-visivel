@@ -136,13 +136,21 @@ async function checkResend(): Promise<DepResult> {
   return timed("resend", async () => {
     const key = process.env.RESEND_API_KEY;
     if (!key) throw new Error("missing env");
-    // Sending-only API keys retornam 401 em /domains. Usamos GET de um email_id
-    // inexistente: se a key é válida, Resend retorna 404 (não 401/403).
-    const res = await fetch("https://api.resend.com/emails/00000000-0000-0000-0000-000000000000", {
-      headers: { Authorization: `Bearer ${key}` },
+    // Sending-only API keys retornam 401 em /domains e GETs. A maneira mais
+    // confiável de validar uma sending key sem enviar email é POST /emails com
+    // body intencionalmente inválido: key válida → 422 (validation error);
+    // key inválida → 401/403.
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}), // corpo vazio força validação
       signal: AbortSignal.timeout(8000),
     });
     if (res.status === 401 || res.status === 403) throw new Error(`auth failed (HTTP ${res.status})`);
+    // 422 (validation) ou qualquer 2xx confirma que a key passou pela auth
     return true;
   });
 }
