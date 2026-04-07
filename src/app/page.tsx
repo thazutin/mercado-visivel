@@ -289,18 +289,37 @@ export default function Home() {
                 {t.formNationalMsg}
               </div>
             ) : (
-              <PlacesAutocomplete
-                value={formData.region}
-                onChange={(val) => updateField("region", val)}
-                onPlaceSelected={handlePlaceSelected}
-                placeholder={t.formRegionPlaceholder}
-              />
+              <>
+                <PlacesAutocomplete
+                  value={formData.region}
+                  onChange={(val) => {
+                    updateField("region", val);
+                    // Limpa lat/lng quando o usuário digita manualmente — será
+                    // re-setado quando uma sugestão do dropdown for clicada.
+                    if ((formData as any).lat || (formData as any).lng) {
+                      setFormData((d: any) => ({ ...d, lat: null, lng: null, placeId: null }));
+                    }
+                  }}
+                  onPlaceSelected={handlePlaceSelected}
+                  placeholder={t.formRegionPlaceholder}
+                />
+                {formData.region.length >= 2 && !((formData as any).lat && (formData as any).lng) && (
+                  <p style={{ fontSize: 11, color: V.amber, margin: "6px 0 0", lineHeight: 1.4 }}>
+                    ⚠️ Selecione uma cidade do dropdown do Google para o diagnóstico ficar preciso. Se o seu negócio é nacional (sem cidade específica), marque a opção abaixo.
+                  </p>
+                )}
+              </>
             )}
             <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 13, color: V.ash, cursor: "pointer" }}>
               <input type="checkbox" checked={isNational} onChange={(e: any) => {
                 setIsNational(e.target.checked);
-                if (e.target.checked) updateField("region", "Brasil (nacional)");
-                else updateField("region", "");
+                if (e.target.checked) {
+                  updateField("region", "Brasil (nacional)");
+                  // Limpa lat/lng pois nacional não tem coordenada
+                  setFormData((d: any) => ({ ...d, lat: null, lng: null, placeId: null }));
+                } else {
+                  updateField("region", "");
+                }
               }} style={{ width: 16, height: 16, accentColor: V.amber }} />
               {t.formNationalCheckbox}
             </label>
@@ -347,7 +366,12 @@ export default function Home() {
   };
 
   const currentStep = formSteps[formStep];
-  const isStepValid = (stepValidation as any)[`step${formStep}`]?.(formData);
+  // Step 1: além das regras do schema, exige cidade do Google Places (lat/lng)
+  // OU checkbox Nacional marcado. Sem isso o diagnóstico não consegue calcular
+  // população por raio e cai em fallback nacional silencioso.
+  const hasValidRegion = isNational || !!((formData as any).lat && (formData as any).lng);
+  const baseStepValid = (stepValidation as any)[`step${formStep}`]?.(formData);
+  const isStepValid = formStep === 1 ? (baseStepValid && hasValidRegion) : baseStepValid;
 
   return (
     <div style={{ minHeight: "100vh", background: V.white }}>
