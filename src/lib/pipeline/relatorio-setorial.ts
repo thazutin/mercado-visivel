@@ -134,25 +134,34 @@ CONTEXTO COMPETITIVO: ${relatorio.contexto_competitivo || 'N/A'}
 TENDÊNCIAS: ${(relatorio.tendencias || []).map((t: any) => t.titulo).join(', ') || 'N/A'}
 ${igContext || ''}
 
-Gere 3 briefings CLIENT-FACING (temas que interessam ao PÚBLICO do negócio, não ao dono):
+Gere 3 briefings de CONTEÚDO E COMUNICAÇÃO para a semana. ESCOPO ESTRITO: cada briefing deve falar SOMENTE sobre conteúdo/comunicação a ser produzida e veiculada pelo negócio.
 
-1. briefing_equipe (200+ palavras, tom operacional):
-   - O que a equipe deve destacar no atendimento esta semana e por quê
-   - 3-5 ações concretas com prazo (ex: "até quinta-feira")
-   - Métricas para acompanhar
-   - Por que cada ação importa agora
+REGRAS RÍGIDAS — NÃO VIOLE:
+- ❌ NÃO falar sobre estoque, treinamento de equipe, processos operacionais, vendas internas, atendimento, métricas de negócio, ticket médio, conversão, perfil de cliente, segmentação interna
+- ❌ NÃO sugerir reuniões, mapeamentos de clientes, reorganização, ações comerciais, prospecção, follow-up
+- ❌ NÃO usar tom de "consultoria de negócio" — só "consultoria de conteúdo/comunicação"
+- ✅ Falar APENAS sobre: o que postar, o que dizer publicamente, em que canal, com qual tom, qual formato, qual ângulo, qual hashtag/palavra-chave, qual referência visual
+- ✅ Cada peça de conteúdo deve ser específica o suficiente para ser produzida nesta semana
 
-2. briefing_agencia (250+ palavras, tom estratégico):
-   - Que conteúdo produzir esta semana e POR QUE o público se interessa
-   - Dados de mercado que justificam cada peça (ex: "N buscas/mês por X")
-   - Formatos específicos (reels, carrossel, stories, artigo)
-   - Tom e referências visuais
+1. briefing_equipe (180+ palavras): pauta de comunicação para a equipe interna que aparece nos conteúdos do negócio (ex: o que destacar nas legendas, no atendimento por DM, nas respostas a comentários — só comunicação visível ao público, NÃO operação)
+   - Mensagens-chave da semana (3-5 frases prontas)
+   - Como abordar dúvidas frequentes nos comentários/DMs
+   - Tom de voz e palavras a usar/evitar
+   - Estritamente comunicação — nunca operação
 
-3. briefing_afiliado (200+ palavras, tom comercial):
-   - Contexto de mercado que justifica indicar este negócio agora
-   - Argumentos client-facing para o potencial cliente
-   - Perfil ideal de quem indicar
-   - Dados que comprovam o momento
+2. briefing_agencia (220+ palavras): briefing de produção de conteúdo para uma agência ou social media
+   - 4-5 peças concretas a produzir esta semana (formato + tema + ângulo)
+   - Para cada peça: gancho, CTA, hashtags, referência visual
+   - Calendário da semana (que dia publicar cada peça)
+   - Tom e identidade visual
+
+3. briefing_afiliado (180+ palavras): pauta de conteúdo para parceiros, criadores ou afiliados que vão FALAR sobre o negócio nas redes deles
+   - 3-4 ângulos de conteúdo que o parceiro pode usar
+   - Frases prontas que o parceiro pode mencionar sobre o negócio
+   - Hashtags + tags a marcar
+   - Tom recomendado (não comercial agressivo, e sim recomendação genuína)
+
+LEMBRE: zero conselho operacional/comercial. Apenas conteúdo e comunicação publicáveis.
 
 JSON: {"briefing_equipe":"...","briefing_agencia":"...","briefing_afiliado":"..."}` }],
       });

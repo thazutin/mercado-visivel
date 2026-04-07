@@ -4,14 +4,14 @@
 // ============================================================================
 
 import dotenv from 'dotenv';
-dotenv.config({ path: '.env.local' });
+dotenv.config({ path: '.env.local', override: true });
 import * as path from 'path';
 import * as fs from 'fs';
 
 // ─── CONFIGURATION ───────────────────────────────────────────────────────────
-const CITY = 'São Paulo';
-const CATEGORY = 'pizzaria';
-const MAX_BUSINESSES = 5;
+const CITY = process.env.CITY || 'São Paulo';
+const CATEGORY = process.env.CATEGORY || 'pizzaria';
+const MAX_BUSINESSES = Number(process.env.MAX || 5);
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.GOOGLE_API_KEY_SERVER || '';
 const OUTPUT_DIR = path.join(process.cwd(), 'output', 'cards');
 
@@ -242,7 +242,7 @@ function buildCardHTML(place: PlaceResult, analysis: AnalysisResult, streetViewB
       background: #161618;
     }
     .photo {
-      width: 100%; height: 580px;
+      width: 100%; height: 480px;
       background: url(data:image/jpeg;base64,${streetViewBase64}) center/cover no-repeat;
       position: relative;
     }
@@ -257,8 +257,8 @@ function buildCardHTML(place: PlaceResult, analysis: AnalysisResult, streetViewB
     .logo-name { font-size: 24px; font-weight: 700; color: #FFFFFF; text-shadow: 0 1px 8px rgba(0,0,0,0.5); }
     .logo-tag { font-size: 12px; color: #CF8523; letter-spacing: 0.1em; text-transform: uppercase; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
     .content {
-      padding: 0 48px 40px;
-      display: flex; flex-direction: column; height: 500px;
+      padding: 0 48px 36px;
+      display: flex; flex-direction: column; height: 600px;
       margin-top: -40px; position: relative; z-index: 2;
     }
     .biz-name { font-size: 40px; font-weight: 900; color: #FFFFFF; line-height: 1.15; margin-bottom: 4px;
@@ -268,7 +268,14 @@ function buildCardHTML(place: PlaceResult, analysis: AnalysisResult, streetViewB
     .metrics { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
     .metric { font-size: 22px; color: #FFFFFF; display: flex; align-items: center; gap: 12px; }
     .metric-icon { font-size: 20px; flex-shrink: 0; width: 28px; text-align: center; }
-    .separator2 { width: 100%; height: 2px; background: #CF8523; margin: 0 0 16px; }
+    .opportunity {
+      background: linear-gradient(135deg, #CF8523 0%, #A06A10 100%);
+      border-radius: 10px; padding: 16px 18px; margin-top: 6px;
+    }
+    .opp-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.7); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+    .opp-number { font-size: 32px; font-weight: 900; color: #FFFFFF; line-height: 1; }
+    .opp-text { font-size: 16px; color: rgba(255,255,255,0.85); margin-top: 4px; }
+    .separator2 { width: 100%; height: 2px; background: #CF8523; margin: 16px 0; }
     .cta-main { font-size: 28px; font-weight: 700; color: #FFFFFF; line-height: 1.35; }
     .cta-link { font-size: 20px; color: #CF8523; margin-top: 10px; }
     .footer { font-size: 14px; color: #666; text-align: center; margin-top: auto; }
@@ -301,10 +308,12 @@ function buildCardHTML(place: PlaceResult, analysis: AnalysisResult, streetViewB
         <span class="metric-icon">🏪</span>
         <span>${analysis.competitors_count} concorrentes na região</span>
       </div>
-      <div class="metric">
-        <span class="metric-icon">📈</span>
-        <span>+${analysis.opportunity_customers} clientes/mês sem investimento</span>
-      </div>
+    </div>
+
+    <div class="opportunity">
+      <div class="opp-label">Oportunidade identificada pela Virô</div>
+      <div class="opp-number">+${analysis.opportunity_customers.toLocaleString('pt-BR')} pessoas/mês</div>
+      <div class="opp-text">conhecendo o negócio</div>
     </div>
 
     <div class="separator2"></div>

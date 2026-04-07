@@ -211,9 +211,7 @@ export async function notifyFullDiagnosisReady(opts: {
   const shortRegion = region.split(",")[0].trim();
   const displayName = name || product;
 
-  const subject = (familiasGap && familiasGap > 0)
-    ? `${displayName}, seu plano está pronto — +${familiasGap.toLocaleString('pt-BR')} pessoas a mais por mês te conhecendo`
-    : `${displayName}, seu plano está pronto — veja o que fazer para aparecer quando te buscam`;
+  const subject = `${displayName}, seu plano de ação está liberado 🔓 — 15 passos prontos para executar`;
 
   await Promise.allSettled([
     sendWhatsApp(
@@ -552,34 +550,47 @@ function fullDiagnosisEmailHtml({
   familiasGap?: number;
   buscasMensais?: number;
 }): string {
-  const heroMetric = (familiasGap && familiasGap > 0)
-    ? `<div style="font-size:48px;font-weight:900;color:#2D9B83;line-height:1;margin-bottom:8px;">+${familiasGap.toLocaleString('pt-BR')}</div>
-       <div style="font-size:14px;color:#888880;margin-bottom:4px;">pessoas adicionais por mês passando a te conhecer</div>
-       <div style="font-size:12px;color:#888880;">com as ações do seu plano</div>`
-    : (buscasMensais && buscasMensais > 0)
-    ? `<div style="font-size:48px;font-weight:900;color:#CF8523;line-height:1;margin-bottom:8px;">${buscasMensais.toLocaleString('pt-BR')}</div>
-       <div style="font-size:14px;color:#888880;margin-bottom:4px;">buscas por mês por ${product} em ${shortRegion}</div>
-       <div style="font-size:12px;color:#888880;">Seu plano mostra como capturar mais delas.</div>`
-    : `<div style="font-size:22px;font-weight:700;color:#FEFEFF;line-height:1.3;">Seu plano está pronto.</div>
-       <div style="font-size:14px;color:#888880;margin-top:8px;">Comece pelo primeiro item — é o que mais move agora.</div>`;
+  const gapLine = (familiasGap && familiasGap > 0)
+    ? `<p style="font-size:13px;color:#888880;margin:12px 0 0;">Meta do plano: <strong style="color:#E6A445;">+${familiasGap.toLocaleString('pt-BR')}</strong> pessoas a mais por mês conhecendo seu negócio.</p>`
+    : '';
 
   return emailShell(`
-    <div style="background:#0A0A0C;border-radius:16px;padding:28px 24px;margin-bottom:24px;text-align:center;">
-      <p style="font-size:11px;color:#888880;margin:0 0 16px;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;">
-        Seu plano está pronto
+    <!-- Hero distintivo: checklist desbloqueado, não mais um número em destaque -->
+    <div style="background:linear-gradient(135deg,#FEFAF3 0%,#FDF3E0 100%);border:2px solid #CF8523;border-radius:16px;padding:24px 22px;margin-bottom:20px;">
+      <div style="display:inline-block;background:#CF8523;color:#FEFEFF;font-size:10px;font-family:monospace;letter-spacing:0.1em;text-transform:uppercase;padding:4px 10px;border-radius:4px;margin-bottom:14px;">
+        🔓 Acesso liberado
+      </div>
+      <h2 style="font-size:26px;font-weight:800;color:#0A0A0C;margin:0 0 8px;line-height:1.2;">
+        Seu plano de ação está pronto.
+      </h2>
+      <p style="font-size:14px;color:#3A3A40;margin:0;line-height:1.5;">
+        15 passos priorizados, com o <strong>como fazer</strong> de cada um e textos prontos para copiar e colar nos seus canais.
       </p>
-      ${heroMetric}
+      ${gapLine}
     </div>
 
-    <p style="font-size:14px;color:#3A3A40;margin:0 0 24px;line-height:1.6;">
-      Comece pelo primeiro item do seu plano — é o que mais move agora.
+    <!-- Preview do conteúdo do plano -->
+    <div style="background:#FEFEFF;border:1px solid #E8E8EC;border-radius:12px;padding:18px 20px;margin-bottom:20px;">
+      <p style="font-size:11px;color:#888880;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;margin:0 0 12px;">O que tem dentro</p>
+      <div style="font-size:13px;color:#0A0A0C;line-height:1.9;">
+        ✓ &nbsp;15 ações priorizadas por impacto<br/>
+        ✓ &nbsp;Passo-a-passo detalhado de cada ação<br/>
+        ✓ &nbsp;Posts prontos para publicar no Instagram<br/>
+        ✓ &nbsp;Respostas prontas para WhatsApp e Google<br/>
+        ✓ &nbsp;Checklist de execução semana a semana
+      </div>
+    </div>
+
+    <a href="${url}" style="display:block;background:#CF8523;color:#FEFEFF;text-align:center;padding:16px;border-radius:10px;font-weight:800;font-size:16px;text-decoration:none;margin-bottom:12px;box-shadow:0 2px 8px rgba(207,133,35,0.25);">
+      Abrir meu plano de ação →
+    </a>
+    <p style="font-size:11px;color:#888880;text-align:center;margin:0 0 20px;">
+      Este link é seu acesso permanente ao painel. Guarde este email.
     </p>
 
-    <a href="${url}" style="display:block;background:#161618;color:#FEFEFF;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:8px;">
-      Ver meu plano de ação →
-    </a>
-    <p style="font-size:11px;color:#888880;text-align:center;margin:0 0 16px;">
-      Este link é seu acesso permanente ao painel. Guarde este email.
+    <p style="font-size:13px;color:#3A3A40;line-height:1.6;margin:0 0 16px;padding:14px 16px;background:#F7F7F8;border-radius:8px;">
+      <strong>Dica:</strong> comece pela primeira ação da lista — ela é a que mais move o ponteiro agora.
+      ${product ? ` Para ${product}${shortRegion ? ` em ${shortRegion}` : ''}, normalmente é uma ação de visibilidade básica que ainda falta no seu perfil.` : ''}
     </p>
 
     <p style="font-size:10px;color:#888880;text-align:center;margin:0;font-style:italic;">

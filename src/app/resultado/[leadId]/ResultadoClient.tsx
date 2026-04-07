@@ -122,25 +122,20 @@ export default function ResultadoClient({ product, region, leadId, results, name
             Pagamento confirmado
           </h2>
           <p style={{ fontSize: 14, color: V.zinc, margin: "0 0 24px", lineHeight: 1.6 }}>
-            Estamos gerando seu diagnóstico completo e plano de ação para{" "}
-            <strong style={{ color: V.night }}>{product}</strong> em{" "}
-            <strong style={{ color: V.night }}>{shortRegion}</strong>.
+            Estamos montando o plano de ação completo da{" "}
+            <strong style={{ color: V.night }}>{name || product}</strong>
+            {shortRegion ? <> em <strong style={{ color: V.night }}>{shortRegion}</strong></> : null}.
           </p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24, textAlign: "left" }}>
-            {[
-              { label: "Diagnóstico completo" },
-              { label: "Plano de ação" },
-            ].map((item, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: V.white, borderRadius: 8, border: `1px solid ${V.fog}` }}>
-                <div style={{
-                  width: 16, height: 16, border: `2px solid ${V.fog}`,
-                  borderTopColor: V.amber, borderRadius: "50%",
-                  animation: "spin 0.8s linear infinite", flexShrink: 0,
-                }} />
-                <span style={{ fontSize: 13, color: V.night, fontWeight: 500 }}>{item.label}</span>
-              </div>
-            ))}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: V.white, borderRadius: 8, border: `1px solid ${V.fog}` }}>
+              <div style={{
+                width: 16, height: 16, border: `2px solid ${V.fog}`,
+                borderTopColor: V.amber, borderRadius: "50%",
+                animation: "spin 0.8s linear infinite", flexShrink: 0,
+              }} />
+              <span style={{ fontSize: 13, color: V.night, fontWeight: 500 }}>Plano de ação</span>
+            </div>
           </div>
 
           <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.6 }}>
@@ -178,9 +173,13 @@ export default function ResultadoClient({ product, region, leadId, results, name
               background: tab === t.key ? V.night : V.white,
               color: tab === t.key ? V.white : V.zinc,
               fontSize: 12, fontWeight: 500, transition: "all 0.15s",
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+              gap: 2, minHeight: 48, lineHeight: 1.2,
             }}>
-              {t.label}
-              {t.locked && <span style={{ fontSize: 9, marginLeft: 2 }}>🔒</span>}
+              <span style={{ textAlign: "center" }}>{t.label}</span>
+              <span style={{ fontSize: 10, height: 12, display: "block", lineHeight: 1 }}>
+                {t.locked ? "🔒" : "\u00A0"}
+              </span>
             </button>
           ))}
         </div>

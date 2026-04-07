@@ -449,33 +449,58 @@ async function getMunicipioInfo(city: string, state: string): Promise<MunicipioI
   };
 }
 
+// Gera um polígono circular (aproximação) a partir de lat/lng + raio em km.
+// WorldPop exige Polygon GeoJSON; Point+radius não é formato válido.
+function buildCirclePolygon(lat: number, lng: number, radiusKm: number, points = 32): number[][] {
+  const coords: number[][] = [];
+  const earthRadius = 6371;
+  const d = radiusKm / earthRadius;
+  const latRad = (lat * Math.PI) / 180;
+  const lngRad = (lng * Math.PI) / 180;
+  for (let i = 0; i <= points; i++) {
+    const bearing = (i / points) * 2 * Math.PI;
+    const newLat = Math.asin(
+      Math.sin(latRad) * Math.cos(d) + Math.cos(latRad) * Math.sin(d) * Math.cos(bearing),
+    );
+    const newLng =
+      lngRad +
+      Math.atan2(
+        Math.sin(bearing) * Math.sin(d) * Math.cos(latRad),
+        Math.cos(d) - Math.sin(latRad) * Math.sin(newLat),
+      );
+    coords.push([(newLng * 180) / Math.PI, (newLat * 180) / Math.PI]);
+  }
+  return coords;
+}
+
 async function fetchWorldPopRadius(lat: number, lng: number, raioKm: number): Promise<number | null> {
-  // WorldPop API: população num raio circular em torno de lat/lng
+  // WorldPop API: população dentro de polígono GeoJSON
   // Documentação: https://api.worldpop.org/v1/services/stats
   try {
+    const ring = buildCirclePolygon(lat, lng, raioKm);
     const geojson = JSON.stringify({
       type: "Feature",
+      properties: {},
       geometry: {
-        type: "Point",
-        coordinates: [lng, lat]  // WorldPop usa [lng, lat]
+        type: "Polygon",
+        coordinates: [ring], // WorldPop usa [lng, lat]
       },
-      properties: { radius: raioKm }
     });
 
-    const url = `https://api.worldpop.org/v1/services/stats?dataset=wpgp&year=2020&geojson=${encodeURIComponent(geojson)}&runasync=false`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    const url = `https://api.worldpop.org/v1/services/stats?dataset=wpgppop&year=2020&geojson=${encodeURIComponent(geojson)}&runasync=false`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
     if (!res.ok) {
       console.warn(`[WorldPop] HTTP ${res.status}`);
       return null;
     }
     const data = await res.json();
-    // Resposta: { status: "200", data: { total_population: 12345.67 } }
+    // Resposta síncrona: { status: "finished", data: { total_population: 12345.67 } }
     const pop = data?.data?.total_population;
     if (typeof pop === 'number' && pop > 0) {
       console.log(`[WorldPop] lat=${lat}, lng=${lng}, raio=${raioKm}km → pop=${Math.round(pop)}`);
       return Math.round(pop);
     }
-    console.warn('[WorldPop] Resposta sem total_population:', JSON.stringify(data).slice(0, 200));
+    console.warn('[WorldPop] Resposta sem total_population:', JSON.stringify(data).slice(0, 300));
     return null;
   } catch (err) {
     console.warn('[WorldPop] Erro:', (err as Error).message);
