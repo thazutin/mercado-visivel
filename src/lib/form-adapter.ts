@@ -13,7 +13,14 @@ export function adaptFormToInput(form: LeadFormData, locale: string): FormInput 
   if (form.instagram) {
     digitalAssets.push({
       type: "instagram",
-      identifier: form.instagram.replace("@", "").trim(),
+      // Instagram handles são case-insensitive, mas a Apify trata como string
+      // exata na URL — sem lowercase, "Efbrasil" não bate com "efbrasil" no scraper.
+      identifier: form.instagram
+        .replace(/^@/, "")
+        .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
+        .replace(/\/.*$/, "")
+        .trim()
+        .toLowerCase(),
     });
   }
 
@@ -52,7 +59,14 @@ export function adaptFormToInput(form: LeadFormData, locale: string): FormInput 
       }
       return {
         name: c.name.trim(),
-        instagram: c.instagram?.replace("@", "").trim() || undefined,
+        instagram: c.instagram
+          ? c.instagram
+              .replace(/^@/, "")
+              .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
+              .replace(/\/.*$/, "")
+              .trim()
+              .toLowerCase() || undefined
+          : undefined,
       };
     });
 
