@@ -604,7 +604,17 @@ export function createApifyInstagramScraper(config: ApifyConfig) {
   return async function runInstagramScraper(
     handles: string[],
   ): Promise<InstagramProfile[]> {
-    const cleanHandles = handles.map(h => h.replace('@', '').replace('https://www.instagram.com/', '').replace('/', ''));
+    // Instagram handles são case-insensitive — sempre normalizar para lowercase
+    // antes de montar a URL, senão o Apify Instagram scraper retorna 0 dados
+    // pra handles digitados com maiúsculas (ex: "Efbrasil" vs "efbrasil").
+    const cleanHandles = handles.map(h =>
+      h
+        .replace(/^@/, '')
+        .replace(/^https?:\/\/(www\.)?instagram\.com\//i, '')
+        .replace(/\/.*$/, '')
+        .trim()
+        .toLowerCase()
+    );
 
     // Check cache per handle
     const cached: InstagramProfile[] = [];
