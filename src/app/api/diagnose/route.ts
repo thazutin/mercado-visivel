@@ -27,6 +27,18 @@ function getSupabaseAdmin() {
 
 export async function POST(req: NextRequest) {
   try {
+    // Kill switch — pausa novas entradas sem precisar de deploy.
+    // Setar VIRO_DIAGNOSE_PAUSED=true no Vercel Environment Variables → pausa em < 30s.
+    if (process.env.VIRO_DIAGNOSE_PAUSED === "true") {
+      return NextResponse.json(
+        {
+          error: "paused",
+          message: "Estamos em manutenção rápida. Volte em alguns minutos — seu diagnóstico continua disponível assim que reabrirmos.",
+        },
+        { status: 503 },
+      );
+    }
+
     const body = await req.json();
 
     // Honeypot
