@@ -36,18 +36,27 @@ interface HealthResponse {
 }
 
 async function fetchHealth(): Promise<HealthResponse | null> {
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "https://virolocal.com";
+  // Sempre usa o domínio canônico — VERCEL_URL aponta pro deployment URL
+  // (viro-xxx.vercel.app) que pode ter routing diferente do alias de produção.
+  const baseUrl = "https://virolocal.com";
   const secret = process.env.INTERNAL_API_SECRET;
-  if (!secret) return null;
+  if (!secret) {
+    console.error("[HealthReport] INTERNAL_API_SECRET not set in env");
+    return null;
+  }
 
   try {
     const res = await fetch(`${baseUrl}/api/health`, {
       headers: { "x-internal-secret": secret },
       signal: AbortSignal.timeout(20000),
     });
-    return (await res.json()) as HealthResponse;
+    if (!res.ok && res.status !== 503) {
+      // 503 é esperado quando ok=false; qualquer outro status é erro real
+      console.error(`[HealthReport] /api/health returned HTTP ${res.status}`);
+    }
+    const data = (await res.json()) as HealthResponse;
+    console.log(`[HealthReport] health snapshot: ok=${data.ok}, paused=${data.paused}, ${data.checks?.length} checks`);
+    return data;
   } catch (err) {
     console.error("[HealthReport] fetch failed:", (err as Error).message);
     return null;
