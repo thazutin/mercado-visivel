@@ -1625,6 +1625,33 @@ Responda APENAS em JSON, sem markdown:
       if (b2bCompanies && b2bCompanies.companies && b2bCompanies.companies.length > 0) {
         sourcesUsed.push('brasil_io_b2b');
         console.log(`[Pipeline] B2B: ${b2bCompanies.totalInRegion || b2bCompanies.companies.length} empresas, ${b2bCompanies.companies.length} retornadas (city="${cityForSearch}")`);
+
+        // ────────────────────────────────────────────────────────────────
+        // Enrichment Hunter.io — contatos individuais (email + nome + cargo)
+        // Consome 1 crédito Hunter por empresa. Budget Free = 50/mês.
+        // Limite: 5 empresas por lead, 3 contatos por empresa.
+        // ────────────────────────────────────────────────────────────────
+        if (process.env.HUNTER_API_KEY) {
+          try {
+            const { enrichCompaniesWithContacts } = await import('./pipeline/hunter');
+            const enriched = await withTimeout(
+              enrichCompaniesWithContacts(b2bCompanies.companies, {
+                limitPerCompany: 3,
+                maxCompanies: 5,
+              }),
+              30_000,
+              'HunterEnrichment',
+            );
+            b2bCompanies.companies = enriched;
+            const withContacts = enriched.filter((c: any) => c.contacts && c.contacts.length > 0).length;
+            if (withContacts > 0) {
+              sourcesUsed.push('hunter_contacts');
+              console.log(`[Pipeline] Hunter: ${withContacts}/${Math.min(enriched.length, 5)} empresas enriquecidas com contatos`);
+            }
+          } catch (err) {
+            console.warn('[Pipeline] Hunter enrichment failed (non-fatal):', (err as Error).message);
+          }
+        }
       } else {
         console.log(`[Pipeline] B2B: nenhuma empresa retornada para "${input.product}" em "${cityForSearch || 'Brasil'}"`);
       }

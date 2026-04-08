@@ -721,26 +721,47 @@ export default function InstantValueScreen({ product, region, results: initialRe
 
             <div>
               <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 10px", lineHeight: 1.5 }}>
-                Empresas do mesmo setor na sua região. O plano de ação traz estratégias de abordagem.
+                Empresas do mesmo setor na sua região, com decisores identificados. O plano de ação traz estratégias de abordagem.
               </p>
-              {((results as any).b2bCompanies.companies as any[]).slice(0, 8).map((c: any, i: number) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: `1px solid ${V.fog}`, fontSize: 12 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, color: V.night, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {c.nomeFantasia || c.razaoSocial}
+              {((results as any).b2bCompanies.companies as any[]).slice(0, 8).map((c: any, i: number) => {
+                const contacts: any[] = Array.isArray(c.contacts) ? c.contacts : [];
+                return (
+                  <div key={i} style={{ padding: "10px 0", borderBottom: `1px solid ${V.fog}` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, color: V.night, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {c.nomeFantasia || c.razaoSocial}
+                        </div>
+                        <div style={{ fontSize: 10, color: V.ash }}>
+                          {c.porte !== 'N/I' && <span>{c.porte} · </span>}
+                          {c.municipio}{c.uf ? ` - ${c.uf}` : ''}
+                        </div>
+                      </div>
+                      {contacts.length > 0 && (
+                        <span style={{ fontFamily: V.mono, fontSize: 9, color: V.teal, flexShrink: 0, background: V.tealWash, padding: "2px 6px", borderRadius: 4 }}>
+                          {contacts.length} {contacts.length === 1 ? 'decisor' : 'decisores'}
+                        </span>
+                      )}
                     </div>
-                    <div style={{ fontSize: 10, color: V.ash }}>
-                      {c.porte !== 'N/I' && <span>{c.porte} · </span>}
-                      {c.municipio}{c.uf ? ` - ${c.uf}` : ''}
-                    </div>
+                    {contacts.length > 0 && (
+                      <div style={{ marginTop: 8, paddingLeft: 4, display: "flex", flexDirection: "column" as const, gap: 6 }}>
+                        {contacts.slice(0, 3).map((k: any, ki: number) => (
+                          <div key={ki} style={{ fontSize: 11, color: V.zinc, lineHeight: 1.4, paddingLeft: 8, borderLeft: `2px solid ${V.teal}33` }}>
+                            <div style={{ fontWeight: 600, color: V.night }}>
+                              {k.fullName || k.email.split('@')[0]}
+                              {k.position && <span style={{ fontWeight: 400, color: V.ash }}> · {k.position}</span>}
+                            </div>
+                            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.teal }}>{k.email}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {c.email && (
-                    <span style={{ fontFamily: V.mono, fontSize: 9, color: V.teal, flexShrink: 0 }}>✉</span>
-                  )}
-                </div>
-              ))}
+                );
+              })}
               <p style={{ fontSize: 10, color: V.ash, margin: "10px 0 0", fontFamily: V.mono }}>
-                Fonte: {(results as any).b2bCompanies.source}
+                Fontes: {(results as any).b2bCompanies.source}
+                {(results.source || '').includes('hunter_contacts') && ' · Hunter.io'}
               </p>
             </div>
           </Expandable>
