@@ -382,36 +382,22 @@ export default function Home() {
         opacity: heroVisible ? 1 : 0, transition: "opacity 0.6s ease",
       }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
-          {/* Estandarte (pennant) — img scale compensa whitespace do SVG */}
+          {/* Estandarte (pennant) — usa o asset completo viro-logo.svg
+              que ja tem bird + texto na proporcao correta */}
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
             <div style={{
               background: V.cloud,
               clipPath: "polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%)",
-              padding: "32px 36px 96px",
+              padding: "36px 48px 80px",
               display: "flex",
-              flexDirection: "row" as const,
               alignItems: "center",
-              gap: 0,
+              justifyContent: "center",
             }}>
               <img
-                src="/favicon.svg"
+                src="/viro-logo.svg"
                 alt="Virô"
-                style={{
-                  display: "block",
-                  height: 280,
-                  width: 280,
-                  // SVG tem whitespace ao redor — uso transform pra dar zoom
-                  // efetivo no passarinho sem alterar o asset.
-                  transform: "scale(1.4)",
-                  transformOrigin: "center",
-                  marginRight: -32,
-                  marginLeft: -16,
-                }}
+                style={{ display: "block", height: 96, width: "auto" }}
               />
-              <span style={{
-                fontFamily: V.display, fontSize: 64, fontWeight: 800, color: V.night,
-                letterSpacing: "-0.03em", lineHeight: 1,
-              }}>virô</span>
             </div>
           </div>
           <h1 style={{
