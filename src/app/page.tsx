@@ -382,22 +382,22 @@ export default function Home() {
         opacity: heroVisible ? 1 : 0, transition: "opacity 0.6s ease",
       }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
-          {/* Estandarte (pennant) — fundo cream com V invertido embaixo */}
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+          {/* Estandarte (pennant) — fundo cream com V suave embaixo, lockup horizontal */}
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
             <div style={{
               background: V.cloud,
-              clipPath: "polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%)",
-              padding: "22px 36px 44px",
+              clipPath: "polygon(0 0, 100% 0, 100% 86%, 50% 100%, 0 86%)",
+              padding: "36px 44px 56px",
               display: "flex",
-              flexDirection: "column" as const,
+              flexDirection: "row" as const,
               alignItems: "center",
-              gap: 6,
-              minWidth: 140,
+              gap: 14,
+              minWidth: 280,
             }}>
-              <img src="/favicon.svg" height={44} alt="Virô" style={{ display: "block" }} />
+              <img src="/favicon.svg" height={68} alt="Virô" style={{ display: "block" }} />
               <span style={{
-                fontFamily: V.display, fontSize: 26, fontWeight: 700, color: V.night,
-                letterSpacing: "-0.02em", lineHeight: 1,
+                fontFamily: V.display, fontSize: 44, fontWeight: 800, color: V.night,
+                letterSpacing: "-0.03em", lineHeight: 1,
               }}>virô</span>
             </div>
           </div>
