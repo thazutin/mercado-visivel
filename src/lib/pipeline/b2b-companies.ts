@@ -105,14 +105,48 @@ export async function searchB2BCompanies(
 /**
  * Versão light — só busca empresas sem enriquecer (instantânea).
  * Usada no pipeline principal (não bloqueia).
+ *
+ * Provider primário: CNPJá (https://cnpja.com) — pago, ~R$25/mês.
+ * Fallback: Brasil.io (depende de BRASIL_IO_TOKEN).
  */
 export async function searchB2BCompaniesLight(
   product: string,
   municipio: string,
   uf?: string,
 ): Promise<B2BCompanyResult | null> {
-  const brasilIOResult = await buscarEmpresasBrasilIO(product, municipio, uf, { limit: 10 });
+  // Tenta CNPJá primeiro (mais confiável, dados frescos da Receita Federal)
+  if (process.env.CNPJA_API_KEY) {
+    try {
+      const { buscarEmpresasCnpja } = await import('./cnpja');
+      const cnpjaResult = await buscarEmpresasCnpja(product, municipio, uf, { limit: 10 });
+      if (cnpjaResult && cnpjaResult.empresas.length > 0) {
+        return {
+          companies: cnpjaResult.empresas.map((e) => ({
+            razaoSocial: e.razaoSocial,
+            nomeFantasia: e.nomeFantasia || undefined,
+            cnpj: e.cnpj,
+            porte: e.porte,
+            municipio: e.municipio,
+            uf: e.uf,
+            cnaeDescricao: e.cnaeDescricao,
+            email: e.email || undefined,
+            telefone: e.telefone || undefined,
+            situacao: e.situacao,
+            // CNPJá já vem enriquecido (email + telefone via Receita Federal)
+            enriched: !!(e.email || e.telefone),
+          })),
+          totalInRegion: cnpjaResult.totalEmpresas,
+          source: cnpjaResult.source,
+          enrichedCount: cnpjaResult.empresas.filter((e) => e.email || e.telefone).length,
+        };
+      }
+    } catch (err) {
+      console.warn('[B2B] CNPJá falhou, tentando Brasil.io:', (err as Error).message);
+    }
+  }
 
+  // Fallback Brasil.io
+  const brasilIOResult = await buscarEmpresasBrasilIO(product, municipio, uf, { limit: 10 });
   if (!brasilIOResult || brasilIOResult.empresas.length === 0) {
     return null;
   }
