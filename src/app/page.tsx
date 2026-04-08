@@ -382,13 +382,12 @@ export default function Home() {
         opacity: heroVisible ? 1 : 0, transition: "opacity 0.6s ease",
       }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
-          {/* Estandarte (pennant) — usa o asset completo viro-logo.svg
-              que ja tem bird + texto na proporcao correta */}
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
+          {/* Estandarte (pennant) — compacto, max ~20% da viewport */}
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
             <div style={{
               background: V.cloud,
-              clipPath: "polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%)",
-              padding: "36px 48px 80px",
+              clipPath: "polygon(0 0, 100% 0, 100% 80%, 50% 100%, 0 80%)",
+              padding: "12px 22px 32px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -396,7 +395,7 @@ export default function Home() {
               <img
                 src="/viro-logo.svg"
                 alt="Virô"
-                style={{ display: "block", height: 132, width: "auto" }}
+                style={{ display: "block", height: 88, width: "auto" }}
               />
             </div>
           </div>
