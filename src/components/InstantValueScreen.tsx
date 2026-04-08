@@ -843,7 +843,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
         {!hideCTA && (
           <div style={{ background: V.night, borderRadius: 12, padding: "20px 16px", marginTop: 12, color: V.white, textAlign: "center" }}>
             <p style={{ fontSize: 13, color: V.mist, margin: "0 0 12px", lineHeight: 1.5 }}>
-              As recomendações acima funcionam para qualquer negócio. O plano abaixo foi gerado para <strong style={{ color: V.white }}>{product}</strong> em <strong style={{ color: V.white }}>{shortRegion}</strong> — com os gaps reais do seu mercado, na ordem certa.
+              As recomendações acima funcionam para qualquer negócio. O plano abaixo foi gerado para <strong style={{ color: V.white }}>{displayName}</strong> em <strong style={{ color: V.white }}>{shortRegion}</strong> — com os gaps reais do seu mercado, na ordem certa.
             </p>
             <p style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", margin: "0 0 4px" }}>PAGAMENTO ÚNICO</p>
             <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, margin: "0 0 12px" }}>R$ 497</div>

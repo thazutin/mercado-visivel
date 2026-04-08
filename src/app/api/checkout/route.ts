@@ -58,7 +58,9 @@ export async function POST(req: NextRequest) {
       customer_email: email || undefined,
       metadata: { lead_id, email: email || "", locale: locale || "pt" },
       success_url: `${baseUrl}/resultado/${lead_id}?paid=true`,
-      cancel_url: `${baseUrl}/?checkout=cancelled`,
+      // Voltar pra página do diagnóstico (não pro home) — o usuário não perde
+      // o contexto do que estava vendo se cancelar/voltar do Stripe.
+      cancel_url: `${baseUrl}/resultado/${lead_id}?checkout=cancelled`,
     };
 
     // Apply coupon (disables allow_promotion_codes since Stripe doesn't allow both)
