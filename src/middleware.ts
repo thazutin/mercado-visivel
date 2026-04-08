@@ -23,6 +23,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/cron(.*)",
   "/api/agents(.*)",
   "/api/health(.*)",
+  "/api/twilio(.*)",
   "/api/admin(.*)",
   "/api/plan(.*)",
   "/api/tasks(.*)",
