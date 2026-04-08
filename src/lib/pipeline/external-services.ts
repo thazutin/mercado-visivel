@@ -185,8 +185,13 @@ export function createApifyMapsScraper(config: ApifyConfig) {
     businessName: string,
     region: string,
     radiusMeters?: number,
+    options?: {
+      expectedLat?: number | null;
+      expectedLng?: number | null;
+      expectedSite?: string | null;
+    },
   ): Promise<MapsPresence> {
-    const cacheKey = `maps:${businessName}:${region}`;
+    const cacheKey = `maps:${businessName}:${region}:${options?.expectedLat || ''}:${options?.expectedSite || ''}`;
     if (config.cache) {
       const cached = await getCached<MapsPresence>(config.cache, cacheKey);
       if (cached) return cached;
@@ -198,20 +203,65 @@ export function createApifyMapsScraper(config: ApifyConfig) {
       return { found: false, businessName: null, inLocalPack: false };
     }
 
+    // Helpers de validação
+    const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+      const R = 6371;
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLng = ((lng2 - lng1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+      return 2 * R * Math.asin(Math.sqrt(a));
+    };
+    const normalizeDomain = (url: string | null | undefined): string => {
+      if (!url) return '';
+      try {
+        const u = new URL(url.startsWith('http') ? url : `https://${url}`);
+        return u.hostname.replace(/^www\./, '').toLowerCase();
+      } catch {
+        return url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0].toLowerCase();
+      }
+    };
+    const normalizeName = (s: string) =>
+      s
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9 ]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const expectedDomain = normalizeDomain(options?.expectedSite || '');
+    const expectedNameNorm = normalizeName(businessName);
+
     try {
       // 1. Text Search — busca o negócio por nome + região
+      // Quando temos lat/lng do usuário, usa locationBias circular pra restringir.
+      const locationBias =
+        options?.expectedLat && options?.expectedLng
+          ? {
+              circle: {
+                center: { latitude: options.expectedLat, longitude: options.expectedLng },
+                radius: radiusMeters || 5000,
+              },
+            }
+          : radiusMeters
+          ? { circle: { radius: radiusMeters } }
+          : undefined;
+
       const searchRes = await fetch('https://places.googleapis.com/v1/places:searchText', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': apiKey,
-          'X-Goog-FieldMask': 'places.id,places.displayName,places.rating,places.userRatingCount,places.types,places.photos,places.reviews',
+          'X-Goog-FieldMask':
+            'places.id,places.displayName,places.location,places.websiteUri,places.formattedAddress,places.rating,places.userRatingCount,places.types,places.photos,places.reviews',
         },
         body: JSON.stringify({
           textQuery: `${businessName} ${region}`,
           languageCode: 'pt-BR',
-          maxResultCount: 5,
-          ...(radiusMeters ? { locationBias: { circle: { radius: radiusMeters } } } : {}),
+          maxResultCount: 10,
+          ...(locationBias ? { locationBias } : {}),
         }),
       });
 
@@ -230,8 +280,82 @@ export function createApifyMapsScraper(config: ApifyConfig) {
         return notFound;
       }
 
-      // Primeiro resultado como match principal
-      const match = places[0];
+      // ─── Validação: escolher o melhor candidato em vez de pegar places[0] ───
+      // Score por candidato:
+      //   +50 se domain do website bate com expectedSite (sinal mais forte)
+      //   +30 se distância < 1km do expectedLat/Lng
+      //   +20 se distância 1-5km
+      //   +25 se nome normalizado é match exato com businessName
+      //   +15 se nome normalizado contém o businessName (substring)
+      //   +5  pra primeiro resultado (tie-breaker leve, mantém ordem do Google)
+      // Threshold mínimo pra aceitar: 25 (sem nenhum sinal forte → reject)
+      const scored = places.map((p: any, idx: number) => {
+        let score = idx === 0 ? 5 : 0;
+        const reasons: string[] = [];
+
+        // Site match
+        if (expectedDomain) {
+          const placeDomain = normalizeDomain(p.websiteUri || '');
+          if (placeDomain && placeDomain === expectedDomain) {
+            score += 50;
+            reasons.push(`site=${placeDomain}`);
+          }
+        }
+
+        // Distance match
+        if (options?.expectedLat && options?.expectedLng && p.location?.latitude && p.location?.longitude) {
+          const distKm = haversineKm(
+            options.expectedLat,
+            options.expectedLng,
+            p.location.latitude,
+            p.location.longitude,
+          );
+          if (distKm < 1) {
+            score += 30;
+            reasons.push(`dist=${distKm.toFixed(2)}km`);
+          } else if (distKm < 5) {
+            score += 20;
+            reasons.push(`dist=${distKm.toFixed(2)}km`);
+          } else {
+            reasons.push(`dist=${distKm.toFixed(1)}km(far)`);
+          }
+        }
+
+        // Name match
+        const candidateName = normalizeName(p.displayName?.text || '');
+        if (candidateName === expectedNameNorm) {
+          score += 25;
+          reasons.push('name=exact');
+        } else if (candidateName.includes(expectedNameNorm) || expectedNameNorm.includes(candidateName)) {
+          score += 15;
+          reasons.push('name=substring');
+        }
+
+        return { place: p, score, reasons };
+      });
+
+      scored.sort((a: any, b: any) => b.score - a.score);
+      const best = scored[0];
+      const MIN_SCORE = 25;
+
+      console.log(
+        `[Maps] candidates for "${businessName}":`,
+        scored
+          .slice(0, 3)
+          .map((s: any) => `${(s.place.displayName?.text || '?').slice(0, 30)} score=${s.score} [${s.reasons.join(',')}]`)
+          .join(' | '),
+      );
+
+      if (!best || best.score < MIN_SCORE) {
+        console.warn(
+          `[Maps] best score ${best?.score || 0} < ${MIN_SCORE} → rejecting all candidates (likely wrong business)`,
+        );
+        const notFound: MapsPresence = { found: false, businessName: null, inLocalPack: false };
+        if (config.cache) await setCache(config.cache, cacheKey, 'google_places', notFound, 14);
+        return notFound;
+      }
+
+      const match = best.place;
       const placeId = match.id;
 
       // 2. Place Details — busca campos extras (website, telefone, horário)

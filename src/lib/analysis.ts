@@ -690,7 +690,20 @@ Responda APENAS em JSON, sem markdown:
           console.log('[Maps] started');
           try {
             console.log(`[pipeline] município usado em Maps:`, extractedCity);
-            const r = await mapsScraper(input.businessName || input.product, resolvedRegion, resolvedRadiusKm * 1000);
+            // Passa lat/lng do form (se Google Places autocomplete) e o site do
+            // negócio para validação. mapsScraper vai rejeitar candidatos que não
+            // batem com nome+endereço/site, evitando "achar" um Google Meu Negócio
+            // alheio com o nome do produto.
+            const r = await mapsScraper(
+              input.businessName || input.product,
+              resolvedRegion,
+              resolvedRadiusKm * 1000,
+              {
+                expectedLat: pipelineLat || null,
+                expectedLng: pipelineLng || null,
+                expectedSite: (input as any).site || null,
+              },
+            );
             sourcesUsed.push("apify_maps");
             console.log(`[Maps] completed in ${((Date.now() - t0) / 1000).toFixed(1)}s — found=${r.found}, rating=${r.rating}`);
             return r;
@@ -1332,11 +1345,18 @@ Responda APENAS em JSON, sem markdown:
   console.log(`[Pipeline] Step 4 OK: influence ${step4.influence.totalInfluence}%`);
 
   // =========================================================================
-  // STEP 4c — PNCP (Contratações Públicas) — only for B2G
+  // STEP 4c — PNCP (Contratações Públicas)
+  // Aciona pra: (a) B2G direto, (b) B2B em segmentos com forte exposição
+  // a setor público (commodities, hospitalar, segurança, alimentação
+  // institucional, materiais de construção, uniformes, etc).
   // =========================================================================
+  const PUBLIC_SECTOR_KEYWORDS = /cobre|metal|aço|aco|sucata|fundi|metalurg|sider|commodit|min[ée]rio|petr[óo]|gás|gas natural|combust[íi]vel|cimento|brita|asfalto|concreto|construç|construc|obra p[úu]bl|engenharia civil|hospitalar|m[ée]dico|f[áa]rmac|medicament|sa[úu]de|uniform|epi|seguran[çc]a|vigil[âa]ncia|limpeza|conserva|alimenta[çc][ãa]o|merenda|catering|transport|log[íi]stica|frota|combust[íi]vel|papel|papelaria|inform[áa]tica|ti corporat|software gov|mobili[áa]rio escol/i;
+  const isB2GExposed = inferredClientType === 'b2b' && PUBLIC_SECTOR_KEYWORDS.test(`${input.product} ${input.differentiator || ''}`);
+
   let pncpData: PNCPResumo | null = null;
-  if (inferredClientType === 'b2g') {
+  if (inferredClientType === 'b2g' || isB2GExposed) {
     try {
+      console.log(`[Pipeline] PNCP triggered: clientType=${inferredClientType}${isB2GExposed ? ' (b2b com exposição setor público detectada)' : ''}`);
       pncpData = await withTimeout(
         buscarContratacoesPNCP(input.product, extractedState || undefined),
         12_000,
@@ -1588,20 +1608,25 @@ Responda APENAS em JSON, sem markdown:
   }
 
   // =========================================================================
-  // B2B COMPANY SEARCH — lista de empresas-alvo (somente para B2B)
+  // B2B COMPANY SEARCH — lista de empresas-alvo (para B2B, com ou sem cidade)
+  // Para leads nacionais sem cidade, busca em escopo nacional via Brasil.io.
   // =========================================================================
   let b2bCompanies: any = null;
-  if (inferredClientType === 'b2b' && extractedCity) {
+  if (inferredClientType === 'b2b') {
     try {
       const { searchB2BCompaniesLight } = await import('./pipeline/b2b-companies');
+      // Se o lead é nacional sem city, busca sem município (escopo Brasil)
+      const cityForSearch = extractedCity || '';
       b2bCompanies = await withTimeout(
-        searchB2BCompaniesLight(input.product, extractedCity, extractedState || undefined),
-        12_000,
+        searchB2BCompaniesLight(input.product, cityForSearch, extractedState || undefined),
+        15_000,
         'B2BCompanies',
       );
-      if (b2bCompanies) {
+      if (b2bCompanies && b2bCompanies.companies && b2bCompanies.companies.length > 0) {
         sourcesUsed.push('brasil_io_b2b');
-        console.log(`[Pipeline] B2B: ${b2bCompanies.totalInRegion} empresas encontradas, ${b2bCompanies.companies.length} retornadas`);
+        console.log(`[Pipeline] B2B: ${b2bCompanies.totalInRegion || b2bCompanies.companies.length} empresas, ${b2bCompanies.companies.length} retornadas (city="${cityForSearch}")`);
+      } else {
+        console.log(`[Pipeline] B2B: nenhuma empresa retornada para "${input.product}" em "${cityForSearch || 'Brasil'}"`);
       }
     } catch (err) {
       console.warn('[Pipeline] B2B Company Search failed (non-fatal):', (err as Error).message);

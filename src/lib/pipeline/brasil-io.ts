@@ -53,13 +53,16 @@ export async function buscarEmpresasBrasilIO(
   const limit = options?.limit || 20;
 
   try {
-    // Tenta buscar com CNAE primário + município
+    // Tenta buscar com CNAE primário + município (município opcional —
+    // pra leads nacionais, busca é por CNAE + UF apenas)
     const params = new URLSearchParams({
-      municipio: normalizeMunicipio(municipio),
       situacao_cadastral: 'Ativa',
       ordering: '-capital_social',
       page_size: String(limit),
     });
+    if (municipio && municipio.trim().length > 0) {
+      params.set('municipio', normalizeMunicipio(municipio));
+    }
 
     // Adiciona filtro por CNAE (usa grupo para busca mais ampla)
     if (cnaeMapping.cnaePrimarios.length > 0) {

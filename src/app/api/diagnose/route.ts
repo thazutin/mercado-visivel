@@ -188,7 +188,7 @@ export async function POST(req: NextRequest) {
       console.error("[Diagnose] update lead display failed:", err);
     }
 
-    // Helper: calcula oportunidade exibida no email a partir de um display já montado
+    // Helper: calcula oportunidade exibida no email
     const computeEmailOportunidade = (d: typeof display, influencePercent: number) => {
       const proj = d.projecaoFinanceira;
       const audienciaTotal = d.audiencia?.audienciaTarget || 0;
@@ -205,10 +205,36 @@ export async function POST(req: NextRequest) {
       return oportunidade;
     };
 
-    // 7/8. Background tasks — roda enrichment E notifica email SÓ DEPOIS que todos os dados
-    // estão completos (evita email com números obsoletos vs. dashboard).
+    // 7. Notifica por email IMEDIATAMENTE — síncrono, antes do response.
+    // Trade-off: o email pode ter números levemente diferentes do dashboard
+    // após o enrichment background (~30s depois), mas a entrega é garantida.
+    // Defer pra waitUntil estava fazendo emails sumirem em prod.
+    try {
+      const initialInfluence = Math.round(pipelineResult.influence.influence.totalInfluence);
+      const initialSearchVolume = pipelineResult.volumes.totalMonthlyVolume || 0;
+      const initialProjecao: any = (pipelineResult as any).projecaoFinanceira;
+      const initialDemandType: string = (pipelineResult as any).demandType || 'local_residents';
+      const emailOportunidade = computeEmailOportunidade(display, initialInfluence);
+
+      await notifyDiagnosisReady({
+        email: formData.email,
+        whatsapp: formData.whatsapp,
+        leadId: lead.id,
+        product: formData.product,
+        region: formData.region,
+        influencePercent: initialInfluence,
+        searchVolume: initialSearchVolume,
+        projecaoFinanceira: { ...(sanitizeProjecao(initialProjecao) || {}), familiasGap: emailOportunidade },
+        name: formData.businessName || formData.product,
+        demandType: initialDemandType as any,
+      });
+      console.log("[Diagnose] notify completed (sync, pre-enrichment)");
+    } catch (err) {
+      console.error("[Diagnose] notify failed:", err);
+    }
+
+    // 8. Background tasks — enrichment + atualizações de display (não bloqueia response)
     waitUntil((async () => {
-      // 8a. Post-diagnosis enrichment (checklist, seasonality, content)
       try {
         await runPostDiagnosisEnrichment(lead.id, pipelineResult, {
           name: (formData as any).name || formData.product,
@@ -220,13 +246,7 @@ export async function POST(req: NextRequest) {
         console.error("[Diagnose] Enrichment failed:", err);
       }
 
-      // 8b. Se dados slow ficaram pendentes, re-roda pipeline completo e atualiza display
-      let finalDisplay = display;
-      let finalInfluence = Math.round(pipelineResult.influence.influence.totalInfluence);
-      let finalSearchVolume = pipelineResult.volumes.totalMonthlyVolume || 0;
-      let finalProjecao: any = (pipelineResult as any).projecaoFinanceira;
-      let finalDemandType: string = (pipelineResult as any).demandType || 'local_residents';
-
+      // Se dados slow ficaram pendentes, re-roda pipeline completo e atualiza display
       if (display.enrichmentStatus === 'pending') {
         console.log(`[Diagnose] Slow enrichment pending: [${display.enrichmentPending?.join(', ')}] — running full pipeline in background`);
         try {
@@ -243,12 +263,6 @@ export async function POST(req: NextRequest) {
             .update({ diagnosis_display: fullDisplay })
             .eq('id', lead.id);
           console.log(`[Diagnose] Background enrichment complete for ${lead.id}`);
-
-          finalDisplay = fullDisplay;
-          finalInfluence = Math.round(fullResult.influence.influence.totalInfluence);
-          finalSearchVolume = fullResult.volumes.totalMonthlyVolume || 0;
-          finalProjecao = (fullResult as any).projecaoFinanceira;
-          finalDemandType = (fullResult as any).demandType || finalDemandType;
         } catch (err) {
           console.error('[Diagnose] Background enrichment failed:', err);
           try {
@@ -257,26 +271,6 @@ export async function POST(req: NextRequest) {
             await supabaseAdmin.from('leads').update({ diagnosis_display: display }).eq('id', lead.id);
           } catch { /* ignore */ }
         }
-      }
-
-      // 8c. Notifica por WhatsApp + email APENAS agora — com números finais e estáveis
-      try {
-        const emailOportunidade = computeEmailOportunidade(finalDisplay, finalInfluence);
-        await notifyDiagnosisReady({
-          email: formData.email,
-          whatsapp: formData.whatsapp,
-          leadId: lead.id,
-          product: formData.product,
-          region: formData.region,
-          influencePercent: finalInfluence,
-          searchVolume: finalSearchVolume,
-          projecaoFinanceira: { ...(sanitizeProjecao(finalProjecao) || {}), familiasGap: emailOportunidade },
-          name: formData.businessName || formData.product,
-          demandType: finalDemandType as any,
-        });
-        console.log("[Diagnose] notify completed (post-enrichment)");
-      } catch (err) {
-        console.error("[Diagnose] notify failed:", err);
       }
     })());
 
