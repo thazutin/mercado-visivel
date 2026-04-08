@@ -382,9 +382,24 @@ export default function Home() {
         opacity: heroVisible ? 1 : 0, transition: "opacity 0.6s ease",
       }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
-          <div style={{ display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 8, marginBottom: 24 }}>
-            <img src="/favicon.svg" height={40} alt="Nelson" style={{ display: "block" }} />
-            <span style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.white }}>virô</span>
+          {/* Estandarte (pennant) — fundo cream com V invertido embaixo */}
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+            <div style={{
+              background: V.cloud,
+              clipPath: "polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%)",
+              padding: "22px 36px 44px",
+              display: "flex",
+              flexDirection: "column" as const,
+              alignItems: "center",
+              gap: 6,
+              minWidth: 140,
+            }}>
+              <img src="/favicon.svg" height={44} alt="Virô" style={{ display: "block" }} />
+              <span style={{
+                fontFamily: V.display, fontSize: 26, fontWeight: 700, color: V.night,
+                letterSpacing: "-0.02em", lineHeight: 1,
+              }}>virô</span>
+            </div>
           </div>
           <h1 style={{
             fontFamily: V.display, fontSize: "clamp(28px, 5vw, 38px)", fontWeight: 700,
@@ -625,11 +640,11 @@ export default function Home() {
         <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 12, scrollSnapType: "x mandatory" as const }}>
           {[
             // Pizzaria — São Paulo
+            "ChIJO-3dqidazpQR8grH25DryHA",
             "ChIJT_hKLcBZzpQR_DXAu2tj7fg",
             "ChIJafL6lbRXzpQR_uL1LS6YHqM",
             "ChIJJ--IeftXzpQRvnflvmEVs88",
             "ChIJZ-k7vfxXzpQRaDkvzVYxJNc",
-            "ChIJO-3dqidazpQR8grH25DryHA",
           ].map((id) => (
             <div key={id} style={{ flexShrink: 0, width: 280, scrollSnapAlign: "start" as const }}>
               <img
