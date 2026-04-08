@@ -297,7 +297,7 @@ export default function Home() {
                     // Limpa lat/lng quando o usuário digita manualmente — será
                     // re-setado quando uma sugestão do dropdown for clicada.
                     if ((formData as any).lat || (formData as any).lng) {
-                      setFormData((d: any) => ({ ...d, lat: null, lng: null, placeId: null }));
+                      setFormData((d: any) => ({ ...d, lat: undefined, lng: undefined, placeId: "" }));
                     }
                   }}
                   onPlaceSelected={handlePlaceSelected}
@@ -316,7 +316,7 @@ export default function Home() {
                 if (e.target.checked) {
                   updateField("region", "Brasil (nacional)");
                   // Limpa lat/lng pois nacional não tem coordenada
-                  setFormData((d: any) => ({ ...d, lat: null, lng: null, placeId: null }));
+                  setFormData((d: any) => ({ ...d, lat: undefined, lng: undefined, placeId: "" }));
                 } else {
                   updateField("region", "");
                 }
