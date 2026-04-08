@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-const WHATSAPP_NUMBER = "5511999677443";
+const WHATSAPP_NUMBER = "5511936190947";
 const DEFAULT_MESSAGE = "Oi, acabei de fazer o diagnóstico na Virô e quero saber mais!";
 
 export default function WhatsAppButton() {
