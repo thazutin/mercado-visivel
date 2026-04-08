@@ -309,6 +309,75 @@ export const SECTOR_BENCHMARKS: SectorBenchmark[] = [
     targetProfile: 'Empresas e residências buscando segurança',
     source: 'Benchmark setorial segurança 2024',
   },
+
+  // ═══ COMMODITIES & METAIS (B2B / setor público) ═══
+  {
+    category: 'metais_sucata',
+    keywords: ['cobre', 'sucata', 'ferro velho', 'alumínio', 'aluminio', 'reciclagem.*metal', 'metal.*reciclag', 'compra.*metal', 'venda.*metal', 'lat[ãa]o', 'bronze', 'zinco', 'chumbo', 'inox', 'a[çc]o.*reciclad'],
+    ticketMedio: { low: 5000, mid: 25000, high: 150000 },
+    taxaConversao: { low: 0.02, mid: 0.05, high: 0.10 },
+    targetPercentage: { b2c: 0.001, b2b: 0.04 },
+    targetProfile: 'Indústrias, construtoras, oficinas e órgãos públicos compradores de metal/sucata',
+    source: 'Benchmark setor de metais e reciclagem 2024',
+  },
+  {
+    category: 'metalurgia_fundicao',
+    keywords: ['metalurg', 'fundi[çc]', 'sider', 'usinag', 'caldeira', 'estrutura met[áa]lica', 'serralh'],
+    ticketMedio: { low: 3000, mid: 18000, high: 100000 },
+    taxaConversao: { low: 0.02, mid: 0.05, high: 0.08 },
+    targetPercentage: { b2c: 0.002, b2b: 0.05 },
+    targetProfile: 'Indústrias e empresas de construção compradoras de produtos metalúrgicos',
+    source: 'Benchmark setor metalurgia 2024',
+  },
+  {
+    category: 'construcao_materiais',
+    keywords: ['cimento', 'argamassa', 'brita', 'asfalt', 'concreto', 'tij[oô]l', 'bloco', 'ferragem', 'material.*constru'],
+    ticketMedio: { low: 500, mid: 2500, high: 15000 },
+    taxaConversao: { low: 0.03, mid: 0.06, high: 0.10 },
+    targetPercentage: { b2c: 0.05, b2b: 0.12 },
+    targetProfile: 'Construtoras, reformadores, autônomos da construção civil e órgãos públicos',
+    source: 'Benchmark materiais de construção 2024',
+  },
+
+  // ═══ HOSPITALAR ═══
+  {
+    category: 'hospitalar_distribuidora',
+    keywords: ['hospitalar', 'medicament', 'farmac[êe]ut', 'distribuidor.*sa[úu]de', 'equipamento.*m[ée]dic'],
+    ticketMedio: { low: 5000, mid: 30000, high: 250000 },
+    taxaConversao: { low: 0.02, mid: 0.04, high: 0.08 },
+    targetPercentage: { b2c: 0.001, b2b: 0.03 },
+    targetProfile: 'Hospitais, clínicas e órgãos públicos de saúde',
+    source: 'Benchmark distribuição hospitalar 2024',
+  },
+
+  // ═══ SERVIÇOS B2B / B2G ═══
+  {
+    category: 'limpeza_conservacao',
+    keywords: ['limpeza.*predial', 'conserva[çc][ãa]o predial', 'terceiriza[çc][ãa]o.*limpeza', 'fac[íi]lities'],
+    ticketMedio: { low: 2000, mid: 8000, high: 40000 },
+    taxaConversao: { low: 0.03, mid: 0.06, high: 0.10 },
+    targetPercentage: { b2c: 0.001, b2b: 0.08 },
+    targetProfile: 'Empresas, condomínios e órgãos públicos contratantes de limpeza terceirizada',
+    source: 'Benchmark facilities 2024',
+  },
+  {
+    category: 'uniformes_epi',
+    keywords: ['uniforme', '\\bepi\\b', 'equipamento.*prote', 'farda', 'jaleco'],
+    ticketMedio: { low: 500, mid: 3000, high: 20000 },
+    taxaConversao: { low: 0.03, mid: 0.06, high: 0.10 },
+    targetPercentage: { b2c: 0.005, b2b: 0.08 },
+    targetProfile: 'Indústrias, hospitais, escolas e órgãos públicos compradores de uniformes/EPI',
+    source: 'Benchmark uniformes/EPI 2024',
+  },
+  {
+    category: 'transporte_logistica',
+    keywords: ['transport.*carga', 'log[íi]stica', 'frete', 'mudan[çc]a comercial', 'distribui[çc][ãa]o.*mercadoria'],
+    ticketMedio: { low: 1000, mid: 5000, high: 50000 },
+    taxaConversao: { low: 0.03, mid: 0.06, high: 0.10 },
+    targetPercentage: { b2c: 0.01, b2b: 0.10 },
+    targetProfile: 'Empresas e indústrias com necessidade de transporte de cargas',
+    source: 'Benchmark transporte/logística 2024',
+  },
 ];
 
 // ─── LOOKUP FUNCTIONS ──────────────────────────────────────────────────────────

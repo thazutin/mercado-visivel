@@ -175,6 +175,60 @@ export const CNAE_MAPPINGS: CNAEMapping[] = [
     cnaeGrupos: ['55', '79'],
     descricao: 'Hotéis, pousadas e agências de turismo',
   },
+
+  // ═══ COMMODITIES & METAIS (B2B / setor público) ═══
+  {
+    category: 'metais_sucata',
+    cnaePrimarios: ['4687703', '4687701', '3831999', '3811400'],
+    cnaeGrupos: ['46', '38'],
+    descricao: 'Comércio atacadista de sucata de metais, cobre, alumínio, ferro e reciclagem',
+  },
+  {
+    category: 'metalurgia_fundicao',
+    cnaePrimarios: ['2451200', '2452100', '2511000', '2512800'],
+    cnaeGrupos: ['24', '25'],
+    descricao: 'Metalurgia, fundição de metais e fabricação de produtos siderúrgicos',
+  },
+  {
+    category: 'construcao_materiais',
+    cnaePrimarios: ['4744099', '4744001', '4744002', '4744003', '4679603'],
+    cnaeGrupos: ['47', '46'],
+    descricao: 'Comércio de materiais de construção, cimento, aço, ferragens',
+  },
+
+  // ═══ SAÚDE INSTITUCIONAL (hospitalar / setor público) ═══
+  {
+    category: 'hospitalar_distribuidora',
+    cnaePrimarios: ['4644301', '4645101', '4645102', '4645103'],
+    cnaeGrupos: ['46'],
+    descricao: 'Distribuidoras de medicamentos, equipamentos e materiais hospitalares',
+  },
+
+  // ═══ SERVIÇOS B2B / B2G ═══
+  {
+    category: 'limpeza_conservacao',
+    cnaePrimarios: ['8121400', '8122200', '8129000'],
+    cnaeGrupos: ['81'],
+    descricao: 'Empresas de limpeza, conservação predial e serviços terceirizados',
+  },
+  {
+    category: 'seguranca_vigilancia',
+    cnaePrimarios: ['8011101', '8012900', '8020001'],
+    cnaeGrupos: ['80'],
+    descricao: 'Vigilância, segurança patrimonial e monitoramento eletrônico',
+  },
+  {
+    category: 'uniformes_epi',
+    cnaePrimarios: ['1412601', '1412602', '4642701'],
+    cnaeGrupos: ['14', '46'],
+    descricao: 'Confecção e comércio de uniformes profissionais e EPIs',
+  },
+  {
+    category: 'transporte_logistica',
+    cnaePrimarios: ['4930202', '4930201', '5320202', '5229099'],
+    cnaeGrupos: ['49', '53'],
+    descricao: 'Transporte de cargas, logística, distribuição e entrega',
+  },
 ];
 
 // ─── LOOKUP ──────────────────────────────────────────────────────────────────
