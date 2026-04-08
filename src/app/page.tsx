@@ -693,7 +693,7 @@ export default function Home() {
           {[
             "Google Search", "Google Maps", "Google Places API", "Google Ads",
             "Instagram", "Perplexity AI", "DataForSEO",
-            "IBGE", "PNCP", "Brasil.io", "CNPJ.ws",
+            "IBGE", "PNCP", "CNPJá", "Receita Federal",
             "Claude AI", "fal.ai",
           ].map((source, i) => (
             <span key={i} style={{
