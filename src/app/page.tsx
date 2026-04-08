@@ -396,7 +396,7 @@ export default function Home() {
               <img
                 src="/viro-logo.svg"
                 alt="Virô"
-                style={{ display: "block", height: 96, width: "auto" }}
+                style={{ display: "block", height: 132, width: "auto" }}
               />
             </div>
           </div>
