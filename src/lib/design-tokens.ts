@@ -22,10 +22,10 @@ export const V = {
   coral: "#9B3B30",
   coralWash: "rgba(155,59,48,0.06)",
 
-  // Fontes
-  display: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-  body: "'Satoshi', 'General Sans', -apple-system, sans-serif",
-  mono: "'JetBrains Mono', 'SF Mono', monospace",
+  // Fontes — Inter pura (sans neutra de UI) + IBM Plex Mono para labels técnicas
+  display: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  body: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  mono: "'IBM Plex Mono', 'SF Mono', 'Menlo', monospace",
 } as const;
 
 // Ícones dos pilares — centralizados para fácil troca

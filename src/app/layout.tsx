@@ -31,7 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           colorInputBackground: "#F4F4F7",
           colorInputText: "#161618",
           borderRadius: "10px",
-          fontFamily: "'Satoshi', 'General Sans', -apple-system, sans-serif",
+          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         },
         elements: {
           card: { boxShadow: "0 2px 12px rgba(0,0,0,0.06)" },

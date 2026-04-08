@@ -1609,7 +1609,7 @@ Responda APENAS em JSON, sem markdown:
 
   // =========================================================================
   // B2B COMPANY SEARCH — lista de empresas-alvo (para B2B, com ou sem cidade)
-  // Para leads nacionais sem cidade, busca em escopo nacional via Brasil.io.
+  // Para leads nacionais sem cidade, busca em escopo nacional via CNPJá (provider primário).
   // =========================================================================
   let b2bCompanies: any = null;
   if (inferredClientType === 'b2b') {
