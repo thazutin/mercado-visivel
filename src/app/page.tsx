@@ -637,12 +637,19 @@ export default function Home() {
         </p>
         <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 12, scrollSnapType: "x mandatory" as const }}>
           {[
-            // Pizzaria — São Paulo
-            "ChIJO-3dqidazpQR8grH25DryHA",
-            "ChIJT_hKLcBZzpQR_DXAu2tj7fg",
-            "ChIJafL6lbRXzpQR_uL1LS6YHqM",
-            "ChIJJ--IeftXzpQRvnflvmEVs88",
-            "ChIJZ-k7vfxXzpQRaDkvzVYxJNc",
+            // Intercala diversidade de categorias e praças para demonstrar
+            // versatilidade e assimetria TAM x Buscas x Oportunidade
+            "ChIJO-3dqidazpQR8grH25DryHA", // Bráz Quintal — pizzaria SP
+            "ChIJXRay7yzPyJQRhkG2VmqUh34", // Odontologia — Campinas
+            "ChIJ1ThQoCPk3JQRUW_L9Tto-7A", // Academia — Curitiba
+            "ChIJT_hKLcBZzpQR_DXAu2tj7fg", // Don Corleone — pizzaria SP
+            "ChIJH_3ZddAfqwcRQqB21n_rvk0", // Cafeteria/padaria — Recife
+            "ChIJbUAMmQ0DzpQRse_VyP7UZ1c", // Agência de marketing (B2B) — SP
+            "ChIJafL6lbRXzpQR_uL1LS6YHqM", // Vila 109 — pizzaria SP
+            "ChIJtZVfHnmXpgARTh3Px3IayW0", // Veterinária — Belo Horizonte
+            "ChIJJ--IeftXzpQRvnflvmEVs88", // Rei da Pizza — pizzaria SP
+            "ChIJo6qqqiU4J5URrHXPVL0YHrk", // Consultoria empresarial (B2B) — Florianópolis
+            "ChIJZ-k7vfxXzpQRaDkvzVYxJNc", // Leggera — pizzaria SP
           ].map((id) => (
             <div key={id} style={{ flexShrink: 0, width: 280, scrollSnapAlign: "start" as const }}>
               <img
