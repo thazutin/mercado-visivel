@@ -72,11 +72,40 @@ interface AnalysisResult {
   competitors_count: number;
   potential_customers: number;
   opportunity_customers: number;
+  clientType: 'b2c' | 'b2b' | 'b2g';
 }
 
 // ─── 1. PLACES FETCHER ──────────────────────────────────────────────────────
 
+async function fetchPlaceById(placeId: string): Promise<PlaceResult | null> {
+  console.log(`\n🔍 Buscando PLACE_ID direto: ${placeId}`);
+  const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=place_id,name,formatted_address,geometry,rating,user_ratings_total&language=pt-BR&key=${GOOGLE_API_KEY}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if (data.status !== 'OK' || !data.result) {
+    console.error(`❌ Place Details error: ${data.status} — ${data.error_message || ''}`);
+    return null;
+  }
+  const p = data.result;
+  return {
+    place_id: p.place_id,
+    name: p.name,
+    formatted_address: p.formatted_address,
+    lat: p.geometry?.location?.lat,
+    lng: p.geometry?.location?.lng,
+    rating: p.rating || 0,
+    user_ratings_total: p.user_ratings_total || 0,
+  };
+}
+
 async function fetchPlaces(category: string, city: string): Promise<PlaceResult[]> {
+  // Se PLACE_ID env var está setada, bypassa o search e usa ID direto
+  const forcedPlaceId = process.env.PLACE_ID;
+  if (forcedPlaceId) {
+    const place = await fetchPlaceById(forcedPlaceId);
+    return place ? [place] : [];
+  }
+
   const searchTerm = CATEGORY_SEARCH_TERMS[category] || category;
   const query = `${searchTerm} em ${city}`;
   console.log(`\n🔍 Buscando: "${query}"`);
@@ -204,6 +233,7 @@ async function analyzeBusinessSimple(place: PlaceResult, category: string): Prom
       competitors_count: (result as any).competitionIndex?.activeCompetitors || 0,
       potential_customers: (result as any).audiencia?.audienciaTarget || Math.round((volumes?.totalMonthlyVolume || 500) * 0.15),
       opportunity_customers: (result as any).projecaoFinanceira?.familiasGap || 0,
+      clientType: (result as any).clientType || 'b2c',
     };
   } catch (err) {
     console.log(`   ⚠️ Pipeline completo indisponível, usando estimativas: ${(err as Error).message?.slice(0, 60)}`);
@@ -220,6 +250,7 @@ async function analyzeBusinessSimple(place: PlaceResult, category: string): Prom
       competitors_count: 10, // conservative default
       potential_customers,
       opportunity_customers: Math.max(opportunity_customers, 10),
+      clientType: 'b2c',
     };
   }
 }
@@ -228,6 +259,17 @@ async function analyzeBusinessSimple(place: PlaceResult, category: string): Prom
 
 function buildCardHTML(place: PlaceResult, analysis: AnalysisResult, streetViewBase64: string): string {
   const shortAddress = place.formatted_address.split(',').slice(0, 2).join(',').trim();
+
+  // Labels adaptados ao clientType
+  const isB2B = analysis.clientType === 'b2b';
+  const isB2G = analysis.clientType === 'b2g';
+  const unitLabel = isB2G ? 'órgãos públicos' : isB2B ? 'empresas' : 'pessoas';
+  const potentialLabel = isB2G
+    ? 'órgãos públicos que podem contratar'
+    : isB2B
+    ? 'empresas que podem contratar'
+    : 'pessoas que podem comprar';
+  const oppSubtext = isB2G || isB2B ? 'que vão te conhecer' : 'conhecendo o negócio';
 
   return `<!DOCTYPE html>
 <html>
@@ -298,7 +340,7 @@ function buildCardHTML(place: PlaceResult, analysis: AnalysisResult, streetViewB
     <div class="metrics">
       <div class="metric">
         <span class="metric-icon">👥</span>
-        <span>${analysis.potential_customers.toLocaleString('pt-BR')} pessoas que podem comprar</span>
+        <span>${analysis.potential_customers.toLocaleString('pt-BR')} ${potentialLabel}</span>
       </div>
       <div class="metric">
         <span class="metric-icon">🔍</span>
@@ -312,8 +354,8 @@ function buildCardHTML(place: PlaceResult, analysis: AnalysisResult, streetViewB
 
     <div class="opportunity">
       <div class="opp-label">Oportunidade identificada pela Virô</div>
-      <div class="opp-number">+${analysis.opportunity_customers.toLocaleString('pt-BR')} pessoas/mês</div>
-      <div class="opp-text">conhecendo o negócio</div>
+      <div class="opp-number">+${analysis.opportunity_customers.toLocaleString('pt-BR')} ${unitLabel}/mês</div>
+      <div class="opp-text">${oppSubtext}</div>
     </div>
 
     <div class="separator2"></div>
