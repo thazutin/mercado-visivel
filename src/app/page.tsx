@@ -754,8 +754,8 @@ export default function Home() {
       </Section>
 
       {/* ═══ FOOTER ═══ */}
-      <footer style={{ background: V.night, padding: "32px 24px", textAlign: "center" }}>
-        <div style={{ maxWidth: 600, margin: "0 auto" }}>
+      <footer style={{ background: V.night, padding: "40px 24px 32px", textAlign: "center" }}>
+        <div style={{ maxWidth: 680, margin: "0 auto" }}>
           <span style={{ fontFamily: V.display, fontSize: 16, fontWeight: 700, color: V.white, letterSpacing: "-0.02em" }}>
             Virô
           </span>
@@ -767,7 +767,31 @@ export default function Home() {
               Termos de Serviço
             </a>
           </div>
-          <p style={{ fontSize: 12, color: V.slate, marginTop: 16 }}>
+          <div style={{
+            marginTop: 28, paddingTop: 24,
+            borderTop: `1px solid rgba(255,255,255,0.08)`,
+            fontSize: 11, color: V.slate, lineHeight: 1.7, textAlign: "left" as const,
+          }}>
+            <p style={{ margin: "0 0 8px" }}>
+              <strong style={{ color: V.ash }}>Dados reais + metodologia Virô.</strong>{" "}
+              Todos os números exibidos são coletados em tempo real de fontes públicas e
+              processados por metodologia proprietária que combina cruzamentos, benchmarks
+              setoriais e inferência por modelos de linguagem.
+            </p>
+            <p style={{ margin: "0 0 8px" }}>
+              <strong style={{ color: V.ash }}>Marketing é probabilístico, não determinístico.</strong>{" "}
+              As recomendações do Virô aumentam a <em>probabilidade</em> de resultado — não o
+              garantem. Fatores externos ao Virô (concorrência, execução, preço, experiência,
+              algoritmos de terceiros) influenciam o resultado final.
+            </p>
+            <p style={{ margin: 0 }}>
+              <strong style={{ color: V.ash }}>Execução é do usuário.</strong>{" "}
+              O Virô não se responsabiliza por resultados específicos de faturamento, ranking,
+              captação de clientes ou qualquer indicador comercial decorrente da aplicação das
+              recomendações. Detalhes completos em <a href="/termos" style={{ color: V.amber, textDecoration: "none" }}>Termos de Serviço</a>.
+            </p>
+          </div>
+          <p style={{ fontSize: 12, color: V.slate, marginTop: 24 }}>
             © {new Date().getFullYear()} Virô. Todos os direitos reservados.
           </p>
         </div>
