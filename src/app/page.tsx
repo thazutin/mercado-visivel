@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import ProcessingScreen from "@/components/ProcessingScreen";
 import InstantValueScreen from "@/components/InstantValueScreen";
 import { initialFormData, type LeadFormData, stepValidation } from "@/lib/schema";
@@ -150,6 +151,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 // ═════════════════════════════════════════════════════════════════════
 export default function Home() {
   const t = dictionaries.pt;
+  const router = useRouter();
   const formRef = useRef<HTMLDivElement>(null);
   const [screen, setScreen] = useState<"landing" | "processing" | "value">("landing");
   const [formStep, setFormStep] = useState(1);
@@ -169,14 +171,20 @@ export default function Home() {
   const [animDone, setAnimDone] = useState(false);
 
   useEffect(() => {
-    if (apiDone && animDone && results) {
+    if (apiDone && animDone && results && leadId) {
+      // Renderiza a view em memória imediatamente para não ter flash visual
+      // enquanto a navegação real completa.
       setScreen("value");
-      // Update URL so user can bookmark/return to this result
-      if (leadId) {
-        window.history.replaceState({}, "", `/resultado/${leadId}`);
-      }
+      // Navega DE VERDADE pra /resultado/[leadId] — o server component dessa
+      // rota busca o lead no Supabase e renderiza, então o estado fica
+      // persistente mesmo se o usuário sair da aba, voltar depois, ou o
+      // browser descarregar a página da memória. Antes era só um
+      // window.history.replaceState cosmético que não trocava a rota real,
+      // então ao recarregar ou voltar da aba descarregada o state vazio
+      // mostrava a home em branco.
+      router.replace(`/resultado/${leadId}`);
     }
-  }, [apiDone, animDone, results, leadId]);
+  }, [apiDone, animDone, results, leadId, router]);
 
   const handleSubmit = useCallback(async () => {
     if (honeypot) return;
