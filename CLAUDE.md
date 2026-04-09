@@ -67,10 +67,10 @@ Two notification channels: **Email (Resend)** and **WhatsApp (Twilio)**.
 
 #### Templates Twilio aprovados
 
-| Template name | ContentSid | Variáveis body | Variáveis botão | Uso |
-|---|---|---|---|---|
-| `viro_diagnostico_pronto` | `HXccdbed413b828a2e04c8b474e16920df` | `{{1}}` produto, `{{2}}` região, `{{3}}` influência% | `{{1}}` leadId (URL) | `notifyDiagnosisReady` |
-| `viro_plano_pronto` | `HX904aa5fc3eaee7c3fc2351626ce3fb52` | `{{1}}` produto, `{{2}}` região | `{{1}}` leadId (URL) | `notifyPlanReady` |
+| Template name | ContentSid | Variáveis | Uso |
+|---|---|---|---|
+| `viro_diagnostico_atualizado` | `HX672bd3177d6ae1de3bab9ead2806bf8a` | `{{1}}` nome do negócio, `{{2}}` região, `{{3}}` leadId (URL do botão) | `notifyDiagnosisReady` |
+| `viro_plano_acao` | `HX1ccebfd16b0961d7bdbdd5fa07e46255` | `{{1}}` nome do negócio, `{{2}}` região, `{{3}}` leadId (URL do botão) | `notifyFullDiagnosisReady` |
 
 #### Fluxo pós-pagamento
 

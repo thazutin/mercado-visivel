@@ -352,11 +352,11 @@ export default function Home() {
       content: (
         <>
           <p style={{ fontSize: 13, color: V.ash, margin: "0 0 16px", lineHeight: 1.5 }}>{t.formStep2Subtitle}</p>
-          <Field label={`${t.formEmailLabel} *`} hint="Enviamos seu resultado por aqui">
+          <Field label={`${t.formEmailLabel} *`} hint="Enviamos seu diagnóstico e plano por email e WhatsApp">
             <input style={inputStyle} type="email" placeholder={t.formEmailPlaceholder} value={formData.email}
               onChange={(e: any) => updateField("email", e.target.value)} />
           </Field>
-          <Field label={t.formWhatsappLabel} hint="Opcional — para contato sobre seu diagnóstico">
+          <Field label={`${t.formWhatsappLabel} *`} hint="Com DDD — enviamos notificações por aqui também">
             <input style={inputStyle} type="tel" placeholder={t.formWhatsappPlaceholder} value={formData.whatsapp}
               onChange={(e: any) => updateField("whatsapp", e.target.value)} />
           </Field>

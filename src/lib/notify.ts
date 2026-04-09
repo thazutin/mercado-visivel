@@ -7,9 +7,15 @@
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://virolocal.com";
 
 // ─── WhatsApp Content Templates (Twilio) ────────────────────────────────────
+// Templates atuais (aprovados em abril/2026) com variáveis separadas entre
+// body e botão URL:
+//   {{1}} = nome do negócio (businessName)
+//   {{2}} = região curta (shortRegion)
+//   {{3}} = leadId (usado na URL do botão "Ver resultado" / "Ver meu plano")
+// A influência digital foi removida do body do template de diagnóstico.
 const WHATSAPP_TEMPLATES = {
-  diagnostico_pronto: "HXccdbed413b828a2e04c8b474e16920df",
-  plano_pronto: "HX904aa5fc3eaee7c3fc2351626ce3fb52",
+  diagnostico_pronto: "HX672bd3177d6ae1de3bab9ead2806bf8a",
+  plano_pronto: "HX1ccebfd16b0961d7bdbdd5fa07e46255",
 } as const;
 
 function cleanPhone(whatsapp: string): string {
@@ -174,7 +180,8 @@ export async function notifyDiagnosisReady(opts: {
     sendWhatsApp(
       whatsapp,
       WHATSAPP_TEMPLATES.diagnostico_pronto,
-      { "1": product, "2": shortRegion, "3": String(influencePercent), "4": leadId },
+      // Template aprovado usa: {{1}} nome do negócio, {{2}} região, {{3}} leadId
+      { "1": displayName, "2": shortRegion, "3": leadId },
     ),
 
     sendEmail({
@@ -217,7 +224,8 @@ export async function notifyFullDiagnosisReady(opts: {
     sendWhatsApp(
       whatsapp,
       WHATSAPP_TEMPLATES.plano_pronto,
-      { "1": product, "2": shortRegion, "3": leadId },
+      // Template aprovado usa: {{1}} nome do negócio, {{2}} região, {{3}} leadId
+      { "1": displayName, "2": shortRegion, "3": leadId },
     ),
 
     sendEmail({
