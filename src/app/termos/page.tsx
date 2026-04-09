@@ -125,12 +125,45 @@ export default function TermosPage() {
         </section>
 
         <section style={{ marginBottom: 36 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>7. Limitação de responsabilidade</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 12 }}>7. Metodologia, natureza probabilística do marketing e limitação de responsabilidade</h2>
+          <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc, marginBottom: 12 }}>
+            <strong style={{ color: V.night }}>Dados reais e metodologia proprietária.</strong>{" "}
+            Todos os dados exibidos pelo Virô — volumes de busca, concorrentes, audiência estimada,
+            presença digital, indicadores demográficos, empresas-alvo e contatos de decisores — são
+            coletados em tempo real a partir de fontes públicas e de terceiros licenciados
+            (Google Search, Google Maps, Google Places, Google Ads, DataForSEO, Instagram, IBGE,
+            PNCP, CNPJá, Receita Federal, Hunter.io, Perplexity AI, Claude AI, entre outras).
+            Esses dados brutos são processados por uma metodologia proprietária do Virô — que
+            combina cruzamentos, pesos setoriais, benchmarks e inferência por modelos de linguagem —
+            para gerar contexto, score de influência, projeções e recomendações. Essa metodologia
+            é autoral e pode evoluir sem aviso prévio.
+          </p>
+          <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc, marginBottom: 12 }}>
+            <strong style={{ color: V.night }}>Marketing é uma disciplina probabilística, não determinística.</strong>{" "}
+            O Virô parte do princípio de que marketing aumenta a <em>probabilidade</em> de um resultado
+            acontecer — não o garante. Uma ação recomendada pelo Virô pode tornar mais provável que
+            seu negócio apareça em mais buscas, receba mais visitas, seja considerado por mais
+            clientes ou feche mais vendas — mas nenhum desses resultados é causal, determinístico
+            ou garantido. Inúmeros fatores fora do controle do Virô (concorrência local,
+            sazonalidade, qualidade da execução, preço, experiência do cliente, macroeconomia,
+            algoritmos de plataformas terceiras, tendências sociais) influenciam o resultado final.
+          </p>
+          <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc, marginBottom: 12 }}>
+            <strong style={{ color: V.night }}>Limitação de responsabilidade.</strong>{" "}
+            O Virô não se responsabiliza por resultados específicos de faturamento, ranking em
+            buscadores, captação de clientes, conversão, alcance orgânico, valor de pedido, churn,
+            suspensão de perfis em plataformas terceiras, ou qualquer outro indicador comercial
+            decorrente — ou não decorrente — da aplicação das recomendações geradas pelo Virô.
+            A execução das ações sugeridas, a decisão de contatar terceiros (incluindo decisores
+            identificados em listas de prospecção B2B), o cumprimento de leis aplicáveis
+            (incluindo a LGPD no tratamento de dados de terceiros) e a adequação comercial das
+            recomendações ao seu contexto específico são de responsabilidade exclusiva do usuário.
+          </p>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>
-            Os dados do diagnóstico são baseados em fontes públicas e podem apresentar variações em relação à
-            realidade de mercado. O Virô não garante resultados específicos de faturamento, ranking ou captação
-            de clientes. As recomendações são baseadas em evidências — a execução e os resultados dependem de
-            fatores externos ao controle do Virô.
+            O Virô atua como ferramenta de inteligência e suporte à decisão — não como consultoria
+            jurídica, contábil, financeira ou substituto de profissionais qualificados nessas
+            áreas. Em caso de dúvida sobre a adequação legal ou comercial de uma recomendação
+            específica ao seu negócio, consulte um profissional habilitado antes de executar.
           </p>
         </section>
 
