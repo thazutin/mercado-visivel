@@ -386,6 +386,31 @@ export function createApifyMapsScraper(config: ApifyConfig) {
         snippet: r.text?.text?.slice(0, 100) || '',
       }));
 
+      // Reviews completas pro co-pilot de resposta (cap 20, ignora já respondidas)
+      const crypto = await import('crypto');
+      const scrapedReviews = reviews
+        .filter((r: any) => !r.ownerResponse && r.text?.text)
+        .slice(0, 20)
+        .map((r: any) => {
+          const authorName = r.authorAttribution?.displayName || null;
+          const text = r.text?.text || '';
+          const date = r.publishTime || null;
+          const hashInput = `${authorName || 'anon'}|${date || ''}|${text.slice(0, 50)}`;
+          const externalId = crypto
+            .createHash('sha1')
+            .update(hashInput)
+            .digest('hex')
+            .slice(0, 16);
+          return {
+            externalId,
+            authorName,
+            rating: r.rating || 0,
+            text,
+            date,
+            hasOwnerResponse: false,
+          };
+        });
+
       const presence: MapsPresence = {
         found: true,
         businessName: source.displayName?.text || null,
@@ -396,6 +421,7 @@ export function createApifyMapsScraper(config: ApifyConfig) {
         ownerResponseCount: ownerResponseCount,
         reviewsAnalyzed: reviews.length,
         topReviews: topReviews,
+        reviews: scrapedReviews,
         categories: source.types || [],
         inLocalPack: true,
         localPackPosition: 1,

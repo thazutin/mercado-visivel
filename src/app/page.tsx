@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import ProcessingScreen from "@/components/ProcessingScreen";
-import InstantValueScreen from "@/components/InstantValueScreen";
 import { initialFormData, type LeadFormData, stepValidation } from "@/lib/schema";
 import { dictionaries, type Locale } from "@/lib/i18n";
 import { NelsonLogo } from "@/components/NelsonLogo";
@@ -153,85 +151,56 @@ export default function Home() {
   const t = dictionaries.pt;
   const router = useRouter();
   const formRef = useRef<HTMLDivElement>(null);
-  const [screen, setScreen] = useState<"landing" | "processing" | "value">("landing");
   const [formStep, setFormStep] = useState(1);
   const [formData, setFormData] = useState<LeadFormData>(initialFormData);
-  const [results, setResults] = useState<any>(null);
   const [leadId, setLeadId] = useState("");
   const [heroVisible, setHeroVisible] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [isNational, setIsNational] = useState(false);
   const [honeypot, setHoneypot] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => { setTimeout(() => setHeroVisible(true), 200); }, []);
 
   const updateField = (key: keyof LeadFormData, val: any) => setFormData((d: any) => ({ ...d, [key]: val }));
 
-  const [apiDone, setApiDone] = useState(false);
-  const [animDone, setAnimDone] = useState(false);
-
-  useEffect(() => {
-    if (apiDone && animDone && results && leadId) {
-      // Renderiza a view em memória imediatamente para não ter flash visual
-      // enquanto a navegação real completa.
-      setScreen("value");
-      // Navega DE VERDADE pra /resultado/[leadId] — o server component dessa
-      // rota busca o lead no Supabase e renderiza, então o estado fica
-      // persistente mesmo se o usuário sair da aba, voltar depois, ou o
-      // browser descarregar a página da memória. Antes era só um
-      // window.history.replaceState cosmético que não trocava a rota real,
-      // então ao recarregar ou voltar da aba descarregada o state vazio
-      // mostrava a home em branco.
-      router.replace(`/resultado/${leadId}`);
-    }
-  }, [apiDone, animDone, results, leadId, router]);
-
   const handleSubmit = useCallback(async () => {
-    if (honeypot) return;
+    if (honeypot || submitting) return;
 
-    setScreen("processing");
-    setApiDone(false);
-    setAnimDone(false);
+    setSubmitting(true);
+    setSubmitError(null);
 
     try {
+      // POST agora retorna {lead_id, status:"processing"} em <1s — o pipeline
+      // roda em background no servidor via waitUntil. A gente redireciona
+      // imediatamente para /resultado/[leadId] que mostra PollingScreen até
+      // o status virar 'done' no DB. Se o usuário fechar a aba durante o
+      // processing, não perde nada: o lead está salvo e o link do resultado
+      // funciona quando voltar.
       const res = await fetch("/api/diagnose", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
       const data = await res.json();
-      if (data.results) {
-        setResults(data.results);
-        setLeadId(data.lead_id);
+      if (!res.ok || !data.lead_id) {
+        setSubmitError(
+          data?.message || data?.error || "Erro ao iniciar diagnóstico. Tente novamente.",
+        );
+        setSubmitting(false);
+        return;
       }
+      setLeadId(data.lead_id);
+      // router.push pra navegação real — Next.js monta o server component de
+      // /resultado/[leadId] que vai renderizar o PollingScreen enquanto o
+      // pipeline roda em background.
+      router.push(`/resultado/${data.lead_id}`);
     } catch (err) {
       console.error("Submit error:", err);
-    } finally {
-      setApiDone(true);
+      setSubmitError("Erro de conexão. Verifique sua internet e tente novamente.");
+      setSubmitting(false);
     }
-  }, [formData, honeypot]);
-
-  const handleCheckout = useCallback(async (coupon?: string) => {
-    setCheckoutLoading(true);
-    try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lead_id: leadId,
-          email: formData.email,
-          locale: formData.locale,
-          coupon,
-        }),
-      });
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
-    } catch (err) {
-      console.error("Checkout error:", err);
-    } finally {
-      setCheckoutLoading(false);
-    }
-  }, [leadId, formData]);
+  }, [formData, honeypot, router, submitting]);
 
   const handlePlaceSelected = useCallback((place: { address: string; placeId: string; lat: number; lng: number }) => {
     setFormData((d: any) => ({
@@ -245,30 +214,40 @@ export default function Home() {
   }, []);
 
   // ─── Screen routing ──────────────────────────────────────────────
-  if (screen === "processing") {
+  // O POST dispara o pipeline em background e router.push imediatamente pra
+  // /resultado/[leadId]. Enquanto a navegação acontece (<500ms), mostramos
+  // um overlay mínimo pra não deixar o formulário "congelado sem feedback".
+  if (submitting && !submitError) {
     return (
-      <ProcessingScreen
-        product={formData.product}
-        region={formData.region}
-        businessName={formData.businessName}
-        onComplete={() => setAnimDone(true)}
-      />
+      <div
+        style={{
+          minHeight: "100vh",
+          background: V.night,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "32px 20px",
+          gap: 16,
+        }}
+      >
+        <div
+          style={{
+            width: 48,
+            height: 48,
+            border: `3px solid ${V.graphite}`,
+            borderTopColor: V.amber,
+            borderRadius: "50%",
+            animation: "spin 0.8s linear infinite",
+          }}
+        />
+        <p style={{ color: V.mist, fontSize: 14, fontFamily: V.body, margin: 0 }}>
+          Iniciando seu diagnóstico...
+        </p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
     );
   }
-  if (screen === "value" && results) {
-    return (
-      <InstantValueScreen
-        product={formData.product}
-        region={formData.region}
-        results={results}
-        onCheckout={handleCheckout}
-        loading={checkoutLoading}
-        leadId={leadId}
-        name={formData.businessName}
-      />
-    );
-  }
-
   // ─── Form steps ──────────────────────────────────────────────────
   const totalSteps = 2;
 

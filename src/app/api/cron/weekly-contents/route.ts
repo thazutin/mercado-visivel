@@ -144,6 +144,57 @@ export async function GET(req: NextRequest) {
       await triggerContentGenerationWithContext(lead.id, relatorioSetorial);
       console.log(`[Cron/Contents] Contents generated for lead ${lead.id}`);
 
+      // 2b. Co-pilot: re-scrape Maps e gera drafts pras reviews novas
+      //     (dedup via external_review_id, só cria drafts pros reviews inéditos)
+      try {
+        const { createApifyMapsScraper } = await import("@/lib/pipeline/external-services");
+        if (process.env.GOOGLE_PLACES_API_KEY && lead.product && lead.region) {
+          const scraper = createApifyMapsScraper({
+            apiToken: process.env.APIFY_API_TOKEN || '',
+            cache: undefined,
+          } as any);
+          const freshMaps = await Promise.race([
+            scraper(lead.name || lead.product, lead.region),
+            new Promise<any>((resolve) => setTimeout(() => resolve(null), 30_000)),
+          ]);
+          if (freshMaps?.reviews?.length > 0) {
+            // Atualiza raw_data.influence.rawGoogle.mapsPresence.reviews no diagnosis
+            // mais recente pra que generateReviewResponses enxergue os novos
+            const supabaseInner = getSupabase();
+            const { data: latestDiag } = await supabaseInner
+              .from("diagnoses")
+              .select("id, raw_data")
+              .eq("lead_id", lead.id)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .single();
+            if (latestDiag?.raw_data) {
+              const merged = { ...latestDiag.raw_data };
+              merged.influence = merged.influence || {};
+              merged.influence.rawGoogle = merged.influence.rawGoogle || {};
+              merged.influence.rawGoogle.mapsPresence = {
+                ...(merged.influence.rawGoogle.mapsPresence || {}),
+                reviews: freshMaps.reviews,
+              };
+              await supabaseInner
+                .from("diagnoses")
+                .update({ raw_data: merged })
+                .eq("id", latestDiag.id);
+            }
+          }
+        }
+        const { generateReviewResponses } = await import("@/lib/generateReviewResponses");
+        const result = await generateReviewResponses(lead.id);
+        console.log(
+          `[Cron/Contents] Review copilot: generated=${result.generated}, total=${result.total}`,
+        );
+      } catch (rcErr) {
+        console.warn(
+          `[Cron/Contents] Review copilot falhou (non-fatal):`,
+          (rcErr as Error).message,
+        );
+      }
+
       // 3. Notificar
       await notifyWeeklyContents({
         leadId: lead.id,

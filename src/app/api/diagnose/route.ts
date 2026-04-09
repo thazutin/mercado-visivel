@@ -1,15 +1,17 @@
 // ============================================================================
-// Virô — Diagnose Route (síncrono + notificações)
-// Pipeline roda de forma síncrona — Vercel maxDuration=180s garante o tempo
-// Ao terminar: salva resultado + notifica via WhatsApp + email
-// GET ?leadId=X — polling endpoint para ResultadoClient
+// Virô — Diagnose Route (assíncrono)
+// POST cria o lead, retorna {lead_id, status:"processing"} em <1s.
+// Pipeline + persistência + notify + enrichment rodam em background via
+// waitUntil() — frontend redireciona imediatamente pra /resultado/[leadId]
+// que mostra PollingScreen até status='done' no DB.
+// GET ?leadId=X — polling endpoint para ResultadoClient/PollingScreen.
 // File: src/app/api/diagnose/route.ts
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
 import { waitUntil } from "@vercel/functions";
-import { leadSchema } from "@/lib/schema";
-import { insertLead, updateLeadStatus, insertDiagnosis } from "@/lib/supabase";
+import { leadSchema, type LeadFormData } from "@/lib/schema";
+import { insertLead, insertDiagnosis } from "@/lib/supabase";
 import { runInstantAnalysis, runPostDiagnosisEnrichment, buildDisplayData, sanitizeProjecao } from "@/lib/analysis";
 import { notifyDiagnosisReady } from "@/lib/notify";
 import { createClient } from "@supabase/supabase-js";
@@ -23,101 +25,56 @@ function getSupabaseAdmin() {
   );
 }
 
-// ─── POST /api/diagnose ──────────────────────────────────────────────────────
+// Helper: calcula oportunidade exibida no email
+function computeEmailOportunidade(d: any, influencePercent: number): number {
+  const proj = d.projecaoFinanceira;
+  const audienciaTotal = d.audiencia?.audienciaTarget || 0;
+  const familiasAtual = proj?.familiasAtual != null
+    ? Math.min(proj.familiasAtual, audienciaTotal)
+    : Math.round(audienciaTotal * (influencePercent / 100));
+  const familiasPotencial = proj?.familiasPotencial != null
+    ? Math.min(proj.familiasPotencial, audienciaTotal)
+    : Math.round(audienciaTotal * (Math.min(influencePercent + 10, 100) / 100));
+  let oportunidade = Math.max(0, familiasPotencial - familiasAtual);
+  if (oportunidade <= 0 && audienciaTotal > 0) {
+    oportunidade = proj?.familiasGap || Math.max(1, Math.round(audienciaTotal * 0.10));
+  }
+  return oportunidade;
+}
 
-export async function POST(req: NextRequest) {
+// ─── Pipeline background executor ───────────────────────────────────────────
+// Roda a análise completa + persiste no DB + notifica + enrichment.
+// Chamado via waitUntil() após o lead ter sido criado.
+
+async function runPipelineBackground(leadId: string, formData: LeadFormData, locale: string) {
+  const supabase = getSupabaseAdmin();
+
   try {
-    // Kill switch — pausa novas entradas sem precisar de deploy.
-    // Setar VIRO_DIAGNOSE_PAUSED=true no Vercel Environment Variables → pausa em < 30s.
-    if (process.env.VIRO_DIAGNOSE_PAUSED === "true") {
-      return NextResponse.json(
-        {
-          error: "paused",
-          message: "Estamos em manutenção rápida. Volte em alguns minutos — seu diagnóstico continua disponível assim que reabrirmos.",
-        },
-        { status: 503 },
-      );
-    }
-
-    const body = await req.json();
-
-    // Honeypot
-    if (body.website_url) {
-      return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
-    }
-
-    const parsed = leadSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Dados inválidos", details: parsed.error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    const formData = parsed.data;
-    const locale = formData.locale || "pt";
-
-    // 1. Salva lead
-    let lead: { id: string };
-    try {
-      lead = await insertLead({
-        name: (formData as any).businessName || (formData as any).name || "",
-        email: formData.email || "",
-        whatsapp: formData.whatsapp || "",
-        site: formData.site || "",
-        instagram: formData.instagram || "",
-        linkedin: (formData as any).linkedin || "",
-        other_social: "",
-        google_maps: "",
-        product: formData.product,
-        customer_description: formData.customerDescription || "",
-        region: formData.region,
-        address: formData.address || "",
-        place_id: formData.placeId || "",
-        lat: formData.lat || null,
-        lng: formData.lng || null,
-        ticket: typeof formData.ticket === "number"
-          ? String(formData.ticket)
-          : formData.ticket || "",
-        channels: formData.channels || [],
-        differentiator: formData.differentiator || "",
-        competitors: formData.competitors || [],
-        challenge: formData.challenge || "",
-        free_text: formData.freeText || "",
-        locale,
-        coupon: formData.coupon || "",
-        client_type: formData.clientType || "b2c",
-        status: "processing",
-      });
-    } catch (dbError) {
-      console.error("[Diagnose] insertLead failed:", dbError);
-      lead = { id: "temp_" + Date.now() };
-    }
-
-    // 2. Roda pipeline (síncrono — com safety timeout de 150s antes do Vercel matar em 180s)
+    // 1. Pipeline (síncrono — safety timeout de 150s antes do Vercel matar em 180s)
+    console.log(`[DiagnoseBG] Starting pipeline for lead ${leadId}`);
     const pipelineResult = await Promise.race([
       runInstantAnalysis(formData, locale),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Pipeline timeout: 150s exceeded')), 150_000)
+        setTimeout(() => reject(new Error("Pipeline timeout: 150s exceeded")), 150_000),
       ),
     ]);
-    pipelineResult.leadId = lead.id;
+    (pipelineResult as any).leadId = leadId;
 
-    // 3. Salva diagnóstico
+    // 2. Salva diagnóstico (tabela diagnoses)
     try {
       await insertDiagnosis({
-        lead_id: lead.id,
+        lead_id: leadId,
         terms: pipelineResult.terms.terms.map((t: any) => {
-          const serpMatch = pipelineResult.influence?.influence?.rawGoogle?.serpPositions?.find(
-            (sp: any) => sp.term.toLowerCase() === t.term.toLowerCase()
+          const serpMatch = (pipelineResult.influence as any)?.influence?.rawGoogle?.serpPositions?.find(
+            (sp: any) => sp.term?.toLowerCase() === t.term.toLowerCase(),
           );
           return {
             term: t.term,
             volume: pipelineResult.volumes.termVolumes.find(
-              (v: any) => v.term === t.term
+              (v: any) => v.term === t.term,
             )?.monthlyVolume || 0,
             cpc: pipelineResult.volumes.termVolumes.find(
-              (v: any) => v.term === t.term
+              (v: any) => v.term === t.term,
             )?.cpcBrl || 0,
             position: serpMatch?.position ? String(serpMatch.position) : "—",
           };
@@ -140,14 +97,13 @@ export async function POST(req: NextRequest) {
         projecao_financeira: sanitizeProjecao((pipelineResult as any).projecaoFinanceira),
       });
     } catch (err) {
-      console.error("[Diagnose] insertDiagnosis failed:", err);
+      console.error("[DiagnoseBG] insertDiagnosis failed:", err);
     }
 
-    // 4. Salva pipeline_run
+    // 3. Salva pipeline_run
     try {
-      const supabase = getSupabaseAdmin();
       await supabase.from("pipeline_runs").insert({
-        lead_id: lead.id,
+        lead_id: leadId,
         pipeline_version: pipelineResult.pipelineVersion,
         total_duration_ms: pipelineResult.totalProcessingTimeMs,
         steps_timing: {
@@ -159,159 +115,250 @@ export async function POST(req: NextRequest) {
         confidence_level: pipelineResult.confidenceLevel,
       });
     } catch (err) {
-      console.warn("[Diagnose] pipeline_runs skipped:", (err as Error).message);
+      console.warn("[DiagnoseBG] pipeline_runs skipped:", (err as Error).message);
     }
 
-    // 5. Monta display data
-    console.log(`[Diagnose] audiencia object:`, JSON.stringify(pipelineResult.audiencia || null));
-    console.log(`[Diagnose] volumes: totalMonthly=${pipelineResult.volumes?.totalMonthlyVolume}, termCount=${pipelineResult.volumes?.termVolumes?.length}`);
+    // 4. Monta display data
     const display = buildDisplayData(pipelineResult);
-    // Lat/lng: prioriza form (Places autocomplete), fallback pipeline (geocoding)
     display.lat = formData.lat || (pipelineResult as any).pipelineLat || null;
     display.lng = formData.lng || (pipelineResult as any).pipelineLng || null;
-    console.log(`[Diagnose] buildDisplayData keys:`, Object.keys(display));
-    console.log(`[Diagnose] display.totalVolume=${display.totalVolume}, display.audiencia=${JSON.stringify(display.audiencia)}, display.influencePercent=${display.influencePercent}, display.marketLow=${display.marketLow}, display.marketHigh=${display.marketHigh}`);
+    console.log(
+      `[DiagnoseBG] display ready for ${leadId}: totalVolume=${display.totalVolume}, influence=${display.influencePercent}, audiencia=${display.audiencia ? "present" : "null"}`,
+    );
 
-    // 6. Salva display no lead (para /resultado/[leadId] e polling)
+    // 5. Salva display no lead — ESSE é o sinal que o polling procura
     try {
-      const supabase = getSupabaseAdmin();
       const { error: updateError } = await supabase
         .from("leads")
-        .update({ status: "done", diagnosis_display: display, client_type: pipelineResult.clientType || "b2c" })
-        .eq("id", lead.id);
+        .update({
+          status: "done",
+          diagnosis_display: display,
+          client_type: pipelineResult.clientType || "b2c",
+        })
+        .eq("id", leadId);
       if (updateError) {
-        console.error("[Diagnose] update lead display SUPABASE ERROR:", updateError.message, updateError.details, updateError.hint);
+        console.error(
+          "[DiagnoseBG] update lead display SUPABASE ERROR:",
+          updateError.message,
+          updateError.details,
+          updateError.hint,
+        );
       } else {
-        console.log(`[Diagnose] lead ${lead.id} updated: status=done, display keys=${Object.keys(display).join(',')}, audiencia=${display.audiencia ? 'present' : 'null'}`);
+        console.log(`[DiagnoseBG] lead ${leadId} status=done, display saved`);
       }
     } catch (err) {
-      console.error("[Diagnose] update lead display failed:", err);
+      console.error("[DiagnoseBG] update lead display failed:", err);
     }
 
-    // Helper: calcula oportunidade exibida no email
-    const computeEmailOportunidade = (d: typeof display, influencePercent: number) => {
-      const proj = d.projecaoFinanceira;
-      const audienciaTotal = d.audiencia?.audienciaTarget || 0;
-      const familiasAtual = proj?.familiasAtual != null
-        ? Math.min(proj.familiasAtual, audienciaTotal)
-        : Math.round(audienciaTotal * (influencePercent / 100));
-      const familiasPotencial = proj?.familiasPotencial != null
-        ? Math.min(proj.familiasPotencial, audienciaTotal)
-        : Math.round(audienciaTotal * (Math.min(influencePercent + 10, 100) / 100));
-      let oportunidade = Math.max(0, familiasPotencial - familiasAtual);
-      if (oportunidade <= 0 && audienciaTotal > 0) {
-        oportunidade = proj?.familiasGap || Math.max(1, Math.round(audienciaTotal * 0.10));
-      }
-      return oportunidade;
-    };
-
-    // 7. Notifica por email IMEDIATAMENTE — síncrono, antes do response.
-    // Trade-off: o email pode ter números levemente diferentes do dashboard
-    // após o enrichment background (~30s depois), mas a entrega é garantida.
-    // Defer pra waitUntil estava fazendo emails sumirem em prod.
+    // 6. Notifica por email (WhatsApp desativado até a Meta reativar a WABA)
     try {
       const initialInfluence = Math.round(pipelineResult.influence.influence.totalInfluence);
       const initialSearchVolume = pipelineResult.volumes.totalMonthlyVolume || 0;
       const initialProjecao: any = (pipelineResult as any).projecaoFinanceira;
-      const initialDemandType: string = (pipelineResult as any).demandType || 'local_residents';
+      const initialDemandType: string = (pipelineResult as any).demandType || "local_residents";
       const emailOportunidade = computeEmailOportunidade(display, initialInfluence);
 
       await notifyDiagnosisReady({
         email: formData.email,
-        whatsapp: formData.whatsapp,
-        leadId: lead.id,
+        whatsapp: formData.whatsapp || "",
+        leadId,
         product: formData.product,
         region: formData.region,
         influencePercent: initialInfluence,
         searchVolume: initialSearchVolume,
-        projecaoFinanceira: { ...(sanitizeProjecao(initialProjecao) || {}), familiasGap: emailOportunidade },
-        name: formData.businessName || formData.product,
+        projecaoFinanceira: {
+          ...(sanitizeProjecao(initialProjecao) || {}),
+          familiasGap: emailOportunidade,
+        },
+        name: (formData as any).businessName || formData.product,
         demandType: initialDemandType as any,
       });
-      console.log("[Diagnose] notify completed (sync, pre-enrichment)");
+      console.log(`[DiagnoseBG] notify completed for ${leadId}`);
     } catch (err) {
-      console.error("[Diagnose] notify failed:", err);
+      console.error("[DiagnoseBG] notify failed:", err);
     }
 
-    // 8. Background tasks — enrichment + atualizações de display (não bloqueia response)
-    waitUntil((async () => {
+    // 7. Post-enrichment (checklist, seasonality, content)
+    try {
+      await runPostDiagnosisEnrichment(leadId, pipelineResult, {
+        name: (formData as any).businessName || formData.product,
+        product: formData.product,
+        region: formData.region,
+        client_type: pipelineResult.clientType || "b2c",
+      });
+    } catch (err) {
+      console.error("[DiagnoseBG] Post-enrichment failed:", err);
+    }
+
+    // 8. Se dados slow ficaram pendentes, re-roda pipeline completo e atualiza display
+    if (display.enrichmentStatus === "pending") {
+      console.log(
+        `[DiagnoseBG] Slow enrichment pending: [${display.enrichmentPending?.join(", ")}] — running full pipeline in background`,
+      );
       try {
-        await runPostDiagnosisEnrichment(lead.id, pipelineResult, {
-          name: (formData as any).name || formData.product,
-          product: formData.product,
-          region: formData.region,
-          client_type: pipelineResult.clientType || "b2c",
-        });
+        const fullResult = await runInstantAnalysis(formData, locale);
+        const fullDisplay = buildDisplayData(fullResult);
+        fullDisplay.lat = formData.lat || null;
+        fullDisplay.lng = formData.lng || null;
+        fullDisplay.enrichmentStatus = "complete";
+        fullDisplay.enrichmentPending = [];
+
+        await supabase
+          .from("leads")
+          .update({ diagnosis_display: fullDisplay })
+          .eq("id", leadId);
+        console.log(`[DiagnoseBG] Background enrichment complete for ${leadId}`);
       } catch (err) {
-        console.error("[Diagnose] Enrichment failed:", err);
-      }
-
-      // Se dados slow ficaram pendentes, re-roda pipeline completo e atualiza display
-      if (display.enrichmentStatus === 'pending') {
-        console.log(`[Diagnose] Slow enrichment pending: [${display.enrichmentPending?.join(', ')}] — running full pipeline in background`);
+        console.error("[DiagnoseBG] Background enrichment failed:", err);
         try {
-          const fullResult = await runInstantAnalysis(formData, locale);
-          const fullDisplay = buildDisplayData(fullResult);
-          fullDisplay.lat = formData.lat || null;
-          fullDisplay.lng = formData.lng || null;
-          fullDisplay.enrichmentStatus = 'complete';
-          fullDisplay.enrichmentPending = [];
-
-          const supabaseAdmin = getSupabaseAdmin();
-          await supabaseAdmin
-            .from('leads')
-            .update({ diagnosis_display: fullDisplay })
-            .eq('id', lead.id);
-          console.log(`[Diagnose] Background enrichment complete for ${lead.id}`);
-        } catch (err) {
-          console.error('[Diagnose] Background enrichment failed:', err);
-          try {
-            const supabaseAdmin = getSupabaseAdmin();
-            display.enrichmentStatus = 'complete';
-            await supabaseAdmin.from('leads').update({ diagnosis_display: display }).eq('id', lead.id);
-          } catch { /* ignore */ }
+          display.enrichmentStatus = "complete";
+          await supabase.from("leads").update({ diagnosis_display: display }).eq("id", leadId);
+        } catch {
+          /* ignore */
         }
       }
-    })());
+    }
 
-    // 9. Responde com resultado FAST (frontend exibe imediatamente, polls para enrichment)
+    console.log(`[DiagnoseBG] Pipeline background completed for ${leadId}`);
+  } catch (err) {
+    // Pipeline falhou — marca o lead como done com display vazio pra não travar
+    // em "processing" pra sempre. O ResultadoClient vai renderizar o display
+    // vazio (fallback visual) e o usuário vê uma mensagem honesta.
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[DiagnoseBG] Pipeline FAILED for ${leadId}:`,
+      err instanceof Error ? `${err.message}\n${err.stack}` : err,
+    );
+    try {
+      await supabase
+        .from("leads")
+        .update({
+          status: "done",
+          diagnosis_display: {
+            terms: [],
+            totalVolume: 0,
+            avgCpc: 0,
+            marketLow: 0,
+            marketHigh: 0,
+            influencePercent: 0,
+            source: "error",
+            confidence: "low",
+            pipeline: {
+              version: "error",
+              durationMs: 0,
+              sourcesUsed: [],
+              sourcesUnavailable: ["pipeline_error"],
+            },
+            _error: errMsg,
+          },
+        })
+        .eq("id", leadId);
+    } catch (updateErr) {
+      console.error("[DiagnoseBG] Failed to mark lead as done:", updateErr);
+    }
+  }
+}
+
+// ─── POST /api/diagnose ──────────────────────────────────────────────────────
+
+export async function POST(req: NextRequest) {
+  try {
+    // Kill switch — pausa novas entradas sem precisar de deploy.
+    if (process.env.VIRO_DIAGNOSE_PAUSED === "true") {
+      return NextResponse.json(
+        {
+          error: "paused",
+          message:
+            "Estamos em manutenção rápida. Volte em alguns minutos — seu diagnóstico continua disponível assim que reabrirmos.",
+        },
+        { status: 503 },
+      );
+    }
+
+    const body = await req.json();
+
+    // Honeypot
+    if (body.website_url) {
+      return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
+    }
+
+    const parsed = leadSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Dados inválidos", details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+
+    const formData = parsed.data;
+    const locale = formData.locale || "pt";
+
+    // 1. Cria o lead SÍNCRONO — precisamos do leadId pra devolver ao client
+    let lead: { id: string };
+    try {
+      lead = await insertLead({
+        name: (formData as any).businessName || (formData as any).name || "",
+        email: formData.email || "",
+        whatsapp: formData.whatsapp || "",
+        site: formData.site || "",
+        instagram: formData.instagram || "",
+        linkedin: (formData as any).linkedin || "",
+        other_social: "",
+        google_maps: "",
+        product: formData.product,
+        customer_description: formData.customerDescription || "",
+        region: formData.region,
+        address: formData.address || "",
+        place_id: formData.placeId || "",
+        lat: formData.lat || null,
+        lng: formData.lng || null,
+        ticket:
+          typeof formData.ticket === "number"
+            ? String(formData.ticket)
+            : formData.ticket || "",
+        channels: formData.channels || [],
+        differentiator: formData.differentiator || "",
+        competitors: formData.competitors || [],
+        challenge: formData.challenge || "",
+        free_text: formData.freeText || "",
+        locale,
+        coupon: formData.coupon || "",
+        client_type: formData.clientType || "b2c",
+        status: "processing",
+      });
+    } catch (dbError) {
+      console.error("[Diagnose] insertLead failed:", dbError);
+      return NextResponse.json(
+        { error: "Erro ao criar diagnóstico. Tente novamente em alguns segundos." },
+        { status: 500 },
+      );
+    }
+
+    // 2. Dispara pipeline em background — client redireciona antes de terminar
+    waitUntil(runPipelineBackground(lead.id, formData as LeadFormData, locale));
+
+    // 3. Responde IMEDIATAMENTE — cliente vai redirecionar pra /resultado/[leadId]
+    //    que faz polling no GET até status='done'.
     return NextResponse.json({
       lead_id: lead.id,
-      results: display,
+      status: "processing",
     });
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
-    console.error("[Diagnose] Unexpected error:", err instanceof Error ? `${err.message}\n${err.stack}` : err);
-
-    // Mark lead as done with error flag so it doesn't stay stuck in processing
-    // Status 'error' may not exist in schema — use 'done' with empty display
-    if (lead?.id) {
-      try {
-        const supabase = getSupabaseAdmin();
-        await supabase.from('leads').update({
-          status: 'done',
-          diagnosis_display: {
-            terms: [], totalVolume: 0, avgCpc: 0, marketLow: 0, marketHigh: 0,
-            influencePercent: 0, source: 'error', confidence: 'low',
-            pipeline: { version: 'error', durationMs: 0, sourcesUsed: [], sourcesUnavailable: ['pipeline_error'] },
-            _error: errMsg,
-          },
-        }).eq('id', lead.id);
-        console.log(`[Diagnose] Lead ${lead.id} marked as done with error display`);
-      } catch (updateErr) {
-        console.error('[Diagnose] Failed to mark lead as done:', updateErr);
-      }
-    }
-
+    console.error(
+      "[Diagnose] Unexpected error:",
+      err instanceof Error ? `${err.message}\n${err.stack}` : err,
+    );
     return NextResponse.json(
-      { error: "Erro interno ao processar análise", reason: errMsg, leadId: lead?.id },
-      { status: 500 }
+      { error: "Erro interno ao processar análise", reason: errMsg },
+      { status: 500 },
     );
   }
 }
 
 // ─── GET /api/diagnose?leadId=X ──────────────────────────────────────────────
-// Polling endpoint — usado por /resultado/[leadId] para carregar diagnóstico salvo
+// Polling endpoint — usado por /resultado/[leadId] e PollingScreen para
+// carregar diagnóstico salvo ou aguardar ele ficar pronto.
 
 export async function GET(req: NextRequest) {
   const leadId = req.nextUrl.searchParams.get("leadId");
@@ -352,5 +399,3 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ status: "processing" });
   }
 }
-
-// sanitizeProjecao and buildDisplayData are now imported from @/lib/analysis

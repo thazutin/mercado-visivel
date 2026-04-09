@@ -28,3 +28,28 @@ ALTER TABLE checklists ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Leitura pública" ON checklists FOR SELECT USING (true);
 CREATE POLICY "Insert apenas service role" ON checklists FOR INSERT WITH CHECK (false);
 CREATE POLICY "Update apenas service role" ON checklists FOR UPDATE USING (false);
+
+-- nova tabela: co-pilot de respostas a reviews do Google
+CREATE TABLE IF NOT EXISTS review_responses (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  lead_id uuid NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+  external_review_id text NOT NULL, -- sha1(author + date + text.slice(0,50))
+  author_name text,
+  rating int,
+  review_text text,
+  review_date timestamptz,
+  has_owner_response boolean DEFAULT false,
+  draft_response text,
+  status text DEFAULT 'pending', -- pending | copied | dismissed
+  week_number int, -- pra agrupar na aba semanal (ISO week)
+  created_at timestamptz NOT NULL DEFAULT now(),
+  copied_at timestamptz,
+  UNIQUE(lead_id, external_review_id)
+);
+CREATE INDEX IF NOT EXISTS idx_review_responses_lead_id ON review_responses(lead_id);
+CREATE INDEX IF NOT EXISTS idx_review_responses_lead_status ON review_responses(lead_id, status);
+CREATE INDEX IF NOT EXISTS idx_review_responses_lead_week ON review_responses(lead_id, week_number);
+ALTER TABLE review_responses ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Leitura pública review_responses" ON review_responses FOR SELECT USING (true);
+CREATE POLICY "Insert apenas service role review_responses" ON review_responses FOR INSERT WITH CHECK (false);
+CREATE POLICY "Update apenas service role review_responses" ON review_responses FOR UPDATE USING (false);
