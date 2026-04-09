@@ -14,14 +14,7 @@ export const leadSchema = z.object({
   // Step 2: Contato + presença digital
   name: z.string().optional().default(""),
   email: z.string().email("Email é obrigatório").min(5, "Email é obrigatório"),
-  // WhatsApp agora é obrigatório — enviamos notificações por email E WhatsApp.
-  // Mínimo 10 dígitos (DDD + número) após limpeza.
-  whatsapp: z
-    .string()
-    .min(10, "WhatsApp é obrigatório")
-    .refine((s) => s.replace(/\D/g, "").length >= 10, {
-      message: "WhatsApp deve ter DDD + número (pelo menos 10 dígitos)",
-    }),
+  whatsapp: z.string().optional().default(""),
   instagram: z.string().optional().default(""),
   linkedin: z.string().optional().default(""),
 
@@ -81,7 +74,5 @@ export const stepValidation = {
     data.product.length >= 2 &&
     data.region.length >= 2,
   step2: (data: LeadFormData) =>
-    data.email.length >= 5 &&
-    data.email.includes("@") &&
-    (data.whatsapp || "").replace(/\D/g, "").length >= 10,
+    data.email.length >= 5 && data.email.includes("@"),
 };
