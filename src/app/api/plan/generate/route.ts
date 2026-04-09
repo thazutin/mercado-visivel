@@ -151,6 +151,52 @@ export async function POST(req: NextRequest) {
       console.warn(`[PlanGen] Validation: ${validationIssues}/${itensEstruturantes.items.length} itens com qualidade baixa (genéricos, sem steps ou keywords)`);
     }
 
+    // 4c. Injetar item "Responder avaliações" no pilar Credibilidade se houver
+    //     reviews scrapeadas não respondidas pelo dono. Co-pilot copia/cola.
+    try {
+      const scrapedReviews: any[] =
+        raw?.influence?.rawGoogle?.mapsPresence?.reviews || [];
+      const pendingReviews = scrapedReviews.filter((r: any) => !r.hasOwnerResponse);
+      if (pendingReviews.length > 0 && (lead.client_type || 'b2c') !== 'b2g') {
+        const reviewsItem: any = {
+          id: 'reviews-copilot',
+          kind: 'reviews',
+          dimensao: 'credibilidade',
+          pilar: 'Credibilidade',
+          titulo: `Responder ${pendingReviews.length} avaliações no Google`,
+          descricao: `Negócios que respondem avaliações recebem 45% mais avaliações novas. Gere respostas personalizadas e cole no seu Google Meu Negócio.`,
+          impacto: '+8pts Credibilidade',
+          prazo: 'Esta semana',
+          concluida: false,
+          copy_pronto: '',
+          how_to_steps: [
+            'Clique em "Gerar conteúdo" pra criar respostas no seu tom',
+            'Revise cada resposta sugerida',
+            'Copie e cole direto no seu Google Meu Negócio',
+          ],
+          keywords: [],
+          content_hook: '',
+          whatsapp_template: null,
+          program_description: null,
+          content_generated: false,
+        };
+        // Insere no topo dos itens "Esta semana"
+        const firstWeekly = itensEstruturantes.items.findIndex(
+          (it: any) => (it.prazo || '').toLowerCase().includes('semana'),
+        );
+        if (firstWeekly >= 0) {
+          itensEstruturantes.items.splice(firstWeekly, 0, reviewsItem);
+        } else {
+          itensEstruturantes.items.unshift(reviewsItem);
+        }
+        console.log(
+          `[PlanGen] Injetado item reviews-copilot: ${pendingReviews.length} reviews pendentes`,
+        );
+      }
+    } catch (err) {
+      console.warn('[PlanGen] Falha ao injetar item reviews (non-fatal):', (err as Error).message);
+    }
+
     // 5. Salvar plan no Supabase
     await supabase.from("plans").delete().eq("lead_id", leadId);
     const { error: planError } = await supabase.from("plans").insert({
@@ -180,6 +226,7 @@ export async function POST(req: NextRequest) {
         prazo: item.prazo,
         concluida: false,
         copy_pronto: item.copy_pronto || '',
+        kind: item.kind || 'content',
       }));
 
       // Delete existing then insert fresh (upsert may fail silently without unique constraint)

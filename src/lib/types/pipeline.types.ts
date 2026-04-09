@@ -168,11 +168,12 @@ export interface MapsPresence {
   ownerResponseRate?: number;         // % de avaliações com resposta do dono (0-1)
   ownerResponseCount?: number;        // quantas respostas o dono deu
   reviewsAnalyzed?: number;           // quantas avaliações foram analisadas (max 5 da API)
-  topReviews?: Array<{               // últimas avaliações para contexto
+  topReviews?: Array<{               // últimas avaliações para contexto (legado: snippet curto)
     rating: number;
     hasOwnerResponse: boolean;
     snippet?: string;
   }>;
+  reviews?: ScrapedReview[];          // reviews completas para co-pilot de resposta (até 20)
   categories?: string[];
   inLocalPack: boolean;               // Aparece no local pack?
   localPackPosition?: number;
@@ -188,6 +189,15 @@ export interface MapsPresence {
     categories?: string[];
     website?: string;
   }>;
+}
+
+export interface ScrapedReview {
+  externalId: string;                 // sha1(authorName + date + text.slice(0,50))
+  authorName: string | null;
+  rating: number;
+  text: string;                       // texto completo da avaliação
+  date: string | null;                // ISO string
+  hasOwnerResponse: boolean;
 }
 
 export interface MapsCompetitor {

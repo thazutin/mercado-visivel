@@ -302,6 +302,73 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [generatingContent, setGeneratingContent] = useState<Record<string, boolean>>({});
+  // Co-pilot de reviews
+  const [reviewResponses, setReviewResponses] = useState<any[]>([]);
+  const [reviewsExpanded, setReviewsExpanded] = useState(false);
+  const [generatingReviews, setGeneratingReviews] = useState(false);
+  const [copiedReviewId, setCopiedReviewId] = useState<string | null>(null);
+
+  const loadReviewResponses = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/reviews?leadId=${leadId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setReviewResponses(data.reviews || []);
+    } catch {
+      /* silent */
+    }
+  }, [leadId]);
+
+  useEffect(() => {
+    loadReviewResponses();
+  }, [loadReviewResponses]);
+
+  const generateReviewDrafts = async () => {
+    setGeneratingReviews(true);
+    setReviewsExpanded(true);
+    try {
+      const res = await fetch('/api/reviews/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadId }),
+      });
+      if (res.ok) {
+        await loadReviewResponses();
+      } else {
+        alert('Erro ao gerar respostas. Tente novamente.');
+      }
+    } catch {
+      alert('Erro de conexão. Tente novamente.');
+    }
+    setGeneratingReviews(false);
+  };
+
+  const copyReviewResponse = async (id: string, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedReviewId(id);
+      setTimeout(() => setCopiedReviewId(null), 2500);
+      await fetch('/api/reviews', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status: 'copied' }),
+      });
+      setReviewResponses((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, status: 'copied' } : r)),
+      );
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const dismissReview = async (id: string) => {
+    await fetch('/api/reviews', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status: 'dismissed' }),
+    });
+    setReviewResponses((prev) => prev.filter((r) => r.id !== id));
+  };
 
   useEffect(() => {
     fetch(`/api/checklists?leadId=${leadId}`)
@@ -450,12 +517,149 @@ function ItensEstruturantesTab({ leadId, planReady, plan }: {
             )}
 
             {/* Contextual content generation button — simplified */}
-            {planReady && !item.completed && !item.generated_blog && (
+            {planReady && !item.completed && !item.generated_blog && item.kind !== 'reviews' && (
               <div style={{ marginTop: 8 }}>
                 <button onClick={() => generateContent(itemIdx, 'both')} disabled={generatingContent[`${itemIdx}-both`]}
                   style={{ fontSize: 12, color: V.night, background: V.cloud, border: `1px solid ${V.fog}`, borderRadius: 8, padding: "10px 14px", cursor: "pointer", fontWeight: 600, opacity: generatingContent[`${itemIdx}-both`] ? 0.5 : 1, width: "100%" }}>
                   {generatingContent[`${itemIdx}-both`] ? 'Gerando conteúdo (~1 min)...' : 'Gerar conteúdo'}
                 </button>
+              </div>
+            )}
+
+            {/* ─── Co-pilot de reviews (kind === 'reviews') ─── */}
+            {item.kind === 'reviews' && !item.completed && (
+              <div style={{ marginTop: 8 }}>
+                {reviewResponses.length === 0 && !generatingReviews && (
+                  <button
+                    onClick={generateReviewDrafts}
+                    style={{
+                      fontSize: 12, color: V.night, background: V.cloud,
+                      border: `1px solid ${V.fog}`, borderRadius: 8,
+                      padding: "10px 14px", cursor: "pointer",
+                      fontWeight: 600, width: "100%",
+                    }}
+                  >
+                    Gerar respostas
+                  </button>
+                )}
+                {generatingReviews && (
+                  <button
+                    disabled
+                    style={{
+                      fontSize: 12, color: V.ash, background: V.cloud,
+                      border: `1px solid ${V.fog}`, borderRadius: 8,
+                      padding: "10px 14px", width: "100%", opacity: 0.6,
+                    }}
+                  >
+                    Gerando respostas personalizadas (~30s)...
+                  </button>
+                )}
+
+                {reviewResponses.length > 0 && (
+                  <>
+                    <button
+                      onClick={() => setReviewsExpanded(!reviewsExpanded)}
+                      style={{
+                        fontSize: 12, color: V.night, background: V.cloud,
+                        border: `1px solid ${V.fog}`, borderRadius: 8,
+                        padding: "10px 14px", cursor: "pointer",
+                        fontWeight: 600, width: "100%", marginBottom: 8,
+                        display: "flex", justifyContent: "space-between", alignItems: "center",
+                      }}
+                    >
+                      <span>
+                        {reviewResponses.filter(r => r.status === 'pending').length > 0
+                          ? `${reviewResponses.filter(r => r.status === 'pending').length} respostas prontas pra copiar`
+                          : 'Respostas geradas'}
+                      </span>
+                      <span>{reviewsExpanded ? '▴' : '▾'}</span>
+                    </button>
+
+                    {reviewsExpanded && reviewResponses.map((r) => (
+                      <div
+                        key={r.id}
+                        style={{
+                          background: r.status === 'copied' ? 'rgba(45,155,131,0.06)' : V.white,
+                          border: `1px solid ${r.status === 'copied' ? V.teal + '40' : V.fog}`,
+                          borderRadius: 10, padding: "12px 14px", marginBottom: 10,
+                        }}
+                      >
+                        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
+                          <span style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, fontWeight: 700 }}>
+                            {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                          </span>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: V.night }}>
+                            {r.author_name || 'Cliente'}
+                          </span>
+                          {r.review_date && (
+                            <span style={{ fontSize: 10, color: V.ash }}>
+                              · {new Date(r.review_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                            </span>
+                          )}
+                          {r.status === 'copied' && (
+                            <span style={{ fontSize: 10, color: V.teal, fontWeight: 600, marginLeft: 'auto' }}>
+                              ✓ Copiada
+                            </span>
+                          )}
+                        </div>
+                        <p style={{
+                          fontSize: 12, color: V.zinc, margin: "0 0 10px",
+                          lineHeight: 1.5, fontStyle: "italic",
+                        }}>
+                          &ldquo;{r.review_text}&rdquo;
+                        </p>
+                        <div style={{
+                          background: V.cloud, borderRadius: 8,
+                          padding: "10px 12px", borderLeft: `3px solid ${V.amber}`,
+                        }}>
+                          <div style={{
+                            fontFamily: V.mono, fontSize: 9, color: V.amber,
+                            marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.04em",
+                          }}>
+                            Resposta sugerida
+                          </div>
+                          <p style={{
+                            fontSize: 12, color: V.night, margin: "0 0 8px",
+                            lineHeight: 1.5, whiteSpace: "pre-wrap",
+                          }}>
+                            {r.draft_response}
+                          </p>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button
+                              onClick={() => copyReviewResponse(r.id, r.draft_response)}
+                              style={{
+                                fontSize: 11, color: V.white,
+                                background: copiedReviewId === r.id ? V.teal : V.night,
+                                border: "none", borderRadius: 6,
+                                padding: "6px 12px", cursor: "pointer", fontWeight: 600,
+                              }}
+                            >
+                              {copiedReviewId === r.id ? 'Copiado! Cole no Google' : 'Copiar resposta'}
+                            </button>
+                            <button
+                              onClick={() => dismissReview(r.id)}
+                              style={{
+                                fontSize: 11, color: V.ash, background: "none",
+                                border: "none", cursor: "pointer", fontWeight: 500,
+                              }}
+                            >
+                              Ignorar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {reviewsExpanded && (
+                      <p style={{
+                        fontSize: 10, color: V.ash, margin: "4px 0 0",
+                        fontStyle: "italic", textAlign: "center",
+                      }}>
+                        Em breve o Agente Nelson vai postar direto no seu Google Meu Negócio.
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
             )}
 
