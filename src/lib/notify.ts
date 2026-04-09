@@ -61,11 +61,20 @@ export async function sendWhatsApp(
     return;
   }
 
+  // Força todos os chars não-ASCII a virarem escapes \uXXXX no JSON. Sem isso,
+  // chars UTF-8 multi-byte (como "ã" em "São Paulo") passam como bytes literais
+  // pelo URLSearchParams e o Twilio acaba renderizando com replacement char
+  // (U+FFFD) no body do template. Com ASCII puro, Twilio decoda corretamente.
+  const asciiSafeJson = JSON.stringify(contentVariables).replace(
+    /[\u0080-\uffff]/g,
+    (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`,
+  );
+
   const requestBody = {
     From: from,
     To: `whatsapp:+${phone}`,
     ContentSid: contentSid,
-    ContentVariables: JSON.stringify(contentVariables),
+    ContentVariables: asciiSafeJson,
   };
   console.log(`[Notify] WhatsApp request:`, JSON.stringify(requestBody));
 
@@ -76,7 +85,7 @@ export async function sendWhatsApp(
         method: "POST",
         headers: {
           Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`,
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
         },
         body: new URLSearchParams(requestBody),
       }
