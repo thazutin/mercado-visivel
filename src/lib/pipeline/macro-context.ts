@@ -34,10 +34,11 @@ export async function generateMacroContext(
 
   try {
     // Etapa 1: Web search para dados reais do setor
+    // Usa Sonnet (suporte a web_search garantido) e formato correto de server-side tool
     const searchResponse = await claudeClient.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 800,
-      tools: [{ type: "web_search_20250305" as any, name: "web_search" }],
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1200,
+      tools: [{ type: "web_search_20250305" } as any],
       messages: [{
         role: 'user',
         content: `Busque dados REAIS e RECENTES sobre o mercado de "${product}" em ${geoContext}:
@@ -48,15 +49,25 @@ Foque em dados verificáveis com fonte.`,
       }],
     });
 
+    // Extrai tanto text blocks quanto web_search_tool_result blocks
     const searchContext = searchResponse.content
-      .map((b: any) => b.type === 'text' ? b.text : '')
+      .map((b: any) => {
+        if (b.type === 'text') return b.text;
+        if (b.type === 'web_search_tool_result' && Array.isArray(b.content)) {
+          return b.content
+            .filter((r: any) => r.type === 'web_search_result')
+            .map((r: any) => `[${r.title}] ${r.page_content || r.snippet || ''}`)
+            .join('\n');
+        }
+        return '';
+      })
       .filter(Boolean)
       .join('\n')
       .slice(0, 3000);
 
     // Se não encontrou nada relevante, retorna fallback
     if (!searchContext || searchContext.length < 50) {
-      console.warn('[MacroContext] Web search returned insufficient data');
+      console.warn('[MacroContext] Web search returned insufficient data, len=', searchContext.length);
       return FALLBACK;
     }
 
