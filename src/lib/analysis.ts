@@ -1754,12 +1754,20 @@ export function buildDisplayData(result: any) {
   const mapsData = influence.rawGoogle?.mapsPresence || null;
   const igData = influence.rawInstagram || null;
 
-  // Se nenhuma fonte encontrou o negócio, score é 0
-  const nenhumDadoReal =
-    !mapsData?.found &&
-    !igData?.profile?.dataAvailable &&
-    serpPositions.filter((sp: any) => sp.position && sp.position <= 20).length === 0;
-  const influencePercentFinal = nenhumDadoReal ? 0 : Math.round(influence.totalInfluence || 0);
+  // Usa o score calculado pelo pipeline. Se totalInfluence é 0 mas os 4D
+  // breakdown scores existem, calcula média dos 4D como fallback.
+  // Antes: forçava 0 quando nenhuma fonte "encontrava" o negócio, mas isso
+  // ignorava scores parciais legítimos (ex: Maps found + Instagram ausente).
+  const breakdown4D = (influence as any).breakdown;
+  let influencePercentFinal = Math.round(influence.totalInfluence || 0);
+  if (influencePercentFinal === 0 && breakdown4D) {
+    const d1 = breakdown4D.d1_descoberta ?? breakdown4D.d1_discovery ?? 0;
+    const d2 = breakdown4D.d2_credibilidade ?? breakdown4D.d2_credibility ?? 0;
+    const d3 = breakdown4D.d3_presenca ?? breakdown4D.d3_reach ?? 0;
+    const d4 = breakdown4D.d4_reputacao ?? 0;
+    const avg = Math.round((d1 + d2 + d3 + d4) / 4);
+    if (avg > 0) influencePercentFinal = avg;
+  }
 
   const terms = (result.terms?.terms || []).slice(0, 10).map((t: any) => {
     const volumeMatch = (result.volumes?.termVolumes || []).find((v: any) => v.term === t.term);
