@@ -16,6 +16,7 @@
     "@fal-ai/client": "^1.9.4",
     "@stripe/stripe-js": "^5.5.0",
     "@supabase/supabase-js": "^2.49.1",
+    "@vercel/analytics": "^2.0.1",
     "@vercel/functions": "^3.4.3",
     "apify-client": "^2.11.0",
     "framer-motion": "^11.18.0",
