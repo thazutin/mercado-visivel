@@ -312,89 +312,83 @@ export default function Home() {
             </label>
           </Field>
 
+          {/* Seu mercado */}
+          <div style={{ marginTop: 8, paddingTop: 16, borderTop: `1px solid ${V.fog}` }}>
+            <Field label={t.formClientTargetLabel}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {t.formClientTargetOptions.map((opt: string) => {
+                  const val = opt === "Pessoa física" ? "b2c" : opt === "Empresa" ? "b2b" : opt === "Governo" ? "b2g" : "mixed";
+                  const selected = (formData as any).clientType === val;
+                  return (
+                    <button key={val} type="button" onClick={() => updateField("clientType" as any, val)}
+                      style={{
+                        padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                        border: `1.5px solid ${selected ? V.amber : V.fog}`,
+                        background: selected ? V.amberWash : V.white,
+                        color: selected ? V.night : V.zinc,
+                        transition: "all 0.15s",
+                      }}>
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+
+            <Field label={t.formSalesChannelLabel}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {t.formSalesChannelOptions.map((opt: string) => {
+                  const channelMap: Record<string, string> = {
+                    "Loja física": "loja_fisica",
+                    "Online / e-commerce": "online",
+                    "Prestação de serviço": "servico",
+                    "Marketplace (iFood, ML, etc)": "marketplace",
+                    "Direto (WhatsApp, telefone)": "direto",
+                  };
+                  const val = channelMap[opt] || "servico";
+                  const selected = (formData as any).salesChannel === val;
+                  return (
+                    <button key={val} type="button" onClick={() => updateField("salesChannel" as any, val)}
+                      style={{
+                        padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                        border: `1.5px solid ${selected ? V.amber : V.fog}`,
+                        background: selected ? V.amberWash : V.white,
+                        color: selected ? V.night : V.zinc,
+                        textAlign: "left", transition: "all 0.15s",
+                      }}>
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+          </div>
+
           {/* Presença digital */}
           <div style={{ marginTop: 8, paddingTop: 16, borderTop: `1px solid ${V.fog}` }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: V.night, marginBottom: 4 }}>Sua presença digital</div>
             <p style={{ fontSize: 12, color: V.ash, margin: "0 0 16px", lineHeight: 1.4 }}>
-              Não obrigatório — mas quanto mais você compartilhar, mais personalizado fica seu diagnóstico.
+              Opcional — quanto mais, mais personalizado o diagnóstico.
             </p>
             <Field label="Instagram">
               <input style={inputStyle} type="text" placeholder="@seunegocio" value={formData.instagram}
                 onChange={(e: any) => updateField("instagram", e.target.value)} />
             </Field>
-            <Field label="Site do seu negócio">
+            <Field label="Site">
               <input style={inputStyle} type="text" placeholder="www.seunegocio.com.br" value={formData.site}
                 onChange={(e: any) => updateField("site", e.target.value)} />
-            </Field>
-            <Field label="LinkedIn">
-              <input style={inputStyle} type="text" placeholder="linkedin.com/company/seunegocio" value={(formData as any).linkedin || ""}
-                onChange={(e: any) => updateField("linkedin" as any, e.target.value)} />
             </Field>
           </div>
         </>
       ),
     },
     2: {
-      title: t.formStep2Title,
+      title: "Onde enviamos seu diagnóstico",
       content: (
         <>
-          <p style={{ fontSize: 13, color: V.ash, margin: "0 0 16px", lineHeight: 1.5 }}>{t.formStep2Subtitle}</p>
-
-          {/* Quem é seu cliente */}
-          <Field label={t.formClientTargetLabel}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {t.formClientTargetOptions.map((opt: string) => {
-                const val = opt === "Pessoa física" ? "b2c" : opt === "Empresa" ? "b2b" : opt === "Governo" ? "b2g" : "mixed";
-                const selected = (formData as any).clientType === val;
-                return (
-                  <button key={val} type="button" onClick={() => updateField("clientType" as any, val)}
-                    style={{
-                      padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer",
-                      border: `1.5px solid ${selected ? V.amber : V.fog}`,
-                      background: selected ? V.amberWash : V.white,
-                      color: selected ? V.night : V.zinc,
-                      transition: "all 0.15s",
-                    }}>
-                    {opt}
-                  </button>
-                );
-              })}
-            </div>
-          </Field>
-
-          {/* Canal de venda */}
-          <Field label={t.formSalesChannelLabel}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {t.formSalesChannelOptions.map((opt: string) => {
-                const channelMap: Record<string, string> = {
-                  "Loja física": "loja_fisica",
-                  "Online / e-commerce": "online",
-                  "Prestação de serviço": "servico",
-                  "Marketplace (iFood, ML, etc)": "marketplace",
-                  "Direto (WhatsApp, telefone)": "direto",
-                };
-                const val = channelMap[opt] || "servico";
-                const selected = (formData as any).salesChannel === val;
-                return (
-                  <button key={val} type="button" onClick={() => updateField("salesChannel" as any, val)}
-                    style={{
-                      padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer",
-                      border: `1.5px solid ${selected ? V.amber : V.fog}`,
-                      background: selected ? V.amberWash : V.white,
-                      color: selected ? V.night : V.zinc,
-                      textAlign: "left", transition: "all 0.15s",
-                    }}>
-                    {opt}
-                  </button>
-                );
-              })}
-            </div>
-          </Field>
-
-          <div style={{ marginTop: 8, paddingTop: 16, borderTop: `1px solid ${V.fog}` }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: V.night, marginBottom: 4 }}>Seus dados de contato</div>
-            <p style={{ fontSize: 12, color: V.ash, margin: "0 0 12px" }}>Enviamos seu diagnóstico por aqui.</p>
-          </div>
+          <p style={{ fontSize: 13, color: V.ash, margin: "0 0 16px", lineHeight: 1.5 }}>
+            Resultado sai em 60 segundos. Enviamos também por email.
+          </p>
           <Field label={`${t.formEmailLabel} *`}>
             <input style={inputStyle} type="email" placeholder={t.formEmailPlaceholder} value={formData.email}
               onChange={(e: any) => updateField("email", e.target.value)} />
@@ -677,38 +671,67 @@ export default function Home() {
         </div>
       </Section>
 
-      {/* ═══ CARROSSEL — Cards reais ═══ */}
+      {/* ═══ CARROSSEL — Exemplos por segmento ═══ */}
       <Section bg={V.cloud}>
-        <SectionLabel>negócios analisados</SectionLabel>
+        <SectionLabel>exemplos reais</SectionLabel>
         <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
-          Oportunidades reais que encontramos
+          O que a Virô entrega pra cada segmento
         </h2>
         <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.6, margin: "0 0 24px" }}>
-          Cada card foi gerado com dados reais. O seu negócio é o próximo.
+          Cada negócio recebe ações específicas pro seu mercado.
         </p>
         <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 12, scrollSnapType: "x mandatory" as const }}>
           {[
-            // Intercala diversidade de categorias e praças para demonstrar
-            // versatilidade e assimetria TAM x Buscas x Oportunidade
-            "ChIJO-3dqidazpQR8grH25DryHA", // Bráz Quintal — pizzaria SP
-            "ChIJXRay7yzPyJQRhkG2VmqUh34", // Odontologia — Campinas
-            "ChIJ1ThQoCPk3JQRUW_L9Tto-7A", // Academia — Curitiba
-            "ChIJT_hKLcBZzpQR_DXAu2tj7fg", // Don Corleone — pizzaria SP
-            "ChIJH_3ZddAfqwcRQqB21n_rvk0", // Cafeteria/padaria — Recife
-            "ChIJbUAMmQ0DzpQRse_VyP7UZ1c", // Agência de marketing (B2B) — SP
-            "ChIJafL6lbRXzpQR_uL1LS6YHqM", // Vila 109 — pizzaria SP
-            "ChIJtZVfHnmXpgARTh3Px3IayW0", // Veterinária — Belo Horizonte
-            "ChIJJ--IeftXzpQRvnflvmEVs88", // Rei da Pizza — pizzaria SP
-            "ChIJo6qqqiU4J5URrHXPVL0YHrk", // Consultoria empresarial (B2B) — Florianópolis
-            "ChIJZ-k7vfxXzpQRaDkvzVYxJNc", // Leggera — pizzaria SP
-          ].map((id) => (
-            <div key={id} style={{ flexShrink: 0, width: 280, scrollSnapAlign: "start" as const }}>
-              <img
-                src={`/cards/${id}.png`}
-                alt="Análise Virô"
-                style={{ width: "100%", borderRadius: 12, boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}
-                loading="lazy"
-              />
+            { icon: "🍽️", segment: "Restaurante", region: "Campinas, SP", type: "free", score: 31, insight: "480 buscas/mês por 'restaurante italiano campinas'. Você aparece na posição 8.", action: "Responder 23 reviews + otimizar ficha Google" },
+            { icon: "💇", segment: "Salão de Beleza", region: "Belo Horizonte", type: "radar", score: 18, insight: "Concorrente principal tem 4x mais avaliações e posta 3x/semana.", action: "Calendário de 12 posts + respostas prontas pra 15 reviews" },
+            { icon: "🏢", segment: "Consultoria B2B", region: "São Paulo", type: "free", score: 42, insight: "1.200 empresas no seu segmento em SP. Nenhuma investe em conteúdo no LinkedIn.", action: "3 posts LinkedIn prontos + landing page" },
+            { icon: "⚡", segment: "Trading de Energia", region: "Nacional", type: "radar", score: 12, insight: "14 licitações abertas no PNCP. 8 empresas mudaram de fornecedor.", action: "White paper + jornada de email + lista de prospects" },
+            { icon: "📡", segment: "Provedor de Internet", region: "Campos do Jordão", type: "free", score: 72, insight: "Score 72/100 — líder local. 3 cidades vizinhas com menos concorrência.", action: "Análise comparativa de expansão pra São Bento e São Luiz" },
+            { icon: "🏥", segment: "Clínica Odontológica", region: "Curitiba", type: "radar", score: 28, insight: "Seus 5 concorrentes respondem reviews. Você: 0%. Nota 3.9 vs média 4.4.", action: "Respostas pra 34 reviews + bio Instagram + 4 posts" },
+            { icon: "🛒", segment: "E-commerce", region: "Nacional", type: "free", score: 15, insight: "3 termos com 2.400 buscas/mês — você não aparece em nenhum.", action: "SEO pra 3 termos prioritários + estrutura de landing page" },
+            { icon: "💪", segment: "Academia", region: "Recife", type: "radar", score: 35, insight: "Janeiro tem 3x mais buscas por 'academia recife'. Prepare agora.", action: "Calendário sazonal + 8 posts + campanha WhatsApp" },
+          ].map((card, i) => (
+            <div key={i} style={{
+              flexShrink: 0, width: 280, scrollSnapAlign: "start" as const,
+              background: V.white, borderRadius: 14, border: `1px solid ${card.type === 'radar' ? V.amber : V.fog}`,
+              padding: "20px 18px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <span style={{ fontSize: 20 }}>{card.icon}</span>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: V.night }}>{card.segment}</div>
+                    <div style={{ fontSize: 10, color: V.ash }}>{card.region}</div>
+                  </div>
+                </div>
+                <span style={{
+                  fontFamily: V.mono, fontSize: 9, padding: "2px 8px", borderRadius: 100,
+                  background: card.type === 'radar' ? V.amberWash : V.tealWash,
+                  color: card.type === 'radar' ? V.amber : V.teal, fontWeight: 700,
+                }}>
+                  {card.type === 'radar' ? 'RADAR' : 'GRÁTIS'}
+                </span>
+              </div>
+              <div style={{
+                display: "flex", alignItems: "baseline", gap: 4, marginBottom: 10,
+              }}>
+                <span style={{ fontSize: 28, fontWeight: 800, color: V.night, fontFamily: V.display }}>{card.score}</span>
+                <span style={{ fontSize: 11, color: V.ash }}>/100</span>
+              </div>
+              <p style={{ fontSize: 12, color: V.zinc, lineHeight: 1.5, margin: "0 0 12px", minHeight: 54 }}>
+                {card.insight}
+              </p>
+              <div style={{
+                background: V.cloud, borderRadius: 8, padding: "8px 10px",
+                borderLeft: `3px solid ${card.type === 'radar' ? V.amber : V.teal}`,
+              }}>
+                <div style={{ fontFamily: V.mono, fontSize: 8, color: V.ash, letterSpacing: "0.04em", marginBottom: 2 }}>
+                  AÇÃO PRONTA
+                </div>
+                <p style={{ fontSize: 11, color: V.night, margin: 0, lineHeight: 1.4, fontWeight: 500 }}>
+                  {card.action}
+                </p>
+              </div>
             </div>
           ))}
         </div>
