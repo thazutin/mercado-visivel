@@ -375,13 +375,13 @@ export default function Home() {
           <Field label="Onde você quer crescer?">
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {[
-                { label: "Vender mais vezes pro meu cliente atual", value: "frequencia" },
-                { label: "Vender mais itens pro meu cliente atual", value: "cross_sell" },
-                { label: "Vender pra quem já compra a categoria mas não de mim", value: "market_share" },
-                { label: "Vender pra quem compra a categoria mas nem me conhece", value: "awareness" },
-                { label: "Vender pra quem ainda não compra a categoria mas poderia", value: "criar_demanda" },
+                { label: "Fazer meu cliente comprar mais vezes", value: "frequencia" },
+                { label: "Fazer meu cliente comprar mais coisas", value: "cross_sell" },
+                { label: "Roubar clientes dos meus concorrentes", value: "market_share" },
+                { label: "Ser encontrado por quem precisa do que eu faço", value: "awareness" },
+                { label: "Atrair pessoas que ainda não sabem que precisam de mim", value: "criar_demanda" },
                 { label: "Expandir pra novas regiões", value: "expansao_geo" },
-                { label: "Expandir pra novos segmentos", value: "novo_segmento" },
+                { label: "Atender um novo tipo de cliente", value: "novo_segmento" },
                 { label: "Vender de um jeito novo", value: "novo_canal" },
                 { label: "Lançar produto ou serviço novo", value: "novo_produto" },
               ].map(({ label, value }) => {
