@@ -371,13 +371,19 @@ export default function Home() {
               onChange={(e: any) => updateField("ticket", e.target.value)} />
           </Field>
 
-          {/* Maior desafio */}
-          <Field label="Maior desafio hoje">
+          {/* Onde quer crescer */}
+          <Field label="Onde você quer crescer?">
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {["Atrair clientes novos", "Aparecer no Google", "Entender a concorrência", "Saber onde investir em marketing", "Expandir pra novas regiões"].map((opt) => {
-                const selected = formData.challenge === opt;
+              {[
+                { label: "Vender mais pro meu cliente atual", value: "penetracao" },
+                { label: "Conquistar clientes que ainda não me conhecem", value: "aquisicao" },
+                { label: "Expandir pra novas regiões ou cidades", value: "expansao_geo" },
+                { label: "Alcançar um novo tipo de cliente ou segmento", value: "novo_segmento" },
+                { label: "Lançar um produto ou serviço novo", value: "novo_produto" },
+              ].map(({ label, value }) => {
+                const selected = formData.challenge === value;
                 return (
-                  <button key={opt} type="button" onClick={() => updateField("challenge", opt)}
+                  <button key={value} type="button" onClick={() => updateField("challenge", value)}
                     style={{
                       padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer",
                       border: `1.5px solid ${selected ? V.amber : V.fog}`,
@@ -385,7 +391,7 @@ export default function Home() {
                       color: selected ? V.night : V.zinc,
                       textAlign: "left", transition: "all 0.15s",
                     }}>
-                    {opt}
+                    {label}
                   </button>
                 );
               })}
