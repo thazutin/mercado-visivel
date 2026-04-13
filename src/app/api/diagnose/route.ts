@@ -15,6 +15,7 @@ import { insertLead, insertDiagnosis } from "@/lib/supabase";
 import { runInstantAnalysis, runPostDiagnosisEnrichment, buildDisplayData, sanitizeProjecao } from "@/lib/analysis";
 import { notifyDiagnosisReady } from "@/lib/notify";
 import { createClient } from "@supabase/supabase-js";
+import { classifyBusiness } from "@/lib/blueprints";
 
 export const maxDuration = 180;
 
@@ -118,8 +119,26 @@ async function runPipelineBackground(leadId: string, formData: LeadFormData, loc
       console.warn("[DiagnoseBG] pipeline_runs skipped:", (err as Error).message);
     }
 
+    // 3b. Classifica blueprint do negócio
+    let blueprintId = 'servicos_local';
+    try {
+      const classification = await classifyBusiness({
+        businessName: formData.businessName || formData.product,
+        product: formData.product,
+        clientType: (pipelineResult as any).clientType || formData.clientType || 'b2c',
+        region: formData.region,
+        instagram: formData.instagram,
+        site: formData.site,
+      });
+      blueprintId = classification.blueprint.id;
+      console.log(`[DiagnoseBG] Blueprint: ${blueprintId} (${classification.method}, ${classification.confidence})`);
+    } catch (err) {
+      console.warn('[DiagnoseBG] Blueprint classification failed (non-fatal):', (err as Error).message);
+    }
+
     // 4. Monta display data
     const display = buildDisplayData(pipelineResult);
+    (display as any).blueprintId = blueprintId;
     display.lat = formData.lat || (pipelineResult as any).pipelineLat || null;
     display.lng = formData.lng || (pipelineResult as any).pipelineLng || null;
     console.log(
@@ -134,6 +153,7 @@ async function runPipelineBackground(leadId: string, formData: LeadFormData, loc
           status: "done",
           diagnosis_display: display,
           client_type: pipelineResult.clientType || "b2c",
+          blueprint_id: blueprintId,
         })
         .eq("id", leadId);
       if (updateError) {

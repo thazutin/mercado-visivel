@@ -1,5 +1,9 @@
 -- Schema v2 — rodar no Supabase SQL Editor
 
+-- leads: blueprint + growth machine (radar de crescimento)
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS blueprint_id text; -- ex: restaurante_food, b2b_servicos
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS growth_machine jsonb; -- resultado da máquina de crescimento
+
 -- leads: suporte a recorrência
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS subscription_status text; -- null | active | cancelled
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS subscription_stripe_id text;
