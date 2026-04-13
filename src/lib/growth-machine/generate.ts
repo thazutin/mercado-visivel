@@ -197,15 +197,93 @@ function generateQuickWins(
         break;
       }
 
-      case 'posts_instagram':
+      case 'posts_instagram': {
+        if (lead.instagram && ig) {
+          const postsPerMonth = ig.postsLast30d || 0;
+          if (postsPerMonth < 8) {
+            quickWins.push({
+              id: 'qw-ig-frequency',
+              type: actionType,
+              title: `Aumentar frequência de posts no Instagram`,
+              description: `Você postou ${postsPerMonth} vezes nos últimos 30 dias. Meta mínima: 3x por semana. Consistência é mais importante que perfeição.`,
+              impact: '+6pts Presença Digital',
+              timeEstimate: '~30 min/semana',
+              steps: [
+                'Defina 3 dias fixos da semana pra postar (ex: seg, qua, sex)',
+                'Alterne formatos: 1 carrossel educativo + 1 reel mostrando bastidores + 1 post de depoimento',
+                'Use as hashtags do seu setor + localização na legenda',
+                'Poste entre 11h-13h ou 18h-20h (horários de pico)',
+              ],
+            });
+          }
+        }
+        break;
+      }
+
+      case 'whatsapp_templates': {
+        quickWins.push({
+          id: 'qw-whatsapp',
+          type: actionType,
+          title: 'Criar mensagens prontas de atendimento no WhatsApp',
+          description: `82% dos consumidores brasileiros preferem WhatsApp pra contato com negócios. Mensagens prontas agilizam atendimento e fecham mais vendas.`,
+          impact: '+4pts Presença Digital',
+          timeEstimate: '~15 min',
+          steps: [
+            'Abra WhatsApp Business → Ferramentas → Respostas rápidas',
+            'Crie atalho /oi → mensagem de boas-vindas com cardápio/serviços',
+            'Crie atalho /preco → tabela de preços resumida',
+            'Crie atalho /local → endereço + horário + link do Maps',
+          ],
+          copyReady: `Olá! 👋 Obrigado por entrar em contato com ${lead.name || lead.product}.\n\nComo posso ajudar?\n\n📋 Nossos serviços: [liste os principais]\n📍 ${lead.region?.split(',')[0] || 'Sua cidade'}\n⏰ Seg-Sex 8h-18h\n\nRespondo em até 10 minutos!`,
+        });
+        break;
+      }
+
+      case 'landing_page': {
+        if (!lead.site) {
+          quickWins.push({
+            id: 'qw-landing',
+            type: actionType,
+            title: 'Criar uma página simples na internet',
+            description: `Você não tem site. 70% dos consumidores pesquisam online antes de comprar. Uma página simples no Carrd.co (gratuito) resolve em 30 min.`,
+            impact: '+10pts Visibilidade',
+            timeEstimate: '~30 min',
+            steps: [
+              'Acesse carrd.co e crie uma conta gratuita',
+              'Escolha um template de negócio local',
+              'Preencha: nome, o que faz, fotos, endereço, WhatsApp',
+              'Publique e adicione o link no Instagram e Google Meu Negócio',
+            ],
+          });
+        }
+        break;
+      }
+
+      case 'posts_linkedin': {
+        if (bp.primaryClientType === 'b2b' || bp.primaryClientType === 'mixed') {
+          quickWins.push({
+            id: 'qw-linkedin',
+            type: actionType,
+            title: 'Publicar primeiro post no LinkedIn da empresa',
+            description: `LinkedIn é o canal #1 pra B2B no Brasil. Um post bem feito alcança 5-10x mais pessoas que email frio.`,
+            impact: '+6pts Visibilidade',
+            timeEstimate: '~15 min',
+            steps: [
+              'Crie ou atualize a Company Page no LinkedIn',
+              'Publique um post sobre um case de sucesso ou dado do seu setor',
+              'Peça para 3 funcionários curtirem e comentarem',
+              'Repita 2x por semana com dados reais do seu mercado',
+            ],
+          });
+        }
+        break;
+      }
+
       case 'video_reels':
-      case 'landing_page':
-      case 'posts_linkedin':
-      case 'whatsapp_templates':
       case 'ml_otimizar':
       case 'white_paper':
       case 'email_nurturing':
-        // Estas ações serão geradas como pilares estratégicos via Claude, não quick wins
+        // Gerados como pilares estratégicos via Claude
         break;
     }
   }

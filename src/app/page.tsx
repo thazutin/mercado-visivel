@@ -242,7 +242,7 @@ export default function Home() {
           }}
         />
         <p style={{ color: V.mist, fontSize: 14, fontFamily: V.body, margin: 0 }}>
-          Iniciando seu diagnóstico...
+          Ativando seu radar de crescimento...
         </p>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -339,11 +339,67 @@ export default function Home() {
       content: (
         <>
           <p style={{ fontSize: 13, color: V.ash, margin: "0 0 16px", lineHeight: 1.5 }}>{t.formStep2Subtitle}</p>
-          <Field label={`${t.formEmailLabel} *`} hint="Enviamos seu diagnóstico e plano de ação por aqui">
+
+          {/* Quem é seu cliente */}
+          <Field label={t.formClientTargetLabel}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {t.formClientTargetOptions.map((opt: string) => {
+                const val = opt === "Pessoa física" ? "b2c" : opt === "Empresa" ? "b2b" : opt === "Governo" ? "b2g" : "mixed";
+                const selected = (formData as any).clientType === val;
+                return (
+                  <button key={val} type="button" onClick={() => updateField("clientType" as any, val)}
+                    style={{
+                      padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                      border: `1.5px solid ${selected ? V.amber : V.fog}`,
+                      background: selected ? V.amberWash : V.white,
+                      color: selected ? V.night : V.zinc,
+                      transition: "all 0.15s",
+                    }}>
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+
+          {/* Canal de venda */}
+          <Field label={t.formSalesChannelLabel}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {t.formSalesChannelOptions.map((opt: string) => {
+                const channelMap: Record<string, string> = {
+                  "Loja física": "loja_fisica",
+                  "Online / e-commerce": "online",
+                  "Prestação de serviço": "servico",
+                  "Marketplace (iFood, ML, etc)": "marketplace",
+                  "Direto (WhatsApp, telefone)": "direto",
+                };
+                const val = channelMap[opt] || "servico";
+                const selected = (formData as any).salesChannel === val;
+                return (
+                  <button key={val} type="button" onClick={() => updateField("salesChannel" as any, val)}
+                    style={{
+                      padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                      border: `1.5px solid ${selected ? V.amber : V.fog}`,
+                      background: selected ? V.amberWash : V.white,
+                      color: selected ? V.night : V.zinc,
+                      textAlign: "left", transition: "all 0.15s",
+                    }}>
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+
+          <div style={{ marginTop: 8, paddingTop: 16, borderTop: `1px solid ${V.fog}` }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: V.night, marginBottom: 4 }}>Seus dados de contato</div>
+            <p style={{ fontSize: 12, color: V.ash, margin: "0 0 12px" }}>Enviamos seu diagnóstico por aqui.</p>
+          </div>
+          <Field label={`${t.formEmailLabel} *`}>
             <input style={inputStyle} type="email" placeholder={t.formEmailPlaceholder} value={formData.email}
               onChange={(e: any) => updateField("email", e.target.value)} />
           </Field>
-          <Field label={t.formWhatsappLabel} hint="Opcional — para contato sobre seu diagnóstico">
+          <Field label={t.formWhatsappLabel} hint="Opcional">
             <input style={inputStyle} type="tel" placeholder={t.formWhatsappPlaceholder} value={formData.whatsapp}
               onChange={(e: any) => updateField("whatsapp", e.target.value)} />
           </Field>
@@ -390,10 +446,10 @@ export default function Home() {
             fontFamily: V.display, fontSize: "clamp(28px, 5vw, 38px)", fontWeight: 700,
             color: V.white, letterSpacing: "-0.03em", margin: "24px 0 16px", lineHeight: 1.2,
           }}>
-            Seu próximo cliente já está <span style={{ color: V.amber }}>procurando o que você faz</span>.
+            Seu mercado mapeado. Sua <span style={{ color: V.amber }}>máquina de crescimento</span> montada.
           </h1>
           <p style={{ fontSize: 15, color: V.ash, lineHeight: 1.6, margin: 0 }}>
-            Veja quantos são e o que fazer para ser a escolha óbvia — em 60 segundos, grátis.
+            Virô cruza dados reais do seu mercado e monta sua operação de marketing — ações prontas, conteúdo pronto, toda semana. Comece grátis em 60 segundos.
           </p>
         </div>
       </div>
@@ -501,10 +557,10 @@ export default function Home() {
       <Section bg={V.white}>
         <SectionLabel>é para mim?</SectionLabel>
         <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
-          Feito para negócios locais
+          Pra qualquer negócio que quer crescer
         </h2>
         <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: "0 0 12px" }}>
-          Lojas, clínicas, escolas, restaurantes, estúdios, consultórios e prestadores de serviço. Com ou sem presença digital hoje.
+          Restaurantes, clínicas, e-commerces, agências, B2B, energia, agro, criadores de conteúdo — 25 segmentos com fontes de dados e ações específicas pro seu mercado.
         </p>
         <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: 0 }}>
           Se você quer saber onde estão seus próximos clientes, o que seus concorrentes estão fazendo, e ter um plano pronto pra executar — sem contratar equipe e sem gastar mais em mídia — Virô é seu radar de crescimento.
@@ -541,7 +597,7 @@ export default function Home() {
           {/* ─── BLOCO 2: PLANO DE AÇÃO ─── */}
           <div style={{ padding: "24px", borderTop: `2px solid ${V.amber}` }}>
             <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.06em", marginBottom: 12 }}>RADAR DE CRESCIMENTO · R$247/MÊS</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, marginBottom: 16 }}>15 ações priorizadas com conteúdo pronto — para copiar e colar</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, marginBottom: 16 }}>Ações rápidas + pilares estratégicos com conteúdo pronto</div>
 
             {/* Exemplo de ação COM conteúdo gerado */}
             <div style={{ background: V.cloud, borderRadius: 12, padding: "16px", marginBottom: 12 }}>
@@ -654,35 +710,31 @@ export default function Home() {
       <Section bg={V.cloud}>
         <SectionLabel>o que você recebe</SectionLabel>
         <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 28px", lineHeight: 1.25 }}>
-          Três níveis de profundidade
+          Um produto. Dois níveis.
         </h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {/* Grátis */}
           <div style={{ background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`, padding: "24px", overflow: "hidden" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.teal, letterSpacing: "0.06em", fontWeight: 600 }}>DIAGNÓSTICO · 30 SEGUNDOS</span>
-              <span style={{ fontFamily: V.mono, fontSize: 11, color: V.teal, fontWeight: 700 }}>Grátis</span>
+              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.teal, letterSpacing: "0.06em", fontWeight: 600 }}>DIAGNÓSTICO GRATUITO · 60 SEGUNDOS</span>
+              <span style={{ fontFamily: V.mono, fontSize: 11, color: V.teal, fontWeight: 700 }}>R$0</span>
             </div>
-            <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 6px" }}>Quantos clientes você pode ter a mais por mês.</p>
-            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: 0 }}>Posição competitiva, 3 pilares com score, mercado mapeado (buscas, audiência, concorrentes, sazonalidade). Resultado em 30 segundos.</p>
+            <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 6px" }}>Seu mercado mapeado com dados reais.</p>
+            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: 0 }}>Score com benchmark do setor, gap de mercado, análise de concorrentes, termos de busca reais, audiência estimada e ações rápidas prontas pra executar.</p>
           </div>
-          {/* R$497 */}
+          {/* Radar R$247/mês */}
           <div style={{ background: V.white, borderRadius: 14, border: `2px solid ${V.amber}`, padding: "24px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.06em", fontWeight: 600 }}>PLANO DE AÇÃO · PAGAMENTO ÚNICO</span>
+              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.06em", fontWeight: 600 }}>RADAR DE CRESCIMENTO · CANCELE QUANDO QUISER</span>
               <span style={{ fontFamily: V.mono, fontSize: 11, color: V.amber, fontWeight: 700 }}>R$247/mês</span>
             </div>
-            <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 6px" }}>15 ações priorizadas com conteúdo pronto.</p>
-            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: 0 }}>Cada ação tem o que fazer, por quê, quanto tempo leva e um botão que gera o conteúdo pronto — respostas para reviews, textos para o site, roteiros, templates. Copie e cole.</p>
-          </div>
-          {/* R$99/mês */}
-          <div style={{ background: V.white, borderRadius: 14, border: `1px solid ${V.slate}40`, padding: "24px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.slate, letterSpacing: "0.06em", fontWeight: 600 }}>AÇÕES SEMANAIS · CANCELE QUANDO QUISER</span>
-              <span style={{ fontFamily: V.mono, fontSize: 11, color: V.slate, fontWeight: 700 }}>Incluso</span>
+            <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 6px" }}>Máquina de crescimento montada + monitoramento semanal.</p>
+            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: "0 0 12px" }}>Ações rápidas com copy pronto, pilares estratégicos personalizados pro seu segmento (conteúdo, prospecção, autoridade), monitoramento semanal do mercado e materiais atualizados toda semana.</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {['Ações rápidas', 'Pilares estratégicos', 'Copy pronto', 'Radar semanal', '25 segmentos', '12+ fontes de dados'].map((tag, i) => (
+                <span key={i} style={{ fontSize: 10, fontWeight: 600, color: V.amber, background: V.amberWash, padding: "3px 8px", borderRadius: 4 }}>{tag}</span>
+              ))}
             </div>
-            <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 6px" }}>Contexto do mercado + conteúdos prontos toda sexta.</p>
-            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: 0 }}>Indicadores macro, movimentações do setor, oportunidades da semana. 5 posts com arco narrativo + 3 briefings estratégicos (equipe, agência, parceiro). Requer Plano de Ação.</p>
           </div>
         </div>
       </Section>
