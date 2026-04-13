@@ -46,10 +46,12 @@ export default function PollingScreen({
   leadId,
   product,
   region,
+  name,
 }: {
   leadId: string;
   product: string;
   region: string;
+  name?: string;
 }) {
   const router = useRouter();
   const [progress, setProgress] = useState(0);
@@ -149,7 +151,7 @@ export default function PollingScreen({
   }, [leadId, router]);
 
   const shortRegion = region?.split(",")[0].trim() || "";
-  const displayName = product || "seu negócio";
+  const displayName = (name && name.trim()) ? name.trim() : (product || "seu negócio");
   const currentFact = facts[factIdx];
 
   // SVG ring

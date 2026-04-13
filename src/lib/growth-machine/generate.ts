@@ -374,6 +374,151 @@ function generateQuickWins(
     });
   }
 
+  // Quick wins baseados no challenge do form (diversifica com base no objetivo do dono)
+  if (lead.challenge) {
+    switch (lead.challenge) {
+      case 'frequencia': {
+        quickWins.push({
+          id: 'qw-challenge-freq',
+          type: 'whatsapp_templates',
+          title: 'Criar campanha de recompra via WhatsApp',
+          description: 'Clientes que já compraram são 5x mais baratos de ativar. Uma mensagem no timing certo traz de volta.',
+          impact: '+5pts Fidelização',
+          timeEstimate: '~15 min',
+          steps: [
+            'Liste 20 clientes que compraram nos últimos 60 dias',
+            'Envie a mensagem pronta abaixo via WhatsApp',
+            'Repita a cada 30 dias com oferta ou novidade diferente',
+          ],
+          copyReady: `Oi! Aqui é da ${lead.name || lead.product}. 😊\n\nFaz um tempo que você veio e queria te contar que temos novidades!\n\n[DESCREVA A NOVIDADE]\n\nQuer agendar? É só responder essa mensagem. 💬`,
+        });
+        break;
+      }
+      case 'cross_sell': {
+        quickWins.push({
+          id: 'qw-challenge-cross',
+          type: 'whatsapp_templates',
+          title: 'Montar combo ou pacote para aumentar ticket',
+          description: `${lead.ticket ? `Ticket médio atual: R$${lead.ticket}. ` : ''}Combos aumentam o valor médio em até 30%. Monte um pacote dos seus itens mais vendidos.`,
+          impact: '+5pts Receita',
+          timeEstimate: '~20 min',
+          steps: [
+            'Identifique os 3 produtos/serviços mais vendidos',
+            'Crie 2 combos com desconto de 10-15% vs compra separada',
+            'Divulgue no cardápio/catálogo e no WhatsApp',
+            'Treine equipe pra oferecer o combo em todo atendimento',
+          ],
+        });
+        break;
+      }
+      case 'market_share': {
+        const region = lead.region?.split(',')[0] || 'sua região';
+        quickWins.push({
+          id: 'qw-challenge-share',
+          type: 'seo_conteudo',
+          title: `Aparecer antes dos concorrentes em "${region}"`,
+          description: 'Quem aparece primeiro no Google captura 75% dos cliques. Invista 30 min pra garantir sua posição.',
+          impact: '+8pts Visibilidade',
+          timeEstimate: '~30 min',
+          steps: [
+            'Responda todas as avaliações do Google (respostas ativas sobem seu ranking)',
+            `Publique 1 post por semana mencionando "${region}" no texto`,
+            'Peça pra 5 clientes satisfeitos deixarem avaliação esta semana',
+            'Atualize fotos e horários no Google Meu Negócio',
+          ],
+        });
+        break;
+      }
+      case 'awareness': {
+        quickWins.push({
+          id: 'qw-challenge-aware',
+          type: 'posts_instagram',
+          title: 'Criar conteúdo que atrai quem ainda não te conhece',
+          description: 'Posts educativos e de bastidores alcançam 3x mais pessoas que posts de venda. Mostre o processo, não só o produto.',
+          impact: '+7pts Alcance',
+          timeEstimate: '~20 min',
+          steps: [
+            'Grave 1 vídeo curto (30-60s) mostrando seu dia a dia de trabalho',
+            'Publique como Reel com legenda que responda uma dúvida comum do seu cliente',
+            'Use 3-5 hashtags locais + do seu setor',
+            'Repita 2x por semana alternando: bastidores, antes/depois, dica rápida',
+          ],
+        });
+        break;
+      }
+      case 'expansao_geo': {
+        quickWins.push({
+          id: 'qw-challenge-geo',
+          type: 'seo_conteudo',
+          title: 'Aparecer nas buscas de novas regiões',
+          description: 'Crie páginas ou posts direcionados às regiões que você quer alcançar. Google prioriza conteúdo com localização.',
+          impact: '+8pts Expansão',
+          timeEstimate: '~30 min',
+          steps: [
+            'Liste 3 bairros ou cidades vizinhas que você quer alcançar',
+            `Crie 1 post/página pra cada: "${lead.product} em [REGIÃO]"`,
+            'Inclua endereço de atendimento ou área de cobertura',
+            'Adicione as regiões na descrição do Google Meu Negócio',
+          ],
+        });
+        break;
+      }
+      case 'novo_canal': {
+        if (!lead.site) {
+          quickWins.push({
+            id: 'qw-challenge-canal',
+            type: 'landing_page',
+            title: 'Criar presença online pra vender por canal novo',
+            description: 'Você quer vender por um novo canal. O primeiro passo é ter uma página online profissional pra receber esses clientes.',
+            impact: '+10pts Visibilidade',
+            timeEstimate: '~30 min',
+            steps: [
+              'Escolha a plataforma do novo canal (iFood, ML, delivery próprio, loja online)',
+              'Crie um perfil profissional com fotos, descrições e preços',
+              'Divulgue o novo canal pra sua base de clientes atual via WhatsApp',
+              'Acompanhe os primeiros 30 dias e ajuste preços/fotos conforme feedback',
+            ],
+          });
+        }
+        break;
+      }
+      case 'novo_produto': {
+        quickWins.push({
+          id: 'qw-challenge-produto',
+          type: 'posts_instagram',
+          title: 'Validar novo produto/serviço antes de lançar',
+          description: 'Antes de investir em estoque ou estrutura, valide a demanda. Um post-teste custa R$0 e dá dados reais.',
+          impact: '+5pts Validação',
+          timeEstimate: '~15 min',
+          steps: [
+            'Crie um post/story apresentando a ideia do novo produto',
+            'Pergunte diretamente: "Vocês gostariam de [PRODUTO]? Responde aqui 👇"',
+            'Se tiver mais de 10 respostas positivas em 48h, vale o investimento',
+            'Ofereça condição especial pros primeiros 10 clientes (cria urgência + valida preço)',
+          ],
+        });
+        break;
+      }
+      case 'novo_segmento': {
+        quickWins.push({
+          id: 'qw-challenge-segmento',
+          type: 'seo_conteudo',
+          title: 'Criar conteúdo para atrair novo perfil de cliente',
+          description: 'Pra vender pra um público novo, você precisa falar a língua dele. Crie conteúdo específico pra esse perfil.',
+          impact: '+6pts Alcance',
+          timeEstimate: '~20 min',
+          steps: [
+            'Defina o novo perfil: quem é, o que busca, onde está',
+            `Crie 1 post respondendo a principal dúvida desse público sobre "${lead.product}"`,
+            'Use linguagem e exemplos que falem com esse perfil específico',
+            'Teste como anúncio segmentado (R$10/dia por 7 dias) pra medir interesse',
+          ],
+        });
+        break;
+      }
+    }
+  }
+
   // Instagram gaps reais
   if (expanded.instagramExpanded?.gaps?.length > 0) {
     const igGaps = expanded.instagramExpanded.gaps;
