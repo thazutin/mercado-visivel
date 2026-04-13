@@ -50,14 +50,23 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Token exchange failed", status: tokenRes.status, detail: tokenData });
     }
 
-    // Test the actual Anatel function
-    const { fetchAnatelBandaLarga } = await import("@/lib/pipeline/anatel");
-    const anatelResult = await fetchAnatelBandaLarga("Campos do Jordão", "SP");
-    return NextResponse.json({
-      ok: true, projectId, clientEmail: key.client_email,
-      tokenOk: true, anatel: anatelResult,
-    });
-    const anatelSql = "SELECT 1"; // won't reach here
+    // Test municipality lookup
+    const munSql = `SELECT id_municipio, nome, sigla_uf FROM \`basedosdados.br_bd_diretorios_brasil.municipio\` WHERE nome LIKE '%Campos%' AND sigla_uf = 'SP' LIMIT 5`;
+    const munRes = await fetch(
+      `https://bigquery.googleapis.com/bigquery/v2/projects/${projectId}/queries`,
+      {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${tokenData.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: munSql, useLegacySql: false, timeoutMs: 30000 }),
+      },
+    );
+    const munData = await munRes.json();
+    const fields = munData.schema?.fields || [];
+    const munRows = (munData.rows || []).map((r: any) =>
+      Object.fromEntries(fields.map((f: any, i: number) => [f.name, r.f[i]?.v]))
+    );
+    return NextResponse.json({ ok: true, municipios: munRows, error: munData.error });
+    const anatelSql = "SELECT 1";
     const queryRes = await fetch(
       `https://bigquery.googleapis.com/bigquery/v2/projects/${projectId}/queries`,
       {
