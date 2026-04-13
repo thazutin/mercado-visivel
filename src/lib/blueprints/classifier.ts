@@ -36,7 +36,9 @@ function classifyByKeywords(input: ClassificationInput): ClassificationResult | 
   const scores: Record<string, { count: number; keywords: string[] }> = {};
 
   for (const { keyword, blueprintId } of ALL_KEYWORDS) {
-    if (text.includes(keyword)) {
+    // Word boundary matching — "bar" não matcha "barbearia"
+    const regex = new RegExp(`(?:^|\\s|[^a-záàâãéèêíïóôõöúüç])${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:$|\\s|[^a-záàâãéèêíïóôõöúüç])`, 'i');
+    if (regex.test(` ${text} `)) {
       if (!scores[blueprintId]) scores[blueprintId] = { count: 0, keywords: [] };
       scores[blueprintId].count++;
       scores[blueprintId].keywords.push(keyword);
