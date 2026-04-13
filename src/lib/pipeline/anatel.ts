@@ -142,21 +142,15 @@ export async function fetchAnatelBandaLarga(
     source: 'bigquery_anatel',
   };
 
-  // Normaliza nome do município pra match
-  const municipioClean = municipio
-    .toUpperCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^A-Z\s]/g, '')
-    .trim();
-
+  // Usa o nome original (com acentos) — BigQuery armazena com acentos
+  const municipioClean = municipio.trim();
   if (!municipioClean) return empty;
 
-  // Step 1: find id_municipio from name
+  // Step 1: find id_municipio from name (busca com LIKE pra flexibilidade)
   const findMunSql = `
     SELECT id_municipio, nome, sigla_uf
     FROM \`basedosdados.br_bd_diretorios_brasil.municipio\`
-    WHERE UPPER(nome) LIKE '%${municipioClean}%'
+    WHERE nome LIKE '%${municipioClean}%'
     ${uf ? `AND sigla_uf = '${uf.toUpperCase()}'` : ''}
     LIMIT 1
   `;
