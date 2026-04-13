@@ -50,17 +50,32 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Token exchange failed", status: tokenRes.status, detail: tokenData });
     }
 
-    // Test simple query
+    // Test Anatel query
+    const anatelSql = `
+      SELECT m.nome, m.sigla_uf, t.grupo_economico, SUM(CAST(t.acessos AS INT64)) as total_acessos, t.ano
+      FROM \`basedosdados.br_anatel_banda_larga_fixa.microdados\` t
+      JOIN \`basedosdados.br_bd_diretorios_brasil.municipio\` m ON t.id_municipio = m.id_municipio
+      WHERE m.nome = 'Campos do Jordão' AND t.ano = 2024
+      GROUP BY m.nome, m.sigla_uf, t.grupo_economico, t.ano
+      ORDER BY total_acessos DESC LIMIT 10
+    `;
     const queryRes = await fetch(
       `https://bigquery.googleapis.com/bigquery/v2/projects/${projectId}/queries`,
       {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${tokenData.access_token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: "SELECT 1 as test", useLegacySql: false }),
+        body: JSON.stringify({ query: anatelSql, useLegacySql: false, timeoutMs: 30000 }),
       },
     );
 
     const queryData = await queryRes.json();
+    const rows = (queryData.rows || []).map((r: any) => ({
+      municipio: r.f?.[0]?.v,
+      uf: r.f?.[1]?.v,
+      prestadora: r.f?.[2]?.v,
+      acessos: r.f?.[3]?.v,
+      ano: r.f?.[4]?.v,
+    }));
 
     return NextResponse.json({
       ok: true,
@@ -68,7 +83,9 @@ export async function GET(req: NextRequest) {
       clientEmail: key.client_email,
       tokenOk: !!tokenData.access_token,
       queryOk: queryRes.ok,
-      queryResult: queryData.rows?.[0]?.f?.[0]?.v,
+      queryError: queryData.error || null,
+      rowCount: rows.length,
+      rows: rows.slice(0, 5),
     });
   } catch (err) {
     return NextResponse.json({ error: "Auth failed", detail: (err as Error).message });
