@@ -377,8 +377,10 @@ export default function Home() {
               {[
                 { label: "Vender mais pro meu cliente atual", value: "penetracao" },
                 { label: "Conquistar clientes que ainda não me conhecem", value: "aquisicao" },
+                { label: "Tomar espaço dos meus concorrentes", value: "market_share" },
                 { label: "Expandir pra novas regiões ou cidades", value: "expansao_geo" },
                 { label: "Alcançar um novo tipo de cliente ou segmento", value: "novo_segmento" },
+                { label: "Vender de um jeito novo (novo canal, delivery, online)", value: "novo_canal" },
                 { label: "Lançar um produto ou serviço novo", value: "novo_produto" },
               ].map(({ label, value }) => {
                 const selected = formData.challenge === value;
