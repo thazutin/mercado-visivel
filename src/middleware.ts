@@ -32,6 +32,10 @@ const isPublicRoute = createRouteMatcher([
   "/api/contents(.*)",
   "/api/leads(.*)",
   "/api/checklist(.*)",
+  "/api/checklists(.*)",
+  "/api/reviews(.*)",
+  "/api/growth-machine(.*)",
+  "/api/snapshots(.*)",
   "/privacidade",
   "/termos",
 ]);
