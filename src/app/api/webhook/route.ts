@@ -55,9 +55,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    // ─── SUBSCRIPTION CHECKOUT ───
-    if (sessionType === "subscription") {
-      console.log(`[Webhook] Subscription activated for lead ${leadId}`);
+    // ─── RADAR CHECKOUT (new R$247/mês subscription) ───
+    if (sessionType === "subscription" || sessionType === "radar") {
+      console.log(`[Webhook] Radar activated for lead ${leadId}`);
 
       try {
         await supabase
@@ -98,12 +98,57 @@ export async function POST(req: NextRequest) {
               console.error("[Webhook] First content generation failed:", err);
             }
 
-            // Notifica
-            notifyWeeklyContents({
-              leadId,
-              email,
-              name: lead?.name || "",
-            }).catch((err) => console.error("[Webhook] notifyWeeklyContents failed:", err));
+            // Welcome email + growth machine
+            try {
+              const { notifyWelcomeRadar } = await import("@/lib/notify");
+              const { generateGrowthMachine } = await import("@/lib/growth-machine");
+              const { classifyBusiness } = await import("@/lib/blueprints");
+
+              // Classify + generate growth machine
+              const classification = await classifyBusiness({
+                businessName: lead?.name || lead?.product || '',
+                product: lead?.product || '',
+                clientType: lead?.client_type || 'b2c',
+                region: lead?.region || '',
+              });
+
+              const { data: fullLead } = await supabase.from("leads").select("*").eq("id", leadId).single();
+              if (fullLead?.diagnosis_display) {
+                const { data: diagRecord } = await supabase.from("diagnoses").select("raw_data")
+                  .eq("lead_id", leadId).order("created_at", { ascending: false }).limit(1).single();
+
+                const gm = await generateGrowthMachine({
+                  lead: {
+                    id: leadId, name: fullLead.name || fullLead.product,
+                    product: fullLead.product, region: fullLead.region,
+                    instagram: fullLead.instagram, site: fullLead.site,
+                    client_type: fullLead.client_type, challenge: fullLead.challenge,
+                    ticket: fullLead.ticket,
+                  },
+                  diagnosis: fullLead.diagnosis_display,
+                  blueprintId: classification.blueprint.id,
+                  rawData: diagRecord?.raw_data,
+                });
+
+                await supabase.from("leads").update({
+                  blueprint_id: classification.blueprint.id,
+                  growth_machine: gm,
+                  welcome_email_sent: true,
+                }).eq("id", leadId);
+
+                await notifyWelcomeRadar({
+                  email,
+                  name: lead?.name || lead?.product || '',
+                  product: lead?.product || '',
+                  leadId,
+                  blueprintLabel: classification.blueprint.label,
+                  quickWinsCount: gm.quickWins?.length,
+                });
+                console.log(`[Webhook] Welcome email + growth machine sent for ${leadId}`);
+              }
+            } catch (err) {
+              console.error("[Webhook] Welcome/growth machine failed:", err);
+            }
           })());
         }
       } catch (err) {

@@ -4,6 +4,12 @@
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS blueprint_id text; -- ex: restaurante_food, b2b_servicos
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS growth_machine jsonb; -- resultado da máquina de crescimento
 
+-- leads: rastreamento de emails lifecycle
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS welcome_email_sent boolean DEFAULT false;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS churn_email_sent_at timestamptz; -- null = nunca enviou
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS reengagement_email_sent_at timestamptz; -- null = nunca enviou
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS trial_expiry_email_sent boolean DEFAULT false;
+
 -- leads: suporte a recorrência
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS subscription_status text; -- null | active | cancelled
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS subscription_stripe_id text;
