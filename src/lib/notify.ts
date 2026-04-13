@@ -227,7 +227,7 @@ export async function notifyFullDiagnosisReady(opts: {
   const shortRegion = region.split(",")[0].trim();
   const displayName = name || product;
 
-  const subject = `${displayName}, seu plano de ação está liberado 🔓 — 15 passos prontos para executar`;
+  const subject = `${displayName}, seu radar de crescimento está ativo 📡 — máquina montada e pronta`;
 
   await Promise.allSettled([
     sendWhatsApp(
@@ -258,7 +258,7 @@ export async function notifyWeeklyContents(opts: {
 
   await sendEmail({
     to: email,
-    subject: `${firstName}, passei pelo seu mercado essa semana. Tem novidade.`,
+    subject: `${firstName}, seu radar detectou novidades no seu mercado esta semana.`,
     html: emailShell(`
       <h1 style="font-size:22px;color:#161618;margin:0 0 16px;line-height:1.3;">
         Seus conteúdos da semana estão prontos.

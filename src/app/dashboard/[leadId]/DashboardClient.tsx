@@ -1476,7 +1476,7 @@ function ContentsSection({ leadId, tier }: { leadId: string; tier: Tier }) {
             padding: "10px 24px", borderRadius: 10, border: "none",
             background: V.teal, color: V.white, fontSize: 13, fontWeight: 600, cursor: "pointer",
           }}>
-            Assinar por R$99/mês
+            Ativar Radar · R$247/mês
           </button>
         </div>
       </div>
@@ -1646,7 +1646,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
         {tab === "estruturantes" && (
           <div>
             {tier === "free" ? (
-              <LockedTab lockLevel={1} ctaLabel="Gerar meu plano de ação · R$497" ctaUrl="#" leadId={lead.id} />
+              <LockedTab lockLevel={1} ctaLabel="Ativar Radar de Crescimento · R$247/mês" ctaUrl="#" leadId={lead.id} />
             ) : (
               <ItensEstruturantesTab
                 leadId={lead.id}
@@ -1661,7 +1661,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
         {tab === "semana" && (
           <div>
             {tier !== "subscriber" ? (
-              <LockedTab lockLevel={2} ctaLabel="Assinar por R$99/mês" ctaUrl="#" leadId={lead.id} />
+              <LockedTab lockLevel={2} ctaLabel="Ativar Radar · R$247/mês" ctaUrl="#" leadId={lead.id} />
             ) : !planReady ? (
               <Spinner text="Preparando suas ações semanais..." />
             ) : (
@@ -1708,7 +1708,7 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
                 )}
 
                 <div style={{ textAlign: "center", marginTop: 12, fontSize: 11, color: V.ash }}>
-                  Assinatura mensal · R$99/mês ·{' '}
+                  Radar de Crescimento · R$247/mês ·{' '}
                   <button onClick={async () => {
                     try {
                       const res = await fetch('/api/checkout/portal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ leadId: lead.id }) });
