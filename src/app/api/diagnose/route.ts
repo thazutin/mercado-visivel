@@ -146,6 +146,9 @@ async function runPipelineBackground(leadId: string, formData: LeadFormData, loc
         product: formData.product,
         region: formData.region,
         instagram: formData.instagram,
+        linkedin: (formData as any).linkedin,
+        site: formData.site,
+        sales_channel: (formData as any).salesChannel,
       }, buildDisplayData(pipelineResult));
       console.log(`[DiagnoseBG] Expanded sources: ${Object.keys(expandedData).filter(k => k !== 'fetchedAt' && expandedData[k]).join(', ') || 'none'}`);
     } catch (err) {
@@ -361,6 +364,7 @@ export async function POST(req: NextRequest) {
         locale,
         coupon: formData.coupon || "",
         client_type: formData.clientType || "b2c",
+        sales_channel: (formData as any).salesChannel || null,
         status: "processing",
       });
     } catch (dbError) {

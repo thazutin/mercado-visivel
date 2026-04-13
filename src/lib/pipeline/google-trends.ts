@@ -1,133 +1,141 @@
 // ============================================================================
-// Virô Radar — Google Trends Integration
-// Busca sazonalidade real por termos de busca.
-// Usa a API não-oficial do Google Trends (mesma que pytrends).
+// Virô Radar — Google Trends Integration (DADOS REAIS)
+// Busca sazonalidade real via Apify Google Trends scraper.
+// Sem inferência, sem Claude. Só dados reais do Google Trends.
 // ============================================================================
 
 export interface TrendData {
   term: string;
-  monthlyTrend: { month: string; interest: number }[];  // 0-100
+  monthlyTrend: { month: string; interest: number }[];
   peakMonth: string;
   lowMonth: string;
-  isRising: boolean;           // tendência de alta nos últimos 3 meses
-  averageInterest: number;     // média 0-100
+  isRising: boolean;
+  averageInterest: number;
 }
 
 export interface SeasonalityResult {
   terms: TrendData[];
-  bestMonths: string[];        // top 3 meses
-  worstMonths: string[];       // bottom 3 meses
+  bestMonths: string[];
+  worstMonths: string[];
   seasonalityStrength: 'high' | 'medium' | 'low';
-  summary: string;             // "Março é seu pico, agosto é seu vale"
+  summary: string;
+  source: 'google_trends_apify' | 'unavailable';
 }
 
 const MONTHS_PT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 /**
- * Busca dados de tendência do Google Trends pra um termo.
- * Usa endpoint público do Google Trends (mesmo que o pytrends usa).
+ * Busca dados reais do Google Trends via Apify actor.
+ * Actor: "emastra/google-trends-scraper" (grátis no plano Apify)
  */
-async function fetchTrend(term: string, geo: string = 'BR'): Promise<TrendData | null> {
+async function fetchTrendsApify(terms: string[], geo: string = 'BR'): Promise<any[]> {
+  const token = process.env.APIFY_API_TOKEN;
+  if (!token) {
+    console.warn('[GoogleTrends] APIFY_API_TOKEN not set');
+    return [];
+  }
+
   try {
-    // Google Trends API pública — interesse ao longo do tempo (últimos 12 meses)
-    const url = `https://trends.google.com/trends/api/widgetdata/multiline?hl=pt-BR&tz=-180&req=${encodeURIComponent(
-      JSON.stringify({
-        time: 'today 12-m',
-        resolution: 'MONTH',
-        locale: 'pt-BR',
-        comparisonItem: [{ keyword: term, geo, time: 'today 12-m' }],
-        requestOptions: { property: '', backend: 'IZG', category: 0 },
-      }),
-    )}&token=PLACEHOLDER`;
+    // Inicia o actor
+    const runRes = await fetch(
+      `https://api.apify.com/v2/acts/emastra~google-trends-scraper/run-sync-get-dataset-items?token=${token}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          searchTerms: terms,
+          geo,
+          timeRange: 'past12Months',
+          category: '',
+          isMultiple: terms.length > 1,
+          maxItems: 100,
+        }),
+        signal: AbortSignal.timeout(30_000),
+      },
+    );
 
-    // Fallback: usar a Claude pra estimar sazonalidade se Google bloquear
-    // A API do Google Trends frequentemente bloqueia requests diretos.
-    // Vamos usar uma abordagem pragmática: Claude com web_search.
-    const Anthropic = (await import('@anthropic-ai/sdk')).default;
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+    if (!runRes.ok) {
+      console.warn(`[GoogleTrends] Apify returned ${runRes.status}`);
+      return [];
+    }
 
-    const res = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 500,
-      temperature: 0,
-      system: 'Responda APENAS com JSON válido.',
-      messages: [{
-        role: 'user',
-        content: `Com base no seu conhecimento sobre o mercado brasileiro, estime a sazonalidade de busca para "${term}" no Brasil.
-
-Retorne JSON:
-{"monthly":[{"month":"Jan","interest":50},{"month":"Fev","interest":55},...todos os 12 meses],"peak_month":"Dez","low_month":"Jul","is_rising":true}
-
-REGRAS:
-- interest: 0-100 (100 = mês de pico)
-- Considere sazonalidade real do setor (ex: sorvete pico no verão, aquecedor no inverno)
-- is_rising: se a tendência geral está subindo nos últimos anos
-- Seja realista com os padrões sazonais brasileiros`,
-      }],
-    });
-
-    const text = res.content[0].type === 'text' ? res.content[0].text : '';
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) return null;
-
-    const parsed = JSON.parse(match[0]);
-    const monthly = parsed.monthly || [];
-
-    return {
-      term,
-      monthlyTrend: monthly.map((m: any) => ({
-        month: m.month,
-        interest: m.interest || 50,
-      })),
-      peakMonth: parsed.peak_month || 'Dez',
-      lowMonth: parsed.low_month || 'Jul',
-      isRising: parsed.is_rising || false,
-      averageInterest: monthly.length > 0
-        ? Math.round(monthly.reduce((s: number, m: any) => s + (m.interest || 50), 0) / monthly.length)
-        : 50,
-    };
+    const items = await runRes.json();
+    return Array.isArray(items) ? items : [];
   } catch (err) {
-    console.warn(`[GoogleTrends] Failed for "${term}":`, (err as Error).message);
-    return null;
+    console.warn('[GoogleTrends] Apify error:', (err as Error).message);
+    return [];
   }
 }
 
 /**
- * Analisa sazonalidade para os termos principais do diagnóstico.
- * Custo: ~$0.001 por chamada (Haiku, ~200 tokens)
+ * Analisa sazonalidade com dados reais do Google Trends.
+ * Se Apify falhar, retorna resultado vazio (não inventa dados).
  */
 export async function analyzeSeasonality(
   terms: string[],
   geo: string = 'BR',
 ): Promise<SeasonalityResult> {
-  // Pega os top 3 termos pra análise (custo-eficiente)
   const topTerms = terms.slice(0, 3);
-  const results = await Promise.all(topTerms.map(t => fetchTrend(t, geo)));
-  const validResults = results.filter((r): r is TrendData => r !== null);
+  const items = await fetchTrendsApify(topTerms, geo);
 
-  if (validResults.length === 0) {
+  if (items.length === 0) {
     return {
       terms: [],
       bestMonths: [],
       worstMonths: [],
       seasonalityStrength: 'low',
-      summary: 'Dados de sazonalidade não disponíveis.',
+      summary: 'Dados de sazonalidade não disponíveis no momento.',
+      source: 'unavailable',
     };
   }
 
-  // Agrega interesse mensal de todos os termos
-  const monthlyAvg: Record<string, number[]> = {};
-  for (const result of validResults) {
-    for (const m of result.monthlyTrend) {
-      if (!monthlyAvg[m.month]) monthlyAvg[m.month] = [];
-      monthlyAvg[m.month].push(m.interest);
+  // Processa dados do Apify — formato varia por actor, normalizar
+  const trendResults: TrendData[] = [];
+  const monthlyAggregate: Record<string, number[]> = {};
+
+  for (const item of items) {
+    const term = item.searchTerm || item.keyword || topTerms[0] || '';
+    const timeline = item.timelineData || item.interestOverTime || [];
+
+    if (!Array.isArray(timeline) || timeline.length === 0) continue;
+
+    const monthly: { month: string; interest: number }[] = [];
+
+    for (const point of timeline) {
+      const date = new Date(point.date || point.time || '');
+      if (isNaN(date.getTime())) continue;
+      const monthLabel = MONTHS_PT[date.getMonth()];
+      const interest = point.value?.[0] ?? point.interest ?? point.value ?? 0;
+      monthly.push({ month: monthLabel, interest });
+
+      if (!monthlyAggregate[monthLabel]) monthlyAggregate[monthLabel] = [];
+      monthlyAggregate[monthLabel].push(interest);
     }
+
+    if (monthly.length === 0) continue;
+
+    const sorted = [...monthly].sort((a, b) => b.interest - a.interest);
+    const avg = Math.round(monthly.reduce((s, m) => s + m.interest, 0) / monthly.length);
+    const lastThree = monthly.slice(-3);
+    const firstThree = monthly.slice(0, 3);
+    const isRising = lastThree.reduce((s, m) => s + m.interest, 0) / 3 >
+      firstThree.reduce((s, m) => s + m.interest, 0) / 3;
+
+    trendResults.push({
+      term,
+      monthlyTrend: monthly,
+      peakMonth: sorted[0]?.month || 'Dez',
+      lowMonth: sorted[sorted.length - 1]?.month || 'Jul',
+      isRising,
+      averageInterest: avg,
+    });
   }
 
+  // Agrega meses
   const monthScores = MONTHS_PT.map(month => ({
     month,
-    score: monthlyAvg[month]
-      ? Math.round(monthlyAvg[month].reduce((a, b) => a + b, 0) / monthlyAvg[month].length)
+    score: monthlyAggregate[month]
+      ? Math.round(monthlyAggregate[month].reduce((a, b) => a + b, 0) / monthlyAggregate[month].length)
       : 50,
   }));
 
@@ -135,21 +143,23 @@ export async function analyzeSeasonality(
   const bestMonths = sorted.slice(0, 3).map(m => m.month);
   const worstMonths = sorted.slice(-3).map(m => m.month);
 
-  // Força da sazonalidade: diferença entre melhor e pior mês
   const maxScore = sorted[0]?.score || 50;
   const minScore = sorted[sorted.length - 1]?.score || 50;
   const diff = maxScore - minScore;
   const strength = diff > 40 ? 'high' : diff > 20 ? 'medium' : 'low';
 
-  const summary = strength === 'low'
-    ? `Seu setor tem demanda relativamente estável ao longo do ano.`
-    : `${bestMonths[0]} é seu pico de demanda (${maxScore}% do interesse máximo). ${worstMonths[0]} é o vale (${minScore}%). ${strength === 'high' ? 'Sazonalidade forte — planeje com antecedência.' : 'Sazonalidade moderada.'}`;
+  const summary = trendResults.length === 0
+    ? 'Dados de sazonalidade não disponíveis.'
+    : strength === 'low'
+    ? `Demanda relativamente estável ao longo do ano para seus termos.`
+    : `${bestMonths[0]} é o pico de demanda (${maxScore}% do interesse máximo). ${worstMonths[0]} é o vale (${minScore}%). Fonte: Google Trends.`;
 
   return {
-    terms: validResults,
+    terms: trendResults,
     bestMonths,
     worstMonths,
     seasonalityStrength: strength,
     summary,
+    source: 'google_trends_apify',
   };
 }
