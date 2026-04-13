@@ -28,8 +28,45 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const excludeEmail = body.excludeEmail || '';
   const grantMonths = body.grantMonths || 3;
-
   const supabase = getSupabase();
+
+  // Modo single: reclassificar um lead específico com blueprint forçado
+  if (body.leadId && body.forceBlueprint) {
+    const { data: lead } = await supabase.from("leads").select("*").eq("id", body.leadId).single();
+    if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+
+    const blueprintId = body.forceBlueprint;
+    const diagnosis = lead.diagnosis_display;
+    const { data: diagRecord } = await supabase
+      .from("diagnoses").select("raw_data").eq("lead_id", lead.id)
+      .order("created_at", { ascending: false }).limit(1).single();
+
+    const gm = await generateGrowthMachine({
+      lead: {
+        id: lead.id, name: lead.name || lead.product, product: lead.product,
+        region: lead.region, instagram: lead.instagram, site: lead.site,
+        client_type: lead.client_type, challenge: lead.challenge, ticket: lead.ticket,
+      },
+      diagnosis,
+      blueprintId,
+      rawData: diagRecord?.raw_data,
+    });
+
+    await supabase.from("leads").update({
+      blueprint_id: blueprintId,
+      growth_machine: gm,
+    }).eq("id", lead.id);
+
+    return NextResponse.json({
+      status: "reclassified",
+      leadId: lead.id,
+      name: lead.name,
+      oldBlueprint: lead.blueprint_id,
+      newBlueprint: blueprintId,
+      quickWins: gm.quickWins?.length,
+      pillars: gm.strategicPillars?.length,
+    });
+  }
 
   // Find paid leads without blueprint (legado)
   let query = supabase

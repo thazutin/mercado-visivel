@@ -261,18 +261,18 @@ export async function notifyWeeklyContents(opts: {
     subject: `${firstName}, seu radar detectou novidades no seu mercado esta semana.`,
     html: emailShell(`
       <h1 style="font-size:22px;color:#161618;margin:0 0 16px;line-height:1.3;">
-        Seus conteúdos da semana estão prontos.
+        Seu radar detectou novidades esta semana.
       </h1>
       <p style="font-size:15px;color:#888880;line-height:1.7;margin:0 0 24px;">
-        Seus 4 conteúdos desta semana foram gerados e estão no seu painel.
+        Novos conteúdos prontos, atualizações do mercado e ações pra você executar — tudo no seu painel.
       </p>
       <div style="text-align:center;margin:0 0 28px;">
         <a href="${dashboardUrl}" style="background:#161618;color:#FEFEFF;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;display:inline-block;">
-          Acessar agora
+          Ver meu radar →
         </a>
       </div>
       <p style="font-size:13px;color:#888880;line-height:1.6;margin:0;">
-        Copie, adapte e publique — o trabalho de criação já está feito.
+        Copie e use — o trabalho de criação já está feito.
       </p>
     `),
   });
@@ -377,6 +377,75 @@ export async function notifyClosure(opts: {
   });
 }
 
+// ─── Comunicação de reposicionamento (one-shot, terça manhã) ─────────────────
+
+export async function notifyRepositioning(opts: {
+  email: string;
+  name: string;
+  product: string;
+  leadId: string;
+  isPaid: boolean;
+}): Promise<void> {
+  const { email, name, product, leadId, isPaid } = opts;
+  const firstName = name.split(" ")[0] || "Olá";
+  const url = isPaid
+    ? `${BASE_URL}/dashboard/${leadId}`
+    : `${BASE_URL}/resultado/${leadId}`;
+
+  const paidBlock = isPaid ? `
+    <div style="background:#FEFAF3;border:2px solid #CF8523;border-radius:12px;padding:18px 20px;margin:0 0 20px;">
+      <p style="font-size:14px;color:#0A0A0C;font-weight:700;margin:0 0 8px;">
+        Você já tem acesso ao Radar.
+      </p>
+      <p style="font-size:13px;color:#3A3A40;margin:0;line-height:1.5;">
+        Seu painel foi atualizado com o novo formato — ações prontas, monitoramento semanal e conteúdo personalizado pro seu segmento. Acesse agora e veja o que mudou.
+      </p>
+    </div>
+  ` : `
+    <div style="background:#F7F7F8;border-radius:12px;padding:18px 20px;margin:0 0 20px;">
+      <p style="font-size:14px;color:#0A0A0C;font-weight:700;margin:0 0 8px;">
+        Seu diagnóstico continua disponível.
+      </p>
+      <p style="font-size:13px;color:#3A3A40;margin:0;line-height:1.5;">
+        Acesse seu resultado e veja as ações práticas que preparamos pro seu negócio — agora com mais profundidade e dados.
+      </p>
+    </div>
+  `;
+
+  await sendEmail({
+    to: email,
+    subject: `${firstName}, Virô evoluiu. Veja o que mudou pra ${product}.`,
+    html: emailShell(`
+      <h1 style="font-size:22px;color:#161618;margin:0 0 16px;line-height:1.3;">
+        Virô agora é seu radar de crescimento.
+      </h1>
+      <p style="font-size:15px;color:#888880;line-height:1.7;margin:0 0 20px;">
+        ${firstName}, ouvimos os primeiros usuários e reconstruímos o Virô do zero. O que era um diagnóstico virou um radar que monitora seu mercado toda semana e entrega tudo pronto pra você crescer.
+      </p>
+
+      <div style="background:#0A0A0C;border-radius:12px;padding:20px;margin:0 0 20px;color:#FEFEFF;">
+        <p style="font-size:11px;color:#888880;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;margin:0 0 12px;">O que mudou</p>
+        <div style="font-size:13px;line-height:1.9;">
+          → Ações com passo a passo e texto pronto pra copiar<br/>
+          → Respostas prontas pras suas avaliações no Google<br/>
+          → Conteúdo personalizado pro seu segmento<br/>
+          → Monitoramento semanal do mercado e concorrentes<br/>
+          → Score de evolução — veja seu crescimento semana a semana
+        </div>
+      </div>
+
+      ${paidBlock}
+
+      <a href="${url}" style="display:block;background:#161618;color:#FEFEFF;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:12px;">
+        ${isPaid ? 'Ver meu radar →' : 'Ver meu diagnóstico →'}
+      </a>
+      <p style="font-size:11px;color:#888880;text-align:center;margin:0;">
+        Obrigado por fazer parte do começo. O melhor ainda está por vir.
+      </p>
+    `),
+  });
+}
+
 // ─── Email templates ─────────────────────────────────────────────────────────
 
 export function emailShell(content: string): string {
@@ -388,7 +457,7 @@ export function emailShell(content: string): string {
       ${content}
       <hr style="border:none;border-top:1px solid #E8E4DE;margin:32px 0;" />
       <p style="font-size:11px;color:#888880;text-align:center;margin:0;">
-        Virô · virolocal.com · inteligência de mercado local
+        Virô · virolocal.com · seu radar de crescimento
       </p>
     </div>
   `;
@@ -541,15 +610,15 @@ function diagnosisEmailHtmlSimple({ product, shortRegion, url, familiasGap, sear
   return emailShell(`
     <div style="background:#0A0A0C;border-radius:16px;padding:28px 24px;margin-bottom:24px;text-align:center;">
       <p style="font-size:11px;color:#888880;margin:0 0 16px;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;">
-        Seu diagnóstico está pronto
+        Seu radar encontrou dados reais do seu mercado
       </p>
       ${heroMetric}
     </div>
     <a href="${url}" style="display:block;background:#161618;color:#FEFEFF;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:16px;">
-      Ver meu diagnóstico →
+      Ver meu mercado →
     </a>
     <p style="font-size:10px;color:#888880;text-align:center;margin:0;font-style:italic;">
-      — Nelson · Virô · virolocal.com
+      — Virô · Seu radar de crescimento · virolocal.com
     </p>
   `);
 }
@@ -578,28 +647,28 @@ function fullDiagnosisEmailHtml({
         🔓 Acesso liberado
       </div>
       <h2 style="font-size:26px;font-weight:800;color:#0A0A0C;margin:0 0 8px;line-height:1.2;">
-        Seu plano de ação está pronto.
+        Seu radar de crescimento está ativo.
       </h2>
       <p style="font-size:14px;color:#3A3A40;margin:0;line-height:1.5;">
-        15 passos priorizados, com o <strong>como fazer</strong> de cada um e textos prontos para copiar e colar nos seus canais.
+        Ações prontas, conteúdo pra copiar e colar, e monitoramento semanal do seu mercado — tudo montado pro seu negócio.
       </p>
       ${gapLine}
     </div>
 
     <!-- Preview do conteúdo do plano -->
     <div style="background:#FEFEFF;border:1px solid #E8E8EC;border-radius:12px;padding:18px 20px;margin-bottom:20px;">
-      <p style="font-size:11px;color:#888880;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;margin:0 0 12px;">O que tem dentro</p>
+      <p style="font-size:11px;color:#888880;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;margin:0 0 12px;">O que está pronto pra você</p>
       <div style="font-size:13px;color:#0A0A0C;line-height:1.9;">
-        ✓ &nbsp;15 ações priorizadas por impacto<br/>
-        ✓ &nbsp;Passo-a-passo detalhado de cada ação<br/>
-        ✓ &nbsp;Posts prontos para publicar no Instagram<br/>
-        ✓ &nbsp;Respostas prontas para WhatsApp e Google<br/>
-        ✓ &nbsp;Checklist de execução semana a semana
+        ✓ &nbsp;Ações rápidas com passo a passo<br/>
+        ✓ &nbsp;Conteúdo pronto pra copiar e colar<br/>
+        ✓ &nbsp;Respostas pras suas avaliações no Google<br/>
+        ✓ &nbsp;Monitoramento semanal do mercado<br/>
+        ✓ &nbsp;Score de evolução semana a semana
       </div>
     </div>
 
     <a href="${url}" style="display:block;background:#CF8523;color:#FEFEFF;text-align:center;padding:16px;border-radius:10px;font-weight:800;font-size:16px;text-decoration:none;margin-bottom:12px;box-shadow:0 2px 8px rgba(207,133,35,0.25);">
-      Abrir meu plano de ação →
+      Abrir meu radar →
     </a>
     <p style="font-size:11px;color:#888880;text-align:center;margin:0 0 20px;">
       Este link é seu acesso permanente ao painel. Guarde este email.
