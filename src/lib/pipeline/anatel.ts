@@ -101,8 +101,9 @@ async function queryBigQuery(sql: string): Promise<any[]> {
           query: sql,
           useLegacySql: false,
           maxResults: 50,
+          timeoutMs: 30000,
         }),
-        signal: AbortSignal.timeout(20_000),
+        signal: AbortSignal.timeout(40_000),
       },
     );
 
