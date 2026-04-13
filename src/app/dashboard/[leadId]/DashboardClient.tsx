@@ -34,7 +34,7 @@ function formatLocationDisplay(address: string): string {
 import { V, ICONS } from "@/lib/design-tokens";
 
 type TabKey = "diagnostico" | "estruturantes" | "semana";
-type Tier = "free" | "paid" | "subscriber";
+type Tier = "free" | "subscriber";
 
 interface Props {
   lead: any;
@@ -1449,7 +1449,7 @@ function ContentsSection({ leadId, tier }: { leadId: string; tier: Tier }) {
   const latestContents = allByWeek[latestWeek] || contents;
   const olderWeeks = allWeeks.slice(1);
 
-  if (tier === "paid") {
+  if (tier === "free") {
     return (
       <div>
         <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 10 }}>

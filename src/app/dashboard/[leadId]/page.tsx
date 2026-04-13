@@ -34,12 +34,10 @@ export default async function DashboardPage({ params }: { params: { leadId: stri
   }
 
   // Determine tier
-  const tier: "free" | "paid" | "subscriber" =
+  const tier: "free" | "subscriber" =
     lead.subscription_status === "active"
       ? "subscriber"
-      : lead.paid_at
-        ? "paid"
-        : "free";
+      : "free";
 
   // Load plan
   const { data: plan } = await supabase
