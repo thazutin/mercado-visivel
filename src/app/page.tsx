@@ -372,18 +372,17 @@ export default function Home() {
           </Field>
 
           {/* Onde quer crescer */}
-          <Field label="Onde você quer crescer?">
+          <Field label="Se você pudesse resolver uma coisa agora, seria:">
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {[
-                { label: "Fazer meu cliente comprar mais vezes", value: "frequencia" },
-                { label: "Fazer meu cliente comprar mais coisas", value: "cross_sell" },
-                { label: "Roubar clientes dos meus concorrentes", value: "market_share" },
-                { label: "Ser encontrado por quem precisa do que eu faço", value: "awareness" },
-                { label: "Atrair pessoas que ainda não sabem que precisam de mim", value: "criar_demanda" },
-                { label: "Expandir pra novas regiões", value: "expansao_geo" },
-                { label: "Atender um novo tipo de cliente", value: "novo_segmento" },
-                { label: "Vender de um jeito novo", value: "novo_canal" },
-                { label: "Lançar produto ou serviço novo", value: "novo_produto" },
+                { label: "Meu cliente voltar mais vezes", value: "frequencia" },
+                { label: "Meu cliente gastar mais por compra", value: "cross_sell" },
+                { label: "Tirar clientes dos meus concorrentes", value: "market_share" },
+                { label: "Ser encontrado por quem ainda não me conhece", value: "awareness" },
+                { label: "Abrir em novas regiões ou cidades", value: "expansao_geo" },
+                { label: "Vender pra um público diferente do atual", value: "novo_segmento" },
+                { label: "Vender por um canal novo (online, delivery, marketplace)", value: "novo_canal" },
+                { label: "Lançar um produto ou serviço novo", value: "novo_produto" },
               ].map(({ label, value }) => {
                 const selected = formData.challenge === value;
                 return (
