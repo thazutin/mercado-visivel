@@ -13,8 +13,8 @@ type TabKey = "resultado" | "plano" | "semanal";
 
 const TABS: { key: TabKey; label: string; locked: false | 1 | 2 }[] = [
   { key: "resultado", label: "Diagnóstico", locked: false },
-  { key: "plano", label: "Plano de Ação", locked: 1 },
-  { key: "semanal", label: "Ações Semanais", locked: 2 },
+  { key: "plano", label: "Máquina de Crescimento", locked: 1 },
+  { key: "semanal", label: "Radar Semanal", locked: 2 },
 ];
 
 interface Props {
@@ -161,7 +161,7 @@ export default function ResultadoClient({ product, region, leadId, results, name
             {name && name.trim() ? name.trim() : product} · {shortRegion}
           </h1>
           <p style={{ fontSize: 13, color: V.ash, margin: 0 }}>
-            Seu diagnóstico de visibilidade
+            Seu radar de crescimento
           </p>
         </div>
 

@@ -18,8 +18,9 @@ export const leadSchema = z.object({
   instagram: z.string().optional().default(""),
   linkedin: z.string().optional().default(""),
 
-  // Inferido pelo step1 (Claude), não declarado no form
-  clientType: z.enum(['b2c', 'b2b', 'b2g']).optional().default('b2c'),
+  // Selecionado no step 2 do form
+  clientType: z.enum(['b2c', 'b2b', 'b2g', 'mixed']).optional().default('b2c'),
+  salesChannel: z.enum(['loja_fisica', 'online', 'servico', 'marketplace', 'direto']).optional().default('servico'),
 
   // Preserved for pipeline compatibility (auto-filled or defaults)
   differentiator: z.string().optional().default(""),
@@ -53,6 +54,7 @@ export const initialFormData: LeadFormData = {
   instagram: "",
   linkedin: "",
   clientType: "b2c" as const,
+  salesChannel: "servico" as const,
   differentiator: "",
   noInstagram: false,
   site: "",

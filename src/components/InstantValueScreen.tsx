@@ -516,7 +516,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
               background: V.amber, color: V.white, fontSize: 14, fontWeight: 700,
               cursor: loading ? "wait" : "pointer", opacity: loading ? 0.7 : 1,
             }}>
-              {loading ? "Redirecionando..." : "Gerar meu plano de ação →"}
+              {loading ? "Redirecionando..." : "Ativar meu Radar de Crescimento →"}
             </button>
           </div>
         )}
@@ -721,7 +721,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
 
             <div>
               <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 10px", lineHeight: 1.5 }}>
-                Empresas do mesmo setor na sua região, com decisores identificados. O plano de ação traz estratégias de abordagem.
+                Empresas do mesmo setor na sua região, com decisores identificados. O Radar de Crescimento traz estratégias de abordagem.
               </p>
               {((results as any).b2bCompanies.companies as any[]).slice(0, 8).map((c: any, i: number) => {
                 const contacts: any[] = Array.isArray(c.contacts) ? c.contacts : [];
@@ -883,7 +883,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
               background: V.amber, color: V.white, fontSize: 15, fontWeight: 700,
               cursor: loading ? "wait" : "pointer", opacity: loading ? 0.7 : 1,
             }}>
-              {loading ? "Redirecionando..." : "Gerar meu plano de ação →"}
+              {loading ? "Redirecionando..." : "Ativar meu Radar de Crescimento →"}
             </button>
             <p style={{ fontSize: 11, color: V.ash, margin: "8px 0 0" }}>Pronto em 2-3 minutos · pagamento único</p>
           </div>

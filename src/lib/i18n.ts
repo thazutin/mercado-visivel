@@ -7,12 +7,12 @@ export type Locale = "pt" | "en" | "es";
 export const dictionaries: Record<Locale, any> = {
   pt: {
     // ─── Hero ───
-    badge: "marketing para negócios locais",
-    heroTitle1: "Descubra como seu negócio aparece",
-    heroTitle2: "no seu mercado local",
-    heroSub: "Análise real de demanda, concorrência e posicionamento. Grátis. 30 segundos.",
-    heroWho: "Para donos de negócio que atendem clientes na região e querem enxergar o mercado ao redor com clareza.",
-    heroCta: "Ver meu mercado",
+    badge: "seu radar de crescimento",
+    heroTitle1: "Seu próximo cliente já está",
+    heroTitle2: "procurando o que você faz",
+    heroSub: "Veja quantos são, quem compete com você e receba uma operação de marketing montada — grátis em 60 segundos.",
+    heroWho: "Para donos de negócio, criadores e profissionais que querem crescer com dados reais, não achismo.",
+    heroCta: "Ativar meu radar",
     proof: [
       { number: "2.4k", label: "negócios analisados" },
       { number: "850+", label: "termos mapeados" },
@@ -21,9 +21,9 @@ export const dictionaries: Record<Locale, any> = {
     // ─── Why ───
     whyLabel: "por que isso importa",
     whyTitle: "Seu mercado existe. Ele não depende de você.",
-    whyP1: "Toda semana, pessoas na sua região buscam no Google o que você oferece. Pesquisam preço, comparam opções, procuram quem está mais perto. Se você não aparece, outra pessoa aparece.",
-    whyP2: "Virô mapeia essa demanda real — o que buscam, quem encontram e onde você está nesse cenário. Sem achismo. Sem promessa.",
-    whyHighlight: "A pergunta não é \"como conseguir mais clientes\". É: quando alguém precisa do que você faz, qual a chance de te encontrar? E mais — como fazer sua marca ser a primeira que vem à cabeça quando o cliente pensa na categoria?",
+    whyP1: "Toda semana, pessoas na sua região buscam no Google o que você oferece. Se você não aparece, outra pessoa aparece. Virô monitora esse mercado e monta sua operação de marketing.",
+    whyP2: "Cruzamos Google, Maps, Instagram, iFood, Reclame Aqui, IBGE e mais fontes reais. Não é opinião de IA — são dados verificáveis do SEU mercado.",
+    whyHighlight: "A pergunta não é \"como conseguir mais clientes\". É: onde estão seus próximos clientes, o que seus concorrentes estão fazendo, e qual o plano pra crescer? Virô responde com dados reais.",
     // ─── Patterns ───
     patternsLabel: "o que nosso dado revela",
     patternsTitle: "3 padrões que vemos em todo mercado local",
@@ -35,10 +35,10 @@ export const dictionaries: Record<Locale, any> = {
     // ─── How it works ───
     howTitle: "Como funciona",
     howSteps: [
-      { step: "01", title: "Responde o formulário", desc: "2 minutos. O que você faz, onde atua, como te encontram hoje.", tag: "grátis" },
-      { step: "02", title: "A análise roda em tempo real", desc: "Cruzamos busca, posicionamento e concorrência ao redor de você. Tudo automático." },
-      { step: "03", title: "Você vê o resultado", desc: "Termos de busca reais, volume, influência e onde você aparece (ou não).", tag: "grátis" },
-      { step: "04", title: "Gera seu plano de ação", desc: "Plano personalizado com ações práticas, na ordem certa para o seu negócio. R$497 único.", tag: "R$497" },
+      { step: "01", title: "Você informa seu negócio", desc: "Nome, segmento, região e canais. Menos de 1 minuto.", tag: "grátis" },
+      { step: "02", title: "Seu radar analisa o mercado", desc: "Cruzamos Google, Maps, Instagram, iFood, Reclame Aqui, IBGE e mais 12 fontes reais.", tag: "grátis" },
+      { step: "03", title: "Diagnóstico grátis com ações práticas", desc: "Score com benchmark, oportunidades detectadas e ações rápidas com copy pronto.", tag: "grátis" },
+      { step: "04", title: "Máquina de crescimento ativa", desc: "Pilares estratégicos montados, monitoramento semanal e materiais prontos toda semana.", tag: "R$247/mês" },
     ],
     // ─── Form ───
     formTitle: "Seu mercado em 2 minutos",
@@ -105,12 +105,12 @@ export const dictionaries: Record<Locale, any> = {
 
     // ─── Context / Pricing ───
     contextLabel: "o que Virô entrega",
-    contextP1: "O diagnóstico mostra onde você está. O plano de ação mostra o que fazer — na ordem certa, com conteúdo pronto.",
-    contextP2: "Diagnóstico detalhado + 15 ações priorizadas + conteúdo pronto para copiar e colar. Baseado em dados reais.",
-    contextPrice: "Plano de Ação",
-    contextPriceValue: "R$ 497",
-    contextRecurring: "Pagamento único",
-    contextRecurringValue: "diagnóstico + plano de ação + conteúdo pronto",
+    contextP1: "O diagnóstico grátis mostra onde você está. O Radar monta sua máquina de crescimento — com ações prontas e monitoramento semanal.",
+    contextP2: "Score com benchmark + ações rápidas + pilares estratégicos com conteúdo pronto + monitoramento semanal do seu mercado.",
+    contextPrice: "Radar de Crescimento",
+    contextPriceValue: "R$ 247/mês",
+    contextRecurring: "Cancele quando quiser",
+    contextRecurringValue: "diagnóstico + máquina de crescimento + radar semanal",
 
     // ─── Footer ───
     footer: "Virô · inteligência de mercado local · virolocal.com",
@@ -125,19 +125,19 @@ export const dictionaries: Record<Locale, any> = {
     resultCpcLabel: "CPC MÉDIO",
     resultTermsLabel: "TERMOS MAPEADOS",
     resultTermsTitle: "TERMOS DE BUSCA REAIS",
-    resultCtaTitle: "Esse mercado existe. Ele não depende de você — já está lá.",
-    resultCtaText: "A pergunta é: como aumentar a probabilidade de que, quando alguém nesse mercado precisar do que você oferece, seu negócio seja lembrado? Não existe garantia — mas existe um plano baseado em evidência.",
-    resultCtaButton: "Gerar meu plano de ação",
-    resultUnlockLabel: "O QUE VIRÔ DESBLOQUEIA",
+    resultCtaTitle: "Seu mercado está aí. A questão é: você tá crescendo nele?",
+    resultCtaText: "O Radar monitora seu mercado toda semana, monta sua operação de marketing e te diz exatamente o que fazer — com dados reais, não palpites.",
+    resultCtaButton: "Ativar meu Radar de Crescimento",
+    resultUnlockLabel: "O QUE O RADAR INCLUI",
     resultUnlockItems: [
-      "Posicionamento completo vs concorrentes reais",
-      "Mapa de demanda por termo e intenção",
-      "Plano de ação de 12 semanas personalizado",
-      "Acompanhamento semanal com dados atualizados",
+      "Ações rápidas com copy pronto pra copiar e usar",
+      "Pilares estratégicos montados pro seu segmento",
+      "Monitoramento semanal: o que mudou no seu mercado",
+      "Score de evolução: veja seu crescimento semana a semana",
     ],
 
     // ─── 2-step form (current) ───
-    formStep1Title: "Sobre seu negócio",
+    formStep1Title: "Seu negócio",
     formProductLabel: "O que você faz?",
     formProductHint: "Ex: implantes dentários, barbearia masculina, açaí artesanal",
     formProductPlaceholder: "Descreva em poucas palavras",
@@ -158,8 +158,8 @@ export const dictionaries: Record<Locale, any> = {
     formSiteLabel: "Tem site?",
     formSiteHint: "Opcional — analisamos se disponível",
     formSitePlaceholder: "https://seunegocio.com.br",
-    formStep2Title: "Seus dados de contato",
-    formStep2Subtitle: "Onde enviamos seu diagnóstico e plano de ação",
+    formStep2Title: "Seu mercado + contato",
+    formStep2Subtitle: "Pra quem você vende e como enviamos seu diagnóstico",
     formEmailLabel: "Seu melhor email",
     formEmailPlaceholder: "voce@email.com",
     formWhatsappLabel: "WhatsApp",
@@ -167,9 +167,16 @@ export const dictionaries: Record<Locale, any> = {
     formStepOf: (s: number, t: number) => `Passo ${s} de ${t}`,
     formBack: "Voltar",
     formNext: "Continuar →",
-    formSubmit: "Ver meu diagnóstico grátis",
+    formSubmit: "Ativar meu radar grátis",
+
+    // ─── Form Step 2 — new fields ───
+    formClientTargetLabel: "Quem é seu cliente principal?",
+    formClientTargetOptions: ["Pessoa física", "Empresa", "Governo", "Todos"],
+    formSalesChannelLabel: "Qual seu principal canal de venda?",
+    formSalesChannelOptions: ["Loja física", "Online / e-commerce", "Prestação de serviço", "Marketplace (iFood, ML, etc)", "Direto (WhatsApp, telefone)"],
+
     // ─── Hero (current simplified) ───
-    heroSubShort: "Virô analisa sua visibilidade digital e entrega um plano de ação, e conteúdos prontos para você ter novos clientes - em 1 minuto. Grátis.",
+    heroSubShort: "Monitora seu mercado, monta sua operação de marketing, toda semana. Grátis em 60 segundos.",
     heroFree: "",
 
     // ─── Processing ───

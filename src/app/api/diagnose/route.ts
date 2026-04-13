@@ -127,6 +127,7 @@ async function runPipelineBackground(leadId: string, formData: LeadFormData, loc
         businessName: formData.businessName || formData.product,
         product: formData.product,
         clientType: (pipelineResult as any).clientType || formData.clientType || 'b2c',
+        salesChannel: (formData as any).salesChannel,
         region: formData.region,
         instagram: formData.instagram,
         site: formData.site,
