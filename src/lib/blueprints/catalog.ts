@@ -192,7 +192,7 @@ const beleza_estetica: Blueprint = {
   ],
   quickWins: ['bio_instagram', 'otimizar_google_maps', 'responder_reviews', 'posts_instagram'],
   benchmarkTemplate: 'salões e estéticas em {region}',
-  keywords: ['salão', 'barbearia', 'barbeiro', 'cabeleireiro', 'cabeleireira', 'estética', 'spa', 'maquiagem', 'manicure', 'pedicure', 'nail', 'unha', 'depilação', 'sobrancelha', 'lash', 'extensão', 'micropigmentação', 'design', 'beleza', 'skincare', 'facial', 'corporal', 'massagem'],
+  keywords: ['salão', 'barbearia', 'barbeiro', 'barba', 'cabelo', 'corte', 'cabeleireiro', 'cabeleireira', 'estética', 'spa', 'maquiagem', 'manicure', 'pedicure', 'nail', 'unha', 'depilação', 'sobrancelha', 'lash', 'extensão', 'micropigmentação', 'design', 'beleza', 'skincare', 'facial', 'corporal', 'massagem'],
   seasonalityRelevance: 'medium',
   primaryKPI: 'Agendamentos por mês via Instagram + WhatsApp',
 };
