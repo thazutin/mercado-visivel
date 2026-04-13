@@ -89,6 +89,8 @@ export async function POST(req: NextRequest) {
         instagram: lead.instagram,
         site: lead.site,
         client_type: lead.client_type,
+        challenge: lead.challenge,
+        ticket: lead.ticket,
       },
       diagnosis,
       blueprintId,

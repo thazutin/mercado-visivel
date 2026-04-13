@@ -38,6 +38,8 @@ interface GenerateInput {
     instagram?: string;
     site?: string;
     client_type?: string;
+    challenge?: string;   // growth goal from form (frequencia, market_share, etc)
+    ticket?: string;
   };
   diagnosis: any;        // diagnosis_display from leads table
   blueprintId: string;
@@ -398,13 +400,29 @@ async function generateStrategicPillars(
   const competitors = (diagnosis.competitorInstagram || []).slice(0, 3);
   const mapsCompetitors = rawData?.influence?.rawGoogle?.mapsPresence?.mapsCompetitors || [];
 
+  // Mapa de challenge pra contexto em PT
+  const challengeLabels: Record<string, string> = {
+    frequencia: 'Fazer o cliente voltar mais vezes',
+    cross_sell: 'Fazer o cliente comprar mais itens',
+    market_share: 'Tirar clientes dos concorrentes',
+    awareness: 'Ser encontrado por quem ainda não conhece o negócio',
+    novo_segmento: 'Vender pra um público diferente do atual',
+    expansao_geo: 'Expandir pra novas regiões',
+    novo_canal: 'Vender por um canal novo',
+    novo_produto: 'Lançar produto ou serviço novo',
+  };
+  const challengeContext = lead.challenge && challengeLabels[lead.challenge]
+    ? `\nOBJETIVO PRINCIPAL DO DONO: ${challengeLabels[lead.challenge]}`
+    : '';
+
   const dataContext = `
 NEGÓCIO: ${lead.name || lead.product}
 PRODUTO/SERVIÇO: ${lead.product}
 REGIÃO: ${lead.region}
 BLUEPRINT: ${bp.label}
 TIPO CLIENTE: ${bp.primaryClientType}
-SCORE ATUAL: ${diagnosis.influencePercent || 0}/100
+SCORE ATUAL: ${diagnosis.influencePercent || 0}/100${challengeContext}
+${lead.ticket ? `TICKET MÉDIO: R$${lead.ticket}` : ''}
 
 GOOGLE MAPS:
 ${maps?.found ? `- Encontrado: sim | Rating: ${maps.rating || '?'} | Reviews: ${maps.reviewCount || 0} | Fotos: ${maps.photos || 0}` : '- NÃO encontrado no Google Maps'}
@@ -432,6 +450,7 @@ REGRAS CRÍTICAS:
 5. Máximo 4 pilares, mínimo 2
 6. Cada pilar tem 2-4 itens com conteúdo pronto
 7. Todos os textos em PT-BR, tom profissional mas acessível
+8. ${challengeContext ? `O PRIMEIRO PILAR deve ser diretamente ligado ao objetivo do dono: "${challengeLabels[lead.challenge || ''] || ''}"` : 'Priorize pilares pelos gaps mais críticos detectados nos dados'}
 
 FORMATO JSON:
 {"pillars":[{

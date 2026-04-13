@@ -76,11 +76,15 @@ function classifyByKeywords(input: ClassificationInput): ClassificationResult | 
   const blueprint = BLUEPRINT_MAP[bestId];
   if (!blueprint) return null;
 
-  // Confiança baseada em matches
-  const confidence = best.count >= 3 ? 'high' : best.count >= 2 ? 'medium' : 'low';
+  // Confiança baseada em matches (incluindo boosts)
+  const confidence = best.count >= 3 ? 'high' : best.count >= 1.5 ? 'medium' : 'low';
 
-  // Se só 1 match e é genérico, não confia
-  if (best.count < 1.5) return null;
+  // Se menos de 1 keyword real (sem boosts), não confia
+  const realKeywordCount = best.keywords.length;
+  if (realKeywordCount === 0) return null;
+
+  // Se 1+ keyword real + qualquer boost, aceita com medium
+  if (best.count < 1.0) return null;
 
   return {
     blueprint,
@@ -109,17 +113,24 @@ async function classifyByClaude(input: ClassificationInput): Promise<Classificat
       temperature: 0,
       messages: [{
         role: 'user',
-        content: `Classifique este negócio em UM dos blueprints abaixo.
+        content: `Classifique este negócio no blueprint MAIS ESPECÍFICO.
 
 Negócio: "${input.businessName}"
 Produto/serviço: "${input.product}"
 ${input.clientType ? `Tipo de cliente: ${input.clientType}` : ''}
 ${input.salesChannel ? `Canal de venda: ${input.salesChannel}` : ''}
 
-Blueprints disponíveis:
+ATENÇÃO:
+- Barbearia, salão, estética = beleza_estetica (NÃO restaurante)
+- Advogado, escritório advocacia = juridico_advocacia (NÃO profissional_liberal)
+- Contador, contabilidade = contabilidade (NÃO b2b_servicos)
+- Pet shop, veterinário = pet_veterinario (NÃO varejo_local)
+- Oficina, mecânica = automotivo (NÃO servicos_local)
+
+Blueprints:
 ${blueprintOptions}
 
-Responda APENAS com o ID do blueprint mais adequado (ex: restaurante_food). Nada mais.`,
+Responda APENAS com o ID (ex: beleza_estetica). Nada mais.`,
       }],
     });
 
