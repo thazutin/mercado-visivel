@@ -282,12 +282,110 @@ function generateQuickWins(
       }
 
       case 'video_reels':
-      case 'ml_otimizar':
       case 'white_paper':
       case 'email_nurturing':
-        // Gerados como pilares estratégicos via Claude
         break;
+
+      case 'ml_otimizar': {
+        const ml = diagnosis.expandedData?.mercadoLivre;
+        if (ml?.found) {
+          const rep = ml.reputation;
+          quickWins.push({
+            id: 'qw-ml',
+            type: actionType,
+            title: `Otimizar perfil no Mercado Livre`,
+            description: rep
+              ? `Perfil encontrado: ${ml.sellerName}. ${rep.powerSellerStatus ? `Status: ${rep.powerSellerStatus}.` : ''} ${rep.transactions ? `${rep.transactions} vendas.` : ''} ${rep.ratings ? `Avaliação: ${rep.ratings.positive}% positiva.` : ''}`
+              : `Seu perfil ${ml.sellerName || ''} foi encontrado no ML.`,
+            impact: '+8pts Visibilidade',
+            timeEstimate: '~20 min',
+            steps: [
+              'Revise título e descrição dos seus anúncios com palavras-chave do seu produto',
+              'Adicione fotos profissionais (fundo branco, múltiplos ângulos)',
+              'Responda todas as perguntas de compradores em até 1h',
+              'Ofereça frete grátis quando possível (aumenta visibilidade no algoritmo)',
+            ],
+          });
+        }
+        break;
+      }
+
+      case 'ifood_otimizar': {
+        const ifood = diagnosis.expandedData?.ifood;
+        if (ifood?.found) {
+          quickWins.push({
+            id: 'qw-ifood',
+            type: actionType,
+            title: `Otimizar perfil no iFood`,
+            description: `Seu restaurante foi encontrado no iFood${ifood.url ? '' : ' (via busca)'}. Otimize pra aparecer melhor nas buscas.`,
+            impact: '+8pts Visibilidade',
+            timeEstimate: '~20 min',
+            steps: [
+              'Atualize fotos do cardápio (fotos profissionais vendem até 30% mais)',
+              'Revise descrições dos pratos com detalhes que diferenciam',
+              'Ajuste tempo de entrega pra faixa realista (não prometa menos do que consegue)',
+              'Responda TODAS as avaliações — positivas e negativas',
+            ],
+          });
+        }
+        break;
+      }
     }
+  }
+
+  // Quick wins extras baseados em expandedData
+  const expanded = diagnosis.expandedData || {};
+
+  // Reclame Aqui
+  if (expanded.reclameAqui?.found && expanded.reclameAqui.score !== undefined) {
+    const ra = expanded.reclameAqui;
+    if (ra.score < 7) {
+      quickWins.push({
+        id: 'qw-reclame-aqui',
+        type: 'responder_reviews',
+        title: `Melhorar reputação no Reclame Aqui`,
+        description: `Nota ${ra.score}/10 no Reclame Aqui${ra.reputation ? ` (${ra.reputation})` : ''}. ${ra.responseRate ? `Taxa de resposta: ${ra.responseRate}%.` : ''} ${ra.totalComplaints ? `${ra.totalComplaints} reclamações registradas.` : ''}`,
+        impact: '+6pts Credibilidade',
+        timeEstimate: '~30 min',
+        steps: [
+          `Acesse ${ra.url || 'reclameaqui.com.br'} e responda reclamações pendentes`,
+          'Priorize reclamações sem resposta (impactam mais o score)',
+          'Tom: empático, solução concreta, sem defensividade',
+          'Meta: taxa de resposta acima de 90% e score acima de 7.5',
+        ],
+      });
+    }
+  }
+
+  // Sazonalidade
+  if (expanded.seasonality?.seasonalityStrength === 'high' && expanded.seasonality.source === 'google_trends_apify') {
+    quickWins.push({
+      id: 'qw-seasonality',
+      type: 'calendario_sazonal',
+      title: `Preparar pro pico: ${expanded.seasonality.bestMonths?.[0] || 'próximo mês'}`,
+      description: expanded.seasonality.summary || 'Seu setor tem sazonalidade forte.',
+      impact: '+5pts Visibilidade',
+      timeEstimate: '~15 min',
+      steps: [
+        `Mês de pico: ${expanded.seasonality.bestMonths?.join(', ') || 'verificar'}. Prepare conteúdo e estoque com antecedência.`,
+        `Mês de vale: ${expanded.seasonality.worstMonths?.join(', ') || 'verificar'}. Promoções e fidelização.`,
+        'Agende posts e campanhas 2-4 semanas antes do pico',
+      ],
+    });
+  }
+
+  // Instagram gaps reais
+  if (expanded.instagramExpanded?.gaps?.length > 0) {
+    const igGaps = expanded.instagramExpanded.gaps;
+    quickWins.push({
+      id: 'qw-ig-gaps',
+      type: 'posts_instagram',
+      title: `Fechar ${igGaps.length} gap(s) no Instagram vs concorrentes`,
+      description: igGaps[0],
+      impact: '+6pts Presença Digital',
+      timeEstimate: '~20 min',
+      steps: igGaps.slice(0, 4).map((g: string, i: number) => `${i + 1}. ${g}`),
+    });
   }
 
   return quickWins;
@@ -436,8 +534,16 @@ TERMOS DE BUSCA:
 ${terms.map((t: any) => `- "${t.term}": ${t.volume}/mês, posição: ${t.position}`).join('\n')}
 
 CANAIS PRIORITÁRIOS DO SEGMENTO: ${bp.channels.slice(0, 5).join(', ')}
-AÇÕES RELEVANTES: ${bp.actionTypes.join(', ')}
 KPI PRINCIPAL: ${bp.primaryKPI}
+
+DADOS EXPANDIDOS (REAIS, coletados de fontes públicas):
+${diagnosis.expandedData?.reclameAqui?.found ? `- Reclame Aqui: nota ${diagnosis.expandedData.reclameAqui.score}/10, ${diagnosis.expandedData.reclameAqui.reputation || 'sem classificação'}` : ''}
+${diagnosis.expandedData?.ifood?.found ? `- iFood: encontrado${diagnosis.expandedData.ifood.url ? ` (${diagnosis.expandedData.ifood.url})` : ''}` : ''}
+${diagnosis.expandedData?.mercadoLivre?.found ? `- Mercado Livre: ${diagnosis.expandedData.mercadoLivre.sellerName || 'encontrado'}${diagnosis.expandedData.mercadoLivre.reputation ? `, ${diagnosis.expandedData.mercadoLivre.reputation.transactions} vendas, ${diagnosis.expandedData.mercadoLivre.reputation.ratings?.positive}% positivas` : ''}` : ''}
+${diagnosis.expandedData?.adsTransparency?.searched ? `- Google Ads: ${diagnosis.expandedData.adsTransparency.termsWithAds}/${diagnosis.expandedData.adsTransparency.totalTerms} termos com ads` : ''}
+${diagnosis.expandedData?.seasonality?.source === 'google_trends_apify' ? `- Sazonalidade: pico em ${diagnosis.expandedData.seasonality.bestMonths?.join(', ')}, vale em ${diagnosis.expandedData.seasonality.worstMonths?.join(', ')}` : ''}
+${diagnosis.expandedData?.instagramExpanded?.gaps?.length > 0 ? `- Instagram gaps: ${diagnosis.expandedData.instagramExpanded.gaps.slice(0, 2).join('; ')}` : ''}
+${diagnosis.expandedData?.linkedin?.companyPage?.found ? `- LinkedIn: company page encontrada` : ''}
 `.trim();
 
   const prompt = `Você é o Virô, radar de crescimento para negócios brasileiros. Com base nos DADOS REAIS acima, gere pilares estratégicos de marketing.
