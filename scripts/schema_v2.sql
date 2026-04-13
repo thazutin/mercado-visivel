@@ -1,5 +1,8 @@
 -- Schema v2 — rodar no Supabase SQL Editor
 
+-- leads: sales channel (from form)
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS sales_channel text; -- loja_fisica, online, servico, marketplace, direto
+
 -- leads: blueprint + growth machine (radar de crescimento)
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS blueprint_id text; -- ex: restaurante_food, b2b_servicos
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS growth_machine jsonb; -- resultado da máquina de crescimento

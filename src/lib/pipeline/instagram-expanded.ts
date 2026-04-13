@@ -1,40 +1,36 @@
 // ============================================================================
-// Virô Radar — Instagram Competitors Expanded Analysis
-// Análise mais profunda dos concorrentes no Instagram: temas, formatos,
-// horários de pico, hashtags. Alimenta provocações e pilares estratégicos.
+// Virô Radar — Instagram Competitors Analysis (DADOS REAIS)
+// Compara dados REAIS scraped do Instagram. Sem Claude, sem inferência.
+// Cada número vem do scraping real do Apify.
 // ============================================================================
 
 export interface ExpandedInstagramAnalysis {
   handle: string;
   followers: number;
   engagementRate: number;
-  postsPerWeek: number;
-  topThemes: string[];            // Top 3 temas por engajamento
-  bestPostTypes: string[];        // 'carousel', 'reel', 'image', 'video'
-  bestPostingTimes: string[];     // 'Terça 18h', 'Quinta 12h'
-  topHashtags: string[];          // Top 5 hashtags usadas
+  postsLast30d: number;
   avgLikes: number;
-  avgComments: number;
-  contentStrategy: string;        // "Foco em reels educativos com frequência alta"
+  avgViews: number;
 }
 
 export interface CompetitorInsight {
+  business: ExpandedInstagramAnalysis | null;
   competitors: ExpandedInstagramAnalysis[];
-  gaps: string[];                 // "Seus concorrentes postam 5x/semana, você 1x"
-  opportunities: string[];        // "Nenhum concorrente usa carousel — oportunidade"
+  gaps: string[];          // Baseados em dados reais, não inferência
   summary: string;
+  source: 'apify_scrape';
 }
 
 /**
- * Gera análise expandida dos concorrentes baseada nos dados já scraped.
- * Não faz scrape adicional — usa os dados existentes + Claude pra análise.
- *
- * Custo: ~$0.002 (Haiku).
+ * Compara dados REAIS do Instagram do negócio vs concorrentes.
+ * Cada insight é derivado matematicamente dos dados scraped, não de IA.
  */
-export async function analyzeInstagramCompetitors(
+export function analyzeInstagramCompetitors(
   businessHandle: string | null,
   businessFollowers: number,
   businessEngagement: number,
+  businessPostsLast30d: number,
+  businessAvgLikes: number,
   competitors: Array<{
     handle: string;
     followers: number;
@@ -43,86 +39,78 @@ export async function analyzeInstagramCompetitors(
     avgLikes?: number;
     avgViews?: number;
   }>,
-  product: string,
-): Promise<CompetitorInsight> {
+): CompetitorInsight {
   if (competitors.length === 0) {
     return {
+      business: businessHandle ? {
+        handle: businessHandle,
+        followers: businessFollowers,
+        engagementRate: businessEngagement,
+        postsLast30d: businessPostsLast30d,
+        avgLikes: businessAvgLikes,
+        avgViews: 0,
+      } : null,
       competitors: [],
       gaps: [],
-      opportunities: [],
       summary: 'Sem concorrentes no Instagram pra comparar.',
+      source: 'apify_scrape',
     };
   }
 
-  try {
-    const Anthropic = (await import('@anthropic-ai/sdk')).default;
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+  const compAnalysis: ExpandedInstagramAnalysis[] = competitors.map(c => ({
+    handle: c.handle,
+    followers: c.followers || 0,
+    engagementRate: c.engagementRate || 0,
+    postsLast30d: c.postsLast30d || 0,
+    avgLikes: c.avgLikes || 0,
+    avgViews: c.avgViews || 0,
+  }));
 
-    const competitorData = competitors.map(c =>
-      `@${c.handle}: ${c.followers} seg, ${((c.engagementRate || 0) * 100).toFixed(1)}% eng, ${c.postsLast30d || '?'} posts/30d, ~${c.avgLikes || 0} likes/post`,
-    ).join('\n');
+  // Gaps baseados em dados reais (comparação matemática, sem IA)
+  const gaps: string[] = [];
 
-    const res = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 800,
-      temperature: 0.2,
-      system: 'Responda APENAS com JSON válido.',
-      messages: [{
-        role: 'user',
-        content: `Analise competitivamente estes perfis de Instagram no setor de "${product}":
-
-MEU PERFIL:
-@${businessHandle || 'não informado'}: ${businessFollowers} seguidores, ${(businessEngagement * 100).toFixed(1)}% engajamento
-
-CONCORRENTES:
-${competitorData}
-
-JSON:
-{
-  "competitors": [{"handle":"@x","postsPerWeek":3,"topThemes":["tema1","tema2"],"bestPostTypes":["reel","carousel"],"contentStrategy":"1 frase"}],
-  "gaps": ["gap1 — dado específico", "gap2"],
-  "opportunities": ["oportunidade1", "oportunidade2"],
-  "summary": "2-3 frases comparativas com dados"
-}
-
-REGRAS:
-- gaps devem citar números (ex: "Concorrente posta 5x/semana, você 1x")
-- opportunities devem ser específicas e acionáveis
-- summary deve ter dados reais da comparação`,
-      }],
-    });
-
-    const text = res.content[0].type === 'text' ? res.content[0].text : '';
-    const match = text.match(/\{[\s\S]*\}/);
-    if (match) {
-      const parsed = JSON.parse(match[0]);
-      return {
-        competitors: (parsed.competitors || []).map((c: any, i: number) => ({
-          handle: c.handle || competitors[i]?.handle || '',
-          followers: competitors[i]?.followers || 0,
-          engagementRate: competitors[i]?.engagementRate || 0,
-          postsPerWeek: c.postsPerWeek || 0,
-          topThemes: c.topThemes || [],
-          bestPostTypes: c.bestPostTypes || [],
-          bestPostingTimes: c.bestPostingTimes || [],
-          topHashtags: c.topHashtags || [],
-          avgLikes: competitors[i]?.avgLikes || 0,
-          avgComments: 0,
-          contentStrategy: c.contentStrategy || '',
-        })),
-        gaps: parsed.gaps || [],
-        opportunities: parsed.opportunities || [],
-        summary: parsed.summary || '',
-      };
-    }
-  } catch (err) {
-    console.warn('[IG Expanded] Analysis failed:', (err as Error).message);
+  // Followers
+  const avgCompFollowers = Math.round(compAnalysis.reduce((s, c) => s + c.followers, 0) / compAnalysis.length);
+  if (businessFollowers < avgCompFollowers * 0.5) {
+    gaps.push(`Seus ${businessFollowers.toLocaleString('pt-BR')} seguidores são menos da metade da média dos concorrentes (${avgCompFollowers.toLocaleString('pt-BR')})`);
   }
 
+  // Frequência de posts
+  const avgCompPosts = Math.round(compAnalysis.reduce((s, c) => s + c.postsLast30d, 0) / compAnalysis.length);
+  if (businessPostsLast30d < avgCompPosts * 0.5 && avgCompPosts > 2) {
+    gaps.push(`Você postou ${businessPostsLast30d}x nos últimos 30 dias. Concorrentes: média de ${avgCompPosts}x`);
+  }
+
+  // Engajamento
+  const avgCompEng = compAnalysis.reduce((s, c) => s + c.engagementRate, 0) / compAnalysis.length;
+  if (businessEngagement > avgCompEng * 1.5 && businessEngagement > 0.02) {
+    gaps.push(`Seu engajamento (${(businessEngagement * 100).toFixed(1)}%) é maior que a média dos concorrentes (${(avgCompEng * 100).toFixed(1)}%) — qualidade boa, falta volume`);
+  } else if (businessEngagement < avgCompEng * 0.5 && avgCompEng > 0.01) {
+    gaps.push(`Engajamento ${(businessEngagement * 100).toFixed(1)}% vs média dos concorrentes ${(avgCompEng * 100).toFixed(1)}%`);
+  }
+
+  // Maior concorrente
+  const biggest = [...compAnalysis].sort((a, b) => b.followers - a.followers)[0];
+  if (biggest && biggest.followers > businessFollowers * 3) {
+    gaps.push(`@${biggest.handle} tem ${biggest.followers.toLocaleString('pt-BR')} seguidores (${Math.round(biggest.followers / Math.max(businessFollowers, 1))}x os seus)`);
+  }
+
+  const summary = gaps.length === 0
+    ? `Você está competitivo no Instagram: ${businessFollowers.toLocaleString('pt-BR')} seguidores, ${businessPostsLast30d} posts/mês, ${(businessEngagement * 100).toFixed(1)}% engajamento.`
+    : `${gaps.length} gap(s) detectado(s) comparando seus dados com ${compAnalysis.length} concorrente(s). Todos os números são do scraping real do Instagram.`;
+
   return {
-    competitors: [],
-    gaps: [],
-    opportunities: [],
-    summary: 'Análise de concorrentes não disponível.',
+    business: businessHandle ? {
+      handle: businessHandle,
+      followers: businessFollowers,
+      engagementRate: businessEngagement,
+      postsLast30d: businessPostsLast30d,
+      avgLikes: businessAvgLikes,
+      avgViews: 0,
+    } : null,
+    competitors: compAnalysis,
+    gaps,
+    summary,
+    source: 'apify_scrape',
   };
 }

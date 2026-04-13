@@ -1,87 +1,59 @@
 // ============================================================================
-// Virô Radar — Google Ads Transparency Integration
-// Verifica se concorrentes estão investindo em Google Ads.
-// Usa o Google Ads Transparency Center (adstransparency.google.com).
+// Virô Radar — Google Ads Detection (DADOS REAIS)
+// Usa dados REAIS da SERP (serpFeatures) pra detectar quem investe em ads.
+// Sem inferência, sem Claude. Só dados do scraping real.
 // ============================================================================
 
 export interface AdsTransparencyResult {
   searched: boolean;
-  competitorsWithAds: {
-    name: string;
-    hasAds: boolean;
-    adCount?: number;
-    lastSeen?: string;
-  }[];
-  selfHasAds: boolean;
-  summary: string;           // "2 dos seus 3 concorrentes investem em Google Ads"
+  termsWithAds: number;        // quantos termos têm ads na SERP
+  totalTerms: number;
+  adsDetected: boolean;        // há concorrentes investindo nos seus termos?
+  summary: string;
+  source: 'serp_features';     // sempre real
 }
 
 /**
- * Verifica presença de ads dos concorrentes via Google Ads Transparency.
- * Nota: o Transparency Center não tem API pública. Usamos inferência
- * a partir dos dados de SERP (serpFeatures incluem 'ads') e Claude.
- *
- * Custo: ~$0.001 (Haiku).
+ * Analisa presença de ads nos resultados de SERP.
+ * Usa SOMENTE dados reais do scraping (serpFeatures).
+ * Não chama Claude, não infere, não chuta.
  */
-export async function checkAdsTransparency(
-  businessName: string,
-  competitors: string[],
-  serpData?: any[],
-): Promise<AdsTransparencyResult> {
-  // 1. Verifica nos dados de SERP se há ads
-  const termsWithAds = (serpData || []).filter(
-    (sp: any) => sp.serpFeatures?.includes('ads'),
+export function analyzeAdsFromSerp(
+  serpData: Array<{ term?: string; serpFeatures?: string[]; position?: string | number | null }>,
+): AdsTransparencyResult {
+  if (!serpData || serpData.length === 0) {
+    return {
+      searched: false,
+      termsWithAds: 0,
+      totalTerms: 0,
+      adsDetected: false,
+      summary: 'Sem dados de SERP disponíveis.',
+      source: 'serp_features',
+    };
+  }
+
+  const termsWithAds = serpData.filter(
+    sp => sp.serpFeatures?.includes('ads') || sp.serpFeatures?.includes('paid'),
   );
 
-  const hasAdsInSerp = termsWithAds.length > 0;
+  const adsDetected = termsWithAds.length > 0;
+  const pct = Math.round((termsWithAds.length / serpData.length) * 100);
 
-  // 2. Infere quais concorrentes investem em ads
-  try {
-    const Anthropic = (await import('@anthropic-ai/sdk')).default;
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
-
-    const res = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 300,
-      temperature: 0,
-      messages: [{
-        role: 'user',
-        content: `Baseado no mercado brasileiro, estime quais destes negócios provavelmente investem em Google Ads:
-
-Negócio principal: "${businessName}"
-Concorrentes: ${competitors.map((c, i) => `${i + 1}. "${c}"`).join(', ')}
-Ads detectados na SERP: ${hasAdsInSerp ? 'Sim' : 'Não'}
-
-JSON: {"self_has_ads": false, "competitors": [{"name": "...", "likely_has_ads": true, "confidence": "high|medium|low"}], "summary": "frase"}
-
-Considere: empresas maiores e redes tendem a investir mais. Negócios muito locais menos.`,
-      }],
-    });
-
-    const text = res.content[0].type === 'text' ? res.content[0].text : '';
-    const match = text.match(/\{[\s\S]*\}/);
-    if (match) {
-      const parsed = JSON.parse(match[0]);
-      return {
-        searched: true,
-        selfHasAds: parsed.self_has_ads || false,
-        competitorsWithAds: (parsed.competitors || []).map((c: any) => ({
-          name: c.name,
-          hasAds: c.likely_has_ads || false,
-        })),
-        summary: parsed.summary || '',
-      };
-    }
-  } catch (err) {
-    console.warn('[AdsTransparency] Failed:', (err as Error).message);
+  let summary: string;
+  if (!adsDetected) {
+    summary = `Nenhum dos ${serpData.length} termos analisados tem anúncios pagos. Oportunidade: ser o primeiro a investir em ads pode capturar tráfego antes dos concorrentes.`;
+  } else if (pct >= 70) {
+    summary = `${termsWithAds.length} dos ${serpData.length} termos (${pct}%) têm anúncios pagos. Concorrência alta em ads — investir exige estratégia de termos de cauda longa.`;
+  } else {
+    summary = `${termsWithAds.length} dos ${serpData.length} termos (${pct}%) têm anúncios pagos. Há espaço pra investir em ads nos termos sem concorrência paga.`;
   }
 
   return {
     searched: true,
-    competitorsWithAds: [],
-    selfHasAds: false,
-    summary: hasAdsInSerp
-      ? 'Detectamos anúncios pagos nos resultados de busca dos seus termos. Concorrentes podem estar investindo.'
-      : 'Não detectamos anúncios pagos nos seus termos de busca.',
+    termsWithAds: termsWithAds.length,
+    totalTerms: serpData.length,
+    adsDetected,
+    summary,
+    source: 'serp_features',
   };
 }
