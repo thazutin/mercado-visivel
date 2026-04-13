@@ -42,6 +42,8 @@ export async function fetchExpandedSources(
     linkedin?: string;
     site?: string;
     sales_channel?: string;
+    mercado_livre_url?: string;
+    ifood_url?: string;
   },
   diagnosis: any,
 ): Promise<ExpandedData> {
@@ -75,20 +77,65 @@ export async function fetchExpandedSources(
     );
   }
 
-  // 3. iFood — só pra food
+  // 3. iFood — só pra food. Usa URL direto se disponível
   if (bp?.dataSources?.ifood) {
-    promises.push(
-      withTimeout(searchIFood(lead.name || lead.product, city), 10_000, null)
-        .then((r: any) => { if (r?.found) { result.ifood = r; result.sources.push('ifood'); } }),
-    );
+    if (lead.ifood_url) {
+      // Link direto informado no form — presença confirmada
+      result.ifood = { found: true, url: lead.ifood_url, restaurantName: lead.name, source: 'form_input' };
+      result.sources.push('ifood');
+    } else {
+      promises.push(
+        withTimeout(searchIFood(lead.name || lead.product, city), 10_000, null)
+          .then((r: any) => { if (r?.found) { result.ifood = r; result.sources.push('ifood'); } }),
+      );
+    }
   }
 
-  // 4. Mercado Livre — pra ecommerce/marketplace
+  // 4. Mercado Livre — pra ecommerce/marketplace. Usa URL direto se disponível
   if (bp?.dataSources?.mercado_livre || lead.sales_channel === 'marketplace') {
-    promises.push(
-      withTimeout(searchMercadoLivre(lead.name || lead.product, lead.product), 15_000, null)
-        .then((r: any) => { if (r?.found) { result.mercadoLivre = r; result.sources.push('mercado_livre'); } }),
-    );
+    if (lead.mercado_livre_url) {
+      // Link direto informado — extrai nickname e busca detalhes via API
+      const nickname = lead.mercado_livre_url.split('/perfil/')[1]?.split(/[?#/]/)[0] || '';
+      if (nickname) {
+        promises.push(
+          withTimeout(
+            (async () => {
+              try {
+                const res = await fetch(`https://api.mercadolibre.com/sites/MLB/search?nickname=${encodeURIComponent(nickname)}&limit=1`, { signal: AbortSignal.timeout(10_000) });
+                if (res.ok) {
+                  const data = await res.json();
+                  const seller = data.results?.[0]?.seller;
+                  if (seller) {
+                    const detailRes = await fetch(`https://api.mercadolibre.com/users/${seller.id}`, { signal: AbortSignal.timeout(10_000) });
+                    if (detailRes.ok) {
+                      const user = await detailRes.json();
+                      const rep = user.seller_reputation || {};
+                      const ratings = rep.transactions?.ratings || {};
+                      return {
+                        found: true, sellerName: user.nickname, sellerId: String(seller.id),
+                        reputation: { level: rep.level_id, powerSellerStatus: rep.power_seller_status, transactions: rep.transactions?.total || 0,
+                          ratings: { positive: Math.round((ratings.positive || 0) * 100), neutral: Math.round((ratings.neutral || 0) * 100), negative: Math.round((ratings.negative || 0) * 100) } },
+                        permalink: user.permalink || lead.mercado_livre_url, source: 'ml_api' as const,
+                      };
+                    }
+                  }
+                }
+              } catch { /* fall through */ }
+              return { found: true, sellerName: nickname, permalink: lead.mercado_livre_url, source: 'form_input' as const };
+            })(),
+            15_000, null,
+          ).then((r: any) => { if (r?.found) { result.mercadoLivre = r; result.sources.push('mercado_livre'); } }),
+        );
+      } else {
+        result.mercadoLivre = { found: true, permalink: lead.mercado_livre_url, source: 'form_input' };
+        result.sources.push('mercado_livre');
+      }
+    } else {
+      promises.push(
+        withTimeout(searchMercadoLivre(lead.name || lead.product, lead.product), 15_000, null)
+          .then((r: any) => { if (r?.found) { result.mercadoLivre = r; result.sources.push('mercado_livre'); } }),
+      );
+    }
   }
 
   // 5. Google Ads — dados reais da SERP (síncrono, sem API)

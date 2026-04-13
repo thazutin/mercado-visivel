@@ -415,6 +415,25 @@ export default function Home() {
               <input style={inputStyle} type="text" placeholder="linkedin.com/company/seunegocio" value={(formData as any).linkedin || ""}
                 onChange={(e: any) => updateField("linkedin" as any, e.target.value)} />
             </Field>
+
+            {/* Campos condicionais por canal de venda */}
+            {(formData as any).salesChannel === 'marketplace' && (
+              <Field label="Seu perfil no Mercado Livre" hint="Link direto — ex: mercadolivre.com.br/perfil/SEUNOME">
+                <input style={inputStyle} type="text" placeholder="mercadolivre.com.br/perfil/seunegocio"
+                  value={(formData as any).mercadoLivreUrl || ""}
+                  onChange={(e: any) => updateField("mercadoLivreUrl" as any, e.target.value)} />
+              </Field>
+            )}
+
+            {/* iFood: mostra se produto parece food */}
+            {/restaurante|lanchonete|pizzaria|hamburgue|doceria|padaria|café|cafeteria|açaí|sushi|food|delivery|cozinha|buffet|sorveteria|pastelaria|bar /i.test(formData.product || '') && (
+              <Field label="Seu link no iFood" hint="Link direto — ex: ifood.com.br/delivery/cidade/seu-restaurante">
+                <input style={inputStyle} type="text" placeholder="ifood.com.br/delivery/..."
+                  value={(formData as any).ifoodUrl || ""}
+                  onChange={(e: any) => updateField("ifoodUrl" as any, e.target.value)} />
+              </Field>
+            )}
+
             <Field label="Site">
               <input style={inputStyle} type="text" placeholder="www.seunegocio.com.br" value={formData.site}
                 onChange={(e: any) => updateField("site", e.target.value)} />

@@ -83,6 +83,18 @@ interface Results {
     demandType?: string;
   } | null;
   demandType?: string;
+  expandedData?: {
+    sources?: string[];
+    reclameAqui?: { found: boolean; score?: number; reputation?: string; responseRate?: number; totalComplaints?: number; url?: string };
+    ifood?: { found: boolean; url?: string; restaurantName?: string };
+    mercadoLivre?: { found: boolean; sellerName?: string; reputation?: { level?: string; powerSellerStatus?: string; transactions?: number; ratings?: { positive: number; neutral: number; negative: number } }; permalink?: string };
+    adsTransparency?: { searched: boolean; termsWithAds: number; totalTerms: number; adsDetected: boolean; summary: string };
+    seasonality?: { bestMonths?: string[]; worstMonths?: string[]; seasonalityStrength: string; summary: string; source: string };
+    instagramExpanded?: { gaps?: string[]; summary?: string };
+    linkedin?: { companyPage?: { found: boolean; url?: string }; founderProfile?: { found: boolean; url?: string } };
+    fetchedAt?: string;
+  };
+  blueprintId?: string;
 }
 interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; leadId?: string; hideCTA?: boolean; hideWorkRoutes?: boolean; name?: string; seasonality?: any; }
 
@@ -829,6 +841,79 @@ export default function InstantValueScreen({ product, region, results: initialRe
                     <span style={{ color: V.night, fontWeight: 600 }}>Visibilidade em IA</span>
                     <span style={{ color: V.teal, fontWeight: 700 }}>Mencionado</span>
                   </div>
+                </div>
+              )}
+
+              {/* Dados expandidos (fontes reais adicionais) */}
+              {results.expandedData?.reclameAqui?.found && (
+                <div style={{ padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                    <span style={{ color: V.night, fontWeight: 600 }}>Reclame Aqui</span>
+                    <span style={{ color: (results.expandedData!.reclameAqui!.score || 0) >= 7 ? V.teal : V.coral, fontWeight: 700 }}>
+                      {results.expandedData!.reclameAqui!.score ?? '?'}/10 {results.expandedData!.reclameAqui!.reputation ? `· ${results.expandedData!.reclameAqui!.reputation}` : ''}
+                    </span>
+                  </div>
+                </div>
+              )}
+              {results.expandedData?.ifood?.found && (
+                <div style={{ padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                    <span style={{ color: V.night, fontWeight: 600 }}>iFood</span>
+                    <span style={{ color: V.teal, fontWeight: 700 }}>Encontrado</span>
+                  </div>
+                </div>
+              )}
+              {results.expandedData?.mercadoLivre?.found && (
+                <div style={{ padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                    <span style={{ color: V.night, fontWeight: 600 }}>Mercado Livre</span>
+                    <span style={{ color: V.teal, fontWeight: 700 }}>
+                      {results.expandedData.mercadoLivre.reputation?.ratings?.positive
+                        ? `${results.expandedData.mercadoLivre.reputation.ratings.positive}% positiva`
+                        : 'Encontrado'}
+                    </span>
+                  </div>
+                  {(results.expandedData!.mercadoLivre!.reputation?.transactions || 0) > 0 && (
+                    <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>
+                      {(results.expandedData!.mercadoLivre!.reputation!.transactions || 0).toLocaleString('pt-BR')} vendas
+                    </div>
+                  )}
+                </div>
+              )}
+              {results.expandedData?.adsTransparency?.searched && (
+                <div style={{ padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                    <span style={{ color: V.night, fontWeight: 600 }}>Google Ads na SERP</span>
+                    <span style={{ color: results.expandedData.adsTransparency.adsDetected ? V.amber : V.ash, fontWeight: 700 }}>
+                      {results.expandedData.adsTransparency.termsWithAds}/{results.expandedData.adsTransparency.totalTerms} termos com ads
+                    </span>
+                  </div>
+                </div>
+              )}
+              {results.expandedData?.seasonality?.source === 'google_trends_apify' && (
+                <div style={{ padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                    <span style={{ color: V.night, fontWeight: 600 }}>Sazonalidade</span>
+                    <span style={{ color: V.amber, fontWeight: 700 }}>Pico: {results.expandedData.seasonality.bestMonths?.[0] || '—'}</span>
+                  </div>
+                  <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>
+                    Fonte: Google Trends · Força: {results.expandedData.seasonality.seasonalityStrength}
+                  </div>
+                </div>
+              )}
+              {results.expandedData?.linkedin?.companyPage?.found && (
+                <div style={{ padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                    <span style={{ color: V.night, fontWeight: 600 }}>LinkedIn</span>
+                    <span style={{ color: V.teal, fontWeight: 700 }}>Company page encontrada</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Fontes consultadas */}
+              {(results.expandedData?.sources?.length || 0) > 0 && (
+                <div style={{ marginTop: 8, fontSize: 10, color: V.ash, fontFamily: V.mono }}>
+                  Fontes: {results.expandedData!.sources!.join(', ')}
                 </div>
               )}
 
