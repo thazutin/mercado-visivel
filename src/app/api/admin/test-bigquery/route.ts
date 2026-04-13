@@ -50,12 +50,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Token exchange failed", status: tokenRes.status, detail: tokenData });
     }
 
-    // First: discover column names
+    // Get ALL columns + sample data
     const anatelSql = `
-      SELECT column_name, data_type
-      FROM \`basedosdados.br_anatel_banda_larga_fixa.INFORMATION_SCHEMA.COLUMNS\`
-      WHERE table_name = 'microdados'
-      ORDER BY ordinal_position
+      SELECT *
+      FROM \`basedosdados.br_anatel_banda_larga_fixa.microdados\`
+      WHERE sigla_uf = 'SP' AND ano = 2023
+      LIMIT 3
     `;
     const queryRes = await fetch(
       `https://bigquery.googleapis.com/bigquery/v2/projects/${projectId}/queries`,
