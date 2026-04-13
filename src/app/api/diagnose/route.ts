@@ -16,6 +16,7 @@ import { runInstantAnalysis, runPostDiagnosisEnrichment, buildDisplayData, sanit
 import { notifyDiagnosisReady } from "@/lib/notify";
 import { createClient } from "@supabase/supabase-js";
 import { classifyBusiness } from "@/lib/blueprints";
+import { fetchExpandedSources } from "@/lib/pipeline/expanded-sources";
 
 export const maxDuration = 180;
 
@@ -136,9 +137,24 @@ async function runPipelineBackground(leadId: string, formData: LeadFormData, loc
       console.warn('[DiagnoseBG] Blueprint classification failed (non-fatal):', (err as Error).message);
     }
 
+    // 3c. Fetch expanded data sources (paralelo, non-blocking, ~20s)
+    let expandedData: any = null;
+    try {
+      expandedData = await fetchExpandedSources(blueprintId, {
+        name: formData.businessName || formData.product,
+        product: formData.product,
+        region: formData.region,
+        instagram: formData.instagram,
+      }, buildDisplayData(pipelineResult));
+      console.log(`[DiagnoseBG] Expanded sources: ${Object.keys(expandedData).filter(k => k !== 'fetchedAt' && expandedData[k]).join(', ') || 'none'}`);
+    } catch (err) {
+      console.warn('[DiagnoseBG] Expanded sources failed (non-fatal):', (err as Error).message);
+    }
+
     // 4. Monta display data
     const display = buildDisplayData(pipelineResult);
     (display as any).blueprintId = blueprintId;
+    if (expandedData) (display as any).expandedData = expandedData;
     display.lat = formData.lat || (pipelineResult as any).pipelineLat || null;
     display.lng = formData.lng || (pipelineResult as any).pipelineLng || null;
     console.log(
