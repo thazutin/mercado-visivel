@@ -50,13 +50,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Token exchange failed", status: tokenRes.status, detail: tokenData });
     }
 
-    // Get ALL columns + sample data
-    const anatelSql = `
-      SELECT *
-      FROM \`basedosdados.br_anatel_banda_larga_fixa.microdados\`
-      WHERE sigla_uf = 'SP' AND ano = 2023
-      LIMIT 3
-    `;
+    // Test the actual Anatel function
+    const { fetchAnatelBandaLarga } = await import("@/lib/pipeline/anatel");
+    const anatelResult = await fetchAnatelBandaLarga("Campos do Jordão", "SP");
+    return NextResponse.json({
+      ok: true, projectId, clientEmail: key.client_email,
+      tokenOk: true, anatel: anatelResult,
+    });
+    const anatelSql = "SELECT 1"; // won't reach here
     const queryRes = await fetch(
       `https://bigquery.googleapis.com/bigquery/v2/projects/${projectId}/queries`,
       {
