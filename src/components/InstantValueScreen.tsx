@@ -459,61 +459,56 @@ export default function InstantValueScreen({ product, region, results: initialRe
           </div>
         )}
 
-        {/* ═══════════════ BLOCO 3 — COMO CHEGAR LÁ ═══════════════ */}
+        {/* ═══════════════ BLOCO 3 — O QUE FAZER AGORA ═══════════════ */}
         <div style={{ fontSize: 13, fontWeight: 600, color: V.slate, marginBottom: 8, paddingLeft: 4, marginTop: 8, letterSpacing: "0.02em" }}>
-          Como chegar lá
+          O que fazer agora
         </div>
 
-        <div style={{ fontSize: 11, color: V.ash, marginBottom: 12, paddingLeft: 4, lineHeight: 1.5 }}>
-          Estas são as alavancas do seu mercado. O plano completo traz ações específicas para o seu negócio, na ordem certa.
-        </div>
-
+        {/* Ações reais baseadas nos dados — entregam valor imediato */}
         {pilarCards.map((p, i) => {
           const lever = allLevers.find((l: any) => l.dimension === p.dim || (p.dim === 'credibilidade' && l.dimension === 'reputacao'));
-          const pilarPotencial = Math.min(p.score + 35, 85);
           return (
             <div key={i} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "16px 18px", marginBottom: 10 }}>
-              {/* Título com score integrado */}
-              <div style={{ marginBottom: 4 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>{p.icon} {p.label}: </span>
-                <span style={{ fontSize: 14, fontWeight: 800, color: p.color }}>{p.score}</span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>{p.icon} {p.label}</span>
+                <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 700, color: p.score < 30 ? V.coral : p.score < 50 ? V.amber : V.teal }}>
+                  {p.score}/100
+                </span>
               </div>
-              {/* Mini-régua do pilar */}
-              <div style={{ position: "relative", height: 4, background: V.fog, borderRadius: 2, overflow: "visible" }}>
-                <div style={{ position: "absolute", left: 0, top: 0, height: "100%", borderRadius: 2, background: `linear-gradient(90deg, ${p.color}80 ${(p.score / pilarPotencial) * 100}%, ${V.amberSoft}50 100%)`, width: `${pilarPotencial}%`, transition: "width 0.6s ease" }} />
-                <div style={{ position: "absolute", left: `${p.score}%`, top: -3, transform: "translateX(-50%)", width: 10, height: 10, borderRadius: "50%", background: p.color, border: `2px solid ${V.white}`, boxShadow: "0 0 2px rgba(0,0,0,0.12)", zIndex: 2 }} />
-                <div style={{ position: "absolute", left: `${pilarPotencial}%`, top: -2, transform: "translateX(-50%)", width: 8, height: 8, borderRadius: "50%", background: V.white, border: `1.5px dashed ${V.amber}`, zIndex: 1 }} />
-              </div>
-              {/* Hoje / Meta alinhados com pontos */}
-              <div style={{ position: "relative", height: 16, marginTop: 4, marginBottom: 8 }}>
-                <div style={{ position: "absolute", left: `${Math.max(p.score, 3)}%`, transform: "translateX(-50%)", whiteSpace: "nowrap" }}>
-                  <span style={{ fontFamily: V.mono, fontSize: 8, color: V.ash }}>Hoje: {p.score}</span>
-                </div>
-                <div style={{ position: "absolute", left: `${Math.min(pilarPotencial, 97)}%`, transform: "translateX(-50%)", whiteSpace: "nowrap" }}>
-                  <span style={{ fontFamily: V.mono, fontSize: 8, color: V.amber }}>Meta: {pilarPotencial}</span>
-                </div>
-              </div>
-              <div style={{ display: "inline-block", padding: "2px 6px", background: V.amberWash, borderRadius: 3, fontSize: 8, color: V.amber, fontWeight: 700, fontFamily: V.mono, letterSpacing: "0.05em", marginTop: 4, marginBottom: 4 }}>AMOSTRA · 1 DE 5 AÇÕES</div>
-              <p style={{ fontSize: 12, color: V.night, margin: "0 0 4px", lineHeight: 1.5, fontWeight: 500 }}>{lever?.action || p.fallback}</p>
-              <p style={{ fontSize: 10, color: V.ash, margin: "0 0 6px", lineHeight: 1.4, fontStyle: "italic" }}>
-                No plano completo você recebe o passo-a-passo, textos prontos e ordem de execução.
+              <p style={{ fontSize: 12, color: V.night, margin: "0 0 8px", lineHeight: 1.5, fontWeight: 500 }}>
+                {lever?.action || p.fallback}
               </p>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div style={{ padding: "4px 8px", background: p.status.bg, borderRadius: 4, fontSize: 10, color: p.status.color, fontWeight: 500 }}>{p.status.text}</div>
+              <div style={{ padding: "4px 8px", background: p.status.bg, borderRadius: 4, fontSize: 10, color: p.status.color, fontWeight: 500, display: "inline-block" }}>
+                {p.status.text}
               </div>
             </div>
           );
         })}
 
-        {/* CTA intermediário após pilares */}
+        {/* CTA Radar — integrado após as ações */}
         {!hideCTA && (
-          <div style={{ background: V.night, borderRadius: 10, padding: "16px", marginBottom: 16, marginTop: 8, textAlign: "center" }}>
-            <p style={{ fontSize: 12, color: V.mist, margin: "0 0 10px", lineHeight: 1.5 }}>
-              O diagnóstico gratuito mostra uma ação por pilar. O plano completo traz 15 ações priorizadas, na ordem certa, e com conteúdo pronto para você copiar e colar nos canais.
-            </p>
+          <div style={{ background: "linear-gradient(135deg, #161618 0%, #2A2A30 100%)", borderRadius: 14, padding: "24px 20px", marginBottom: 16, marginTop: 12 }}>
+            <div style={{ textAlign: "center", marginBottom: 16 }}>
+              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, letterSpacing: "0.06em", marginBottom: 8 }}>RADAR DE CRESCIMENTO</div>
+              <p style={{ fontSize: 15, color: V.white, fontWeight: 700, margin: "0 0 8px" }}>
+                Ative seu radar e receba tudo pronto
+              </p>
+              <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>
+                Ações com passo a passo, conteúdo pronto pra copiar, monitoramento semanal do mercado e dos concorrentes.
+              </p>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 6, marginBottom: 16 }}>
+              {['Respostas pra reviews', 'Posts prontos', 'Bio otimizada', 'WhatsApp templates', 'Radar semanal', 'Score de evolução'].map((tag, i) => (
+                <span key={i} style={{ fontSize: 9, fontWeight: 600, color: V.amber, background: "rgba(207,133,35,0.15)", padding: "3px 8px", borderRadius: 4 }}>{tag}</span>
+              ))}
+            </div>
+            <div style={{ textAlign: "center", marginBottom: 12 }}>
+              <span style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.white }}>R$ 247</span>
+              <span style={{ fontSize: 14, color: V.ash }}>/mês</span>
+            </div>
             <button onClick={() => onCheckout(couponApplied ? coupon : undefined)} disabled={loading} style={{
-              width: "100%", padding: "12px", borderRadius: 8, border: "none",
-              background: V.amber, color: V.white, fontSize: 14, fontWeight: 700,
+              width: "100%", padding: "14px", borderRadius: 10, border: "none",
+              background: V.amber, color: V.white, fontSize: 15, fontWeight: 700,
               cursor: loading ? "wait" : "pointer", opacity: loading ? 0.7 : 1,
             }}>
               {loading ? "Redirecionando..." : "Ativar meu Radar de Crescimento →"}
@@ -864,10 +859,10 @@ export default function InstantValueScreen({ product, region, results: initialRe
         {!hideCTA && (
           <div style={{ background: V.night, borderRadius: 12, padding: "20px 16px", marginTop: 12, color: V.white, textAlign: "center" }}>
             <p style={{ fontSize: 13, color: V.mist, margin: "0 0 12px", lineHeight: 1.5 }}>
-              As recomendações acima funcionam para qualquer negócio. O plano abaixo foi gerado para <strong style={{ color: V.white }}>{displayName}</strong> em <strong style={{ color: V.white }}>{shortRegion}</strong> — com os gaps reais do seu mercado, na ordem certa.
+              O diagnóstico acima é gratuito. O Radar abaixo monitora seu mercado toda semana e entrega ações prontas — montado pra <strong style={{ color: V.white }}>{displayName}</strong> em <strong style={{ color: V.white }}>{shortRegion}</strong>.
             </p>
-            <p style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", margin: "0 0 4px" }}>PAGAMENTO ÚNICO</p>
-            <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, margin: "0 0 12px" }}>R$ 497</div>
+            <p style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", margin: "0 0 4px" }}>CANCELE QUANDO QUISER</p>
+            <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, margin: "0 0 12px" }}>R$ 247<span style={{ fontSize: 14, fontWeight: 400, color: V.ash }}>/mês</span></div>
             <div style={{ display: "flex", gap: 8, marginBottom: 12, justifyContent: "center" }}>
               <input type="text" placeholder="Cupom" value={coupon}
                 onChange={(e: any) => { setCoupon(e.target.value.toUpperCase()); setCouponApplied(false); }}
@@ -885,7 +880,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
             }}>
               {loading ? "Redirecionando..." : "Ativar meu Radar de Crescimento →"}
             </button>
-            <p style={{ fontSize: 11, color: V.ash, margin: "8px 0 0" }}>Pronto em 2-3 minutos · pagamento único</p>
+            <p style={{ fontSize: 11, color: V.ash, margin: "8px 0 0" }}>Ativo em 2-3 minutos · sem fidelidade</p>
           </div>
         )}
 

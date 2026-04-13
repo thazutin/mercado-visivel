@@ -456,18 +456,18 @@ FORMATO JSON:
 {"pillars":[{
   "id":"pilar-1",
   "type":"content_engine|authority|prospecting|reputation|expansion",
-  "title":"Título do Pilar",
-  "description":"1-2 frases explicando POR QUE esse pilar, com dado real",
+  "title":"Título curto e direto",
+  "description":"POR QUE esse pilar conecta com o objetivo do dono. Cite dados reais.",
   "channel":"canal_principal",
   "priority":1,
   "items":[{
     "id":"item-1",
-    "title":"Nome do item",
+    "title":"Etapa clara (ex: Responder reviews negativos, Publicar post de autoridade)",
     "type":"copy|template|structure|checklist|script",
     "content":"CONTEÚDO COMPLETO PRONTO PRA USAR. Não escreva placeholder — escreva o texto final.",
     "copyable":true
   }],
-  "kpi":{"metric":"Métrica específica","target":"Número meta","timeframe":"30 dias"}
+  "kpi":{"metric":"Métrica específica do pilar","target":"Número meta realista","timeframe":"30 dias"}
 }]}
 
 IMPORTANTE: Cada item.content deve ser o TEXTO COMPLETO, não uma descrição do que escrever. Por exemplo:
