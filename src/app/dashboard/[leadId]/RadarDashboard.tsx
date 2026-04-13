@@ -91,9 +91,102 @@ function ScoreRing({ score, benchmark, benchmarkLabel }: {
   );
 }
 
+// ─── Inline Reviews Component ───────────────────────────────────────────
+function InlineReviews({ leadId }: { leadId: string }) {
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/reviews?leadId=${leadId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.reviews?.length > 0) setReviews(d.reviews); })
+      .catch(() => {});
+  }, [leadId]);
+
+  const generateDrafts = async () => {
+    setGenerating(true);
+    try {
+      await fetch('/api/reviews/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadId }),
+      });
+      const r = await fetch(`/api/reviews?leadId=${leadId}`);
+      const d = await r.json();
+      if (d?.reviews) setReviews(d.reviews);
+    } catch { /* */ }
+    setGenerating(false);
+  };
+
+  const copyResponse = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+    fetch('/api/reviews', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status: 'copied' }),
+    }).catch(() => {});
+  };
+
+  if (reviews.length === 0 && !generating) {
+    return (
+      <button onClick={generateDrafts} style={{
+        width: "100%", padding: "10px", borderRadius: 8, border: `1px solid ${V.fog}`,
+        background: V.cloud, color: V.night, fontSize: 12, fontWeight: 600, cursor: "pointer",
+        marginTop: 8,
+      }}>
+        Carregar reviews e gerar respostas
+      </button>
+    );
+  }
+
+  if (generating) {
+    return <p style={{ fontSize: 11, color: V.amber, marginTop: 8 }}>Gerando respostas personalizadas (~30s)...</p>;
+  }
+
+  return (
+    <div style={{ marginTop: 10 }}>
+      {reviews.slice(0, 5).map(r => (
+        <div key={r.id} style={{
+          background: V.cloud, borderRadius: 8, padding: "10px 12px", marginBottom: 8,
+          border: `1px solid ${r.status === 'copied' ? V.teal + '40' : V.fog}`,
+        }}>
+          <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
+            <span style={{ fontFamily: V.mono, fontSize: 9, color: V.amber }}>
+              {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+            </span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: V.night }}>{r.author_name || 'Cliente'}</span>
+            {r.status === 'copied' && <span style={{ fontSize: 9, color: V.teal, marginLeft: 'auto' }}>✓ Copiada</span>}
+          </div>
+          <p style={{ fontSize: 11, color: V.zinc, margin: "0 0 6px", fontStyle: "italic", lineHeight: 1.4 }}>
+            &ldquo;{(r.review_text || '').slice(0, 150)}{r.review_text?.length > 150 ? '...' : ''}&rdquo;
+          </p>
+          {r.draft_response && (
+            <div style={{ background: V.white, borderRadius: 6, padding: "8px 10px", borderLeft: `3px solid ${V.amber}` }}>
+              <p style={{ fontSize: 11, color: V.night, margin: "0 0 4px", lineHeight: 1.4 }}>{r.draft_response}</p>
+              <button onClick={() => copyResponse(r.id, r.draft_response)} style={{
+                fontSize: 10, color: copiedId === r.id ? V.teal : V.amber,
+                background: "none", border: "none", cursor: "pointer", fontWeight: 600, padding: 0,
+              }}>
+                {copiedId === r.id ? 'Copiado!' : 'Copiar resposta'}
+              </button>
+            </div>
+          )}
+        </div>
+      ))}
+      {reviews.length > 5 && (
+        <p style={{ fontSize: 10, color: V.ash, textAlign: "center" }}>+ {reviews.length - 5} reviews</p>
+      )}
+    </div>
+  );
+}
+
 // ─── Quick Win Card ─────────────────────────────────────────────────────
-function QuickWinCard({ qw, onGenerateContent }: {
-  qw: any; onGenerateContent?: (id: string) => void;
+function QuickWinCard({ qw, leadId }: {
+  qw: any; leadId: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [done, setDone] = useState(false);
@@ -167,6 +260,11 @@ function QuickWinCard({ qw, onGenerateContent }: {
           {/* Copy ready */}
           {expanded && qw.copyReady && (
             <CopyBlock label="Texto pronto" text={qw.copyReady} style={{ marginTop: 8 }} />
+          )}
+
+          {/* Inline reviews for review quick wins */}
+          {expanded && qw.type === 'responder_reviews' && (
+            <InlineReviews leadId={leadId} />
           )}
         </div>
       </div>
@@ -476,7 +574,7 @@ export default function RadarDashboard({ lead, diagnosis, tier, initialGrowthMac
               ⚡ AÇÕES RÁPIDAS — COMECE AGORA
             </div>
             {(gm?.quickWins || []).map((qw: any) => (
-              <QuickWinCard key={qw.id} qw={qw} />
+              <QuickWinCard key={qw.id} qw={qw} leadId={lead.id} />
             ))}
             {!gm?.quickWins?.length && tier === "free" && (
               <p style={{ fontSize: 12, color: V.ash, textAlign: "center" }}>

@@ -5,17 +5,10 @@ import { useState, useCallback, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import InstantValueScreen from "@/components/InstantValueScreen";
 import PostPaymentScreen from "@/components/PostPaymentScreen";
-import { LockedTab } from "@/components/dashboard/LockedTab";
 import { NelsonLogo } from "@/components/NelsonLogo";
 import { V } from "@/lib/design-tokens";
 
-type TabKey = "resultado" | "plano" | "semanal";
-
-const TABS: { key: TabKey; label: string; locked: false | 1 | 2 }[] = [
-  { key: "resultado", label: "Diagnóstico", locked: false },
-  { key: "plano", label: "Seu Plano", locked: 1 },
-  { key: "semanal", label: "Radar Semanal", locked: 2 },
-];
+// Tabs removidas — resultado free é página única com CTA do Radar integrado
 
 interface Props {
   product: string;
@@ -26,7 +19,6 @@ interface Props {
 }
 
 export default function ResultadoClient({ product, region, leadId, results, name }: Props) {
-  const [tab, setTab] = useState<TabKey>("resultado");
   const searchParams = useSearchParams();
   const router = useRouter();
   const [showPostPayment, setShowPostPayment] = useState(false);
@@ -165,66 +157,25 @@ export default function ResultadoClient({ product, region, leadId, results, name
           </p>
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: "flex", gap: 4, marginBottom: 24 }}>
-          {TABS.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)} style={{
-              flex: 1, padding: "10px 6px", borderRadius: 8, border: "none", cursor: "pointer",
-              background: tab === t.key ? V.night : V.white,
-              color: tab === t.key ? V.white : V.zinc,
-              fontSize: 12, fontWeight: 500, transition: "all 0.15s",
-              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-              gap: 2, minHeight: 48, lineHeight: 1.2,
-            }}>
-              <span style={{ textAlign: "center" }}>{t.label}</span>
-              <span style={{ fontSize: 10, height: 12, display: "block", lineHeight: 1 }}>
-                {t.locked ? "🔒" : "\u00A0"}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {/* Tab: Diagnóstico inicial */}
-        {tab === "resultado" && (
-          <InstantValueScreen
-            product={product}
-            region={region}
-            results={results}
-            onCheckout={async (coupon) => {
-              try {
-                const res = await fetch('/api/checkout', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ lead_id: leadId, email: '', locale: 'pt', coupon }),
-                });
-                const data = await res.json();
-                if (data.url) window.location.href = data.url;
-              } catch { /* ignore */ }
-            }}
-            leadId={leadId}
-            name={name}
-          />
-        )}
-
-        {/* Tab: Plano de Ação (locked) */}
-        {tab === "plano" && (
-          <LockedTab
-            lockLevel={1}
-            ctaLabel="Ativar Radar de Crescimento · R$247/mês"
-            ctaUrl="#"
-            leadId={leadId}
-          />
-        )}
-
-        {/* Tab: Semanal (locked) */}
-        {tab === "semanal" && (
-          <LockedTab
-            lockLevel={2}
-            ctaLabel="Ativar Radar · R$247/mês"
-            ctaUrl="#"
-            leadId={leadId}
-          />
-        )}
+        {/* Diagnóstico + CTA Radar integrado (sem tabs) */}
+        <InstantValueScreen
+          product={product}
+          region={region}
+          results={results}
+          onCheckout={async (coupon) => {
+            try {
+              const res = await fetch('/api/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lead_id: leadId, leadId, email: '', locale: 'pt', coupon }),
+              });
+              const data = await res.json();
+              if (data.url) window.location.href = data.url;
+            } catch { /* ignore */ }
+          }}
+          leadId={leadId}
+          name={name}
+        />
 
         {/* Footer */}
         <div style={{ textAlign: "center", paddingTop: 32, marginTop: 24, borderTop: `1px solid ${V.fog}` }}>
