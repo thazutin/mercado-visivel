@@ -50,14 +50,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Token exchange failed", status: tokenRes.status, detail: tokenData });
     }
 
-    // Test Anatel query
+    // First: discover column names
     const anatelSql = `
-      SELECT m.nome, m.sigla_uf, t.grupo_economico, SUM(CAST(t.acessos AS INT64)) as total_acessos, t.ano
-      FROM \`basedosdados.br_anatel_banda_larga_fixa.microdados\` t
-      JOIN \`basedosdados.br_bd_diretorios_brasil.municipio\` m ON t.id_municipio = m.id_municipio
-      WHERE m.nome = 'Campos do Jordão' AND t.ano = 2024
-      GROUP BY m.nome, m.sigla_uf, t.grupo_economico, t.ano
-      ORDER BY total_acessos DESC LIMIT 10
+      SELECT column_name, data_type
+      FROM \`basedosdados.br_anatel_banda_larga_fixa.INFORMATION_SCHEMA.COLUMNS\`
+      WHERE table_name = 'microdados'
+      ORDER BY ordinal_position
     `;
     const queryRes = await fetch(
       `https://bigquery.googleapis.com/bigquery/v2/projects/${projectId}/queries`,
