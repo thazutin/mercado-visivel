@@ -12,6 +12,9 @@ import { analyzeAdsFromSerp } from './google-ads-transparency';
 import { analyzeInstagramCompetitors } from './instagram-expanded';
 import { searchMercadoLivre } from './mercado-livre';
 import { searchLinkedIn } from './linkedin';
+import { fetchGeracaoDistribuida, fetchAgentesComercializacao } from './aneel';
+import { searchCanalSolar } from './canal-solar';
+import { fetchAnatelBandaLarga } from './anatel';
 import { BLUEPRINT_MAP } from '@/lib/blueprints';
 
 export interface ExpandedData {
@@ -22,8 +25,11 @@ export interface ExpandedData {
   adsTransparency?: any;
   instagramExpanded?: any;
   linkedin?: any;
+  aneel?: any;           // geração distribuída + agentes
+  canalSolar?: any;      // integradores de energia solar
+  anatel?: any;          // banda larga por município
   fetchedAt: string;
-  sources: string[];   // lista de fontes que retornaram dados reais
+  sources: string[];     // lista de fontes que retornaram dados reais
 }
 
 /**
@@ -180,6 +186,45 @@ export async function fetchExpandedSources(
           result.sources.push('linkedin');
         }
       }),
+    );
+  }
+
+  // 8. ANEEL — pra blueprints de energia (geração distribuída + agentes)
+  if (bp?.id === 'b2b_energia' || bp?.dataSources?.ccee_aneel) {
+    const uf = (lead.region || '').match(/\b([A-Z]{2})\b/)?.[1] || '';
+    promises.push(
+      withTimeout(
+        (async () => {
+          const gd = await fetchGeracaoDistribuida(city, uf);
+          const agentes = await fetchAgentesComercializacao(30);
+          return { gd, agentes };
+        })(),
+        20_000, null,
+      ).then((r: any) => {
+        if (r?.gd?.found || r?.agentes?.found) {
+          result.aneel = r;
+          result.sources.push('aneel');
+        }
+      }),
+    );
+
+    // Canal Solar — integradores por geolocalização
+    const lat = (diagnosis as any).lat || -23.55;
+    const lng = (diagnosis as any).lng || -46.63;
+    if (lat && lng) {
+      promises.push(
+        withTimeout(searchCanalSolar(lat, lng, 100), 15_000, null)
+          .then((r: any) => { if (r?.found) { result.canalSolar = r; result.sources.push('canal_solar'); } }),
+      );
+    }
+  }
+
+  // 9. Anatel — pra blueprints de telecom/ISP
+  if (bp?.id === 'telecom_isp') {
+    const uf = (lead.region || '').match(/\b([A-Z]{2})\b/)?.[1] || '';
+    promises.push(
+      withTimeout(fetchAnatelBandaLarga(city, uf), 15_000, null)
+        .then((r: any) => { if (r?.found) { result.anatel = r; result.sources.push('anatel'); } }),
     );
   }
 
