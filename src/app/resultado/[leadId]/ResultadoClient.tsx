@@ -13,7 +13,7 @@ type TabKey = "resultado" | "plano" | "semanal";
 
 const TABS: { key: TabKey; label: string; locked: false | 1 | 2 }[] = [
   { key: "resultado", label: "Diagnóstico", locked: false },
-  { key: "plano", label: "Máquina de Crescimento", locked: 1 },
+  { key: "plano", label: "Seu Plano", locked: 1 },
   { key: "semanal", label: "Radar Semanal", locked: 2 },
 ];
 

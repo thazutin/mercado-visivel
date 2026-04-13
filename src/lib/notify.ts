@@ -227,7 +227,7 @@ export async function notifyFullDiagnosisReady(opts: {
   const shortRegion = region.split(",")[0].trim();
   const displayName = name || product;
 
-  const subject = `${displayName}, seu radar de crescimento está ativo 📡 — máquina montada e pronta`;
+  const subject = `${displayName}, seu radar de crescimento está ativo 📡 — tudo pronto pra você executar`;
 
   await Promise.allSettled([
     sendWhatsApp(

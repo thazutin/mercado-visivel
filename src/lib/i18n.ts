@@ -38,7 +38,7 @@ export const dictionaries: Record<Locale, any> = {
       { step: "01", title: "Você informa seu negócio", desc: "Nome, segmento, região e canais. Menos de 1 minuto.", tag: "grátis" },
       { step: "02", title: "Seu radar analisa o mercado", desc: "Cruzamos Google, Maps, Instagram, iFood, Reclame Aqui, IBGE e mais 12 fontes reais.", tag: "grátis" },
       { step: "03", title: "Diagnóstico grátis com ações práticas", desc: "Score com benchmark, oportunidades detectadas e ações rápidas com copy pronto.", tag: "grátis" },
-      { step: "04", title: "Máquina de crescimento ativa", desc: "Pilares estratégicos montados, monitoramento semanal e materiais prontos toda semana.", tag: "R$247/mês" },
+      { step: "04", title: "Tudo pronto pra crescer", desc: "Ações prontas, conteúdo pronto, monitoramento semanal. Seu marketing no piloto automático.", tag: "R$247/mês" },
     ],
     // ─── Form ───
     formTitle: "Seu mercado em 2 minutos",
@@ -105,12 +105,12 @@ export const dictionaries: Record<Locale, any> = {
 
     // ─── Context / Pricing ───
     contextLabel: "o que Virô entrega",
-    contextP1: "O diagnóstico grátis mostra onde você está. O Radar monta sua máquina de crescimento — com ações prontas e monitoramento semanal.",
+    contextP1: "O diagnóstico grátis mostra onde você está. O Radar monta tudo pra você crescer — ações prontas e monitoramento semanal.",
     contextP2: "Score com benchmark + ações rápidas + pilares estratégicos com conteúdo pronto + monitoramento semanal do seu mercado.",
     contextPrice: "Radar de Crescimento",
     contextPriceValue: "R$ 247/mês",
     contextRecurring: "Cancele quando quiser",
-    contextRecurringValue: "diagnóstico + máquina de crescimento + radar semanal",
+    contextRecurringValue: "diagnóstico + ações prontas + radar semanal",
 
     // ─── Footer ───
     footer: "Virô · inteligência de mercado local · virolocal.com",
