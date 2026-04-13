@@ -52,10 +52,34 @@ async function runPipelineBackground(leadId: string, formData: LeadFormData, loc
   const supabase = getSupabaseAdmin();
 
   try {
+    // 0. Espera breve pra dar chance do usuário validar concorrentes no PollingScreen
+    //    (competitor discovery leva ~5-8s, validação ~10-20s)
+    //    Aguarda até 15s checando se validated_competitors aparece no lead.
+    let enrichedFormData = { ...formData };
+    for (let attempt = 0; attempt < 5; attempt++) {
+      await new Promise((r) => setTimeout(r, 3000)); // 3s entre checks
+      const { data: freshLead } = await supabase
+        .from("leads")
+        .select("validated_competitors")
+        .eq("id", leadId)
+        .single();
+      if (freshLead?.validated_competitors?.length > 0) {
+        console.log(`[DiagnoseBG] Using ${freshLead.validated_competitors.length} validated competitors for lead ${leadId}`);
+        enrichedFormData = {
+          ...formData,
+          competitors: freshLead.validated_competitors.map((c: any) => ({
+            name: c.name,
+            instagram: c.instagram || "",
+          })),
+        } as any;
+        break;
+      }
+    }
+
     // 1. Pipeline (síncrono — safety timeout de 150s antes do Vercel matar em 180s)
     console.log(`[DiagnoseBG] Starting pipeline for lead ${leadId}`);
     const pipelineResult = await Promise.race([
-      runInstantAnalysis(formData, locale),
+      runInstantAnalysis(enrichedFormData as LeadFormData, locale),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error("Pipeline timeout: 150s exceeded")), 150_000),
       ),
