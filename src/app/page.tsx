@@ -364,6 +364,34 @@ export default function Home() {
             </Field>
           </div>
 
+          {/* Ticket médio */}
+          <Field label="Ticket médio de uma venda (R$)" hint="Aproximado — ajuda a dimensionar seu mercado">
+            <input style={inputStyle} type="text" inputMode="numeric" placeholder="Ex: 150"
+              value={formData.ticket}
+              onChange={(e: any) => updateField("ticket", e.target.value)} />
+          </Field>
+
+          {/* Maior desafio */}
+          <Field label="Maior desafio hoje">
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {["Atrair clientes novos", "Aparecer no Google", "Entender a concorrência", "Saber onde investir em marketing", "Expandir pra novas regiões"].map((opt) => {
+                const selected = formData.challenge === opt;
+                return (
+                  <button key={opt} type="button" onClick={() => updateField("challenge", opt)}
+                    style={{
+                      padding: "10px 14px", borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer",
+                      border: `1.5px solid ${selected ? V.amber : V.fog}`,
+                      background: selected ? V.amberWash : V.white,
+                      color: selected ? V.night : V.zinc,
+                      textAlign: "left", transition: "all 0.15s",
+                    }}>
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+
           {/* Presença digital */}
           <div style={{ marginTop: 8, paddingTop: 16, borderTop: `1px solid ${V.fog}` }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: V.night, marginBottom: 4 }}>Sua presença digital</div>
@@ -373,6 +401,10 @@ export default function Home() {
             <Field label="Instagram">
               <input style={inputStyle} type="text" placeholder="@seunegocio" value={formData.instagram}
                 onChange={(e: any) => updateField("instagram", e.target.value)} />
+            </Field>
+            <Field label="LinkedIn">
+              <input style={inputStyle} type="text" placeholder="linkedin.com/company/seunegocio" value={(formData as any).linkedin || ""}
+                onChange={(e: any) => updateField("linkedin" as any, e.target.value)} />
             </Field>
             <Field label="Site">
               <input style={inputStyle} type="text" placeholder="www.seunegocio.com.br" value={formData.site}
@@ -682,14 +714,14 @@ export default function Home() {
         </p>
         <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 12, scrollSnapType: "x mandatory" as const }}>
           {[
-            { icon: "🍽️", segment: "Restaurante", region: "Campinas, SP", type: "free", score: 31, insight: "480 buscas/mês por 'restaurante italiano campinas'. Você aparece na posição 8.", action: "Responder 23 reviews + otimizar ficha Google" },
-            { icon: "💇", segment: "Salão de Beleza", region: "Belo Horizonte", type: "radar", score: 18, insight: "Concorrente principal tem 4x mais avaliações e posta 3x/semana.", action: "Calendário de 12 posts + respostas prontas pra 15 reviews" },
-            { icon: "🏢", segment: "Consultoria B2B", region: "São Paulo", type: "free", score: 42, insight: "1.200 empresas no seu segmento em SP. Nenhuma investe em conteúdo no LinkedIn.", action: "3 posts LinkedIn prontos + landing page" },
-            { icon: "⚡", segment: "Trading de Energia", region: "Nacional", type: "radar", score: 12, insight: "14 licitações abertas no PNCP. 8 empresas mudaram de fornecedor.", action: "White paper + jornada de email + lista de prospects" },
-            { icon: "📡", segment: "Provedor de Internet", region: "Campos do Jordão", type: "free", score: 72, insight: "Score 72/100 — líder local. 3 cidades vizinhas com menos concorrência.", action: "Análise comparativa de expansão pra São Bento e São Luiz" },
-            { icon: "🏥", segment: "Clínica Odontológica", region: "Curitiba", type: "radar", score: 28, insight: "Seus 5 concorrentes respondem reviews. Você: 0%. Nota 3.9 vs média 4.4.", action: "Respostas pra 34 reviews + bio Instagram + 4 posts" },
-            { icon: "🛒", segment: "E-commerce", region: "Nacional", type: "free", score: 15, insight: "3 termos com 2.400 buscas/mês — você não aparece em nenhum.", action: "SEO pra 3 termos prioritários + estrutura de landing page" },
-            { icon: "💪", segment: "Academia", region: "Recife", type: "radar", score: 35, insight: "Janeiro tem 3x mais buscas por 'academia recife'. Prepare agora.", action: "Calendário sazonal + 8 posts + campanha WhatsApp" },
+            { icon: "🍽️", segment: "Pizzaria Artesanal", region: "Sumarezinho, SP", type: "free", score: 29, benchmark: 38, insight: "88 avaliações no Google sem resposta. 3 concorrentes no raio de 500m respondem todas.", action: "Respostas prontas pra 88 reviews no tom do negócio" },
+            { icon: "💇", segment: "Barbearia", region: "Savassi, BH", type: "radar", score: 22, benchmark: 35, insight: "@barbearia tem 340 seguidores e 0 posts no mês. Concorrente @cortecerto: 2.100 seg, 12 posts.", action: "Bio otimizada + 12 posts prontos + 4 roteiros de reels" },
+            { icon: "⚖️", segment: "Escritório de Advocacia", region: "Centro, Florianópolis", type: "free", score: 41, benchmark: 33, insight: "'advogado trabalhista florianópolis': 320 buscas/mês. Posição 12 — fora da primeira página.", action: "Artigo SEO otimizado pro termo + ajustes na ficha Google" },
+            { icon: "⚡", segment: "Comercializadora de Energia", region: "Nacional", type: "radar", score: 8, benchmark: 22, insight: "142 empresas elegíveis no mercado livre em SP. 3 licitações abertas no PNCP esta semana.", action: "Paper do setor + 6 posts LinkedIn + jornada de 6 emails" },
+            { icon: "📡", segment: "Provedor de Internet", region: "Campos do Jordão, SP", type: "radar", score: 68, benchmark: 35, insight: "Líder local com 340 reviews. São Luiz do Paraitinga tem 1 ISP com score 15 — expansão viável.", action: "Comparativo de 5 cidades + plano de lançamento São Luiz" },
+            { icon: "🏥", segment: "Clínica de Estética", region: "Tatuapé, SP", type: "free", score: 19, benchmark: 30, insight: "Nota 3.8 no Google vs média 4.4 do setor. 12 reviews negativos sobre atendimento.", action: "Respostas pra reviews negativos + mensagem WhatsApp pós-atendimento" },
+            { icon: "🐾", segment: "Pet Shop", region: "Boa Viagem, Recife", type: "radar", score: 33, benchmark: 30, insight: "Nenhum concorrente local posta no Instagram mais que 2x/mês. Oportunidade de se destacar.", action: "Calendário semanal de posts + parcerias com 3 veterinárias" },
+            { icon: "🎨", segment: "Criadora de Conteúdo", region: "Nacional", type: "free", score: 14, benchmark: 25, insight: "'artesanato macramê' tem 1.900 buscas/mês. Seus reels alcançam 200 pessoas — potencial: 15x mais.", action: "Bio otimizada + 3 termos SEO + estrutura de loja online" },
           ].map((card, i) => (
             <div key={i} style={{
               flexShrink: 0, width: 280, scrollSnapAlign: "start" as const,
@@ -713,10 +745,15 @@ export default function Home() {
                 </span>
               </div>
               <div style={{
-                display: "flex", alignItems: "baseline", gap: 4, marginBottom: 10,
+                display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10,
               }}>
-                <span style={{ fontSize: 28, fontWeight: 800, color: V.night, fontFamily: V.display }}>{card.score}</span>
-                <span style={{ fontSize: 11, color: V.ash }}>/100</span>
+                <div>
+                  <span style={{ fontSize: 28, fontWeight: 800, color: V.night, fontFamily: V.display }}>{card.score}</span>
+                  <span style={{ fontSize: 11, color: V.ash }}>/100</span>
+                </div>
+                <span style={{ fontSize: 10, color: card.score >= card.benchmark ? V.teal : V.amber, fontFamily: V.mono }}>
+                  média {card.benchmark}
+                </span>
               </div>
               <p style={{ fontSize: 12, color: V.zinc, lineHeight: 1.5, margin: "0 0 12px", minHeight: 54 }}>
                 {card.insight}
