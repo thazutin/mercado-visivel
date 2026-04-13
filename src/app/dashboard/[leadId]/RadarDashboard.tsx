@@ -67,16 +67,23 @@ function ScoreRing({ score, benchmark, benchmarkLabel }: {
         </div>
       </div>
       <div style={{ marginTop: 8 }}>
-        <div style={{ fontSize: 12, color: V.zinc }}>
+        <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 4px", lineHeight: 1.5 }}>
+          {score < 20
+            ? "Seu negócio é quase invisível pra quem busca o que você faz. A maioria dos clientes potenciais encontra seus concorrentes primeiro."
+            : score < 40
+            ? "Você aparece pra parte do mercado, mas perde a maioria das oportunidades. Há espaço concreto pra crescer."
+            : score < 60
+            ? "Presença razoável. Você é encontrado, mas concorrentes mais ativos capturam mais atenção."
+            : "Boa presença digital. Seu desafio agora é manter e ampliar a distância pros concorrentes."}
+        </p>
+        <div style={{ fontSize: 12, color: V.zinc, marginTop: 4 }}>
           Média de {benchmarkLabel}: <strong style={{ color: V.night }}>{benchmark}</strong>
+          {" · "}
+          <strong style={{ color: V.amber }}>Meta: {Math.min(score + 25, 85)}</strong>
         </div>
-        {score < benchmark ? (
+        {score < benchmark && (
           <div style={{ fontSize: 11, color: V.amber, marginTop: 2 }}>
             {benchmark - score} pontos abaixo da média — espaço pra crescer
-          </div>
-        ) : (
-          <div style={{ fontSize: 11, color: V.teal, marginTop: 2 }}>
-            {score - benchmark} pontos acima da média — bom trabalho
           </div>
         )}
       </div>
@@ -205,24 +212,46 @@ function PillarCard({ pillar }: { pillar: any }) {
       {/* Content */}
       {expanded && (
         <div style={{ padding: "0 18px 18px", borderTop: `1px solid ${V.fog}` }}>
-          {/* KPI */}
-          <div style={{
-            display: "flex", gap: 8, marginTop: 14, marginBottom: 14,
-            padding: "8px 12px", background: "rgba(45,155,131,0.06)",
-            borderRadius: 8,
-          }}>
-            <span style={{ fontSize: 10, fontWeight: 600, color: V.teal, textTransform: "uppercase" }}>Meta:</span>
-            <span style={{ fontSize: 11, color: V.night }}>
-              {pillar.kpi?.target} em {pillar.kpi?.timeframe}
-            </span>
+          {/* Objetivo + Meta */}
+          <div style={{ marginTop: 14, marginBottom: 14 }}>
+            <div style={{
+              padding: "10px 12px", background: "rgba(45,155,131,0.06)",
+              borderRadius: 8, marginBottom: 8,
+            }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: V.teal, textTransform: "uppercase", marginBottom: 4 }}>OBJETIVO</div>
+              <span style={{ fontSize: 12, color: V.night, fontWeight: 500 }}>
+                {pillar.kpi?.metric || pillar.title}
+              </span>
+              <span style={{ fontSize: 11, color: V.ash, marginLeft: 8 }}>
+                Meta: {pillar.kpi?.target} em {pillar.kpi?.timeframe}
+              </span>
+            </div>
+
+            {/* Etapas resumidas */}
+            <div style={{
+              padding: "10px 12px", background: V.cloud, borderRadius: 8, marginBottom: 8,
+            }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: V.ash, textTransform: "uppercase", marginBottom: 6 }}>ETAPAS</div>
+              {pillar.items?.map((item: any, idx: number) => (
+                <div key={item.id} style={{ display: "flex", gap: 8, marginBottom: 4, alignItems: "flex-start" }}>
+                  <span style={{
+                    fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.fog,
+                    borderRadius: 3, padding: "1px 5px", flexShrink: 0, marginTop: 1,
+                  }}>{idx + 1}</span>
+                  <span style={{ fontSize: 12, color: V.night, fontWeight: 500 }}>{item.title}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Items */}
+          {/* Conteúdo pronto de cada item */}
+          <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 8 }}>
+            CONTEÚDO PRONTO
+          </div>
           {pillar.items?.map((item: any) => (
             <div key={item.id} style={{ marginBottom: 12 }}>
               <div style={{
-                fontFamily: V.mono, fontSize: 10, color: V.ash,
-                letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 4,
+                fontSize: 11, color: V.night, fontWeight: 600, marginBottom: 4,
               }}>
                 {item.title}
               </div>
@@ -245,7 +274,7 @@ function PillarCard({ pillar }: { pillar: any }) {
 }
 
 // ─── Provocation Card ───────────────────────────────────────────────────
-function ProvocationCard({ prov }: { prov: any }) {
+function ProvocationCard({ prov, onAction }: { prov: any; onAction?: () => void }) {
   return (
     <div style={{
       background: V.amberWash, border: `1px solid ${V.amber}30`,
@@ -259,7 +288,11 @@ function ProvocationCard({ prov }: { prov: any }) {
           </p>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: 10, color: V.ash, fontFamily: V.mono }}>{prov.dataSource}</span>
-            <button style={{
+            <button onClick={() => {
+              if (onAction) onAction();
+              // Scroll pro plano de crescimento
+              document.getElementById('growth-plan')?.scrollIntoView({ behavior: 'smooth' });
+            }} style={{
               fontSize: 11, color: V.amber, background: "none",
               border: `1px solid ${V.amber}`, borderRadius: 6,
               padding: "4px 10px", cursor: "pointer", fontWeight: 600,
@@ -460,7 +493,7 @@ export default function RadarDashboard({ lead, diagnosis, tier, initialGrowthMac
               fontFamily: V.mono, fontSize: 10, color: V.night,
               letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10,
             }}>
-              🏗️ SEU PLANO DE CRESCIMENTO
+              <span id="growth-plan">🏗️</span> SEU PLANO DE CRESCIMENTO
             </div>
             <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 12px", lineHeight: 1.5 }}>
               Montado a partir dos dados do seu mercado.
