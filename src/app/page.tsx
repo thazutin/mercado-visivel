@@ -376,11 +376,11 @@ export default function Home() {
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {[
                 { label: "Meu cliente voltar mais vezes", value: "frequencia" },
-                { label: "Meu cliente gastar mais por compra", value: "cross_sell" },
+                { label: "Meu cliente comprar mais itens por compra", value: "cross_sell" },
                 { label: "Tirar clientes dos meus concorrentes", value: "market_share" },
-                { label: "Ser encontrado por quem ainda não me conhece", value: "awareness" },
-                { label: "Abrir em novas regiões ou cidades", value: "expansao_geo" },
+                { label: "Ser encontrado por quem ainda não me conhece mas já compra o que vendo", value: "awareness" },
                 { label: "Vender pra um público diferente do atual", value: "novo_segmento" },
+                { label: "Abrir em novas regiões ou cidades", value: "expansao_geo" },
                 { label: "Vender por um canal novo (online, delivery, marketplace)", value: "novo_canal" },
                 { label: "Lançar um produto ou serviço novo", value: "novo_produto" },
               ].map(({ label, value }) => {
