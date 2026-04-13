@@ -286,7 +286,7 @@ function FreeCTA({ leadId }: { leadId: string }) {
         Ative seu Radar de Crescimento
       </h3>
       <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", margin: "0 0 18px", lineHeight: 1.5 }}>
-        Monitoramento semanal do seu mercado, ações prontas pra executar e máquina de crescimento personalizada.
+        Monitoramento semanal do seu mercado, ações prontas pra executar e conteúdo pronto pra crescer.
       </p>
       <button
         onClick={async () => {
@@ -414,7 +414,7 @@ export default function RadarDashboard({ lead, diagnosis, tier, initialGrowthMac
               margin: "0 auto 12px",
               animation: "spin 0.7s linear infinite",
             }} />
-            Montando sua máquina de crescimento...
+            Montando seu plano de crescimento...
           </div>
         )}
 
@@ -460,11 +460,11 @@ export default function RadarDashboard({ lead, diagnosis, tier, initialGrowthMac
               fontFamily: V.mono, fontSize: 10, color: V.night,
               letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10,
             }}>
-              🏗️ SUA MÁQUINA DE CRESCIMENTO
+              🏗️ SEU PLANO DE CRESCIMENTO
             </div>
             <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 12px", lineHeight: 1.5 }}>
-              Operação completa montada a partir dos dados do seu mercado.
-              Cada pilar tem conteúdo pronto — copie e use.
+              Montado a partir dos dados do seu mercado.
+              Cada item tem conteúdo pronto — copie e use.
             </p>
             {gm.strategicPillars
               .sort((a: any, b: any) => (a.priority || 0) - (b.priority || 0))

@@ -446,10 +446,10 @@ export default function Home() {
             fontFamily: V.display, fontSize: "clamp(28px, 5vw, 38px)", fontWeight: 700,
             color: V.white, letterSpacing: "-0.03em", margin: "24px 0 16px", lineHeight: 1.2,
           }}>
-            Seu mercado mapeado. Sua <span style={{ color: V.amber }}>máquina de crescimento</span> montada.
+            Seu mercado mapeado. Tudo pronto <span style={{ color: V.amber }}>pra você crescer</span>.
           </h1>
           <p style={{ fontSize: 15, color: V.ash, lineHeight: 1.6, margin: 0 }}>
-            Virô cruza dados reais do seu mercado e monta sua operação de marketing — ações prontas, conteúdo pronto, toda semana. Comece grátis em 60 segundos.
+            Virô cruza dados reais do seu mercado e te diz exatamente o que fazer pra crescer — com conteúdo pronto pra usar, toda semana. Comece grátis em 60 segundos.
           </p>
         </div>
       </div>
@@ -535,7 +535,7 @@ export default function Home() {
             { title: "Você informa seu negócio", text: "Nome, segmento e endereço. Leva menos de 1 minuto." },
             { title: "Seu radar de crescimento analisa o mercado", text: "Cruzamos Google, Maps, Instagram, iFood, Reclame Aqui, IBGE e mais 12 fontes pra mapear sua posição, seus concorrentes e sua oportunidade real." },
             { title: "Você recebe o diagnóstico grátis", text: "Quantos clientes você pode ter a mais por mês, quem disputa com você e o que está te impedindo de crescer." },
-            { title: "Máquina de crescimento montada pra você", text: "Ações rápidas, pilares estratégicos com conteúdo pronto e um plano metrificado — tudo baseado nos dados reais do SEU mercado." },
+            { title: "Tudo pronto pra você executar", text: "Ações com passo a passo, conteúdo pronto pra copiar e colar, e um plano com metas claras — baseado nos dados reais do SEU mercado." },
             { title: "Radar ativo toda semana — R$247/mês", text: "Monitoramento contínuo, ações atualizadas e materiais prontos toda semana. Seu marketing no piloto automático." },
           ].map((step, i) => (
             <div key={i} style={{ background: V.white, borderRadius: 14, padding: "20px 20px", border: `1px solid ${V.fog}`, display: "flex", gap: 16, alignItems: "flex-start" }}>
@@ -594,42 +594,50 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ─── BLOCO 2: PLANO DE AÇÃO ─── */}
+          {/* ─── BLOCO 2: RADAR ─── */}
           <div style={{ padding: "24px", borderTop: `2px solid ${V.amber}` }}>
             <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.06em", marginBottom: 12 }}>RADAR DE CRESCIMENTO · R$247/MÊS</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, marginBottom: 16 }}>Ações rápidas + pilares estratégicos com conteúdo pronto</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, marginBottom: 16 }}>Seu radar detecta, analisa e entrega tudo pronto</div>
 
-            {/* Exemplo de ação COM conteúdo gerado */}
-            <div style={{ background: V.cloud, borderRadius: 12, padding: "16px", marginBottom: 12 }}>
+            {/* Exemplo 1: Oportunidade detectada */}
+            <div style={{ background: V.amberWash, borderRadius: 12, padding: "14px 16px", marginBottom: 10, border: `1px solid ${V.amber}30` }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                <span style={{ fontSize: 14 }}>📡</span>
+                <div>
+                  <p style={{ fontSize: 13, color: V.night, margin: "0 0 4px", fontWeight: 600 }}>Seu radar detectou:</p>
+                  <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>3 concorrentes não respondem avaliações. Nenhum posta no Instagram há 2 semanas. Oportunidade clara de se destacar agora.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Exemplo 2: Ação pronta */}
+            <div style={{ background: V.cloud, borderRadius: 12, padding: "16px", marginBottom: 10 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>Responder 88 avaliações do Google</span>
-                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.white, padding: "2px 8px", borderRadius: 100 }}>~15 min</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>Responder 17 avaliações do Google</span>
+                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.white, padding: "2px 8px", borderRadius: 100 }}>~10 min</span>
               </div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 10px" }}>0% de resposta vs 85% dos concorrentes — respostas aumentam confiança em 40%.</p>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 10px" }}>Sua nota: 3.8★ — meta: 4.5★. Respostas aumentam confiança em 40% e geram mais avaliações.</p>
               <div style={{ background: V.white, borderRadius: 8, padding: "12px", borderLeft: `3px solid ${V.amber}` }}>
-                <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, marginBottom: 6 }}>CONTEÚDO GERADO</div>
+                <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, marginBottom: 6 }}>PRONTO PRA COPIAR</div>
                 <p style={{ fontSize: 12, color: V.night, margin: "0 0 4px", lineHeight: 1.5 }}>
-                  <strong>★5 — Elogio ao produto:</strong> "Que bom que gostou da nossa margherita especial, João! A massa fermentada por 24h faz toda diferença. Esperamos você de volta!"
+                  "Muito obrigado pelo feedback, João! Ficamos felizes que tenha gostado. Esperamos você de volta — Equipe Studio Fitness"
                 </p>
-                <p style={{ fontSize: 12, color: V.night, margin: "0 0 4px", lineHeight: 1.5 }}>
-                  <strong>★3 — Feedback construtivo:</strong> "Maria, obrigado pelo retorno. Sentimos muito pela demora na sexta — estávamos com casa cheia. Melhoramos o processo e adoraria que voltasse para conferir."
-                </p>
-                <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontStyle: "italic" }}>+ 86 respostas personalizadas prontas para copiar</p>
+                <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontStyle: "italic" }}>+ 16 respostas personalizadas prontas</p>
               </div>
             </div>
 
-            {/* Segundo exemplo */}
-            <div style={{ background: V.cloud, borderRadius: 12, padding: "16px", marginBottom: 12 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 8 }}>Criar site simples com cardápio</div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 10px" }}>67% dos clientes pesquisam cardápio online antes de pedir.</p>
+            {/* Exemplo 3: Post pronto */}
+            <div style={{ background: V.cloud, borderRadius: 12, padding: "16px", marginBottom: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>Post Instagram pronto pra publicar</span>
+                <span style={{ fontSize: 10, color: "#E1306C", fontWeight: 600, background: "rgba(225,48,108,0.08)", padding: "2px 8px", borderRadius: 100 }}>Feed</span>
+              </div>
               <div style={{ background: V.white, borderRadius: 8, padding: "12px", borderLeft: `3px solid ${V.amber}` }}>
-                <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, marginBottom: 6 }}>CONTEÚDO GERADO</div>
                 <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.5 }}>
-                  Estrutura completa: página inicial com headline pronta, seção "Sobre" (200 palavras), cardápio por categorias, SEO local configurado. Plataforma recomendada: Carrd.co (gratuito).
+                  "Campinas tem mais de 200 academias. Só 12 oferecem pilates com acompanhamento individual. Aqui no Studio Fitness, cada aluno tem um plano personalizado desde o primeiro dia..."
                 </p>
               </div>
             </div>
-            <p style={{ fontSize: 10, color: V.ash, textAlign: "center", fontFamily: V.mono }}>+ 13 ações adicionais, cada uma com conteúdo pronto para copiar</p>
           </div>
 
           {/* ─── BLOCO 3: AÇÕES SEMANAIS ─── */}
@@ -728,8 +736,8 @@ export default function Home() {
               <span style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.06em", fontWeight: 600 }}>RADAR DE CRESCIMENTO · CANCELE QUANDO QUISER</span>
               <span style={{ fontFamily: V.mono, fontSize: 11, color: V.amber, fontWeight: 700 }}>R$247/mês</span>
             </div>
-            <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 6px" }}>Máquina de crescimento montada + monitoramento semanal.</p>
-            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: "0 0 12px" }}>Ações rápidas com copy pronto, pilares estratégicos personalizados pro seu segmento (conteúdo, prospecção, autoridade), monitoramento semanal do mercado e materiais atualizados toda semana.</p>
+            <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 6px" }}>Seu marketing montado + radar semanal do mercado.</p>
+            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: "0 0 12px" }}>Ações prontas com texto pra copiar e colar, conteúdo personalizado pro seu segmento, monitoramento do mercado e materiais novos toda semana.</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {['Ações rápidas', 'Pilares estratégicos', 'Copy pronto', 'Radar semanal', '25 segmentos', '12+ fontes de dados'].map((tag, i) => (
                 <span key={i} style={{ fontSize: 10, fontWeight: 600, color: V.amber, background: V.amberWash, padding: "3px 8px", borderRadius: 4 }}>{tag}</span>
@@ -779,8 +787,8 @@ export default function Home() {
         </h2>
         {[
           { q: "O diagnóstico gratuito usa dados reais do meu negócio?", a: "Sim. O Virô consulta em tempo real o Google Maps, o Instagram, o volume de buscas no Google, dados demográficos do IBGE e a presença do seu negócio em respostas de IA. Nada é inventado — tudo vem de fontes públicas e verificáveis." },
-          { q: "Quanto custa?", a: "O diagnóstico inicial é gratuito e já entrega ações práticas. O Radar de Crescimento custa R$247/mês — inclui monitoramento semanal, máquina de crescimento personalizada e conteúdos prontos. Cancele quando quiser, sem fidelidade." },
-          { q: "O que eu recebo com o Radar de Crescimento?", a: "Ações rápidas com copy pronto (otimização Google, bio Instagram, respostas a reviews), pilares estratégicos montados pro seu setor (conteúdo, prospecção, autoridade), monitoramento semanal do mercado, sazonalidade e análise de concorrentes atualizada toda semana." },
+          { q: "Quanto custa?", a: "O diagnóstico é gratuito e já entrega ações práticas pro seu negócio. O Radar custa R$247/mês — inclui tudo pronto pra você executar: ações, conteúdo, monitoramento semanal. Cancele quando quiser, sem fidelidade." },
+          { q: "O que eu recebo com o Radar?", a: "Ações prontas com texto pra copiar (otimização do Google, bio do Instagram, respostas a reviews), conteúdo personalizado pro seu setor, monitoramento semanal do mercado e dos concorrentes, e sazonalidade — tudo atualizado toda semana." },
           { q: "Em quanto tempo fico com o plano pronto?", a: "O diagnóstico inicial leva cerca de 60 segundos. Após o pagamento, o plano completo é gerado em 2 a 5 minutos e fica disponível no painel — você também recebe o link por email." },
           { q: "O Virô faz por mim ou só me mostra o caminho?", a: "Hoje o Virô monta a operação inteira — posts prontos, respostas a reviews, papers, roteiros, emails, tudo com copy pronto pra copiar e usar. Em breve, o Agente Nelson vai executar direto no Google, Instagram e WhatsApp com sua autorização. Começa como copiloto, vira piloto automático." },
           { q: "Funciona para qualquer tipo de negócio?", a: "Sim. Virô tem 25 blueprints de segmento — restaurantes, clínicas, e-commerce, B2B, energia, agro, criadores de conteúdo, provedores de internet e mais. Cada segmento recebe fontes de dados, ações e canais específicos pro seu mercado." },

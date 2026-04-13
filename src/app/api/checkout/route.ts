@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
           currency,
           product_data: {
             name: "Virô — Radar de Crescimento",
-            description: "Monitoramento semanal + máquina de crescimento + conteúdos prontos",
+            description: "Monitoramento semanal + ações prontas + conteúdo personalizado",
           },
           unit_amount: amount,
         },
