@@ -446,10 +446,10 @@ export default function Home() {
             fontFamily: V.display, fontSize: "clamp(28px, 5vw, 38px)", fontWeight: 700,
             color: V.white, letterSpacing: "-0.03em", margin: "24px 0 16px", lineHeight: 1.2,
           }}>
-            Seu mercado mapeado. Tudo pronto <span style={{ color: V.amber }}>pra você crescer</span>.
+            Seu mercado mapeado. <span style={{ color: V.amber }}>Tudo pronto pra crescer.</span>
           </h1>
           <p style={{ fontSize: 15, color: V.ash, lineHeight: 1.6, margin: 0 }}>
-            Virô cruza dados reais do seu mercado e te diz exatamente o que fazer pra crescer — com conteúdo pronto pra usar, toda semana. Comece grátis em 60 segundos.
+            Dados reais, ações prontas, conteúdo pra copiar e colar. Grátis em 60 segundos.
           </p>
         </div>
       </div>
