@@ -195,13 +195,43 @@ export async function GET(req: NextRequest) {
         );
       }
 
-      // 3. Notificar
+      // 3. Calcular score delta e reviews novas pra email enriquecido
+      let scoreDelta: number | undefined;
+      let currentScore: number | undefined;
+      let newReviewsCount: number | undefined;
+      try {
+        const { data: leadFull } = await getSupabase().from("leads")
+          .select("diagnosis_display").eq("id", lead.id).single();
+        currentScore = leadFull?.diagnosis_display?.influencePercent || 0;
+
+        // Score delta: compara com snapshot anterior (se existir)
+        const { data: snapshots } = await getSupabase().from("snapshots")
+          .select("influence_percent").eq("lead_id", lead.id)
+          .order("created_at", { ascending: false }).limit(2);
+        if (snapshots && snapshots.length >= 2) {
+          scoreDelta = (snapshots[0].influence_percent || 0) - (snapshots[1].influence_percent || 0);
+        }
+
+        // Reviews novas: contar review_responses criadas esta semana
+        const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const { count } = await getSupabase().from("review_responses")
+          .select("id", { count: "exact", head: true })
+          .eq("lead_id", lead.id).gt("created_at", weekAgo);
+        newReviewsCount = count || 0;
+      } catch {
+        // Non-fatal — email sai sem destaques
+      }
+
+      // 4. Notificar com dados enriquecidos
       await notifyWeeklyContents({
         leadId: lead.id,
         email: lead.email,
         name: lead.name || '',
+        scoreDelta,
+        currentScore,
+        newReviewsCount: newReviewsCount || 0,
       });
-      console.log(`[Cron/Contents] Email sent to ${lead.email}`);
+      console.log(`[Cron/Contents] Email sent to ${lead.email} (score delta: ${scoreDelta ?? 'N/A'}, reviews: ${newReviewsCount ?? 0})`);
 
       processed++;
     } catch (err) {

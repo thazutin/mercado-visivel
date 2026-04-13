@@ -251,21 +251,49 @@ export async function notifyWeeklyContents(opts: {
   leadId: string;
   email: string;
   name: string;
+  scoreDelta?: number;      // diferença de score semana a semana
+  currentScore?: number;
+  newReviewsCount?: number; // reviews novas detectadas
 }): Promise<void> {
-  const { leadId, email, name } = opts;
+  const { leadId, email, name, scoreDelta, currentScore, newReviewsCount } = opts;
   const dashboardUrl = `${BASE_URL}/dashboard/${leadId}`;
   const firstName = name.split(" ")[0] || "Olá";
 
+  // Monta destaques baseados nos dados reais da semana
+  const highlights: string[] = [];
+  if (scoreDelta && scoreDelta > 0) {
+    highlights.push(`Seu score subiu ${scoreDelta} pontos (agora ${currentScore}/100)`);
+  } else if (scoreDelta && scoreDelta < 0) {
+    highlights.push(`Seu score caiu ${Math.abs(scoreDelta)} pontos — veja o que aconteceu`);
+  }
+  if (newReviewsCount && newReviewsCount > 0) {
+    highlights.push(`${newReviewsCount} avaliação(ões) nova(s) no Google — respostas prontas`);
+  }
+  highlights.push('Novos conteúdos e ações atualizadas no seu painel');
+
+  const highlightsHtml = highlights.map(h =>
+    `<div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;">
+      <span style="color:#CF8523;flex-shrink:0;">→</span>
+      <span style="font-size:13px;color:#0A0A0C;line-height:1.5;">${h}</span>
+    </div>`
+  ).join('');
+
   await sendEmail({
     to: email,
-    subject: `${firstName}, seu radar detectou novidades no seu mercado esta semana.`,
+    subject: scoreDelta && scoreDelta > 0
+      ? `${firstName}, seu score subiu ${scoreDelta} pontos esta semana.`
+      : newReviewsCount && newReviewsCount > 0
+      ? `${firstName}, ${newReviewsCount} avaliação(ões) nova(s) no Google. Respostas prontas.`
+      : `${firstName}, seu radar detectou novidades no seu mercado esta semana.`,
     html: emailShell(`
       <h1 style="font-size:22px;color:#161618;margin:0 0 16px;line-height:1.3;">
-        Seu radar detectou novidades esta semana.
+        Seu radar desta semana.
       </h1>
-      <p style="font-size:15px;color:#888880;line-height:1.7;margin:0 0 24px;">
-        Novos conteúdos prontos, atualizações do mercado e ações pra você executar — tudo no seu painel.
-      </p>
+
+      <div style="background:#F7F7F8;border-radius:12px;padding:18px 20px;margin:0 0 20px;">
+        ${highlightsHtml}
+      </div>
+
       <div style="text-align:center;margin:0 0 28px;">
         <a href="${dashboardUrl}" style="background:#161618;color:#FEFEFF;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;display:inline-block;">
           Ver meu radar →
@@ -441,6 +469,181 @@ export async function notifyRepositioning(opts: {
       </a>
       <p style="font-size:11px;color:#888880;text-align:center;margin:0;">
         Obrigado por fazer parte do começo. O melhor ainda está por vir.
+      </p>
+    `),
+  });
+}
+
+// ─── Boas-vindas ao Radar (imediato pós-pagamento) ──────────────────────────
+
+export async function notifyWelcomeRadar(opts: {
+  email: string;
+  name: string;
+  product: string;
+  leadId: string;
+  blueprintLabel?: string;
+  quickWinsCount?: number;
+}): Promise<void> {
+  const { email, name, product, leadId, blueprintLabel, quickWinsCount } = opts;
+  const firstName = name.split(" ")[0] || "Olá";
+  const dashboardUrl = `${BASE_URL}/dashboard/${leadId}`;
+
+  await sendEmail({
+    to: email,
+    subject: `${firstName}, seu radar está ativo. Veja o que montamos pra ${product}.`,
+    html: emailShell(`
+      <h1 style="font-size:22px;color:#161618;margin:0 0 16px;line-height:1.3;">
+        Bem-vindo ao seu radar de crescimento.
+      </h1>
+      <p style="font-size:15px;color:#888880;line-height:1.7;margin:0 0 20px;">
+        ${firstName}, analisamos seu mercado e montamos tudo pra ${product}${blueprintLabel ? ` (${blueprintLabel})` : ''}.
+      </p>
+
+      <div style="background:#0A0A0C;border-radius:12px;padding:20px;margin:0 0 20px;color:#FEFEFF;">
+        <p style="font-size:11px;color:#888880;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;margin:0 0 12px;">O que está pronto agora</p>
+        <div style="font-size:13px;line-height:1.9;">
+          ${quickWinsCount ? `→ ${quickWinsCount} ações rápidas com passo a passo<br/>` : ''}
+          → Conteúdo pronto pra copiar e colar<br/>
+          → Respostas pras suas avaliações no Google<br/>
+          → Score do seu negócio com benchmark do setor
+        </div>
+      </div>
+
+      <div style="background:#F7F7F8;border-radius:12px;padding:18px 20px;margin:0 0 20px;">
+        <p style="font-size:14px;color:#0A0A0C;font-weight:700;margin:0 0 8px;">
+          Toda sexta-feira você recebe:
+        </p>
+        <p style="font-size:13px;color:#3A3A40;margin:0;line-height:1.5;">
+          Novidades do mercado, ações atualizadas e conteúdo novo — tudo no seu painel.
+        </p>
+      </div>
+
+      <a href="${dashboardUrl}" style="display:block;background:#161618;color:#FEFEFF;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:12px;">
+        Abrir meu radar →
+      </a>
+      <p style="font-size:11px;color:#888880;text-align:center;margin:0;">
+        Salve este link — é seu acesso permanente.
+      </p>
+    `),
+  });
+}
+
+// ─── Trial expirando (7 dias antes do fim) ──────────────────────────────────
+
+export async function notifyTrialExpiring(opts: {
+  email: string;
+  name: string;
+  product: string;
+  leadId: string;
+  daysRemaining: number;
+}): Promise<void> {
+  const { email, name, product, leadId, daysRemaining } = opts;
+  const firstName = name.split(" ")[0] || "Olá";
+  const dashboardUrl = `${BASE_URL}/dashboard/${leadId}`;
+
+  await sendEmail({
+    to: email,
+    subject: `${firstName}, seu radar expira em ${daysRemaining} dias.`,
+    html: emailShell(`
+      <h1 style="font-size:22px;color:#161618;margin:0 0 16px;line-height:1.3;">
+        Seu acesso ao radar termina em ${daysRemaining} dias.
+      </h1>
+      <p style="font-size:15px;color:#888880;line-height:1.7;margin:0 0 20px;">
+        ${firstName}, você recebeu 3 meses de radar por ter sido um dos primeiros clientes da Virô. Esse período está acabando.
+      </p>
+      <p style="font-size:15px;color:#888880;line-height:1.7;margin:0 0 20px;">
+        Pra continuar recebendo monitoramento semanal, ações atualizadas e conteúdo pronto pra ${product}, ative a assinatura:
+      </p>
+      <a href="${dashboardUrl}" style="display:block;background:#CF8523;color:#FEFEFF;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:12px;">
+        Continuar com o radar · R$247/mês →
+      </a>
+      <p style="font-size:11px;color:#888880;text-align:center;margin:0;">
+        Cancele quando quiser · Sem fidelidade
+      </p>
+    `),
+  });
+}
+
+// ─── Churn prevention (2+ semanas sem acesso) ───────────────────────────────
+
+export async function notifyChurnPrevention(opts: {
+  email: string;
+  name: string;
+  product: string;
+  leadId: string;
+  daysSinceLastAccess: number;
+}): Promise<void> {
+  const { email, name, product, leadId, daysSinceLastAccess } = opts;
+  const firstName = name.split(" ")[0] || "Olá";
+  const dashboardUrl = `${BASE_URL}/dashboard/${leadId}`;
+
+  await sendEmail({
+    to: email,
+    subject: `${firstName}, seu radar continua monitorando ${product}. Veja o que encontrou.`,
+    html: emailShell(`
+      <h1 style="font-size:22px;color:#161618;margin:0 0 16px;line-height:1.3;">
+        Faz ${daysSinceLastAccess} dias que você não acessa seu radar.
+      </h1>
+      <p style="font-size:15px;color:#888880;line-height:1.7;margin:0 0 20px;">
+        ${firstName}, enquanto isso seu mercado continuou se movendo. O radar detectou novidades que ainda não foram vistas.
+      </p>
+
+      <div style="background:#FEFAF3;border:1px solid #CF852330;border-radius:12px;padding:18px 20px;margin:0 0 20px;">
+        <p style="font-size:13px;color:#3A3A40;margin:0;line-height:1.6;">
+          Ações prontas esperando pra serem executadas. Concorrentes mudando de posição. Seu mercado não pausa — seu radar também não.
+        </p>
+      </div>
+
+      <a href="${dashboardUrl}" style="display:block;background:#161618;color:#FEFEFF;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:12px;">
+        Ver o que mudou →
+      </a>
+    `),
+  });
+}
+
+// ─── Reengajamento free (7 dias após diagnóstico sem pagar) ─────────────────
+
+export async function notifyFreeReengagement(opts: {
+  email: string;
+  name: string;
+  product: string;
+  leadId: string;
+  score: number;
+  topAction?: string;
+}): Promise<void> {
+  const { email, name, product, leadId, score, topAction } = opts;
+  const firstName = name.split(" ")[0] || "Olá";
+  const resultUrl = `${BASE_URL}/resultado/${leadId}`;
+
+  await sendEmail({
+    to: email,
+    subject: `${firstName}, seu score é ${score}/100. Sabe o que isso significa pra ${product}?`,
+    html: emailShell(`
+      <div style="background:#0A0A0C;border-radius:16px;padding:28px 24px;margin-bottom:24px;text-align:center;">
+        <div style="font-size:48px;font-weight:900;color:${score < 30 ? '#D9534F' : score < 50 ? '#CF8523' : '#2D9B83'};line-height:1;margin-bottom:8px;">${score}</div>
+        <div style="font-size:14px;color:#888880;">/100 — score do seu negócio</div>
+      </div>
+
+      <p style="font-size:15px;color:#888880;line-height:1.7;margin:0 0 20px;">
+        ${firstName}, faz 1 semana que você rodou o diagnóstico de ${product}. ${score < 30
+          ? 'Seu negócio está quase invisível pra quem busca o que você faz. A boa notícia: tem espaço concreto pra crescer.'
+          : score < 50
+          ? 'Você aparece pra parte do mercado, mas perde a maioria das oportunidades.'
+          : 'Boa presença, mas concorrentes mais ativos capturam mais atenção.'}
+      </p>
+
+      ${topAction ? `
+      <div style="background:#F7F7F8;border-radius:12px;padding:18px 20px;margin:0 0 20px;">
+        <p style="font-size:11px;color:#888880;font-family:monospace;letter-spacing:0.06em;margin:0 0 8px;">PRÓXIMO PASSO</p>
+        <p style="font-size:14px;color:#0A0A0C;font-weight:600;margin:0;">${topAction}</p>
+      </div>
+      ` : ''}
+
+      <a href="${resultUrl}" style="display:block;background:#161618;color:#FEFEFF;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:12px;">
+        Ver meu diagnóstico →
+      </a>
+      <p style="font-size:13px;color:#888880;text-align:center;margin:0;line-height:1.5;">
+        O radar monitora seu mercado e entrega tudo pronto pra você crescer — R$247/mês, cancele quando quiser.
       </p>
     `),
   });
