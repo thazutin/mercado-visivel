@@ -152,55 +152,74 @@ export async function fetchAnatelBandaLarga(
 
   if (!municipioClean) return empty;
 
-  // Query: acessos por prestadora no município mais recente
+  // Step 1: find id_municipio from name
+  const findMunSql = `
+    SELECT id_municipio, nome, sigla_uf
+    FROM \`basedosdados.br_bd_diretorios_brasil.municipio\`
+    WHERE UPPER(nome) LIKE '%${municipioClean}%'
+    ${uf ? `AND sigla_uf = '${uf.toUpperCase()}'` : ''}
+    LIMIT 1
+  `;
+
+  const munRows = await queryBigQuery(findMunSql);
+  if (munRows.length === 0) {
+    console.log(`[Anatel] Municipality not found: "${municipioClean}"`);
+    return empty;
+  }
+
+  const idMunicipio = munRows[0].id_municipio;
+  const munNome = munRows[0].nome;
+  const munUf = munRows[0].sigla_uf;
+
+  // Step 2: acessos por CNPJ no município (ano mais recente disponível)
   const sql = `
     SELECT
-      m.nome AS municipio_nome,
-      m.sigla_uf,
-      t.grupo_economico AS prestadora,
-      SUM(CAST(t.acessos AS INT64)) AS total_acessos,
-      t.ano
+      t.cnpj,
+      COUNT(*) AS total_registros,
+      t.ano, t.mes
     FROM \`basedosdados.br_anatel_banda_larga_fixa.microdados\` t
-    JOIN \`basedosdados.br_bd_diretorios_brasil.municipio\` m
-      ON t.id_municipio = m.id_municipio
-    WHERE UPPER(NORMALIZE(m.nome, NFD)) LIKE '%${municipioClean}%'
-      ${uf ? `AND m.sigla_uf = '${uf.toUpperCase()}'` : ''}
-      AND t.ano = (SELECT MAX(ano) FROM \`basedosdados.br_anatel_banda_larga_fixa.microdados\`)
-    GROUP BY m.nome, m.sigla_uf, t.grupo_economico, t.ano
-    ORDER BY total_acessos DESC
-    LIMIT 20
+    WHERE t.id_municipio = '${idMunicipio}'
+    GROUP BY t.cnpj, t.ano, t.mes
+    ORDER BY t.ano DESC, t.mes DESC, total_registros DESC
+    LIMIT 30
   `;
 
   const rows = await queryBigQuery(sql);
 
   if (rows.length === 0) {
-    console.log(`[Anatel] No data for "${municipioClean}"`);
+    console.log(`[Anatel] No access data for municipality ${idMunicipio}`);
     return empty;
   }
 
-  const totalAcessos = rows.reduce((s, r) => s + (parseInt(r.total_acessos) || 0), 0);
-  const prestadoras = rows
-    .filter((r: any) => r.prestadora && parseInt(r.total_acessos) > 0)
+  // Agrupa por CNPJ (cada CNPJ = 1 prestadora)
+  // O mais recente ano/mês vem primeiro (ORDER BY t.ano DESC, t.mes DESC)
+  const latestAno = rows[0]?.ano;
+  const latestMes = rows[0]?.mes;
+  const latestRows = rows.filter((r: any) => r.ano === latestAno && r.mes === latestMes);
+
+  const totalRegistros = latestRows.reduce((s: number, r: any) => s + (parseInt(r.total_registros) || 0), 0);
+  const prestadoras = latestRows
+    .filter((r: any) => r.cnpj)
     .map((r: any) => ({
-      nome: r.prestadora,
-      acessos: parseInt(r.total_acessos) || 0,
-      marketShare: totalAcessos > 0
-        ? Math.round((parseInt(r.total_acessos) / totalAcessos) * 100)
+      nome: r.cnpj, // CNPJ como identificador (pode resolver nome depois)
+      acessos: parseInt(r.total_registros) || 0,
+      marketShare: totalRegistros > 0
+        ? Math.round((parseInt(r.total_registros) / totalRegistros) * 100)
         : 0,
     }));
 
   console.log(
-    `[Anatel] ${municipioClean}: ${totalAcessos} acessos, ${prestadoras.length} prestadoras, ano ${rows[0]?.ano}`,
+    `[Anatel] ${munNome} (${idMunicipio}): ${totalRegistros} registros, ${prestadoras.length} prestadoras, ${latestAno}/${latestMes}`,
   );
 
   return {
     found: true,
-    municipio: rows[0]?.municipio_nome || municipio,
-    uf: rows[0]?.sigla_uf || uf || '',
-    totalAcessos,
+    municipio: munNome || municipio,
+    uf: munUf || uf || '',
+    totalAcessos: totalRegistros,
     prestadoras,
     totalPrestadoras: prestadoras.length,
-    anoReferencia: parseInt(rows[0]?.ano) || 0,
+    anoReferencia: parseInt(latestAno) || 0,
     source: 'bigquery_anatel',
   };
 }
