@@ -737,7 +737,7 @@ export default function Home() {
               <span style={{ fontFamily: V.mono, fontSize: 11, color: V.amber, fontWeight: 700 }}>R$247/mês</span>
             </div>
             <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 6px" }}>Seu marketing montado + radar semanal do mercado.</p>
-            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: "0 0 12px" }}>Ações prontas com texto pra copiar e colar, operação de conteúdo personalizada pro seu segmento, monitoramento do mercado e materiais novos toda semana.</p>
+            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: "0 0 12px" }}>Ações prontas com texto pra copiar e colar, conteúdo personalizado pro seu segmento, monitoramento do mercado e materiais novos toda semana.</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {['Ações rápidas', 'Pilares estratégicos', 'Copy pronto', 'Radar semanal', '25 segmentos', '12+ fontes de dados'].map((tag, i) => (
                 <span key={i} style={{ fontSize: 10, fontWeight: 600, color: V.amber, background: V.amberWash, padding: "3px 8px", borderRadius: 4 }}>{tag}</span>
