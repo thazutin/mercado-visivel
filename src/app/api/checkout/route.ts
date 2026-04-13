@@ -9,9 +9,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-06-20",
-});
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: "2024-06-20",
+  });
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -49,14 +51,14 @@ export async function POST(req: NextRequest) {
       // Apply coupon
       if (coupon) {
         try {
-          const promoCodes = await stripe.promotionCodes.list({
+          const promoCodes = await getStripe().promotionCodes.list({
             code: coupon, active: true, limit: 1,
           });
           if (promoCodes.data.length > 0) {
             sessionParams.discounts = [{ promotion_code: promoCodes.data[0].id }];
           } else {
             try {
-              await stripe.coupons.retrieve(coupon);
+              await getStripe().coupons.retrieve(coupon);
               sessionParams.discounts = [{ coupon }];
             } catch {
               console.warn(`[Checkout] Invalid coupon: ${coupon}`);
@@ -67,7 +69,7 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      const session = await stripe.checkout.sessions.create(sessionParams);
+      const session = await getStripe().checkout.sessions.create(sessionParams);
       return NextResponse.json({ url: session.url });
     }
 
@@ -105,14 +107,14 @@ export async function POST(req: NextRequest) {
 
     if (coupon) {
       try {
-        const promoCodes = await stripe.promotionCodes.list({ code: coupon, active: true, limit: 1 });
+        const promoCodes = await getStripe().promotionCodes.list({ code: coupon, active: true, limit: 1 });
         if (promoCodes.data.length > 0) {
           sessionParams.discounts = [{ promotion_code: promoCodes.data[0].id }];
         }
       } catch { /* ignore */ }
     }
 
-    const session = await stripe.checkout.sessions.create(sessionParams);
+    const session = await getStripe().checkout.sessions.create(sessionParams);
     return NextResponse.json({ url: session.url });
   } catch (err) {
     console.error("[Checkout] Error:", err);

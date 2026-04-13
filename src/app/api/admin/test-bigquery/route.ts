@@ -1,5 +1,8 @@
-// GET /api/admin/test-bigquery — testa se BigQuery auth funciona
+// GET /api/admin/test-bigquery?city=Campinas&uf=SP — testa Anatel BigQuery end-to-end
 import { NextRequest, NextResponse } from "next/server";
+import { fetchAnatelBandaLarga } from "@/lib/pipeline/anatel";
+
+export const maxDuration = 30;
 
 export async function GET(req: NextRequest) {
   const secret = req.headers.get("x-internal-secret");
@@ -7,95 +10,28 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const projectId = process.env.GOOGLE_BIGQUERY_PROJECT_ID;
-  const keyJson = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  const city = req.nextUrl.searchParams.get("city") || "Campinas";
+  const uf = req.nextUrl.searchParams.get("uf") || "SP";
 
-  if (!projectId) return NextResponse.json({ error: "GOOGLE_BIGQUERY_PROJECT_ID not set" });
-  if (!keyJson) return NextResponse.json({ error: "GOOGLE_SERVICE_ACCOUNT_KEY not set" });
-
-  // Test JSON parse
-  let key: any;
+  const t0 = Date.now();
   try {
-    key = JSON.parse(keyJson);
-  } catch (err) {
-    return NextResponse.json({ error: "JSON parse failed", detail: (err as Error).message, keyLength: keyJson.length, firstChars: keyJson.slice(0, 50) });
-  }
-
-  // Test JWT + token
-  try {
-    const crypto = await import('crypto');
-    const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
-    const now = Math.floor(Date.now() / 1000);
-    const claim = Buffer.from(JSON.stringify({
-      iss: key.client_email,
-      scope: 'https://www.googleapis.com/auth/bigquery.readonly',
-      aud: 'https://oauth2.googleapis.com/token',
-      iat: now, exp: now + 3600,
-    })).toString('base64url');
-
-    const signer = crypto.createSign('RSA-SHA256');
-    signer.update(`${header}.${claim}`);
-    const signature = signer.sign(key.private_key, 'base64url');
-    const jwt = `${header}.${claim}.${signature}`;
-
-    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
-    });
-
-    const tokenData = await tokenRes.json();
-
-    if (!tokenRes.ok) {
-      return NextResponse.json({ error: "Token exchange failed", status: tokenRes.status, detail: tokenData });
-    }
-
-    // Test municipality lookup
-    const munSql = `SELECT id_municipio, nome, sigla_uf FROM \`basedosdados.br_bd_diretorios_brasil.municipio\` WHERE nome LIKE '%Campos%' AND sigla_uf = 'SP' LIMIT 5`;
-    const munRes = await fetch(
-      `https://bigquery.googleapis.com/bigquery/v2/projects/${projectId}/queries`,
-      {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${tokenData.access_token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: munSql, useLegacySql: false, timeoutMs: 30000 }),
-      },
-    );
-    const munData = await munRes.json();
-    const fields = munData.schema?.fields || [];
-    const munRows = (munData.rows || []).map((r: any) =>
-      Object.fromEntries(fields.map((f: any, i: number) => [f.name, r.f[i]?.v]))
-    );
-    return NextResponse.json({ ok: true, municipios: munRows, error: munData.error });
-    const anatelSql = "SELECT 1";
-    const queryRes = await fetch(
-      `https://bigquery.googleapis.com/bigquery/v2/projects/${projectId}/queries`,
-      {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${tokenData.access_token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: anatelSql, useLegacySql: false, timeoutMs: 30000 }),
-      },
-    );
-
-    const queryData = await queryRes.json();
-    const rows = (queryData.rows || []).map((r: any) => ({
-      municipio: r.f?.[0]?.v,
-      uf: r.f?.[1]?.v,
-      prestadora: r.f?.[2]?.v,
-      acessos: r.f?.[3]?.v,
-      ano: r.f?.[4]?.v,
-    }));
-
+    const result = await fetchAnatelBandaLarga(city, uf);
+    const elapsed = Date.now() - t0;
     return NextResponse.json({
       ok: true,
-      projectId,
-      clientEmail: key.client_email,
-      tokenOk: !!tokenData.access_token,
-      queryOk: queryRes.ok,
-      queryError: queryData.error || null,
-      rowCount: rows.length,
-      rows: rows.slice(0, 5),
+      elapsed_ms: elapsed,
+      result,
+      env: {
+        projectId: !!process.env.GOOGLE_BIGQUERY_PROJECT_ID,
+        serviceKey: !!process.env.GOOGLE_SERVICE_ACCOUNT_KEY,
+      },
     });
   } catch (err) {
-    return NextResponse.json({ error: "Auth failed", detail: (err as Error).message });
+    return NextResponse.json({
+      ok: false,
+      elapsed_ms: Date.now() - t0,
+      error: (err as Error).message,
+      stack: (err as Error).stack?.split('\n').slice(0, 5),
+    });
   }
 }

@@ -3,7 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" as any });
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" as any });
+}
 
 function getSupabase() {
   return createClient(
@@ -29,7 +31,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Buscar customer ID da subscription
-    const subscription = await stripe.subscriptions.retrieve(lead.subscription_stripe_id);
+    const subscription = await getStripe().subscriptions.retrieve(lead.subscription_stripe_id);
     const customerId = typeof subscription.customer === "string"
       ? subscription.customer
       : subscription.customer.id;
@@ -39,7 +41,7 @@ export async function POST(req: NextRequest) {
       ? `https://${process.env.VERCEL_URL}`
       : "http://localhost:3000";
 
-    const session = await stripe.billingPortal.sessions.create({
+    const session = await getStripe().billingPortal.sessions.create({
       customer: customerId,
       return_url: `${baseUrl}/dashboard/${leadId}`,
     });

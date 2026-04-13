@@ -219,12 +219,12 @@ export async function fetchExpandedSources(
     }
   }
 
-  // 9. Anatel — pra blueprints de telecom/ISP (BigQuery = pode demorar, timeout maior)
+  // 9. Anatel — pra blueprints de telecom/ISP (BigQuery com token cache + single query)
   if (bp?.id === 'telecom_isp') {
     const uf = (lead.region || '').match(/\b([A-Z]{2})\b/)?.[1] || '';
     console.log(`[ExpandedSources] Anatel: city="${city}", uf="${uf}"`);
     promises.push(
-      withTimeout(fetchAnatelBandaLarga(city, uf), 45_000, null)
+      withTimeout(fetchAnatelBandaLarga(city, uf), 25_000, null)
         .then((r: any) => {
           console.log(`[ExpandedSources] Anatel result: found=${r?.found}, total=${r?.totalAcessos}`);
           if (r?.found) { result.anatel = r; result.sources.push('anatel'); }
