@@ -6,6 +6,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import DashboardClient from "./DashboardClient";
+import RadarDashboard from "./RadarDashboard";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -89,6 +90,21 @@ export default async function DashboardPage({ params }: { params: { leadId: stri
         })),
       };
     }
+  }
+
+  // Radar Dashboard para novos leads (com blueprint) ou todos os novos leads
+  // DashboardClient legado só para leads antigos sem blueprint
+  const useRadar = lead.blueprint_id || lead.growth_machine;
+
+  if (useRadar) {
+    return (
+      <RadarDashboard
+        lead={lead}
+        diagnosis={diagnosis}
+        tier={tier}
+        initialGrowthMachine={lead.growth_machine || null}
+      />
+    );
   }
 
   return (

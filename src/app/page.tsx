@@ -477,10 +477,10 @@ export default function Home() {
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {[
             { title: "Você informa seu negócio", text: "Nome, segmento e endereço. Leva menos de 1 minuto." },
-            { title: "Virô analisa seu mercado em tempo real", text: "Cruzamos Google, Maps, Instagram, IA e IBGE para mapear sua posição, seus concorrentes e sua oportunidade." },
+            { title: "Seu radar de crescimento analisa o mercado", text: "Cruzamos Google, Maps, Instagram, iFood, Reclame Aqui, IBGE e mais 12 fontes pra mapear sua posição, seus concorrentes e sua oportunidade real." },
             { title: "Você recebe o diagnóstico grátis", text: "Quantos clientes você pode ter a mais por mês, quem disputa com você e o que está te impedindo de crescer." },
-            { title: "Gere seu plano de ação — R$497", text: "15 ações priorizadas com conteúdo pronto para copiar e colar. Na ordem certa para o seu negócio." },
-            { title: "Mantenha-se relevante toda semana — R$99/mês", text: "Contexto do mercado + conteúdos prontos toda sexta. Sem ação contínua, a tendência é entropia." },
+            { title: "Máquina de crescimento montada pra você", text: "Ações rápidas, pilares estratégicos com conteúdo pronto e um plano metrificado — tudo baseado nos dados reais do SEU mercado." },
+            { title: "Radar ativo toda semana — R$247/mês", text: "Monitoramento contínuo, ações atualizadas e materiais prontos toda semana. Seu marketing no piloto automático." },
           ].map((step, i) => (
             <div key={i} style={{ background: V.white, borderRadius: 14, padding: "20px 20px", border: `1px solid ${V.fog}`, display: "flex", gap: 16, alignItems: "flex-start" }}>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
@@ -507,7 +507,7 @@ export default function Home() {
           Lojas, clínicas, escolas, restaurantes, estúdios, consultórios e prestadores de serviço. Com ou sem presença digital hoje.
         </p>
         <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: 0 }}>
-          Se você quer saber quantos clientes estão te ignorando por falta de visibilidade — e o que fazer para mudar isso sem gastar mais em mídia — Virô é para você.
+          Se você quer saber onde estão seus próximos clientes, o que seus concorrentes estão fazendo, e ter um plano pronto pra executar — sem contratar equipe e sem gastar mais em mídia — Virô é seu radar de crescimento.
         </p>
       </Section>
 
@@ -540,7 +540,7 @@ export default function Home() {
 
           {/* ─── BLOCO 2: PLANO DE AÇÃO ─── */}
           <div style={{ padding: "24px", borderTop: `2px solid ${V.amber}` }}>
-            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.06em", marginBottom: 12 }}>PLANO DE AÇÃO · R$497</div>
+            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.06em", marginBottom: 12 }}>RADAR DE CRESCIMENTO · R$247/MÊS</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: V.night, marginBottom: 16 }}>15 ações priorizadas com conteúdo pronto — para copiar e colar</div>
 
             {/* Exemplo de ação COM conteúdo gerado */}
@@ -578,7 +578,7 @@ export default function Home() {
 
           {/* ─── BLOCO 3: AÇÕES SEMANAIS ─── */}
           <div style={{ padding: "24px", borderTop: `2px solid ${V.slate}`, background: V.cloud }}>
-            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.slate, letterSpacing: "0.06em", marginBottom: 12 }}>AÇÕES SEMANAIS · R$99/MÊS</div>
+            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.slate, letterSpacing: "0.06em", marginBottom: 12 }}>MONITORAMENTO SEMANAL · INCLUSO</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: V.night, marginBottom: 12 }}>Toda sexta-feira no seu painel — para copiar e colar</div>
 
             {/* Preview de post semanal */}
@@ -670,7 +670,7 @@ export default function Home() {
           <div style={{ background: V.white, borderRadius: 14, border: `2px solid ${V.amber}`, padding: "24px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <span style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.06em", fontWeight: 600 }}>PLANO DE AÇÃO · PAGAMENTO ÚNICO</span>
-              <span style={{ fontFamily: V.mono, fontSize: 11, color: V.amber, fontWeight: 700 }}>R$497</span>
+              <span style={{ fontFamily: V.mono, fontSize: 11, color: V.amber, fontWeight: 700 }}>R$247/mês</span>
             </div>
             <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 6px" }}>15 ações priorizadas com conteúdo pronto.</p>
             <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: 0 }}>Cada ação tem o que fazer, por quê, quanto tempo leva e um botão que gera o conteúdo pronto — respostas para reviews, textos para o site, roteiros, templates. Copie e cole.</p>
@@ -679,7 +679,7 @@ export default function Home() {
           <div style={{ background: V.white, borderRadius: 14, border: `1px solid ${V.slate}40`, padding: "24px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <span style={{ fontFamily: V.mono, fontSize: 10, color: V.slate, letterSpacing: "0.06em", fontWeight: 600 }}>AÇÕES SEMANAIS · CANCELE QUANDO QUISER</span>
-              <span style={{ fontFamily: V.mono, fontSize: 11, color: V.slate, fontWeight: 700 }}>R$99/mês</span>
+              <span style={{ fontFamily: V.mono, fontSize: 11, color: V.slate, fontWeight: 700 }}>Incluso</span>
             </div>
             <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 6px" }}>Contexto do mercado + conteúdos prontos toda sexta.</p>
             <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: 0 }}>Indicadores macro, movimentações do setor, oportunidades da semana. 5 posts com arco narrativo + 3 briefings estratégicos (equipe, agência, parceiro). Requer Plano de Ação.</p>
@@ -694,7 +694,7 @@ export default function Home() {
           Dados reais do seu mercado
         </h2>
         <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: "0 0 28px" }}>
-          Não adivinhamos — coletamos. Virô cruza 12 fontes de dados reais para montar a leitura do seu mercado. Isso é o que nos diferencia de ferramentas genéricas de IA.
+          Não adivinhamos — coletamos. Virô cruza Google, Maps, Instagram, iFood, Reclame Aqui, IBGE, Google Trends e mais fontes reais pra montar a leitura do seu mercado. Dados reais, não palpites de IA.
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 24 }}>
           {[
@@ -727,12 +727,11 @@ export default function Home() {
         </h2>
         {[
           { q: "O diagnóstico gratuito usa dados reais do meu negócio?", a: "Sim. O Virô consulta em tempo real o Google Maps, o Instagram, o volume de buscas no Google, dados demográficos do IBGE e a presença do seu negócio em respostas de IA. Nada é inventado — tudo vem de fontes públicas e verificáveis." },
-          { q: "Quanto custa?", a: "O diagnóstico inicial é gratuito. O Plano de Ação completo custa R$497 (pagamento único, sem mensalidade obrigatória). A assinatura Virô Connect é opcional, custa R$99/mês e pode ser cancelada a qualquer momento direto pelo painel." },
-          { q: "O que eu recebo com o Plano de Ação de R$497?", a: "15 ações priorizadas pelos seus gaps reais, cada uma com passo-a-passo de execução e textos prontos para copiar. Inclui também: respostas prontas para suas avaliações no Google, posts prontos para publicar, otimização da sua ficha do Google Meu Negócio, relatório setorial com tendências do seu mercado, e 30 dias do Agente Nelson (em breve) executando ações direto no seu Google Meu Negócio." },
+          { q: "Quanto custa?", a: "O diagnóstico inicial é gratuito e já entrega ações práticas. O Radar de Crescimento custa R$247/mês — inclui monitoramento semanal, máquina de crescimento personalizada e conteúdos prontos. Cancele quando quiser, sem fidelidade." },
+          { q: "O que eu recebo com o Radar de Crescimento?", a: "Ações rápidas com copy pronto (otimização Google, bio Instagram, respostas a reviews), pilares estratégicos montados pro seu setor (conteúdo, prospecção, autoridade), monitoramento semanal do mercado, sazonalidade e análise de concorrentes atualizada toda semana." },
           { q: "Em quanto tempo fico com o plano pronto?", a: "O diagnóstico inicial leva cerca de 60 segundos. Após o pagamento, o plano completo é gerado em 2 a 5 minutos e fica disponível no painel — você também recebe o link por email." },
-          { q: "E a assinatura mensal de R$99 — o que inclui?", a: "Atualização semanal do seu mercado toda sexta-feira: novo relatório setorial, posts conectados ao contexto da semana e briefings prontos para sua equipe e parceiros. Em breve, também a continuidade do Agente Nelson operando seu Google Meu Negócio. Cancelamento sem fidelidade, direto pelo painel." },
-          { q: "O Virô faz por mim ou só me mostra o caminho?", a: "Hoje o Virô gera todo o conteúdo pronto para você copiar e colar — posts, respostas a reviews, descrição da ficha, briefings. Em breve, o Agente Nelson vai executar essas ações direto no seu Google Meu Negócio com sua autorização (atualmente em processo de aprovação do Google). O caminho é claro: começa como ferramenta, vira agente." },
-          { q: "Funciona para qualquer tipo de negócio?", a: "Para negócios locais com endereço físico ou área de atuação definida — restaurantes, clínicas, academias, escolas, salões, lojas, escritórios de serviço. Se você quer ser encontrado por quem está perto, o Virô serve para você. Para negócios 100% digitais (e-commerce nacional, SaaS), também funciona — basta marcar a opção 'Nacional' no formulário." },
+          { q: "O Virô faz por mim ou só me mostra o caminho?", a: "Hoje o Virô monta a operação inteira — posts prontos, respostas a reviews, papers, roteiros, emails, tudo com copy pronto pra copiar e usar. Em breve, o Agente Nelson vai executar direto no Google, Instagram e WhatsApp com sua autorização. Começa como copiloto, vira piloto automático." },
+          { q: "Funciona para qualquer tipo de negócio?", a: "Sim. Virô tem 25 blueprints de segmento — restaurantes, clínicas, e-commerce, B2B, energia, agro, criadores de conteúdo, provedores de internet e mais. Cada segmento recebe fontes de dados, ações e canais específicos pro seu mercado." },
           { q: "E se meu negócio ainda não aparece no Google Maps?", a: "O diagnóstico funciona mesmo assim. Analisamos a demanda real e a concorrência do seu raio independentemente do seu perfil — e o plano vai indicar exatamente o que fazer para você aparecer." },
           { q: "Meus dados são seguros?", a: "Sim. O Virô só coleta dados públicos do seu negócio (não dados de clientes), opera dentro da LGPD, e nunca vende, aluga ou compartilha seus dados com terceiros. A política completa está em /privacidade." },
         ].map((faq, i) => (

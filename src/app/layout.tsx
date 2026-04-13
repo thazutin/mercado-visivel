@@ -6,16 +6,16 @@ import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Virô — Posição competitiva local para o seu negócio",
-  description: "Descubra quantas pessoas no seu mercado ainda não te conhecem. Diagnóstico gratuito em 60 segundos.",
+  title: "Virô — Seu radar de crescimento",
+  description: "Monitora seu mercado, monta sua operação de marketing, toda semana. Diagnóstico gratuito com dados reais.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
     apple: "/favicon.svg",
   },
   openGraph: {
-    title: "Virô — Posição competitiva local para o seu negócio",
-    description: "Descubra quantas pessoas no seu mercado ainda não te conhecem. Diagnóstico gratuito em 60 segundos.",
+    title: "Virô — Seu radar de crescimento",
+    description: "Monitora seu mercado, monta sua operação de marketing, toda semana. Diagnóstico gratuito com dados reais.",
     type: "website",
   },
 };

@@ -210,7 +210,7 @@ export default function ResultadoClient({ product, region, leadId, results, name
         {tab === "plano" && (
           <LockedTab
             lockLevel={1}
-            ctaLabel="Gerar meu plano de ação · R$497"
+            ctaLabel="Ativar Radar de Crescimento · R$247/mês"
             ctaUrl="#"
             leadId={leadId}
           />
@@ -220,7 +220,7 @@ export default function ResultadoClient({ product, region, leadId, results, name
         {tab === "semanal" && (
           <LockedTab
             lockLevel={2}
-            ctaLabel="Assinar por R$99/mês"
+            ctaLabel="Ativar Radar · R$247/mês"
             ctaUrl="#"
             leadId={leadId}
           />
