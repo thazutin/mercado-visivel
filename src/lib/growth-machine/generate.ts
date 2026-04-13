@@ -1026,6 +1026,96 @@ function generateQuickWins(
     });
   }
 
+  // ─── QUICK WINS DE CONCORRENTES ENRIQUECIDOS ──────────────────────────────────
+  const compProfiles = expanded.competitorProfiles || [];
+
+  // Concorrente com boa reputação no Reclame Aqui (benchmark)
+  const compWithRA = compProfiles.find((c: any) => c.reclameAqui?.found && c.reclameAqui.score >= 7);
+  if (compWithRA && expanded.reclameAqui && (!expanded.reclameAqui.found || (expanded.reclameAqui.score || 0) < (compWithRA.reclameAqui?.score || 0))) {
+    quickWins.push({
+      id: 'qw-comp-ra-gap',
+      type: 'responder_reviews',
+      title: `Fechar gap de reputação vs ${compWithRA.name}`,
+      description: `${compWithRA.name} tem nota ${compWithRA.reclameAqui?.score}/10 (${compWithRA.reclameAqui?.reputation || ''}) no Reclame Aqui.${expanded.reclameAqui?.found ? ` Sua nota: ${expanded.reclameAqui.score}/10.` : ' Você não tem presença no Reclame Aqui.'} Reputação online é fator de decisão pra 92% dos consumidores.`,
+      impact: '+6pts Credibilidade',
+      timeEstimate: '~30 min',
+      steps: expanded.reclameAqui?.found ? [
+        'Responda todas as reclamações pendentes no Reclame Aqui',
+        'Priorize reclamações sem resposta (impactam mais o score)',
+        `Meta: igualar ou superar a nota ${compWithRA.reclameAqui?.score} do ${compWithRA.name}`,
+      ] : [
+        'Cadastre seu negócio no Reclame Aqui (reclameaqui.com.br)',
+        'Monitore reclamações e responda em até 24h',
+        'Presença no RA transmite confiança — mesmo sem reclamações',
+      ],
+    });
+  }
+
+  // Concorrente com LinkedIn (e você não tem)
+  const compWithLinkedIn = compProfiles.find((c: any) => c.linkedin?.found);
+  if (compWithLinkedIn && expanded.linkedin && !expanded.linkedin?.companyPage?.found && (bp.primaryClientType === 'b2b' || bp.primaryClientType === 'mixed')) {
+    quickWins.push({
+      id: 'qw-comp-linkedin-gap',
+      type: 'posts_linkedin',
+      title: `${compWithLinkedIn.name} tem LinkedIn — você não`,
+      description: `${compWithLinkedIn.name} já tem presença no LinkedIn. Pra B2B, estar ausente do LinkedIn é perder visibilidade com decisores.`,
+      impact: '+8pts Presença B2B',
+      timeEstimate: '~20 min',
+      steps: [
+        'Crie Company Page no LinkedIn (linkedin.com/company/setup/new)',
+        `Complete perfil: logo, descrição, setor (${bp.label})`,
+        'Publique 1 post sobre seu diferencial vs concorrentes',
+        'Peça pra equipe seguir e interagir',
+      ],
+    });
+  }
+
+  // Concorrente com Instagram descoberto via site (e que não temos no scraping)
+  const compWithIGFromSite = compProfiles.filter((c: any) => c.instagramFromSite);
+  const existingIGHandles = new Set((diagnosis.competitorInstagram || []).map((c: any) => c.handle?.toLowerCase()));
+  const newIGFromSites = compWithIGFromSite.filter((c: any) => !existingIGHandles.has(c.instagramFromSite?.toLowerCase()));
+  if (newIGFromSites.length > 0) {
+    quickWins.push({
+      id: 'qw-comp-ig-discovered',
+      type: 'posts_instagram',
+      title: `${newIGFromSites.length} concorrente(s) com Instagram encontrado(s) via site`,
+      description: `Encontramos o Instagram de ${newIGFromSites.map((c: any) => `${c.name} (@${c.instagramFromSite})`).join(', ')} através dos sites deles. Analise o conteúdo e estratégia.`,
+      impact: '+5pts Inteligência',
+      timeEstimate: '~15 min',
+      steps: [
+        ...newIGFromSites.slice(0, 3).map((c: any) => `Analise @${c.instagramFromSite} (${c.name}): frequência, formato, engajamento`),
+        'Identifique 2-3 padrões que se repetem nos posts de sucesso',
+      ],
+    });
+  }
+
+  // Comparativo geral de presença digital dos concorrentes
+  if (compProfiles.length >= 3) {
+    const withSite = compProfiles.filter((c: any) => c.website).length;
+    const withIG = compProfiles.filter((c: any) => c.instagramFromSite || existingIGHandles.has(c.name?.toLowerCase())).length;
+    const withLI = compProfiles.filter((c: any) => c.linkedin?.found).length;
+    const withRA = compProfiles.filter((c: any) => c.reclameAqui?.found).length;
+    const avgRating = compProfiles.filter((c: any) => c.rating).reduce((s: number, c: any) => s + (c.rating || 0), 0) / Math.max(compProfiles.filter((c: any) => c.rating).length, 1);
+
+    quickWins.push({
+      id: 'qw-comp-panorama',
+      type: 'seo_conteudo',
+      title: `Panorama: ${compProfiles.length} concorrentes analisados`,
+      description: `Dos ${compProfiles.length} concorrentes: ${withSite} com site, ${withIG} com Instagram, ${withLI} com LinkedIn, ${withRA} no Reclame Aqui. Nota média: ${avgRating.toFixed(1)}★. Use isso pra saber onde se diferenciar.`,
+      impact: '+5pts Inteligência Competitiva',
+      timeEstimate: '~10 min',
+      steps: [
+        `Canais onde concorrentes estão e você não: ${[
+          !lead.site && withSite > 0 ? 'site' : '',
+          !lead.instagram && withIG > 0 ? 'Instagram' : '',
+          withLI > 0 && !expanded.linkedin?.companyPage?.found ? 'LinkedIn' : '',
+        ].filter(Boolean).join(', ') || 'você está em todos'}`,
+        `Nota média concorrentes: ${avgRating.toFixed(1)}★ — ${(maps?.rating || 0) > avgRating ? 'você está acima!' : 'oportunidade de ultrapassar'}`,
+        'Foque no canal onde poucos concorrentes estão (oceano azul)',
+      ],
+    });
+  }
+
   // ─── GARANTIA DE MÍNIMO + DEDUP ──────────────────────────────────────────────
 
   if (quickWins.length < 6) {
@@ -1268,6 +1358,36 @@ ${diagnosis.expandedData?.adsTransparency?.searched ? `- Google Ads: ${diagnosis
 ${diagnosis.expandedData?.seasonality?.source === 'google_trends_apify' ? `- Sazonalidade: pico em ${diagnosis.expandedData.seasonality.bestMonths?.join(', ')}, vale em ${diagnosis.expandedData.seasonality.worstMonths?.join(', ')}` : ''}
 ${diagnosis.expandedData?.instagramExpanded?.gaps?.length > 0 ? `- Instagram gaps: ${diagnosis.expandedData.instagramExpanded.gaps.slice(0, 2).join('; ')}` : ''}
 ${diagnosis.expandedData?.linkedin?.companyPage?.found ? `- LinkedIn: company page encontrada` : ''}
+${(() => {
+  const cp = diagnosis.expandedData?.competitorProfiles;
+  if (!cp || cp.length === 0) return '';
+  return `
+ANÁLISE DE CONCORRENTES (dados reais, scraping direto):
+${cp.slice(0, 5).map((c: any) => {
+  const parts = [`- ${c.name}`];
+  if (c.rating) parts.push(`★${c.rating}`);
+  if (c.reviewCount) parts.push(`${c.reviewCount} reviews`);
+  if (c.website) parts.push(`site: ${c.website}`);
+  if (c.linkedin?.found) parts.push(`LinkedIn: ✓`);
+  if (c.reclameAqui?.found) parts.push(`RA: ${c.reclameAqui.score}/10 (${c.reclameAqui.reputation})`);
+  if (c.instagramFromSite) parts.push(`IG: @${c.instagramFromSite}`);
+  return parts.join(' | ');
+}).join('\n')}`;
+})()}
+${(() => {
+  const compIG = (diagnosis.competitorInstagram || []).slice(0, 3);
+  if (compIG.length === 0) return '';
+  return `
+INSTAGRAM DOS CONCORRENTES (métricas reais):
+${compIG.map((c: any) => {
+  const parts = [`- @${c.handle}: ${c.followers?.toLocaleString('pt-BR') || 0} seg`];
+  if (c.postsLast30d) parts.push(`${c.postsLast30d} posts/mês`);
+  if (c.reachRelative) parts.push(`alcance: ${(c.reachRelative * 100).toFixed(1)}% dos seg`);
+  if (c.engagementRate) parts.push(`eng: ${(c.engagementRate * 100).toFixed(1)}%`);
+  if (c.bio) parts.push(`bio: "${c.bio.slice(0, 80)}${c.bio.length > 80 ? '...' : ''}"`);
+  return parts.join(' | ');
+}).join('\n')}`;
+})()}
 `.trim();
 
   const prompt = `Você é o Virô, radar de crescimento para negócios brasileiros. Com base nos DADOS REAIS acima, gere pilares estratégicos de marketing.
