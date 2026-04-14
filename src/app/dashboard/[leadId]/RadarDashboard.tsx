@@ -519,6 +519,102 @@ function FreeCTA({ leadId }: { leadId: string }) {
   );
 }
 
+// ─── Weekly Contents Section (subscriber) ───────────────────────────
+function WeeklyContentsSection({ leadId }: { leadId: string }) {
+  const [contents, setContents] = useState<any[]>([]);
+  const [weeks, setWeeks] = useState<number[]>([]);
+  const [byWeek, setByWeek] = useState<Record<number, any[]>>({});
+  const [loading, setLoading] = useState(true);
+  const [expandedWeek, setExpandedWeek] = useState<number | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`/api/contents?leadId=${leadId}&all=true`);
+        if (res.ok) {
+          const data = await res.json();
+          setContents(data.contents || []);
+          setWeeks(data.weeks || []);
+          setByWeek(data.byWeek || {});
+          if (data.weeks?.length > 0) setExpandedWeek(data.weeks[0]);
+        }
+      } catch { /* ignore */ }
+      setLoading(false);
+    })();
+  }, [leadId]);
+
+  if (loading) return null;
+  if (weeks.length === 0) return (
+    <div style={{ marginBottom: 24, textAlign: "center", padding: "20px 0" }}>
+      <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>
+        📅 CONTEÚDO SEMANAL
+      </div>
+      <p style={{ fontSize: 12, color: V.ash }}>Próxima geração na sexta-feira. Seus conteúdos aparecerão aqui.</p>
+    </div>
+  );
+
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <div style={{ fontFamily: V.mono, fontSize: 10, color: V.night, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>
+        📅 CONTEÚDO SEMANAL · {weeks.length} semana{weeks.length > 1 ? 's' : ''}
+      </div>
+
+      {weeks.map(wk => {
+        const wkContents = byWeek[wk] || [];
+        const isExpanded = expandedWeek === wk;
+        const isLatest = wk === weeks[0];
+        const firstContent = wkContents[0];
+        const genDate = firstContent?.generation_date || firstContent?.created_at;
+        const dateLabel = genDate ? new Date(genDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : '';
+
+        return (
+          <div key={wk} style={{ marginBottom: 8 }}>
+            <button onClick={() => setExpandedWeek(isExpanded ? null : wk)} style={{
+              width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center",
+              padding: "12px 16px", borderRadius: 10, border: `1px solid ${isLatest ? V.amber + '40' : V.fog}`,
+              background: isLatest ? V.amberWash : V.white, cursor: "pointer", textAlign: "left",
+            }}>
+              <div>
+                <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>
+                  Semana {wk}{dateLabel ? ` · ${dateLabel}` : ''}
+                </span>
+                {isLatest && <span style={{ fontSize: 9, color: V.amber, fontWeight: 600, marginLeft: 8 }}>ATUAL</span>}
+                <span style={{ fontSize: 10, color: V.ash, marginLeft: 8 }}>{wkContents.length} conteúdo{wkContents.length !== 1 ? 's' : ''}</span>
+              </div>
+              <span style={{ fontSize: 14, color: V.ash, transform: isExpanded ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s" }}>▾</span>
+            </button>
+
+            {isExpanded && (
+              <div style={{ padding: "12px 16px", background: V.white, borderRadius: "0 0 10px 10px", border: `1px solid ${V.fog}`, borderTopColor: "transparent", marginTop: -1 }}>
+                {wkContents.map((c: any) => (
+                  <div key={c.id} style={{ marginBottom: 10, padding: "10px 12px", background: V.cloud, borderRadius: 8, borderLeft: `3px solid ${V.amber}` }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: V.amber, textTransform: "uppercase" }}>{c.channel_key || c.channel}</span>
+                      {c.best_time && <span style={{ fontSize: 9, color: V.ash, fontFamily: V.mono }}>{c.best_time}</span>}
+                    </div>
+                    {c.hook && <p style={{ fontSize: 13, fontWeight: 600, color: V.night, margin: "0 0 4px", lineHeight: 1.4 }}>{c.hook}</p>}
+                    <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
+                      {(c.content || '').slice(0, 200)}{(c.content || '').length > 200 ? '...' : ''}
+                    </p>
+                    {c.content && (
+                      <button onClick={() => { navigator.clipboard.writeText(c.content); }} style={{
+                        marginTop: 6, padding: "4px 10px", fontSize: 10, fontWeight: 600,
+                        color: V.amber, background: V.amberWash, border: "none", borderRadius: 4, cursor: "pointer",
+                      }}>
+                        Copiar texto
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // MAIN RADAR DASHBOARD
 // ═══════════════════════════════════════════════════════════════════════
@@ -784,6 +880,9 @@ export default function RadarDashboard({ lead, diagnosis, tier: initialTier, ini
             </div>
           </div>
         )}
+
+        {/* ─── CONTEÚDO SEMANAL (subscriber only) ─── */}
+        {tier === "subscriber" && <WeeklyContentsSection leadId={lead.id} />}
 
         {/* Footer */}
         <div style={{ textAlign: "center", paddingTop: 28, marginTop: 20, borderTop: `1px solid ${V.fog}` }}>

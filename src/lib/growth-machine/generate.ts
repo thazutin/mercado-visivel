@@ -1394,6 +1394,20 @@ ${compIG.map((c: any) => {
   return parts.join(' | ');
 }).join('\n')}`;
 })()}
+${(() => {
+  const b2b = (diagnosis as any).b2bCompanies?.companies;
+  if (!b2b || b2b.length === 0) return '';
+  return `
+PROSPECTS B2B IDENTIFICADOS (com decisores via Hunter.io):
+${b2b.slice(0, 8).map((c: any) => {
+  const contacts = Array.isArray(c.contacts) ? c.contacts : [];
+  const contactStr = contacts.length > 0
+    ? ` → Decisores: ${contacts.slice(0, 2).map((k: any) => `${k.fullName || k.email} (${k.position || 'N/A'}${k.linkedinUrl ? ', LinkedIn ✓' : ''})`).join('; ')}`
+    : c.email ? ` → ${c.email}` : '';
+  return `- ${c.nomeFantasia || c.razaoSocial} (${c.porte || '?'}, ${c.municipio || '?'}-${c.uf || '?'})${contactStr}`;
+}).join('\n')}
+Use NOMES REAIS dos decisores nos templates de abordagem. Personalize cada mensagem.`;
+})()}
 `.trim();
 
   const prompt = `Você é o Virô, radar de crescimento para negócios brasileiros. Com base nos DADOS REAIS acima, crie um PLANO DE CRESCIMENTO — não ações genéricas, mas um plano real de A→B com apostas estratégicas.

@@ -767,60 +767,58 @@ export default function Home() {
         </p>
         <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 12, scrollSnapType: "x mandatory" as const }}>
           {[
-            { icon: "🍽️", segment: "Pizzaria Artesanal", region: "Sumarezinho, SP", type: "free", score: 29, benchmark: 38, insight: "88 avaliações no Google sem resposta. 3 concorrentes no raio de 500m respondem todas.", action: "Respostas prontas pra 88 reviews no tom do negócio" },
-            { icon: "💇", segment: "Barbearia", region: "Savassi, BH", type: "radar", score: 22, benchmark: 35, insight: "@barbearia tem 340 seguidores e 0 posts no mês. Concorrente @cortecerto: 2.100 seg, 12 posts.", action: "Bio otimizada + 12 posts prontos + 4 roteiros de reels" },
-            { icon: "⚖️", segment: "Escritório de Advocacia", region: "Centro, Florianópolis", type: "free", score: 41, benchmark: 33, insight: "'advogado trabalhista florianópolis': 320 buscas/mês. Posição 12 — fora da primeira página.", action: "Artigo SEO otimizado pro termo + ajustes na ficha Google" },
-            { icon: "⚡", segment: "Comercializadora de Energia", region: "Nacional", type: "radar", score: 8, benchmark: 22, insight: "142 empresas elegíveis no mercado livre em SP. 3 licitações abertas no PNCP esta semana.", action: "Paper do setor + 6 posts LinkedIn + jornada de 6 emails" },
-            { icon: "📡", segment: "Provedor de Internet", region: "Campos do Jordão, SP", type: "radar", score: 68, benchmark: 35, insight: "Líder local com 340 reviews. São Luiz do Paraitinga tem 1 ISP com score 15 — expansão viável.", action: "Comparativo de 5 cidades + plano de lançamento São Luiz" },
-            { icon: "🏥", segment: "Clínica de Estética", region: "Tatuapé, SP", type: "free", score: 19, benchmark: 30, insight: "Nota 3.8 no Google vs média 4.4 do setor. 12 reviews negativos sobre atendimento.", action: "Respostas pra reviews negativos + mensagem WhatsApp pós-atendimento" },
-            { icon: "🐾", segment: "Pet Shop", region: "Boa Viagem, Recife", type: "radar", score: 33, benchmark: 30, insight: "Nenhum concorrente local posta no Instagram mais que 2x/mês. Oportunidade de se destacar.", action: "Calendário semanal de posts + parcerias com 3 veterinárias" },
-            { icon: "🎨", segment: "Criadora de Conteúdo", region: "Nacional", type: "free", score: 14, benchmark: 25, insight: "'artesanato macramê' tem 1.900 buscas/mês. Seus reels alcançam 200 pessoas — potencial: 15x mais.", action: "Bio otimizada + 3 termos SEO + estrutura de loja online" },
+            { icon: "🍽️", segment: "Pizzaria Artesanal", region: "Sumarezinho, SP", score: 29, benchmark: 38, potential: 64, quickWin: "Responder 88 avaliações do Google", pillar: "Sistema de fidelização por WhatsApp", insight: "3 concorrentes no raio de 500m respondem todas as avaliações. Você tem 88 sem resposta." },
+            { icon: "💇", segment: "Barbearia", region: "Savassi, BH", score: 22, benchmark: 35, potential: 57, quickWin: "Ajustar bio e perfil do Instagram", pillar: "Motor de conteúdo visual (Reels + Stories)", insight: "@cortecerto tem 2.100 seg e 12 posts/mês. Você: 340 seg e 0 posts." },
+            { icon: "⚖️", segment: "Escritório de Advocacia", region: "Centro, Florianópolis", score: 41, benchmark: 33, potential: 72, quickWin: "Criar artigo SEO sobre 'advogado trabalhista'", pillar: "Captura de leads via Google + site", insight: "'advogado trabalhista florianópolis': 320 buscas/mês. Posição 12 — fora da primeira página." },
+            { icon: "⚡", segment: "Comercializadora de Energia", region: "Nacional", score: 8, benchmark: 22, potential: 45, quickWin: "Prospectar 142 empresas elegíveis no ML em SP", pillar: "Pipeline de prospecção B2B com decisores", insight: "142 empresas elegíveis no mercado livre em SP. 3 licitações abertas no PNCP." },
+            { icon: "📡", segment: "Provedor de Internet", region: "Campos do Jordão, SP", score: 68, benchmark: 35, potential: 85, quickWin: "Mapear expansão pra São Luiz do Paraitinga", pillar: "Plano de expansão geográfica", insight: "Líder local com 340 reviews. S. Luiz do Paraitinga tem 1 ISP com score 15." },
+            { icon: "🏥", segment: "Clínica de Estética", region: "Tatuapé, SP", score: 19, benchmark: 30, potential: 55, quickWin: "Responder 12 reviews negativos no Google", pillar: "Programa de indicação com WhatsApp", insight: "Nota 3.8 vs média 4.4 do setor. 12 reviews negativos sobre atendimento." },
+            { icon: "🐾", segment: "Pet Shop", region: "Boa Viagem, Recife", score: 33, benchmark: 30, potential: 60, quickWin: "Publicar 3 posts/semana no Instagram", pillar: "Parcerias com veterinárias locais", insight: "Nenhum concorrente posta mais que 2x/mês. Oportunidade de se destacar." },
+            { icon: "🎨", segment: "Criadora de Conteúdo", region: "Nacional", score: 14, benchmark: 25, potential: 50, quickWin: "Otimizar bio com 3 termos SEO", pillar: "Estrutura de loja online + funil de vendas", insight: "'artesanato macramê': 1.900 buscas/mês. Reels alcançam 200 — potencial: 15x mais." },
           ].map((card, i) => (
             <div key={i} style={{
-              flexShrink: 0, width: 280, scrollSnapAlign: "start" as const,
-              background: V.white, borderRadius: 14, border: `1px solid ${card.type === 'radar' ? V.amber : V.fog}`,
+              flexShrink: 0, width: 300, scrollSnapAlign: "start" as const,
+              background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`,
               padding: "20px 18px", boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
             }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <span style={{ fontSize: 20 }}>{card.icon}</span>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: V.night }}>{card.segment}</div>
-                    <div style={{ fontSize: 10, color: V.ash }}>{card.region}</div>
+              {/* Header: negócio + região */}
+              <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 14 }}>
+                <span style={{ fontSize: 20 }}>{card.icon}</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: V.night }}>{card.segment}</div>
+                  <div style={{ fontSize: 10, color: V.ash }}>{card.region}</div>
+                </div>
+              </div>
+
+              {/* Mini score ring */}
+              <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
+                <div style={{ position: "relative", width: 56, height: 56, flexShrink: 0 }}>
+                  <svg width={56} height={56} style={{ transform: "rotate(-90deg)" }}>
+                    <circle cx={28} cy={28} r={24} fill="none" stroke={V.fog} strokeWidth={3} />
+                    <circle cx={28} cy={28} r={24} fill="none" stroke={card.score < 30 ? V.coral : card.score < 50 ? V.amber : V.teal} strokeWidth={3} strokeLinecap="round" strokeDasharray={150.8} strokeDashoffset={150.8 - (card.score / 100) * 150.8} />
+                  </svg>
+                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: V.night, fontFamily: V.display, lineHeight: 1 }}>{card.score}</div>
                   </div>
                 </div>
-                <span style={{
-                  fontFamily: V.mono, fontSize: 9, padding: "2px 8px", borderRadius: 100,
-                  background: card.type === 'radar' ? V.amberWash : V.tealWash,
-                  color: card.type === 'radar' ? V.amber : V.teal, fontWeight: 700,
-                }}>
-                  {card.type === 'radar' ? 'RADAR' : 'GRÁTIS'}
-                </span>
-              </div>
-              <div style={{
-                display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10,
-              }}>
-                <div>
-                  <span style={{ fontSize: 28, fontWeight: 800, color: V.night, fontFamily: V.display }}>{card.score}</span>
-                  <span style={{ fontSize: 11, color: V.ash }}>/100</span>
+                <div style={{ fontSize: 11, color: V.zinc, lineHeight: 1.4 }}>
+                  <span style={{ color: V.night, fontWeight: 600 }}>{card.score}</span> hoje · <span style={{ color: V.teal, fontWeight: 600 }}>{card.potential}</span> potencial · média <span style={{ color: V.ash }}>{card.benchmark}</span>
                 </div>
-                <span style={{ fontSize: 10, color: card.score >= card.benchmark ? V.teal : V.amber, fontFamily: V.mono }}>
-                  média {card.benchmark}
-                </span>
               </div>
-              <p style={{ fontSize: 12, color: V.zinc, lineHeight: 1.5, margin: "0 0 12px", minHeight: 54 }}>
-                {card.insight}
-              </p>
-              <div style={{
-                background: V.cloud, borderRadius: 8, padding: "8px 10px",
-                borderLeft: `3px solid ${card.type === 'radar' ? V.amber : V.teal}`,
-              }}>
-                <div style={{ fontFamily: V.mono, fontSize: 8, color: V.ash, letterSpacing: "0.04em", marginBottom: 2 }}>
-                  AÇÃO PRONTA
-                </div>
-                <p style={{ fontSize: 11, color: V.night, margin: 0, lineHeight: 1.4, fontWeight: 500 }}>
-                  {card.action}
-                </p>
+
+              {/* Insight */}
+              <p style={{ fontSize: 11, color: V.zinc, lineHeight: 1.5, margin: "0 0 10px", minHeight: 40 }}>{card.insight}</p>
+
+              {/* Quick Win */}
+              <div style={{ background: V.cloud, borderRadius: 8, padding: "8px 10px", borderLeft: `3px solid ${V.teal}`, marginBottom: 8 }}>
+                <div style={{ fontFamily: V.mono, fontSize: 8, color: V.teal, letterSpacing: "0.04em", marginBottom: 2 }}>AÇÃO RÁPIDA</div>
+                <p style={{ fontSize: 11, color: V.night, margin: 0, lineHeight: 1.4, fontWeight: 500 }}>{card.quickWin}</p>
+              </div>
+
+              {/* Pilar preview */}
+              <div style={{ background: V.cloud, borderRadius: 8, padding: "8px 10px", borderLeft: `3px solid ${V.amber}`, opacity: 0.7 }}>
+                <div style={{ fontFamily: V.mono, fontSize: 8, color: V.amber, letterSpacing: "0.04em", marginBottom: 2 }}>PLANO DE CRESCIMENTO</div>
+                <p style={{ fontSize: 11, color: V.night, margin: 0, lineHeight: 1.4, fontWeight: 500 }}>{card.pillar}</p>
               </div>
             </div>
           ))}

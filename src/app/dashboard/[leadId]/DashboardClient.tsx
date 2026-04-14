@@ -1495,13 +1495,20 @@ function ContentsSection({ leadId, tier }: { leadId: string; tier: Tier }) {
       {olderWeeks.length > 0 && (
         <div style={{ marginTop: 16 }}>
           <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.05em", marginBottom: 8 }}>
-            SEMANAS ANTERIORES
+            SEMANAS ANTERIORES · {olderWeeks.length} semana{olderWeeks.length > 1 ? 's' : ''} de histórico
           </div>
-          {olderWeeks.map(wk => (
-            <Section key={wk} title={`Semana ${wk}`} defaultOpen={false}>
-              {(allByWeek[wk] || []).map((c: any) => <ContentCard key={c.id} c={c} leadId={leadId} />)}
-            </Section>
-          ))}
+          {olderWeeks.map(wk => {
+            const contentsCount = (allByWeek[wk] || []).length;
+            // Data aproximada baseada no generation_date dos conteúdos
+            const firstContent = (allByWeek[wk] || [])[0];
+            const genDate = firstContent?.generation_date || firstContent?.created_at;
+            const dateLabel = genDate ? new Date(genDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : '';
+            return (
+              <Section key={wk} title={`Semana ${wk}${dateLabel ? ` · ${dateLabel}` : ''} · ${contentsCount} conteúdo${contentsCount !== 1 ? 's' : ''}`} defaultOpen={false}>
+                {(allByWeek[wk] || []).map((c: any) => <ContentCard key={c.id} c={c} leadId={leadId} />)}
+              </Section>
+            );
+          })}
         </div>
       )}
     </div>
