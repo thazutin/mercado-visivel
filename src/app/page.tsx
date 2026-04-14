@@ -342,7 +342,7 @@ export default function Home() {
                     "Loja física": "loja_fisica",
                     "Online / e-commerce": "online",
                     "Prestação de serviço": "servico",
-                    "Marketplace (iFood, ML, etc)": "marketplace",
+                    "Marketplace (iFood, Mercado Livre, etc)": "marketplace",
                     "Direto (WhatsApp, telefone)": "direto",
                   };
                   const val = channelMap[opt] || "servico";
@@ -425,8 +425,8 @@ export default function Home() {
               </Field>
             )}
 
-            {/* iFood: mostra se produto parece food */}
-            {/restaurante|lanchonete|pizzaria|hamburgue|doceria|padaria|café|cafeteria|açaí|sushi|food|delivery|cozinha|buffet|sorveteria|pastelaria|bar /i.test(formData.product || '') && (
+            {/* iFood: mostra se marketplace OU produto parece food */}
+            {((formData as any).salesChannel === 'marketplace' || /restaurante|lanchonete|pizzaria|hamburgue|doceria|padaria|café|cafeteria|açaí|sushi|food|delivery|cozinha|buffet|sorveteria|pastelaria|bar /i.test(formData.product || '')) && (
               <Field label="Seu link no iFood" hint="Link direto — ex: ifood.com.br/delivery/cidade/seu-restaurante">
                 <input style={inputStyle} type="text" placeholder="ifood.com.br/delivery/..."
                   value={(formData as any).ifoodUrl || ""}
