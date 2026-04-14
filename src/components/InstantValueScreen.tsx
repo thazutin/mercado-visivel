@@ -444,9 +444,12 @@ export default function InstantValueScreen({ product, region, results: initialRe
 
           return (
             <div style={{ background: V.white, borderRadius: 16, border: `1px solid ${V.fog}`, padding: "28px 20px", marginBottom: 16, textAlign: "center" }}>
-              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 16 }}>
-                ÍNDICE DE VISIBILIDADE
+              <div style={{ fontFamily: V.display, fontSize: 15, fontWeight: 700, color: V.night, marginBottom: 4 }}>
+                Qual fatia do seu mercado você disputa?
               </div>
+              <p style={{ fontSize: 11, color: V.zinc, margin: "0 0 16px", lineHeight: 1.5 }}>
+                Medimos sua presença no Google, Instagram e IA pra calcular quanto do mercado local te encontra hoje.
+              </p>
 
               {/* Ring */}
               <div style={{ position: "relative", width: ringSize, height: ringSize, margin: "0 auto 20px" }}>
@@ -479,6 +482,17 @@ export default function InstantValueScreen({ product, region, results: initialRe
                   <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>Média mercado</div>
                 </div>
               </div>
+
+              {/* Explicação contextual */}
+              <p style={{ fontSize: 11, color: V.zinc, margin: "14px 0 0", lineHeight: 1.6 }}>
+                {scoreAtual < 20
+                  ? `Hoje, quase ninguém que busca "${product}" na sua região te encontra. Com as ações certas, você pode chegar a ${scorePotencial} e capturar uma fatia real do mercado.`
+                  : scoreAtual < 40
+                  ? `Você disputa ${scoreAtual}% da atenção do seu mercado. Concorrentes na região estão em ~${competitorAvgRating > 0 ? Math.round(competitorAvgRating * 10) : 35}. Chegar a ${scorePotencial} é viável em 90 dias.`
+                  : scoreAtual < 60
+                  ? `Boa posição — ${scoreAtual}% do mercado te encontra. Pra puxar de ${scoreAtual} pra ${scorePotencial}, foque nas ações abaixo.`
+                  : `Forte presença: ${scoreAtual}% do mercado te encontra. Você está acima da média. Foque em manter e expandir.`}
+              </p>
 
               {/* Source chips */}
               {fontesEncontradas.length > 0 && (
