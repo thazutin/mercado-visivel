@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import AnimatedCounter from "./AnimatedCounter";
-import FeedbackWidget from "./FeedbackWidget";
+// FeedbackWidget removido — será adicionado em outro momento da jornada
 import { NelsonLogo } from "./NelsonLogo";
 import { V, ICONS, PILAR_COLORS } from "@/lib/design-tokens";
 
@@ -365,21 +365,42 @@ export default function InstantValueScreen({ product, region, results: initialRe
 
   useEffect(() => {
     if (!leadId) { setQwLoading(false); return; }
-    const fetchQW = async () => {
+    let cancelled = false;
+
+    const fetchQW = async (attempt: number) => {
+      if (cancelled) return;
       try {
+        // Tenta GET primeiro (GM já gerada?)
         const res = await fetch(`/api/growth-machine?leadId=${leadId}`);
         if (res.ok) {
           const data = await res.json();
-          if (data.status === 'ready' && data.data?.quickWins) {
-            setQuickWins(data.data.quickWins);
+          if (data.status === 'ready' && data.data?.quickWins?.length > 0) {
+            if (!cancelled) { setQuickWins(data.data.quickWins); setQwLoading(false); }
+            return;
           }
         }
-      } catch { /* ignore */ }
-      setQwLoading(false);
+        // Se não existe, tenta gerar via POST
+        if (attempt <= 1) {
+          await fetch('/api/growth-machine', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ leadId }),
+          });
+        }
+        // Retry até 3x com 8s entre tentativas
+        if (attempt < 3 && !cancelled) {
+          setTimeout(() => fetchQW(attempt + 1), 8000);
+        } else if (!cancelled) {
+          setQwLoading(false);
+        }
+      } catch {
+        if (!cancelled) setQwLoading(false);
+      }
     };
-    // Wait 5s for GM to generate (runs in background after pipeline)
-    const timer = setTimeout(fetchQW, 5000);
-    return () => clearTimeout(timer);
+
+    // Primeira tentativa após 3s (pipeline precisa terminar antes)
+    const timer = setTimeout(() => fetchQW(0), 3000);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [leadId]);
 
   // Score visual data
@@ -541,54 +562,8 @@ export default function InstantValueScreen({ product, region, results: initialRe
                 </>
               )}
             </>
-          ) : (
-            /* Fallback: show pilar cards if no quick wins loaded */
-            pilarCards.map((p, i) => {
-              const lever = allLevers.find((l: any) => l.dimension === p.dim || (p.dim === 'credibilidade' && l.dimension === 'reputacao'));
-              return (
-                <div key={i} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "16px 18px", marginBottom: 10 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>{p.icon} {p.label}</span>
-                    <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 700, color: p.score < 30 ? V.coral : p.score < 50 ? V.amber : V.teal }}>{p.score}/100</span>
-                  </div>
-                  <p style={{ fontSize: 12, color: V.night, margin: "0 0 8px", lineHeight: 1.5, fontWeight: 500 }}>{lever?.action || p.fallback}</p>
-                  <div style={{ padding: "4px 8px", background: p.status.bg, borderRadius: 4, fontSize: 10, color: p.status.color, fontWeight: 500, display: "inline-block" }}>{p.status.text}</div>
-                </div>
-              );
-            })
-          )}
+          ) : null}
         </div>
-
-        {/* CTA Radar inline */}
-        {!hideCTA && (
-          <div style={{ background: "linear-gradient(135deg, #161618 0%, #2A2A30 100%)", borderRadius: 14, padding: "24px 20px", marginBottom: 20 }}>
-            <div style={{ textAlign: "center", marginBottom: 16 }}>
-              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, letterSpacing: "0.06em", marginBottom: 8 }}>RADAR DE CRESCIMENTO</div>
-              <p style={{ fontSize: 15, color: V.white, fontWeight: 700, margin: "0 0 8px" }}>
-                Desbloqueie {quickWins.length > 3 ? `${quickWins.length - 3} ações` : 'todas as ações'} + monitoramento semanal
-              </p>
-              <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>
-                Ações com passo a passo, conteúdo pronto pra copiar, monitoramento semanal do mercado e dos concorrentes.
-              </p>
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap" as const, justifyContent: "center", gap: 6, marginBottom: 16 }}>
-              {['Respostas pra reviews', 'Posts prontos', 'Bio otimizada', 'WhatsApp templates', 'Radar semanal', 'Score de evolução'].map((tag, i) => (
-                <span key={i} style={{ fontSize: 9, fontWeight: 600, color: V.amber, background: "rgba(207,133,35,0.15)", padding: "3px 8px", borderRadius: 4 }}>{tag}</span>
-              ))}
-            </div>
-            <div style={{ textAlign: "center", marginBottom: 12 }}>
-              <span style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, color: V.white }}>R$ 247</span>
-              <span style={{ fontSize: 14, color: V.ash }}>/mês</span>
-            </div>
-            <button onClick={() => onCheckout(couponApplied ? coupon : undefined)} disabled={loading} style={{
-              width: "100%", padding: "14px", borderRadius: 10, border: "none",
-              background: V.amber, color: V.white, fontSize: 15, fontWeight: 700,
-              cursor: loading ? "wait" : "pointer", opacity: loading ? 0.7 : 1,
-            }}>
-              {loading ? "Redirecionando..." : "Ativar meu Radar de Crescimento →"}
-            </button>
-          </div>
-        )}
 
         {/* ═══════════════ ELEMENTOS COMPETITIVOS ═══════════════ */}
         <div style={{ fontFamily: V.mono, fontSize: 10, color: V.night, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 10 }}>
@@ -1026,13 +1001,6 @@ export default function InstantValueScreen({ product, region, results: initialRe
           </div>
         )}
 
-
-        {/* Feedback */}
-        {leadId && (
-          <div style={{ marginTop: 8, marginBottom: 12 }}>
-            <FeedbackWidget leadId={leadId} triggerPoint="post_instant_value" />
-          </div>
-        )}
 
         {/* Footer */}
         <div style={{ textAlign: "center", padding: "20px 0 0" }}>

@@ -439,7 +439,7 @@ export default function PollingScreen({
           <p style={{ color: V.ash, fontSize: 13, margin: "0 0 8px" }}>{shortRegion}</p>
         )}
         <p style={{ color: V.zinc, fontSize: 12, fontFamily: V.mono, marginBottom: 32 }}>
-          Isso pode levar até 2 minutos
+          Isso pode levar até 60 segundos
         </p>
 
         {error ? (
