@@ -81,7 +81,7 @@ Two notification channels: **Email (Resend)** and **WhatsApp (Twilio)**.
 
 #### Fluxo de assinatura (recorrência)
 
-1. Usuário clica "Assinar por R$99/mês" na tab Conteúdos do dashboard (requer diagnóstico pago)
+1. Usuário clica "Assinar por R$247/mês" na tab Conteúdos do dashboard (requer diagnóstico pago)
 2. `POST /api/checkout/subscription` cria Stripe Checkout Session `mode: "subscription"` com `STRIPE_SUBSCRIPTION_PRICE_ID`
 3. Stripe `success_url` redireciona para `/dashboard/{leadId}?subscribed=true`
 4. Webhook `checkout.session.completed` com `metadata.type === "subscription"`:

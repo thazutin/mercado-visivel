@@ -77,7 +77,7 @@ export default function TermosPage() {
             <strong style={{ color: V.night }}>Janela inclusa no diagnóstico pago:</strong> a contratação do
             diagnóstico completo (R$497) inclui 30 dias corridos de operação do agente Google Business Profile,
             contados a partir da conexão da ficha. Após esse período, o agente é pausado. A continuidade da
-            operação ocorre por meio da assinatura mensal Virô (R$99/mês), que pode ser ativada a qualquer
+            operação ocorre por meio da assinatura mensal Virô (R$247/mês), que pode ser ativada a qualquer
             momento durante ou após a janela inicial.
           </p>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: V.zinc }}>

@@ -591,8 +591,8 @@ export default function Home() {
             { title: "Você informa seu negócio", text: "Nome, segmento e endereço. Leva menos de 1 minuto." },
             { title: "Seu radar de crescimento analisa o mercado", text: "Cruzamos Google, Maps, Instagram, iFood, Reclame Aqui, IBGE e mais 12 fontes pra mapear sua posição, seus concorrentes e sua oportunidade real." },
             { title: "Você recebe o diagnóstico grátis", text: "Quantos clientes você pode ter a mais por mês, quem disputa com você e o que está te impedindo de crescer." },
-            { title: "Tudo pronto pra você executar", text: "Ações com passo a passo, conteúdo pronto pra copiar e colar, e um plano com metas claras — baseado nos dados reais do SEU mercado." },
-            { title: "Radar ativo toda semana — R$247/mês", text: "Monitoramento contínuo, ações atualizadas e materiais prontos toda semana. Seu marketing no piloto automático." },
+            { title: "Tudo pronto pra você executar", text: "Pilares estratégicos com objetivo, KPI e timeline; ações rápidas com passo a passo e copy pronto; provocações baseadas no que o radar detectou — tudo com dados reais do SEU mercado." },
+            { title: "Radar ativo toda sexta — R$247/mês", text: "4 posts prontos com imagens, 3 briefings de produção, 1 relatório setorial, respostas pras reviews novas e score reanalisado. Seu marketing no piloto automático." },
           ].map((step, i) => (
             <div key={i} style={{ background: V.white, borderRadius: 14, padding: "20px 20px", border: `1px solid ${V.fog}`, display: "flex", gap: 16, alignItems: "flex-start" }}>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
@@ -673,62 +673,68 @@ export default function Home() {
             </p>
           </div>
 
-          {/* ─── BLOCO 2: RADAR ─── */}
+          {/* ─── BLOCO 2: ATIVOU O RADAR · PLANO COMPLETO ─── */}
           <div style={{ padding: "24px", borderTop: `2px solid ${V.amber}` }}>
-            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.06em", marginBottom: 12 }}>RADAR DE CRESCIMENTO · R$247/MÊS</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, marginBottom: 16 }}>Seu radar detecta, analisa e entrega tudo pronto</div>
+            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.06em", marginBottom: 12 }}>ATIVOU O RADAR · R$247/MÊS</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, marginBottom: 6 }}>Sua operação é montada com os dados reais do seu mercado</div>
+            <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 16px", lineHeight: 1.6 }}>Pilares estratégicos, ações rápidas com copy pronto e provocações baseadas no que o radar detectou.</p>
 
-            {/* Exemplo 1: Oportunidade detectada */}
-            <div style={{ background: V.amberWash, borderRadius: 12, padding: "14px 16px", marginBottom: 10, border: `1px solid ${V.amber}30` }}>
+            {/* Exemplo 1: Pilar Estratégico com KPI */}
+            <div style={{ background: V.cloud, borderRadius: 12, padding: "16px", marginBottom: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, letterSpacing: "0.05em" }}>🏗️ PILAR ESTRATÉGICO</span>
+                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.white, padding: "2px 8px", borderRadius: 100 }}>setup 30 dias</span>
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 6 }}>Sistema de fidelização por WhatsApp</div>
+              <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 10px", lineHeight: 1.5 }}>
+                Objetivo, timeline, recursos necessários, riscos e etapas com conteúdo pronto pra cada passo.
+              </p>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 10, fontWeight: 600, color: V.teal, background: V.tealWash, padding: "3px 8px", borderRadius: 4 }}>Meta: 40% clientes voltando em 15d</span>
+                <span style={{ fontSize: 10, fontWeight: 600, color: V.amber, background: V.amberWash, padding: "3px 8px", borderRadius: 4 }}>Resultado em 60d</span>
+              </div>
+            </div>
+
+            {/* Exemplo 2: Ação Rápida com steps + copy pronto */}
+            <div style={{ background: V.cloud, borderRadius: 12, padding: "16px", marginBottom: 10 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.teal, letterSpacing: "0.05em" }}>⚡ AÇÃO RÁPIDA</span>
+                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.white, padding: "2px 8px", borderRadius: 100 }}>~15 min</span>
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 4 }}>Responder 17 avaliações do Google</div>
+              <p style={{ fontSize: 11, color: V.zinc, margin: "0 0 10px", lineHeight: 1.5 }}>Passo a passo + copy personalizado pra cada review. +8 pts em Credibilidade.</p>
+              <div style={{ background: V.white, borderRadius: 8, padding: "12px", borderLeft: `3px solid ${V.amber}` }}>
+                <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, marginBottom: 6 }}>PRONTO PRA COPIAR</div>
+                <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.5 }}>
+                  "Muito obrigado, João! Ficamos felizes que tenha gostado. Esperamos você de volta — Aggregati"
+                </p>
+                <p style={{ fontSize: 10, color: V.ash, margin: "6px 0 0", fontStyle: "italic" }}>+ 16 respostas personalizadas prontas</p>
+              </div>
+            </div>
+
+            {/* Exemplo 3: Provocation — radar detectou */}
+            <div style={{ background: V.amberWash, borderRadius: 12, padding: "14px 16px", border: `1px solid ${V.amber}30` }}>
               <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
                 <span style={{ fontSize: 14 }}>📡</span>
                 <div>
-                  <p style={{ fontSize: 13, color: V.night, margin: "0 0 4px", fontWeight: 600 }}>Seu radar detectou:</p>
-                  <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>3 concorrentes não respondem avaliações. Nenhum posta no Instagram há 2 semanas. Oportunidade clara de se destacar agora.</p>
+                  <p style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, margin: "0 0 4px", letterSpacing: "0.05em" }}>SEU RADAR DETECTOU</p>
+                  <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.5 }}>3 concorrentes no raio de 500m respondem todas as avaliações. Nenhum posta no Instagram há 2 semanas. Oportunidade clara de se destacar agora.</p>
                 </div>
-              </div>
-            </div>
-
-            {/* Exemplo 2: Ação pronta */}
-            <div style={{ background: V.cloud, borderRadius: 12, padding: "16px", marginBottom: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>Responder 17 avaliações do Google</span>
-                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.white, padding: "2px 8px", borderRadius: 100 }}>~10 min</span>
-              </div>
-              <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 10px" }}>Sua nota: 3.8★ — meta: 4.5★. Respostas aumentam confiança em 40% e geram mais avaliações.</p>
-              <div style={{ background: V.white, borderRadius: 8, padding: "12px", borderLeft: `3px solid ${V.amber}` }}>
-                <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, marginBottom: 6 }}>PRONTO PRA COPIAR</div>
-                <p style={{ fontSize: 12, color: V.night, margin: "0 0 4px", lineHeight: 1.5 }}>
-                  "Muito obrigado pelo feedback, João! Ficamos felizes que tenha gostado. Esperamos você de volta — Equipe Studio Fitness"
-                </p>
-                <p style={{ fontSize: 10, color: V.ash, margin: "4px 0 0", fontStyle: "italic" }}>+ 16 respostas personalizadas prontas</p>
-              </div>
-            </div>
-
-            {/* Exemplo 3: Post pronto */}
-            <div style={{ background: V.cloud, borderRadius: 12, padding: "16px", marginBottom: 10 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: V.night }}>Post Instagram pronto pra publicar</span>
-                <span style={{ fontSize: 10, color: "#E1306C", fontWeight: 600, background: "rgba(225,48,108,0.08)", padding: "2px 8px", borderRadius: 100 }}>Feed</span>
-              </div>
-              <div style={{ background: V.white, borderRadius: 8, padding: "12px", borderLeft: `3px solid ${V.amber}` }}>
-                <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.5 }}>
-                  "Campinas tem mais de 200 academias. Só 12 oferecem pilates com acompanhamento individual. Aqui no Studio Fitness, cada aluno tem um plano personalizado desde o primeiro dia..."
-                </p>
               </div>
             </div>
           </div>
 
-          {/* ─── BLOCO 3: AÇÕES SEMANAIS ─── */}
+          {/* ─── BLOCO 3: RADAR SEMANAL ─── */}
           <div style={{ padding: "24px", borderTop: `2px solid ${V.slate}`, background: V.cloud }}>
-            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.slate, letterSpacing: "0.06em", marginBottom: 12 }}>MONITORAMENTO SEMANAL · INCLUSO</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, marginBottom: 12 }}>Toda sexta-feira no seu painel — para copiar e colar</div>
+            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.slate, letterSpacing: "0.06em", marginBottom: 12 }}>RADAR SEMANAL · TODA SEXTA</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: V.night, marginBottom: 6 }}>Seu painel atualiza sozinho — toda sexta-feira</div>
+            <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 16px", lineHeight: 1.6 }}>Novos conteúdos, respostas prontas pras reviews novas, score reanalisado e relatório do que mudou no mercado.</p>
 
             {/* Preview de post semanal */}
-            <div style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "14px", marginBottom: 10 }}>
+            <div style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "14px", marginBottom: 12 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <span style={{ fontSize: 10, color: "#E1306C", fontWeight: 600, background: "rgba(225,48,108,0.08)", padding: "2px 8px", borderRadius: 100 }}>Instagram Feed</span>
-                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>segunda às 19h</span>
+                <span style={{ fontSize: 10, color: "#E1306C", fontWeight: 600, background: "rgba(225,48,108,0.08)", padding: "2px 8px", borderRadius: 100 }}>Instagram Feed · AUTORIDADE</span>
+                <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>segunda 19h</span>
               </div>
               <p style={{ fontSize: 13, fontWeight: 700, color: V.night, margin: "0 0 6px", lineHeight: 1.4 }}>
                 São Paulo tem mais de 6 mil pizzarias, mas apenas 15% fazem massa fresca diariamente.
@@ -736,20 +742,34 @@ export default function Home() {
               <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
                 Aqui na Aggregati, no coração do Sumarezinho, nossa massa é preparada toda manhã. Zero conservantes, zero pressa...
               </p>
+              <div style={{ fontSize: 10, color: V.ash, marginTop: 8, fontStyle: "italic" }}>+ imagem gerada por IA inclusa</div>
             </div>
 
-            <div style={{ display: "flex", gap: 8 }}>
-              <div style={{ flex: 1, background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px", textAlign: "center" }}>
-                <div style={{ fontSize: 20, fontWeight: 800, color: V.night }}>5</div>
-                <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono }}>posts prontos com imagens</div>
+            {/* Grid 3x2 — o que vem toda sexta */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginBottom: 0 }}>
+              <div style={{ background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px 6px", textAlign: "center" }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: V.night }}>4</div>
+                <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono, lineHeight: 1.3 }}>posts prontos + imagens</div>
               </div>
-              <div style={{ flex: 1, background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px", textAlign: "center" }}>
+              <div style={{ background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px 6px", textAlign: "center" }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: V.night }}>3</div>
-                <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono }}>briefings</div>
+                <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono, lineHeight: 1.3 }}>briefings de produção</div>
               </div>
-              <div style={{ flex: 1, background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px", textAlign: "center" }}>
+              <div style={{ background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px 6px", textAlign: "center" }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: V.night }}>1</div>
-                <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono }}>relatório mercado</div>
+                <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono, lineHeight: 1.3 }}>relatório setorial</div>
+              </div>
+              <div style={{ background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px 6px", textAlign: "center" }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color: V.teal }}>★</div>
+                <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono, lineHeight: 1.3 }}>respostas a reviews novas</div>
+              </div>
+              <div style={{ background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px 6px", textAlign: "center" }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color: V.amber }}>Δ</div>
+                <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono, lineHeight: 1.3 }}>score atualizado (delta)</div>
+              </div>
+              <div style={{ background: V.white, borderRadius: 8, border: `1px solid ${V.fog}`, padding: "10px 6px", textAlign: "center" }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color: "#E1306C" }}>↻</div>
+                <div style={{ fontSize: 9, color: V.ash, fontFamily: V.mono, lineHeight: 1.3 }}>Instagram re-analisado</div>
               </div>
             </div>
           </div>
@@ -767,14 +787,86 @@ export default function Home() {
         </p>
         <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 12, scrollSnapType: "x mandatory" as const }}>
           {[
-            { icon: "🍽️", segment: "Pizzaria Artesanal", region: "Sumarezinho, SP", score: 29, benchmark: 38, potential: 64, quickWin: "Responder 88 avaliações do Google", pillar: "Sistema de fidelização por WhatsApp", insight: "3 concorrentes no raio de 500m respondem todas as avaliações. Você tem 88 sem resposta." },
-            { icon: "💇", segment: "Barbearia", region: "Savassi, BH", score: 22, benchmark: 35, potential: 57, quickWin: "Ajustar bio e perfil do Instagram", pillar: "Motor de conteúdo visual (Reels + Stories)", insight: "@cortecerto tem 2.100 seg e 12 posts/mês. Você: 340 seg e 0 posts." },
-            { icon: "⚖️", segment: "Escritório de Advocacia", region: "Centro, Florianópolis", score: 41, benchmark: 33, potential: 72, quickWin: "Criar artigo SEO sobre 'advogado trabalhista'", pillar: "Captura de leads via Google + site", insight: "'advogado trabalhista florianópolis': 320 buscas/mês. Posição 12 — fora da primeira página." },
-            { icon: "⚡", segment: "Comercializadora de Energia", region: "Nacional", score: 8, benchmark: 22, potential: 45, quickWin: "Prospectar 142 empresas elegíveis no ML em SP", pillar: "Pipeline de prospecção B2B com decisores", insight: "142 empresas elegíveis no mercado livre em SP. 3 licitações abertas no PNCP." },
-            { icon: "📡", segment: "Provedor de Internet", region: "Campos do Jordão, SP", score: 68, benchmark: 35, potential: 85, quickWin: "Mapear expansão pra São Luiz do Paraitinga", pillar: "Plano de expansão geográfica", insight: "Líder local com 340 reviews. S. Luiz do Paraitinga tem 1 ISP com score 15." },
-            { icon: "🏥", segment: "Clínica de Estética", region: "Tatuapé, SP", score: 19, benchmark: 30, potential: 55, quickWin: "Responder 12 reviews negativos no Google", pillar: "Programa de indicação com WhatsApp", insight: "Nota 3.8 vs média 4.4 do setor. 12 reviews negativos sobre atendimento." },
-            { icon: "🐾", segment: "Pet Shop", region: "Boa Viagem, Recife", score: 33, benchmark: 30, potential: 60, quickWin: "Publicar 3 posts/semana no Instagram", pillar: "Parcerias com veterinárias locais", insight: "Nenhum concorrente posta mais que 2x/mês. Oportunidade de se destacar." },
-            { icon: "🎨", segment: "Criadora de Conteúdo", region: "Nacional", score: 14, benchmark: 25, potential: 50, quickWin: "Otimizar bio com 3 termos SEO", pillar: "Estrutura de loja online + funil de vendas", insight: "'artesanato macramê': 1.900 buscas/mês. Reels alcançam 200 — potencial: 15x mais." },
+            {
+              icon: "🍽️", segment: "Pizzaria Artesanal", region: "Sumarezinho, SP",
+              score: 29, benchmark: 38, potential: 64,
+              provocation: "3 concorrentes no raio de 500m respondem todas as avaliações. Você tem 88 sem resposta há 4 meses.",
+              quickWin: "Responder 88 avaliações do Google",
+              quickWinCopy: "\"Muito obrigado, Maria! Esperamos você de volta — Aggregati\"",
+              pillar: "Sistema de fidelização por WhatsApp",
+              pillarKpi: "40% clientes voltando em 15d",
+              weekly: "Post semanal: \"SP tem 6k pizzarias, só 15% fazem massa fresca...\"",
+            },
+            {
+              icon: "💇", segment: "Barbearia", region: "Savassi, BH",
+              score: 22, benchmark: 35, potential: 57,
+              provocation: "@cortecerto tem 2.100 seguidores e 12 posts/mês. Você: 340 seguidores e 0 posts nos últimos 30 dias.",
+              quickWin: "Ajustar bio + perfil do Instagram",
+              quickWinCopy: "Bio otimizada com palavras-chave locais + CTA pro WhatsApp",
+              pillar: "Motor de conteúdo visual (Reels + Stories)",
+              pillarKpi: "1,5k seguidores em 90d",
+              weekly: "4 posts/semana com imagem IA + 3 briefings de Reels",
+            },
+            {
+              icon: "⚖️", segment: "Escritório de Advocacia", region: "Centro, Florianópolis",
+              score: 41, benchmark: 33, potential: 72,
+              provocation: "'advogado trabalhista florianópolis': 320 buscas/mês. Você na posição 12 — fora da primeira página do Google.",
+              quickWin: "Artigo SEO 'direitos do trabalhador demitido'",
+              quickWinCopy: "Estrutura + texto pronto de 1.200 palavras com hook + CTA",
+              pillar: "Captura de leads via Google + site",
+              pillarKpi: "20 leads qualificados/mês",
+              weekly: "1 artigo LinkedIn + 1 post GBP por semana",
+            },
+            {
+              icon: "⚡", segment: "Comercializadora de Energia", region: "Nacional",
+              score: 8, benchmark: 22, potential: 45,
+              provocation: "142 empresas elegíveis no mercado livre em SP. 3 licitações abertas no PNCP agora.",
+              quickWin: "Contatar 10 decisores do top-20",
+              quickWinCopy: "Email frio personalizado por conta + dados do PNCP",
+              pillar: "Pipeline de prospecção B2B com decisores",
+              pillarKpi: "5 reuniões qualificadas/semana",
+              weekly: "Post LinkedIn + análise de licitações novas",
+            },
+            {
+              icon: "📡", segment: "Provedor de Internet", region: "Campos do Jordão, SP",
+              score: 68, benchmark: 35, potential: 85,
+              provocation: "Líder local com 340 reviews. S. Luiz do Paraitinga tem 1 ISP com score 15 e 8k habitantes sem concorrência.",
+              quickWin: "Mapear expansão pra S. Luiz do Paraitinga",
+              quickWinCopy: "Briefing de expansão: investimento, TAM e riscos mapeados",
+              pillar: "Plano de expansão geográfica",
+              pillarKpi: "500 assinantes em cidade vizinha em 6m",
+              weekly: "Post GBP + monitoramento de concorrência em cidades alvo",
+            },
+            {
+              icon: "🏥", segment: "Clínica de Estética", region: "Tatuapé, SP",
+              score: 19, benchmark: 30, potential: 55,
+              provocation: "Nota 3.8 vs média 4.4 do setor. 12 reviews negativos sobre atendimento nos últimos 90 dias.",
+              quickWin: "Responder 12 reviews negativos",
+              quickWinCopy: "\"Oi Carla, lamento o ocorrido. Me chama no WhatsApp pra resolvermos...\"",
+              pillar: "Programa de indicação com WhatsApp",
+              pillarKpi: "3 indicações por cliente ativo",
+              weekly: "Respostas prontas pras reviews novas + 4 posts",
+            },
+            {
+              icon: "🐾", segment: "Pet Shop", region: "Boa Viagem, Recife",
+              score: 33, benchmark: 30, potential: 60,
+              provocation: "Nenhum concorrente no raio de 1km posta mais que 2x/mês. Janela aberta de autoridade local.",
+              quickWin: "Publicar 3 posts/semana no Instagram",
+              quickWinCopy: "3 posts prontos com texto + imagem gerada por IA",
+              pillar: "Parcerias com veterinárias locais",
+              pillarKpi: "3 parceiros em 30d, 50% dos novos clientes via indicação",
+              weekly: "4 posts IG + relatório de movimentação dos concorrentes",
+            },
+            {
+              icon: "🎨", segment: "Criadora de Conteúdo", region: "Nacional",
+              score: 14, benchmark: 25, potential: 50,
+              provocation: "'artesanato macramê': 1.900 buscas/mês. Seus Reels alcançam 200 — potencial: 15x mais com 3 ajustes.",
+              quickWin: "Otimizar bio com 3 termos SEO",
+              quickWinCopy: "Bio reescrita + 3 hooks testados pros próximos Reels",
+              pillar: "Loja online + funil de vendas",
+              pillarKpi: "50 vendas/mês em 90d",
+              weekly: "3 roteiros de Reels + 1 relatório de tendências do nicho",
+            },
           ].map((card, i) => (
             <div key={i} style={{
               flexShrink: 0, width: 300, scrollSnapAlign: "start" as const,
@@ -806,19 +898,30 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Insight */}
-              <p style={{ fontSize: 11, color: V.zinc, lineHeight: 1.5, margin: "0 0 10px", minHeight: 40 }}>{card.insight}</p>
-
-              {/* Quick Win */}
-              <div style={{ background: V.cloud, borderRadius: 8, padding: "8px 10px", borderLeft: `3px solid ${V.teal}`, marginBottom: 8 }}>
-                <div style={{ fontFamily: V.mono, fontSize: 8, color: V.teal, letterSpacing: "0.04em", marginBottom: 2 }}>AÇÃO RÁPIDA</div>
-                <p style={{ fontSize: 11, color: V.night, margin: 0, lineHeight: 1.4, fontWeight: 500 }}>{card.quickWin}</p>
+              {/* Radar detectou */}
+              <div style={{ background: V.amberWash, borderRadius: 8, padding: "8px 10px", border: `1px solid ${V.amber}20`, marginBottom: 8 }}>
+                <div style={{ fontFamily: V.mono, fontSize: 8, color: V.amber, letterSpacing: "0.04em", marginBottom: 2 }}>📡 RADAR DETECTOU</div>
+                <p style={{ fontSize: 11, color: V.night, margin: 0, lineHeight: 1.4, minHeight: 44 }}>{card.provocation}</p>
               </div>
 
-              {/* Pilar preview */}
-              <div style={{ background: V.cloud, borderRadius: 8, padding: "8px 10px", borderLeft: `3px solid ${V.amber}`, opacity: 0.7 }}>
-                <div style={{ fontFamily: V.mono, fontSize: 8, color: V.amber, letterSpacing: "0.04em", marginBottom: 2 }}>PLANO DE CRESCIMENTO</div>
-                <p style={{ fontSize: 11, color: V.night, margin: 0, lineHeight: 1.4, fontWeight: 500 }}>{card.pillar}</p>
+              {/* Ação Rápida com copy preview */}
+              <div style={{ background: V.cloud, borderRadius: 8, padding: "8px 10px", borderLeft: `3px solid ${V.teal}`, marginBottom: 8 }}>
+                <div style={{ fontFamily: V.mono, fontSize: 8, color: V.teal, letterSpacing: "0.04em", marginBottom: 2 }}>⚡ AÇÃO RÁPIDA · COPY PRONTO</div>
+                <p style={{ fontSize: 11, color: V.night, margin: "0 0 4px", lineHeight: 1.4, fontWeight: 600 }}>{card.quickWin}</p>
+                <p style={{ fontSize: 10, color: V.zinc, margin: 0, lineHeight: 1.4, fontStyle: "italic" }}>{card.quickWinCopy}</p>
+              </div>
+
+              {/* Pilar Estratégico com KPI */}
+              <div style={{ background: V.cloud, borderRadius: 8, padding: "8px 10px", borderLeft: `3px solid ${V.amber}`, marginBottom: 8 }}>
+                <div style={{ fontFamily: V.mono, fontSize: 8, color: V.amber, letterSpacing: "0.04em", marginBottom: 2 }}>🏗️ PILAR ESTRATÉGICO</div>
+                <p style={{ fontSize: 11, color: V.night, margin: "0 0 4px", lineHeight: 1.4, fontWeight: 600 }}>{card.pillar}</p>
+                <span style={{ fontSize: 9, fontWeight: 600, color: V.teal, background: V.tealWash, padding: "2px 6px", borderRadius: 4, display: "inline-block" }}>Meta: {card.pillarKpi}</span>
+              </div>
+
+              {/* Radar semanal */}
+              <div style={{ background: V.night, borderRadius: 8, padding: "8px 10px" }}>
+                <div style={{ fontFamily: V.mono, fontSize: 8, color: V.amber, letterSpacing: "0.04em", marginBottom: 2 }}>📅 TODA SEXTA</div>
+                <p style={{ fontSize: 10, color: V.white, margin: 0, lineHeight: 1.4 }}>{card.weekly}</p>
               </div>
             </div>
           ))}
@@ -847,10 +950,10 @@ export default function Home() {
               <span style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.06em", fontWeight: 600 }}>RADAR DE CRESCIMENTO · CANCELE QUANDO QUISER</span>
               <span style={{ fontFamily: V.mono, fontSize: 11, color: V.amber, fontWeight: 700 }}>R$247/mês</span>
             </div>
-            <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 6px" }}>Seu marketing montado + radar semanal do mercado.</p>
-            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: "0 0 12px" }}>Ações prontas com texto pra copiar e colar, conteúdo personalizado pro seu segmento, monitoramento do mercado e materiais novos toda semana.</p>
+            <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 6px" }}>Sua operação montada + radar semanal do mercado.</p>
+            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: "0 0 12px" }}>Pilares estratégicos com KPI, ações rápidas com copy pronto, provocações baseadas em dados — e toda sexta: 4 posts com imagens, 3 briefings de produção, 1 relatório setorial, respostas pras reviews novas e score reanalisado.</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {['Ações rápidas', 'Pilares estratégicos', 'Copy pronto', 'Radar semanal', '25 segmentos', '12+ fontes de dados'].map((tag, i) => (
+              {['Pilares com KPI', 'Ações rápidas + copy', '4 posts/semana', '3 briefings/semana', 'Relatório setorial', 'Respostas a reviews', 'Score semanal', '25 segmentos', '12+ fontes de dados'].map((tag, i) => (
                 <span key={i} style={{ fontSize: 10, fontWeight: 600, color: V.amber, background: V.amberWash, padding: "3px 8px", borderRadius: 4 }}>{tag}</span>
               ))}
             </div>
@@ -899,7 +1002,7 @@ export default function Home() {
         {[
           { q: "O diagnóstico gratuito usa dados reais do meu negócio?", a: "Sim. O Virô consulta em tempo real o Google Maps, o Instagram, o volume de buscas no Google, dados demográficos do IBGE e a presença do seu negócio em respostas de IA. Nada é inventado — tudo vem de fontes públicas e verificáveis." },
           { q: "Quanto custa?", a: "O diagnóstico é gratuito e já entrega ações práticas pro seu negócio. O Radar custa R$247/mês — inclui tudo pronto pra você executar: ações, conteúdo, monitoramento semanal. Cancele quando quiser, sem fidelidade." },
-          { q: "O que eu recebo com o Radar?", a: "Ações prontas com texto pra copiar (otimização do Google, bio do Instagram, respostas a reviews), conteúdo personalizado pro seu setor, monitoramento semanal do mercado e dos concorrentes, e sazonalidade — tudo atualizado toda semana." },
+          { q: "O que eu recebo com o Radar?", a: "Na ativação: seu plano completo — pilares estratégicos com objetivo, KPI e timeline, ações rápidas com passo a passo e copy pronto (bio do Instagram, respostas a reviews, otimização do Google), e provocações baseadas no que o radar detectou nos concorrentes. Toda sexta-feira: 4 posts prontos com imagens, 3 briefings de produção pra delegar, 1 relatório setorial da semana, drafts de resposta pras reviews novas e score reanalisado com o delta vs. semana anterior." },
           { q: "Em quanto tempo fico com o plano pronto?", a: "O diagnóstico inicial leva cerca de 60 segundos. Após o pagamento, o plano completo é gerado em 2 a 5 minutos e fica disponível no painel — você também recebe o link por email." },
           { q: "O Virô faz por mim ou só me mostra o caminho?", a: "Hoje o Virô monta a operação inteira — posts prontos, respostas a reviews, papers, roteiros, emails, tudo com copy pronto pra copiar e usar. Em breve, o Agente Nelson vai executar direto no Google, Instagram e WhatsApp com sua autorização. Começa como copiloto, vira piloto automático." },
           { q: "Funciona para qualquer tipo de negócio?", a: "Sim. Virô tem 25 blueprints de segmento — restaurantes, clínicas, e-commerce, B2B, energia, agro, criadores de conteúdo, provedores de internet e mais. Cada segmento recebe fontes de dados, ações e canais específicos pro seu mercado." },
