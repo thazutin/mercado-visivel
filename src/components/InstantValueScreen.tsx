@@ -371,8 +371,9 @@ export default function InstantValueScreen({ product, region, results: initialRe
     ? Math.round(ci.competitors.reduce((s, c) => s + (c.reviewCount || 0), 0) / ci.competitors.filter(c => c.reviewCount).length) || 0
     : 0;
 
-  // ─── Quick wins state (fetched from growth machine API) ─────────────────
+  // ─── Growth machine state (quick wins + pilares) ─────────────────
   const [quickWins, setQuickWins] = useState<any[]>([]);
+  const [strategicPillars, setStrategicPillars] = useState<any[]>([]);
   const [qwLoading, setQwLoading] = useState(true);
   const [qwExpanded, setQwExpanded] = useState<Record<string, boolean>>({});
 
@@ -388,7 +389,11 @@ export default function InstantValueScreen({ product, region, results: initialRe
         if (res.ok) {
           const data = await res.json();
           if (data.status === 'ready' && data.data?.quickWins?.length > 0) {
-            if (!cancelled) { setQuickWins(data.data.quickWins); setQwLoading(false); }
+            if (!cancelled) {
+              setQuickWins(data.data.quickWins);
+              if (data.data.strategicPillars) setStrategicPillars(data.data.strategicPillars);
+              setQwLoading(false);
+            }
             return;
           }
         }
@@ -554,7 +559,9 @@ export default function InstantValueScreen({ product, region, results: initialRe
                     <span style={{ fontFamily: V.mono, fontSize: 9, padding: "2px 6px", borderRadius: 100, background: V.fog, color: V.ash }}>{qw.timeEstimate}</span>
                   </div>
                   <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 6px", lineHeight: 1.5 }}>{qw.description}</p>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: V.teal, background: "rgba(45,155,131,0.08)", padding: "2px 8px", borderRadius: 4 }}>{qw.impact}</span>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: V.teal, background: "rgba(45,155,131,0.08)", padding: "2px 8px", borderRadius: 4 }}>
+                    {(qw.impact || '').replace(/\s*(Visibilidade|Credibilidade|Presença Digital|Fidelização|Receita|Alcance|Expansão|Validação|Oportunidade|Estratégia|Diferenciação|Prospecção|Inteligência|Engajamento|Presença|Autoridade|Conversão|Presença B2B|Inteligência Competitiva|Prospecção Setorial|Descoberta Digital|Visibilidade Paga|Score Geral|Receita B2G)\s*/i, '')}
+                  </span>
 
                   {qw.steps && (
                     <button onClick={() => setQwExpanded(prev => ({ ...prev, [qw.id]: !prev[qw.id] }))} style={{ fontSize: 11, color: V.amber, background: "none", border: "none", cursor: "pointer", fontWeight: 600, marginLeft: 8, padding: 0 }}>
@@ -602,6 +609,67 @@ export default function InstantValueScreen({ product, region, results: initialRe
             </>
           ) : null}
         </div>
+
+        {/* ═══════════════ PLANO DE CRESCIMENTO (preview locked) ═══════════════ */}
+        {strategicPillars.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.night, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 10 }}>
+              🏗️ SEU PLANO DE CRESCIMENTO
+            </div>
+
+            {strategicPillars.slice(0, 3).map((pillar: any, pi: number) => (
+              <div key={pillar.id || pi} style={{
+                background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`,
+                overflow: "hidden", marginBottom: 10, position: "relative",
+              }}>
+                {/* Header visível */}
+                <div style={{ padding: "14px 16px" }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: V.amber, background: V.amberWash, padding: "2px 8px", borderRadius: 4, fontFamily: V.mono }}>
+                      PILAR {pi + 1}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 4 }}>{pillar.title}</div>
+                  <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px", lineHeight: 1.5 }}>{pillar.description}</p>
+
+                  {/* Objetivo + meta (visível) */}
+                  {pillar.objective && (
+                    <div style={{ fontSize: 11, color: V.teal, fontWeight: 600 }}>
+                      Meta: {pillar.targetMetric || pillar.kpi?.target || pillar.objective}
+                    </div>
+                  )}
+                </div>
+
+                {/* Conteúdo locked */}
+                <div style={{ position: "relative", overflow: "hidden" }}>
+                  <div style={{ padding: "0 16px 14px", filter: "blur(4px)", pointerEvents: "none", userSelect: "none", maxHeight: 80, overflow: "hidden" }}>
+                    {pillar.items?.slice(0, 3).map((item: any, ii: number) => (
+                      <div key={ii} style={{ display: "flex", gap: 6, marginBottom: 4 }}>
+                        <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.fog, borderRadius: 3, padding: "1px 5px" }}>{ii + 1}</span>
+                        <span style={{ fontSize: 11, color: V.zinc }}>{item.title}</span>
+                      </div>
+                    ))}
+                    {pillar.tools?.length > 0 && (
+                      <div style={{ display: "flex", gap: 3, marginTop: 4 }}>
+                        {pillar.tools.slice(0, 3).map((t: string, ti: number) => (
+                          <span key={ti} style={{ fontSize: 8, color: V.ash, background: V.fog, padding: "1px 4px", borderRadius: 3 }}>🔧 {t}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {/* Lock overlay */}
+                  <div style={{
+                    position: "absolute", inset: 0,
+                    background: "linear-gradient(transparent 0%, rgba(255,255,255,0.9) 60%)",
+                    display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 10,
+                  }}>
+                    <span style={{ fontSize: 10, color: V.ash, fontWeight: 500 }}>🔒 Expandir no Radar</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* ═══════════════ ELEMENTOS COMPETITIVOS ═══════════════ */}
         <div style={{ fontFamily: V.mono, fontSize: 10, color: V.night, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 10 }}>

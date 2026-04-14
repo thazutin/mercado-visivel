@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
             "places.id,places.displayName,places.rating,places.userRatingCount,places.types,places.photos,places.websiteUri,places.location",
         },
         body: JSON.stringify({
-          textQuery: `${lead.product} ${lead.region}`,
+          textQuery: `${lead.product} ${(lead.region || '').split(',')[0].trim()}`,
           languageCode: "pt-BR",
           maxResultCount: 15,
           ...(locationBias ? { locationBias } : {}),

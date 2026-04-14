@@ -1404,11 +1404,12 @@ ${challengeContext ? `Objetivo declarado: "${challengeLabels[lead.challenge || '
 REGRAS DO PLANO:
 1. Exatamente 3 PILARES. Cada pilar é uma APOSTA ESTRATÉGICA que move a agulha — não uma ação tática.
 2. CADA pilar deve citar dados reais do diagnóstico (números, concorrentes, métricas).
-3. Se o negócio tem Instagram (mesmo com 0 seguidores), inclua métricas e ações de Instagram.
-4. Se o negócio NÃO tem Instagram mas deveria, o pilar deve incluir a criação.
-5. CADA pilar deve incluir: objetivo, meta quantitativa, timeline, recursos necessários, riscos, ferramentas recomendadas.
-6. CADA etapa deve ter conteúdo COMPLETO pronto pra copiar/colar — textos reais, não instruções.
-7. Todos os textos em PT-BR, tom profissional mas acessível.
+3. O PRIMEIRO PILAR é MANDATORIAMENTE alinhado ao desafio de negócio declarado pelo dono. Se não há desafio declarado, priorize pelo gap mais crítico.
+4. Os pilares NÃO são canais (não é "pilar Instagram" ou "pilar Google") — são INICIATIVAS DE NEGÓCIO (ex: "Sistema de Fidelização", "Captura no Google Maps + iFood", "Programa Café da Manhã Corporativo").
+5. CADA pilar deve incluir: objetivo, meta quantitativa, timeline, recursos necessários (tempo, dinheiro, equipe), riscos e mitigação, ferramentas recomendadas.
+6. CADA etapa deve detalhar O COMO — não "faça X" mas SIM o passo a passo com conteúdo pronto, scripts, templates, estruturas completas.
+7. Se há dados de concorrentes, inclua comparativos e inteligência competitiva dentro dos pilares.
+8. Todos os textos em PT-BR, tom profissional mas acessível.
 
 FORMATO JSON:
 {"pillars":[{
