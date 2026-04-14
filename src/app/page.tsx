@@ -637,17 +637,40 @@ export default function Home() {
 
         <div style={{ border: `1px solid ${V.fog}`, borderRadius: 16, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,0.06)" }}>
           {/* ─── BLOCO 1: DIAGNÓSTICO ─── */}
-          <div style={{ background: V.night, padding: "32px 24px", textAlign: "center" }}>
-            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.08em", marginBottom: 16 }}>DIAGNÓSTICO GRATUITO · 60 SEGUNDOS · EXEMPLO ILUSTRATIVO</div>
-            <div style={{ fontSize: 56, fontWeight: 800, color: V.amber, lineHeight: 1, fontFamily: V.display, marginBottom: 8 }}>+153</div>
-            <div style={{ fontSize: 16, color: V.mist, marginBottom: 20 }}>pessoas a mais por mês conhecendo o seu negócio</div>
-            <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: 10, padding: "16px 20px", textAlign: "left" }}>
-              <p style={{ fontSize: 13, color: V.mist, lineHeight: 1.7, margin: 0 }}>
-                Seu mercado tem <strong style={{ color: V.white }}>2 mil pessoas</strong> no raio de 1km. Hoje você disputa <strong style={{ color: V.white }}>29%</strong> dessa atenção.
-                Com as ações certas, pode chegar a <strong style={{ color: V.amber }}>42%</strong> — sem investimento adicional em mídia.
-                São <strong style={{ color: V.amber }}>350 buscas por mês</strong> por esse serviço na sua região, com <strong style={{ color: V.white }}>14 concorrentes</strong> disputando.
-              </p>
+          <div style={{ background: V.cloud, padding: "32px 24px", textAlign: "center" }}>
+            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.08em", marginBottom: 8 }}>DIAGNÓSTICO GRATUITO · 60 SEGUNDOS · EXEMPLO ILUSTRATIVO</div>
+            <div style={{ fontFamily: V.display, fontSize: 15, fontWeight: 700, color: V.night, marginBottom: 16 }}>Qual fatia do seu mercado você disputa?</div>
+
+            {/* Score Ring */}
+            <div style={{ position: "relative", width: 120, height: 120, margin: "0 auto 16px" }}>
+              <svg width={120} height={120} style={{ transform: "rotate(-90deg)" }}>
+                <circle cx={60} cy={60} r={54} fill="none" stroke={V.fog} strokeWidth={5} />
+                <circle cx={60} cy={60} r={54} fill="none" stroke={V.amber} strokeWidth={5} strokeLinecap="round" strokeDasharray={339} strokeDashoffset={339 - (29 / 100) * 339} />
+              </svg>
+              <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", textAlign: "center" }}>
+                <div style={{ fontFamily: V.display, fontSize: 32, fontWeight: 800, color: V.night }}>29</div>
+                <div style={{ fontFamily: V.mono, fontSize: 8, color: V.ash }}>de 100</div>
+              </div>
             </div>
+
+            {/* Grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginBottom: 12 }}>
+              <div style={{ padding: "8px 4px", background: V.white, borderRadius: 6 }}>
+                <div style={{ fontFamily: V.display, fontSize: 18, fontWeight: 800, color: V.amber }}>29</div>
+                <div style={{ fontSize: 9, color: V.ash }}>Você hoje</div>
+              </div>
+              <div style={{ padding: "8px 4px", background: V.white, borderRadius: 6 }}>
+                <div style={{ fontFamily: V.display, fontSize: 18, fontWeight: 800, color: V.teal }}>64</div>
+                <div style={{ fontSize: 9, color: V.ash }}>Potencial</div>
+              </div>
+              <div style={{ padding: "8px 4px", background: V.white, borderRadius: 6 }}>
+                <div style={{ fontFamily: V.display, fontSize: 18, fontWeight: 800, color: V.zinc }}>42</div>
+                <div style={{ fontSize: 9, color: V.ash }}>Média mercado</div>
+              </div>
+            </div>
+            <p style={{ fontSize: 12, color: V.zinc, lineHeight: 1.6, margin: 0 }}>
+              Você disputa <strong>29%</strong> da demanda. Concorrentes em ~42%. Com as ações certas, chegar a <strong style={{ color: V.teal }}>64%</strong> é viável em 90 dias.
+            </p>
           </div>
 
           {/* ─── BLOCO 2: RADAR ─── */}

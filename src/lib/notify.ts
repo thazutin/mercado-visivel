@@ -196,7 +196,7 @@ export async function notifyDiagnosisReady(opts: {
     sendEmail({
       to: email,
       subject,
-      html: diagnosisEmailHtmlSimple({ product, shortRegion, url, familiasGap, searchVolume, heroLabel }),
+      html: diagnosisEmailHtmlSimple({ product, shortRegion, url, familiasGap, searchVolume, heroLabel, score: influencePercent }),
     }),
   ]);
 
@@ -798,27 +798,34 @@ function diagnosisEmailHtml(opts: {
   `);
 }
 
-function diagnosisEmailHtmlSimple({ product, shortRegion, url, familiasGap, searchVolume, heroLabel }: {
-  product: string; shortRegion: string; url: string; familiasGap: number; searchVolume?: number; heroLabel?: string;
+function diagnosisEmailHtmlSimple({ product, shortRegion, url, familiasGap, searchVolume, heroLabel, score }: {
+  product: string; shortRegion: string; url: string; familiasGap: number; searchVolume?: number; heroLabel?: string; score?: number;
 }): string {
-  const label = heroLabel || 'pessoas no seu raio que ainda não te consideram';
-  const heroMetric = familiasGap > 0
-    ? `<div style="font-size:48px;font-weight:900;color:#2D9B83;line-height:1;margin-bottom:8px;">+${familiasGap.toLocaleString('pt-BR')}</div>
-       <div style="font-size:14px;color:#888880;">${label}</div>`
-    : (searchVolume && searchVolume > 0)
-    ? `<div style="font-size:48px;font-weight:900;color:#CF8523;line-height:1;margin-bottom:8px;">${searchVolume.toLocaleString('pt-BR')}</div>
-       <div style="font-size:14px;color:#888880;">buscas/mês por ${product} em ${shortRegion}</div>`
-    : `<div style="font-size:22px;font-weight:700;color:#FEFEFF;line-height:1.3;">Vasculhei seu mercado. Veja o que encontrei.</div>`;
+  // Hero: score como métrica principal (alinhado ao dashboard)
+  const scoreDisplay = score != null && score > 0;
 
   return emailShell(`
     <div style="background:#0A0A0C;border-radius:16px;padding:28px 24px;margin-bottom:24px;text-align:center;">
       <p style="font-size:11px;color:#888880;margin:0 0 16px;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase;">
-        Seu radar encontrou dados reais do seu mercado
+        Qual fatia do seu mercado você disputa?
       </p>
-      ${heroMetric}
+      ${scoreDisplay
+        ? `<div style="font-size:56px;font-weight:900;color:${score! < 30 ? '#D9534F' : score! < 50 ? '#CF8523' : '#2D9B83'};line-height:1;margin-bottom:4px;">${score}</div>
+           <div style="font-size:12px;color:#888880;margin-bottom:12px;">de 100</div>
+           <div style="font-size:13px;color:#B4B4BC;line-height:1.5;">
+             Você disputa <strong style="color:#FEFEFF">${score}%</strong> da demanda do seu mercado.${familiasGap > 0 ? ` <strong style="color:#CF8523">+${familiasGap.toLocaleString('pt-BR')}</strong> ${heroLabel || 'pessoas'} podem te encontrar.` : ''}
+           </div>`
+        : familiasGap > 0
+        ? `<div style="font-size:48px;font-weight:900;color:#2D9B83;line-height:1;margin-bottom:8px;">+${familiasGap.toLocaleString('pt-BR')}</div>
+           <div style="font-size:14px;color:#888880;">${heroLabel || 'pessoas no seu raio que ainda não te consideram'}</div>`
+        : `<div style="font-size:22px;font-weight:700;color:#FEFEFF;line-height:1.3;">Achei dados reais do seu mercado.</div>`
+      }
     </div>
+    <p style="font-size:12px;color:#3A3A40;text-align:center;margin:0 0 16px;line-height:1.5;">
+      Veja ações rápidas pra começar hoje e o plano de crescimento montado pro seu negócio.
+    </p>
     <a href="${url}" style="display:block;background:#161618;color:#FEFEFF;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:16px;">
-      Ver meu mercado →
+      Ver meu diagnóstico →
     </a>
     <p style="font-size:10px;color:#888880;text-align:center;margin:0;font-style:italic;">
       — Virô · Seu radar de crescimento · virolocal.com
