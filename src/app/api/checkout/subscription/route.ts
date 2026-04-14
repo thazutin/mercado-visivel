@@ -1,5 +1,5 @@
 // ============================================================================
-// Virô — Subscription Checkout Route (R$99/mês)
+// Virô — Subscription Checkout Route (R$247/mês)
 // File: src/app/api/checkout/subscription/route.ts
 // ============================================================================
 

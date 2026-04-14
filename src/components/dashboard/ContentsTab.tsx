@@ -200,7 +200,7 @@ export function ContentsTab({ leadId, showUpgradeBanner }: Props) {
               fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
             }}
           >
-            Assinar por R$99/mês
+            Assinar por R$247/mês
           </button>
         </div>
       )}

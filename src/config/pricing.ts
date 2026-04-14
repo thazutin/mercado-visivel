@@ -9,8 +9,8 @@ export const PRICING = {
     label: 'pagamento único',
   },
   subscription: {
-    brl: 9900,
-    display: 'R$99/mês',
+    brl: 24700,
+    display: 'R$247/mês',
     label: 'assinatura mensal',
   },
   international: {
