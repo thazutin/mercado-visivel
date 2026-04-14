@@ -1840,11 +1840,20 @@ export function buildDisplayData(result: any) {
       ?.filter((c: any) => c.dataAvailable)
       ?.map((c: any) => ({
         handle: c.handle,
+        name: c.name || '',
         followers: c.followers || 0,
         engagementRate: c.engagementRate || 0,
         postsLast30d: c.postsLast30d || 0,
         avgLikes: c.avgLikesLast30d || 0,
         avgViews: c.avgViewsReelsLast30d || 0,
+        // Dados profundos de IG (reach, recência, bio)
+        reachAbsolute: c.reachAbsolute || 0,
+        reachRelative: c.reachRelative || 0,
+        recentPostsCount: c.recentPostsCount || 0,
+        recentAvgReach: c.recentAvgReach || 0,
+        recentEngagementRate: c.recentEngagementRate || 0,
+        bio: c.bio || '',
+        isBusinessProfile: c.isBusinessProfile || false,
       })) || [],
     serpSummary: {
       termsScraped: serpPositions.length,

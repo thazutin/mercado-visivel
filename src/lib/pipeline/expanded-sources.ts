@@ -17,6 +17,20 @@ import { searchCanalSolar } from './canal-solar';
 import { fetchAnatelBandaLarga } from './anatel';
 import { BLUEPRINT_MAP } from '@/lib/blueprints';
 
+export interface CompetitorProfile {
+  name: string;
+  // From Maps
+  rating?: number | null;
+  reviewCount?: number | null;
+  website?: string | null;
+  // LinkedIn (Google search)
+  linkedin?: { found: boolean; url?: string; name?: string };
+  // Reclame Aqui
+  reclameAqui?: { found: boolean; score?: number; reputation?: string; totalComplaints?: number; responseRate?: number; url?: string };
+  // Site → Instagram extraction
+  instagramFromSite?: string | null;
+}
+
 export interface ExpandedData {
   seasonality?: any;
   reclameAqui?: any;
@@ -28,6 +42,7 @@ export interface ExpandedData {
   aneel?: any;           // geração distribuída + agentes
   canalSolar?: any;      // integradores de energia solar
   anatel?: any;          // banda larga por município
+  competitorProfiles?: CompetitorProfile[];  // enriched competitor data
   fetchedAt: string;
   sources: string[];     // lista de fontes que retornaram dados reais
 }
@@ -219,16 +234,121 @@ export async function fetchExpandedSources(
     }
   }
 
-  // 9. Anatel — pra blueprints de telecom/ISP (BigQuery = pode demorar, timeout maior)
+  // 9. Anatel — pra blueprints de telecom/ISP (BigQuery com token cache + single query)
   if (bp?.id === 'telecom_isp') {
     const uf = (lead.region || '').match(/\b([A-Z]{2})\b/)?.[1] || '';
     console.log(`[ExpandedSources] Anatel: city="${city}", uf="${uf}"`);
     promises.push(
-      withTimeout(fetchAnatelBandaLarga(city, uf), 45_000, null)
+      withTimeout(fetchAnatelBandaLarga(city, uf), 25_000, null)
         .then((r: any) => {
           console.log(`[ExpandedSources] Anatel result: found=${r?.found}, total=${r?.totalAcessos}`);
           if (r?.found) { result.anatel = r; result.sources.push('anatel'); }
         }),
+    );
+  }
+
+  // 10. Competitor Enrichment — LinkedIn + Reclame Aqui + site→IG pra cada concorrente do Maps
+  const mapsCompetitors: any[] = diagnosis.competitionIndex?.competitors || [];
+  if (mapsCompetitors.length > 0) {
+    const topCompetitors = mapsCompetitors
+      .filter((c: any) => c.name)
+      .slice(0, 5); // Max 5 pra não estourar timeout
+
+    promises.push(
+      withTimeout(
+        (async () => {
+          const enriched: CompetitorProfile[] = [];
+
+          // Roda LinkedIn + Reclame Aqui + site scraping em paralelo pra cada concorrente
+          const perCompetitorPromises = topCompetitors.map(async (comp: any) => {
+            const profile: CompetitorProfile = {
+              name: comp.name,
+              rating: comp.rating,
+              reviewCount: comp.reviewCount,
+              website: comp.website || null,
+            };
+
+            const subPromises: Promise<void>[] = [];
+
+            // LinkedIn do concorrente
+            subPromises.push(
+              withTimeout(
+                searchLinkedIn(comp.name),
+                8_000, null,
+              ).then((r: any) => {
+                if (r?.companyPage?.found) {
+                  profile.linkedin = { found: true, url: r.companyPage.url, name: r.companyPage.name };
+                } else {
+                  profile.linkedin = { found: false };
+                }
+              }),
+            );
+
+            // Reclame Aqui do concorrente
+            subPromises.push(
+              withTimeout(
+                searchReclameAqui(comp.name),
+                8_000, null,
+              ).then((r: any) => {
+                if (r?.found) {
+                  profile.reclameAqui = {
+                    found: true,
+                    score: r.score,
+                    reputation: r.reputation,
+                    totalComplaints: r.totalComplaints,
+                    responseRate: r.responseRate,
+                    url: r.url,
+                  };
+                } else {
+                  profile.reclameAqui = { found: false };
+                }
+              }),
+            );
+
+            // Extrai Instagram do site do concorrente (se tem website)
+            if (comp.website) {
+              subPromises.push(
+                withTimeout(
+                  (async () => {
+                    try {
+                      const siteRes = await fetch(comp.website, {
+                        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+                        signal: AbortSignal.timeout(6_000),
+                        redirect: 'follow',
+                      });
+                      if (siteRes.ok) {
+                        const html = await siteRes.text();
+                        // Extrai Instagram handle do HTML
+                        const igMatch = html.match(/instagram\.com\/([a-zA-Z0-9_.]{2,30})/);
+                        if (igMatch && !['explore', 'p', 'reel', 'stories', 'accounts', 'about'].includes(igMatch[1])) {
+                          profile.instagramFromSite = igMatch[1].toLowerCase();
+                        }
+                      }
+                    } catch {
+                      /* ignore — best effort */
+                    }
+                  })(),
+                  7_000, undefined,
+                ),
+              );
+            }
+
+            await Promise.allSettled(subPromises);
+            enriched.push(profile);
+          });
+
+          await Promise.allSettled(perCompetitorPromises);
+          return enriched;
+        })(),
+        25_000, // 25s total pra todo o enrichment de concorrentes
+        null,
+      ).then((enriched: CompetitorProfile[] | null) => {
+        if (enriched && enriched.length > 0) {
+          result.competitorProfiles = enriched;
+          result.sources.push('competitor_enrichment');
+          console.log(`[ExpandedSources] Enriched ${enriched.length} competitor profiles (LinkedIn: ${enriched.filter(c => c.linkedin?.found).length}, RA: ${enriched.filter(c => c.reclameAqui?.found).length}, IG: ${enriched.filter(c => c.instagramFromSite).length})`);
+        }
+      }),
     );
   }
 

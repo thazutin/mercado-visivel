@@ -20,11 +20,15 @@ export interface AnatelResult {
   source: 'bigquery_anatel';
 }
 
-/**
- * Gera JWT token a partir da service account key.
- * BigQuery REST API aceita OAuth2 token — geramos via JWT assertion.
- */
+// ─── Token cache (válido por 1h, reusa entre chamadas) ──────────────────────
+let cachedToken: { token: string; expiresAt: number } | null = null;
+
 async function getAccessToken(): Promise<string | null> {
+  // Reusa token se ainda válido (margem de 5min)
+  if (cachedToken && Date.now() < cachedToken.expiresAt - 300_000) {
+    return cachedToken.token;
+  }
+
   const keyJson = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
   if (!keyJson) {
     console.warn('[Anatel] GOOGLE_SERVICE_ACCOUNT_KEY not set');
@@ -35,7 +39,6 @@ async function getAccessToken(): Promise<string | null> {
     const key = JSON.parse(keyJson);
     const crypto = await import('crypto');
 
-    // JWT header + claim
     const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
     const now = Math.floor(Date.now() / 1000);
     const claim = Buffer.from(JSON.stringify({
@@ -46,20 +49,17 @@ async function getAccessToken(): Promise<string | null> {
       exp: now + 3600,
     })).toString('base64url');
 
-    // Sign
     const signInput = `${header}.${claim}`;
     const signer = crypto.createSign('RSA-SHA256');
     signer.update(signInput);
     const signature = signer.sign(key.private_key, 'base64url');
-
     const jwt = `${signInput}.${signature}`;
 
-    // Exchange JWT for access token
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(8_000),
     });
 
     if (!tokenRes.ok) {
@@ -68,6 +68,10 @@ async function getAccessToken(): Promise<string | null> {
     }
 
     const tokenData = await tokenRes.json();
+    cachedToken = {
+      token: tokenData.access_token,
+      expiresAt: Date.now() + 3600_000,
+    };
     return tokenData.access_token;
   } catch (err) {
     console.warn('[Anatel] Auth error:', (err as Error).message);
@@ -76,44 +80,60 @@ async function getAccessToken(): Promise<string | null> {
 }
 
 /**
- * Executa query no BigQuery via REST API.
+ * Executa query no BigQuery via REST API com parameterized query.
  */
-async function queryBigQuery(sql: string): Promise<any[]> {
+async function queryBigQuery(
+  sql: string,
+  params?: Array<{ name: string; parameterType: { type: string }; parameterValue: { value: string } }>,
+  token?: string,
+): Promise<any[]> {
   const projectId = process.env.GOOGLE_BIGQUERY_PROJECT_ID;
   if (!projectId) {
     console.warn('[Anatel] GOOGLE_BIGQUERY_PROJECT_ID not set');
     return [];
   }
 
-  const token = await getAccessToken();
-  if (!token) return [];
+  const accessToken = token || await getAccessToken();
+  if (!accessToken) return [];
 
   try {
+    const body: any = {
+      query: sql,
+      useLegacySql: false,
+      maxResults: 50,
+      timeoutMs: 15000,
+    };
+    if (params?.length) {
+      body.parameterMode = 'NAMED';
+      body.queryParameters = params;
+    }
+
     const res = await fetch(
       `https://bigquery.googleapis.com/bigquery/v2/projects/${projectId}/queries`,
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          query: sql,
-          useLegacySql: false,
-          maxResults: 50,
-          timeoutMs: 30000,
-        }),
-        signal: AbortSignal.timeout(40_000),
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(20_000),
       },
     );
 
     if (!res.ok) {
       const err = await res.text();
-      console.warn(`[Anatel] BigQuery error ${res.status}:`, err.slice(0, 200));
+      console.warn(`[Anatel] BigQuery error ${res.status}:`, err.slice(0, 300));
       return [];
     }
 
     const data = await res.json();
+
+    if (!data.jobComplete) {
+      console.warn('[Anatel] BigQuery job not complete within timeout');
+      return [];
+    }
+
     const fields = data.schema?.fields || [];
     const rows = data.rows || [];
 
@@ -130,8 +150,8 @@ async function queryBigQuery(sql: string): Promise<any[]> {
 
 /**
  * Busca dados de banda larga fixa por município via BigQuery.
- * Retorna: prestadoras ordenadas por market share, total de acessos.
- * Custo: ~0.01 GB processado (~$0 dentro do free tier de 1TB/mês).
+ * Usa single query com subquery pra resolver município e buscar dados
+ * num único round-trip (metade do tempo vs 2 queries sequenciais).
  */
 export async function fetchAnatelBandaLarga(
   municipio: string,
@@ -143,51 +163,145 @@ export async function fetchAnatelBandaLarga(
     source: 'bigquery_anatel',
   };
 
-  // Usa o nome original (com acentos) — BigQuery armazena com acentos
   const municipioClean = municipio.trim();
   if (!municipioClean) return empty;
 
-  // Step 1: find id_municipio from name (busca com LIKE pra flexibilidade)
-  const findMunSql = `
-    SELECT id_municipio, nome, sigla_uf
-    FROM \`basedosdados.br_bd_diretorios_brasil.municipio\`
-    WHERE nome LIKE '%${municipioClean}%'
-    ${uf ? `AND sigla_uf = '${uf.toUpperCase()}'` : ''}
-    LIMIT 1
-  `;
+  const t0 = Date.now();
 
-  const munRows = await queryBigQuery(findMunSql);
-  if (munRows.length === 0) {
-    console.log(`[Anatel] Municipality not found: "${municipioClean}"`);
-    return empty;
-  }
+  // Get token once, reuse for both queries
+  const token = await getAccessToken();
+  if (!token) return empty;
 
-  const idMunicipio = munRows[0].id_municipio;
-  const munNome = munRows[0].nome;
-  const munUf = munRows[0].sigla_uf;
+  console.log(`[Anatel] Auth OK in ${Date.now() - t0}ms. Looking up "${municipioClean}" ${uf || ''}`);
 
-  // Step 2: acessos por CNPJ no município (ano mais recente disponível)
-  const sql = `
+  // Single query: resolve município + busca dados na mesma chamada
+  // Usa subquery pra encontrar id_municipio e depois buscar microdados
+  const sql = uf
+    ? `
+    WITH mun AS (
+      SELECT id_municipio, nome, sigla_uf
+      FROM \`basedosdados.br_bd_diretorios_brasil.municipio\`
+      WHERE LOWER(nome) = LOWER(@municipio)
+        AND sigla_uf = @uf
+      LIMIT 1
+    )
     SELECT
+      mun.nome AS mun_nome,
+      mun.sigla_uf AS mun_uf,
+      mun.id_municipio,
       t.cnpj,
-      COUNT(*) AS total_registros,
-      t.ano, t.mes
-    FROM \`basedosdados.br_anatel_banda_larga_fixa.microdados\` t
-    WHERE t.id_municipio = '${idMunicipio}'
-    GROUP BY t.cnpj, t.ano, t.mes
+      t.ano,
+      t.mes,
+      COUNT(*) AS total_registros
+    FROM mun
+    JOIN \`basedosdados.br_anatel_banda_larga_fixa.microdados\` t
+      ON t.id_municipio = mun.id_municipio
+    GROUP BY mun.nome, mun.sigla_uf, mun.id_municipio, t.cnpj, t.ano, t.mes
+    ORDER BY t.ano DESC, t.mes DESC, total_registros DESC
+    LIMIT 30
+  `
+    : `
+    WITH mun AS (
+      SELECT id_municipio, nome, sigla_uf
+      FROM \`basedosdados.br_bd_diretorios_brasil.municipio\`
+      WHERE LOWER(nome) = LOWER(@municipio)
+      LIMIT 1
+    )
+    SELECT
+      mun.nome AS mun_nome,
+      mun.sigla_uf AS mun_uf,
+      mun.id_municipio,
+      t.cnpj,
+      t.ano,
+      t.mes,
+      COUNT(*) AS total_registros
+    FROM mun
+    JOIN \`basedosdados.br_anatel_banda_larga_fixa.microdados\` t
+      ON t.id_municipio = mun.id_municipio
+    GROUP BY mun.nome, mun.sigla_uf, mun.id_municipio, t.cnpj, t.ano, t.mes
     ORDER BY t.ano DESC, t.mes DESC, total_registros DESC
     LIMIT 30
   `;
 
-  const rows = await queryBigQuery(sql);
-
-  if (rows.length === 0) {
-    console.log(`[Anatel] No access data for municipality ${idMunicipio}`);
-    return empty;
+  const params: Array<{ name: string; parameterType: { type: string }; parameterValue: { value: string } }> = [
+    { name: 'municipio', parameterType: { type: 'STRING' }, parameterValue: { value: municipioClean } },
+  ];
+  if (uf) {
+    params.push({ name: 'uf', parameterType: { type: 'STRING' }, parameterValue: { value: uf.toUpperCase() } });
   }
 
-  // Agrupa por CNPJ (cada CNPJ = 1 prestadora)
-  // O mais recente ano/mês vem primeiro (ORDER BY t.ano DESC, t.mes DESC)
+  const rows = await queryBigQuery(sql, params, token);
+  console.log(`[Anatel] Query done in ${Date.now() - t0}ms, ${rows.length} rows`);
+
+  if (rows.length === 0) {
+    // Fallback: try LIKE match if exact match fails
+    console.log(`[Anatel] Exact match failed, trying LIKE fallback...`);
+    const fallbackSql = uf
+      ? `
+      WITH mun AS (
+        SELECT id_municipio, nome, sigla_uf
+        FROM \`basedosdados.br_bd_diretorios_brasil.municipio\`
+        WHERE LOWER(nome) LIKE CONCAT('%', LOWER(@municipio), '%')
+          AND sigla_uf = @uf
+        LIMIT 1
+      )
+      SELECT
+        mun.nome AS mun_nome,
+        mun.sigla_uf AS mun_uf,
+        mun.id_municipio,
+        t.cnpj,
+        t.ano,
+        t.mes,
+        COUNT(*) AS total_registros
+      FROM mun
+      JOIN \`basedosdados.br_anatel_banda_larga_fixa.microdados\` t
+        ON t.id_municipio = mun.id_municipio
+      GROUP BY mun.nome, mun.sigla_uf, mun.id_municipio, t.cnpj, t.ano, t.mes
+      ORDER BY t.ano DESC, t.mes DESC, total_registros DESC
+      LIMIT 30
+    `
+      : `
+      WITH mun AS (
+        SELECT id_municipio, nome, sigla_uf
+        FROM \`basedosdados.br_bd_diretorios_brasil.municipio\`
+        WHERE LOWER(nome) LIKE CONCAT('%', LOWER(@municipio), '%')
+        LIMIT 1
+      )
+      SELECT
+        mun.nome AS mun_nome,
+        mun.sigla_uf AS mun_uf,
+        mun.id_municipio,
+        t.cnpj,
+        t.ano,
+        t.mes,
+        COUNT(*) AS total_registros
+      FROM mun
+      JOIN \`basedosdados.br_anatel_banda_larga_fixa.microdados\` t
+        ON t.id_municipio = mun.id_municipio
+      GROUP BY mun.nome, mun.sigla_uf, mun.id_municipio, t.cnpj, t.ano, t.mes
+      ORDER BY t.ano DESC, t.mes DESC, total_registros DESC
+      LIMIT 30
+    `;
+
+    const fallbackRows = await queryBigQuery(fallbackSql, params, token);
+    console.log(`[Anatel] LIKE fallback: ${fallbackRows.length} rows in ${Date.now() - t0}ms`);
+    if (fallbackRows.length === 0) {
+      console.log(`[Anatel] Municipality not found: "${municipioClean}"`);
+      return empty;
+    }
+    return parseAnatelRows(fallbackRows, municipio, uf);
+  }
+
+  return parseAnatelRows(rows, municipio, uf);
+}
+
+function parseAnatelRows(
+  rows: any[],
+  municipio: string,
+  uf?: string,
+): AnatelResult {
+  const munNome = rows[0]?.mun_nome;
+  const munUf = rows[0]?.mun_uf;
   const latestAno = rows[0]?.ano;
   const latestMes = rows[0]?.mes;
   const latestRows = rows.filter((r: any) => r.ano === latestAno && r.mes === latestMes);
@@ -196,7 +310,7 @@ export async function fetchAnatelBandaLarga(
   const prestadoras = latestRows
     .filter((r: any) => r.cnpj)
     .map((r: any) => ({
-      nome: r.cnpj, // CNPJ como identificador (pode resolver nome depois)
+      nome: r.cnpj,
       acessos: parseInt(r.total_registros) || 0,
       marketShare: totalRegistros > 0
         ? Math.round((parseInt(r.total_registros) / totalRegistros) * 100)
@@ -204,7 +318,7 @@ export async function fetchAnatelBandaLarga(
     }));
 
   console.log(
-    `[Anatel] ${munNome} (${idMunicipio}): ${totalRegistros} registros, ${prestadoras.length} prestadoras, ${latestAno}/${latestMes}`,
+    `[Anatel] ${munNome}: ${totalRegistros} registros, ${prestadoras.length} prestadoras, ${latestAno}/${latestMes}`,
   );
 
   return {

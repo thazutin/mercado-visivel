@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { V } from "@/lib/design-tokens";
 
 // ─── Types ──────────────────────────────────────────────────────────────
-type Tier = "free" | "paid" | "subscriber";
+type Tier = "free" | "subscriber";
 
 interface Props {
   lead: any;
@@ -272,6 +272,41 @@ function QuickWinCard({ qw, leadId }: {
   );
 }
 
+// ─── Locked Quick Win Card (free tier, blurred) ────────────────────────
+function LockedQuickWinCard({ qw }: { qw: any }) {
+  return (
+    <div style={{
+      background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`,
+      padding: "14px 16px", marginBottom: 10, position: "relative", overflow: "hidden",
+    }}>
+      <div style={{ filter: "blur(5px)", pointerEvents: "none", userSelect: "none" }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+          <div style={{
+            width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+            border: `2px solid ${V.fog}`, background: V.white, marginTop: 1,
+          }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{qw.title}</span>
+              <span style={{ fontFamily: V.mono, fontSize: 9, padding: "2px 6px", borderRadius: 100, background: V.fog, color: V.ash }}>{qw.timeEstimate}</span>
+            </div>
+            <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px", lineHeight: 1.5 }}>{qw.description}</p>
+            <span style={{ fontSize: 10, fontWeight: 600, color: V.teal, background: "rgba(45,155,131,0.08)", padding: "2px 8px", borderRadius: 4 }}>{qw.impact}</span>
+          </div>
+        </div>
+      </div>
+      {/* Lock overlay */}
+      <div style={{
+        position: "absolute", inset: 0, display: "flex",
+        alignItems: "center", justifyContent: "center",
+        background: "rgba(255,255,255,0.4)", borderRadius: 12,
+      }}>
+        <span style={{ fontSize: 16, opacity: 0.6 }}>🔒</span>
+      </div>
+    </div>
+  );
+}
+
 // ─── Strategic Pillar Card ──────────────────────────────────────────────
 function PillarCard({ pillar }: { pillar: any }) {
   const [expanded, setExpanded] = useState(false);
@@ -456,10 +491,9 @@ export default function RadarDashboard({ lead, diagnosis, tier, initialGrowthMac
   const [gm, setGm] = useState<any>(initialGrowthMachine || null);
   const [generating, setGenerating] = useState(false);
 
-  // Fetch or generate growth machine
+  // Fetch or generate growth machine (free também recebe pra exibir quick wins)
   useEffect(() => {
     if (gm) return;
-    if (tier === "free") return; // Free users don't get growth machine
 
     const fetchGM = async () => {
       try {
@@ -530,9 +564,6 @@ export default function RadarDashboard({ lead, diagnosis, tier, initialGrowthMac
           benchmarkLabel={score.benchmarkLabel}
         />
 
-        {/* Free CTA */}
-        {tier === "free" && <FreeCTA leadId={lead.id} />}
-
         {/* Generating state */}
         {generating && (
           <div style={{
@@ -565,27 +596,81 @@ export default function RadarDashboard({ lead, diagnosis, tier, initialGrowthMac
         )}
 
         {/* ─── QUICK WINS ─── */}
-        {(gm?.quickWins?.length > 0 || tier === "free") && (
-          <div style={{ marginBottom: 24 }}>
-            <div style={{
-              fontFamily: V.mono, fontSize: 10, color: V.teal,
-              letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10,
-            }}>
-              ⚡ AÇÕES RÁPIDAS — COMECE AGORA
+        {gm?.quickWins?.length > 0 && (() => {
+          const FREE_VISIBLE = 3;
+          const allQw = gm.quickWins || [];
+          const visibleQw = tier === "free" ? allQw.slice(0, FREE_VISIBLE) : allQw;
+          const lockedQw = tier === "free" ? allQw.slice(FREE_VISIBLE) : [];
+
+          return (
+            <div style={{ marginBottom: 24 }}>
+              <div style={{
+                fontFamily: V.mono, fontSize: 10, color: V.teal,
+                letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10,
+              }}>
+                ⚡ AÇÕES RÁPIDAS — COMECE AGORA
+                {tier === "free" && allQw.length > FREE_VISIBLE && (
+                  <span style={{ color: V.ash, marginLeft: 8 }}>
+                    {FREE_VISIBLE} de {allQw.length}
+                  </span>
+                )}
+              </div>
+
+              {visibleQw.map((qw: any) => (
+                <QuickWinCard key={qw.id} qw={qw} leadId={lead.id} />
+              ))}
+
+              {lockedQw.length > 0 && (
+                <>
+                  {lockedQw.slice(0, 3).map((qw: any) => (
+                    <LockedQuickWinCard key={qw.id} qw={qw} />
+                  ))}
+
+                  {lockedQw.length > 3 && (
+                    <p style={{ fontSize: 11, color: V.ash, textAlign: "center", margin: "4px 0 12px" }}>
+                      + {lockedQw.length - 3} ação(ões) disponível(is)
+                    </p>
+                  )}
+
+                  <div style={{
+                    background: "linear-gradient(135deg, #161618 0%, #2A2A30 100%)",
+                    borderRadius: 12, padding: "18px 20px", textAlign: "center",
+                  }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: V.white, margin: "0 0 4px" }}>
+                      Desbloqueie {lockedQw.length} ação(ões) personalizada(s)
+                    </p>
+                    <p style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", margin: "0 0 12px" }}>
+                      Com passos detalhados, textos prontos e monitoramento semanal.
+                    </p>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch("/api/checkout/subscription", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ leadId: lead.id }),
+                          });
+                          const data = await res.json();
+                          if (data.url) window.location.href = data.url;
+                        } catch { /* ignore */ }
+                      }}
+                      style={{
+                        padding: "10px 24px", borderRadius: 8, border: "none",
+                        background: V.teal, color: V.white, fontSize: 13, fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Ativar Radar · R$247/mês
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
-            {(gm?.quickWins || []).map((qw: any) => (
-              <QuickWinCard key={qw.id} qw={qw} leadId={lead.id} />
-            ))}
-            {!gm?.quickWins?.length && tier === "free" && (
-              <p style={{ fontSize: 12, color: V.ash, textAlign: "center" }}>
-                Ative o Radar pra ver ações personalizadas pro seu negócio.
-              </p>
-            )}
-          </div>
-        )}
+          );
+        })()}
 
         {/* ─── PILARES ESTRATÉGICOS ─── */}
-        {gm?.strategicPillars?.length > 0 && (
+        {gm?.strategicPillars?.length > 0 && tier !== "free" && (
           <div style={{ marginBottom: 24 }}>
             <div style={{
               fontFamily: V.mono, fontSize: 10, color: V.night,
@@ -606,7 +691,7 @@ export default function RadarDashboard({ lead, diagnosis, tier, initialGrowthMac
         )}
 
         {/* ─── KPIs ─── */}
-        {gm?.kpis && (
+        {gm?.kpis && tier !== "free" && (
           <div style={{
             background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`,
             padding: "18px 20px", marginBottom: 24,

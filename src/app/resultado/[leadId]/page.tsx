@@ -66,7 +66,7 @@ export default async function ResultadoPage({ params }: { params: { leadId: stri
     .order("created_at", { ascending: false }).limit(1).single();
 
   if (!diagnosis) {
-    return <PollingScreen leadId={leadId} product={lead.product} region={lead.region} />;
+    return <PollingScreen leadId={leadId} product={lead.product} region={lead.region} name={lead.name} />;
   }
 
   const raw = diagnosis.raw_data || {};

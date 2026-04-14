@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { V } from "@/lib/design-tokens";
 
-// Fatos que rotacionam durante a espera — mesmos do ProcessingScreen original
+// Fatos que rotacionam durante a espera
 const facts = [
   { text: "46% de todas as buscas no Google têm intenção local.", source: "Google" },
   { text: "Negócios com fotos no Google Meu Negócio recebem 42% mais pedidos de rota.", source: "Google" },
@@ -35,21 +35,273 @@ const processingMessages = [
   "Preparando seu plano de ação personalizado...",
 ];
 
-// Animação de progresso visual: sobe até 95% em 90s (não 100% porque o real fica
-// esperando o polling confirmar). Quando o polling detecta done, o componente
-// é desmontado pelo router.refresh().
 const VISUAL_DURATION_MS = 90_000;
 const POLL_INTERVAL_MS = 3_000;
-const POLL_TIMEOUT_MS = 300_000; // 5 min — depois disso mostra erro
+const POLL_TIMEOUT_MS = 300_000;
+
+// ─── Competitor Candidate Type ─────────────────────────────────────────────
+interface CompetitorCandidate {
+  name: string;
+  rating: number | null;
+  reviewCount: number | null;
+  website: string | null;
+  categories: string[];
+  selected: boolean;
+}
+
+// ─── Competitor Validation Section ─────────────────────────────────────────
+function CompetitorValidation({
+  leadId,
+  onValidated,
+}: {
+  leadId: string;
+  onValidated: () => void;
+}) {
+  const [phase, setPhase] = useState<"loading" | "showing" | "saving" | "done" | "hidden">("loading");
+  const [candidates, setCandidates] = useState<CompetitorCandidate[]>([]);
+  const [addName, setAddName] = useState("");
+  const fetchedRef = useRef(false);
+
+  // Fetch competitor candidates
+  useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
+    const discover = async () => {
+      try {
+        const res = await Promise.race([
+          fetch(`/api/competitors/discover?leadId=${leadId}`),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("timeout")), 12000),
+          ),
+        ]);
+        if (!res.ok) { setPhase("hidden"); return; }
+        const data = await res.json();
+        if (!data.candidates || data.candidates.length === 0) {
+          setPhase("hidden");
+          return;
+        }
+        setCandidates(
+          data.candidates.map((c: any) => ({ ...c, selected: true })),
+        );
+        setPhase("showing");
+      } catch {
+        setPhase("hidden");
+      }
+    };
+    discover();
+  }, [leadId]);
+
+  const toggleCandidate = useCallback((idx: number) => {
+    setCandidates((prev) =>
+      prev.map((c, i) => (i === idx ? { ...c, selected: !c.selected } : c)),
+    );
+  }, []);
+
+  const addCompetitor = useCallback(() => {
+    const trimmed = addName.trim();
+    if (!trimmed || candidates.some((c) => c.name.toLowerCase() === trimmed.toLowerCase())) return;
+    setCandidates((prev) => [
+      ...prev,
+      { name: trimmed, rating: null, reviewCount: null, website: null, categories: [], selected: true },
+    ]);
+    setAddName("");
+  }, [addName, candidates]);
+
+  const handleConfirm = useCallback(async () => {
+    const selected = candidates.filter((c) => c.selected);
+    if (selected.length === 0) { setPhase("done"); onValidated(); return; }
+
+    setPhase("saving");
+    try {
+      await fetch("/api/competitors/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leadId,
+          competitors: selected.map((c) => ({
+            name: c.name,
+            website: c.website,
+            rating: c.rating,
+            reviewCount: c.reviewCount,
+          })),
+        }),
+      });
+    } catch {
+      /* ignore — best effort */
+    }
+    setPhase("done");
+    onValidated();
+  }, [candidates, leadId, onValidated]);
+
+  if (phase === "hidden") return null;
+
+  if (phase === "loading") {
+    return (
+      <div style={{ marginTop: 24, opacity: 0.5 }}>
+        <p style={{ fontSize: 11, color: V.ash, fontFamily: V.mono, margin: 0 }}>
+          Buscando concorrentes na região...
+        </p>
+      </div>
+    );
+  }
+
+  if (phase === "done") {
+    return (
+      <div
+        style={{
+          marginTop: 24, padding: "12px 16px", background: "rgba(45,155,131,0.08)",
+          borderRadius: 10, border: "1px solid rgba(45,155,131,0.2)",
+        }}
+      >
+        <p style={{ fontSize: 12, color: V.teal, margin: 0, fontWeight: 600 }}>
+          Concorrentes confirmados
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        marginTop: 24,
+        animation: "fadeIn 0.5s ease",
+      }}
+    >
+      {/* Header */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 6,
+        marginBottom: 10,
+      }}>
+        <span style={{ fontSize: 14 }}>📍</span>
+        <span style={{
+          fontSize: 11, fontWeight: 600, color: V.white,
+          fontFamily: V.mono, letterSpacing: "0.04em", textTransform: "uppercase",
+        }}>
+          Concorrentes na região
+        </span>
+      </div>
+
+      <p style={{ fontSize: 11, color: V.ash, margin: "0 0 10px", lineHeight: 1.5 }}>
+        Encontramos esses negócios similares. Desmarque os que não são concorrentes diretos.
+      </p>
+
+      {/* Candidate cards */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {candidates.map((c, i) => (
+          <button
+            key={`${c.name}-${i}`}
+            onClick={() => toggleCandidate(i)}
+            style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "10px 12px", borderRadius: 8,
+              background: c.selected ? "rgba(45,155,131,0.06)" : V.graphite,
+              border: `1px solid ${c.selected ? "rgba(45,155,131,0.25)" : V.slate}`,
+              cursor: "pointer", textAlign: "left", width: "100%",
+              transition: "all 0.2s ease",
+            }}
+          >
+            {/* Checkbox */}
+            <div style={{
+              width: 20, height: 20, borderRadius: 5, flexShrink: 0,
+              border: `2px solid ${c.selected ? V.teal : V.slate}`,
+              background: c.selected ? V.teal : "transparent",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "all 0.2s ease",
+            }}>
+              {c.selected && (
+                <span style={{ color: V.white, fontSize: 11, fontWeight: 700 }}>✓</span>
+              )}
+            </div>
+
+            {/* Info */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: 12, fontWeight: 600, color: V.white,
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              }}>
+                {c.name}
+              </div>
+              <div style={{ fontSize: 10, color: V.ash, marginTop: 2, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {c.rating && (
+                  <span>★ {c.rating.toFixed(1)}</span>
+                )}
+                {c.reviewCount != null && (
+                  <span>{c.reviewCount} avaliações</span>
+                )}
+                {c.website && (
+                  <span style={{ color: V.teal }}>site ✓</span>
+                )}
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Add competitor input */}
+      <div style={{
+        display: "flex", gap: 6, marginTop: 8,
+      }}>
+        <input
+          type="text"
+          value={addName}
+          onChange={(e) => setAddName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCompetitor(); } }}
+          placeholder="+ Adicionar concorrente"
+          style={{
+            flex: 1, padding: "8px 10px", borderRadius: 6,
+            border: `1px solid ${V.slate}`, background: V.graphite,
+            color: V.white, fontSize: 12, fontFamily: V.body,
+            outline: "none",
+          }}
+        />
+        {addName.trim() && (
+          <button
+            onClick={addCompetitor}
+            style={{
+              padding: "8px 12px", borderRadius: 6, border: "none",
+              background: V.slate, color: V.white, fontSize: 11,
+              fontWeight: 600, cursor: "pointer",
+            }}
+          >
+            +
+          </button>
+        )}
+      </div>
+
+      {/* Confirm button */}
+      <button
+        onClick={handleConfirm}
+        disabled={phase === "saving"}
+        style={{
+          width: "100%", marginTop: 10, padding: "10px 16px",
+          borderRadius: 8, border: "none",
+          background: V.teal, color: V.white,
+          fontSize: 12, fontWeight: 700, cursor: phase === "saving" ? "wait" : "pointer",
+          opacity: phase === "saving" ? 0.7 : 1,
+          transition: "opacity 0.2s ease",
+        }}
+      >
+        {phase === "saving" ? "Salvando..." : `Confirmar ${candidates.filter((c) => c.selected).length} concorrente(s)`}
+      </button>
+
+      <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+    </div>
+  );
+}
+
+// ─── Main PollingScreen ────────────────────────────────────────────────────
 
 export default function PollingScreen({
   leadId,
   product,
   region,
+  name,
 }: {
   leadId: string;
   product: string;
   region: string;
+  name?: string;
 }) {
   const router = useRouter();
   const [progress, setProgress] = useState(0);
@@ -58,6 +310,7 @@ export default function PollingScreen({
   const [factIdx, setFactIdx] = useState(() => Math.floor(Math.random() * facts.length));
   const [factVisible, setFactVisible] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [competitorsValidated, setCompetitorsValidated] = useState(false);
   const doneRef = useRef(false);
 
   // Progresso visual 0 → 95 em VISUAL_DURATION_MS
@@ -116,9 +369,6 @@ export default function PollingScreen({
           doneRef.current = true;
           setProgress(100);
           if (pollInterval) clearInterval(pollInterval);
-          // Força o server component a re-renderizar com o diagnosis_display
-          // populado. router.refresh() mantém o state da URL (não é reload).
-          // Pequeno delay pro usuário ver o anel de progresso fechar em 100%.
           setTimeout(() => {
             if (!cancelled) router.refresh();
           }, 500);
@@ -128,7 +378,6 @@ export default function PollingScreen({
       }
     };
 
-    // Primeira chamada imediata + polling periódico
     check();
     pollInterval = setInterval(check, POLL_INTERVAL_MS);
 
@@ -149,7 +398,7 @@ export default function PollingScreen({
   }, [leadId, router]);
 
   const shortRegion = region?.split(",")[0].trim() || "";
-  const displayName = product || "seu negócio";
+  const displayName = (name && name.trim()) ? name.trim() : (product || "seu negócio");
   const currentFact = facts[factIdx];
 
   // SVG ring
@@ -227,23 +476,13 @@ export default function PollingScreen({
             {/* Progress Ring */}
             <div style={{ position: "relative", width: size, height: size, margin: "0 auto 24px" }}>
               <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-                {/* Background ring */}
                 <circle
-                  cx={size / 2}
-                  cy={size / 2}
-                  r={radius}
-                  fill="none"
-                  stroke={V.graphite}
-                  strokeWidth={strokeWidth}
+                  cx={size / 2} cy={size / 2} r={radius}
+                  fill="none" stroke={V.graphite} strokeWidth={strokeWidth}
                 />
-                {/* Progress ring */}
                 <circle
-                  cx={size / 2}
-                  cy={size / 2}
-                  r={radius}
-                  fill="none"
-                  stroke={V.amber}
-                  strokeWidth={strokeWidth}
+                  cx={size / 2} cy={size / 2} r={radius}
+                  fill="none" stroke={V.amber} strokeWidth={strokeWidth}
                   strokeLinecap="round"
                   strokeDasharray={circumference}
                   strokeDashoffset={strokeDashoffset}
@@ -252,9 +491,7 @@ export default function PollingScreen({
               </svg>
               <div
                 style={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "50%",
+                  position: "absolute", top: "50%", left: "50%",
                   transform: "translate(-50%, -50%)",
                   fontSize: 36,
                   animation: "spin 3s linear infinite",
@@ -265,12 +502,10 @@ export default function PollingScreen({
             </div>
 
             {/* Rotating message */}
-            <div style={{ minHeight: 24, marginBottom: 32 }}>
+            <div style={{ minHeight: 24, marginBottom: 24 }}>
               <p
                 style={{
-                  fontSize: 14,
-                  color: V.mist,
-                  fontFamily: V.body,
+                  fontSize: 14, color: V.mist, fontFamily: V.body,
                   opacity: msgVisible ? 1 : 0,
                   transition: "opacity 0.3s ease",
                   margin: 0,
@@ -279,6 +514,14 @@ export default function PollingScreen({
                 {processingMessages[msgIdx]}
               </p>
             </div>
+
+            {/* ─── Competitor Validation (interactive) ─── */}
+            {!competitorsValidated && (
+              <CompetitorValidation
+                leadId={leadId}
+                onValidated={() => setCompetitorsValidated(true)}
+              />
+            )}
 
             {/* Fact card */}
             <div
@@ -291,28 +534,22 @@ export default function PollingScreen({
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "center",
+                marginTop: competitorsValidated ? 24 : 24,
               }}
             >
               <div style={{ opacity: factVisible ? 1 : 0, transition: "opacity 0.4s ease" }}>
                 <p
                   style={{
-                    fontSize: 13,
-                    color: V.white,
-                    margin: "0 0 6px",
-                    lineHeight: 1.5,
-                    fontFamily: V.body,
+                    fontSize: 13, color: V.white, margin: "0 0 6px",
+                    lineHeight: 1.5, fontFamily: V.body,
                   }}
                 >
                   {currentFact.text}
                 </p>
                 <p
                   style={{
-                    fontSize: 10,
-                    color: V.ash,
-                    margin: 0,
-                    fontFamily: V.mono,
-                    letterSpacing: "0.02em",
-                    opacity: 0.7,
+                    fontSize: 10, color: V.ash, margin: 0,
+                    fontFamily: V.mono, letterSpacing: "0.02em", opacity: 0.7,
                   }}
                 >
                   Fonte: {currentFact.source}
@@ -320,14 +557,11 @@ export default function PollingScreen({
               </div>
             </div>
 
-            {/* Reassurance: link atual é seu marcador, pode voltar depois */}
+            {/* Reassurance */}
             <p
               style={{
-                color: V.ash,
-                fontSize: 11,
-                fontFamily: V.body,
-                marginTop: 20,
-                lineHeight: 1.6,
+                color: V.ash, fontSize: 11, fontFamily: V.body,
+                marginTop: 20, lineHeight: 1.6,
               }}
             >
               Pode fechar essa aba — o diagnóstico continua rodando.
