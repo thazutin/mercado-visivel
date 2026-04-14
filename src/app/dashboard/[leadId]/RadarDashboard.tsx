@@ -44,13 +44,18 @@ function ScoreRing({ score, benchmark, benchmarkLabel }: {
   score: number; benchmark: number; benchmarkLabel: string;
 }) {
   const pct = Math.min(score, 100);
+  const potential = Math.min(score + 25, 85);
   const circumference = 2 * Math.PI * 52;
   const offset = circumference - (pct / 100) * circumference;
   const color = score >= 50 ? V.teal : score >= 25 ? V.amber : "#D95A4F";
 
   return (
-    <div style={{ textAlign: "center", marginBottom: 24 }}>
-      <div style={{ position: "relative", display: "inline-block", width: 130, height: 130 }}>
+    <div style={{ background: V.white, borderRadius: 16, border: `1px solid ${V.fog}`, padding: "24px 20px", marginBottom: 20, textAlign: "center" }}>
+      <div style={{ fontFamily: V.display, fontSize: 15, fontWeight: 700, color: V.night, marginBottom: 16 }}>
+        Qual fatia do seu mercado você disputa?
+      </div>
+
+      <div style={{ position: "relative", display: "inline-block", width: 130, height: 130, marginBottom: 16 }}>
         <svg width="130" height="130" viewBox="0 0 130 130">
           <circle cx="65" cy="65" r="52" fill="none" stroke={V.fog} strokeWidth="8" />
           <circle cx="65" cy="65" r="52" fill="none" stroke={color} strokeWidth="8"
@@ -58,35 +63,31 @@ function ScoreRing({ score, benchmark, benchmarkLabel }: {
             strokeLinecap="round" transform="rotate(-90 65 65)"
             style={{ transition: "stroke-dashoffset 1s ease" }} />
         </svg>
-        <div style={{
-          position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
-          textAlign: "center",
-        }}>
+        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", textAlign: "center" }}>
           <div style={{ fontSize: 32, fontWeight: 800, color: V.night, lineHeight: 1 }}>{score}</div>
           <div style={{ fontSize: 10, color: V.ash, fontFamily: V.mono }}>/100</div>
         </div>
       </div>
-      <div style={{ marginTop: 8 }}>
-        <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 4px", lineHeight: 1.5 }}>
-          {score < 20
-            ? "Seu negócio é quase invisível pra quem busca o que você faz. A maioria dos clientes potenciais encontra seus concorrentes primeiro."
-            : score < 40
-            ? "Você aparece pra parte do mercado, mas perde a maioria das oportunidades. Há espaço concreto pra crescer."
-            : score < 60
-            ? "Presença razoável. Você é encontrado, mas concorrentes mais ativos capturam mais atenção."
-            : "Boa presença digital. Seu desafio agora é manter e ampliar a distância pros concorrentes."}
-        </p>
-        <div style={{ fontSize: 12, color: V.zinc, marginTop: 4 }}>
-          Média de {benchmarkLabel}: <strong style={{ color: V.night }}>{benchmark}</strong>
-          {" · "}
-          <strong style={{ color: V.amber }}>Meta: {Math.min(score + 25, 85)}</strong>
+
+      {/* Grid 3 colunas */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, textAlign: "center", marginBottom: 12 }}>
+        <div style={{ padding: "8px 4px", background: V.cloud, borderRadius: 8 }}>
+          <div style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color }}>{score}</div>
+          <div style={{ fontSize: 10, color: V.ash }}>Você hoje</div>
         </div>
-        {score < benchmark && (
-          <div style={{ fontSize: 11, color: V.amber, marginTop: 2 }}>
-            {benchmark - score} pontos abaixo da média — espaço pra crescer
-          </div>
-        )}
+        <div style={{ padding: "8px 4px", background: V.cloud, borderRadius: 8 }}>
+          <div style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.amber }}>{potential}</div>
+          <div style={{ fontSize: 10, color: V.ash }}>Potencial</div>
+        </div>
+        <div style={{ padding: "8px 4px", background: V.cloud, borderRadius: 8 }}>
+          <div style={{ fontFamily: V.display, fontSize: 20, fontWeight: 800, color: V.zinc }}>{benchmark}</div>
+          <div style={{ fontSize: 10, color: V.ash }}>Média mercado</div>
+        </div>
       </div>
+
+      <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.6, fontWeight: 500 }}>
+        {`Você disputa ${score}% da demanda do seu mercado atingível. Concorrentes no mesmo contexto disputam ~${benchmark}%. Chegar a ${potential}% é viável em 90 dias.`}
+      </p>
     </div>
   );
 }
@@ -742,22 +743,41 @@ export default function RadarDashboard({ lead, diagnosis, tier: initialTier, ini
           </div>
         )}
 
-        {/* ─── PROVOCAÇÕES (topo, pra chamar atenção) ─── */}
-        {gm?.provocations?.length > 0 && (
+        {/* ─── 1. PLANO DE CRESCIMENTO (subscriber: expandido, free: locked) ─── */}
+        {gm?.strategicPillars?.length > 0 && (
           <div style={{ marginBottom: 24 }}>
             <div style={{
-              fontFamily: V.mono, fontSize: 10, color: V.amber,
+              fontFamily: V.mono, fontSize: 10, color: V.night,
               letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10,
             }}>
-              📡 SEU RADAR DETECTOU
+              <span id="growth-plan">🏗️</span> SEU PLANO DE CRESCIMENTO
             </div>
-            {gm.provocations.map((p: any) => (
-              <ProvocationCard key={p.id} prov={p} />
-            ))}
+            {tier !== "free" && (
+              <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 12px", lineHeight: 1.5 }}>
+                Montado a partir dos dados do seu mercado. Cada item tem conteúdo pronto — copie e use.
+              </p>
+            )}
+            {gm.strategicPillars
+              .sort((a: any, b: any) => (a.priority || 0) - (b.priority || 0))
+              .map((pillar: any) => (
+                tier !== "free"
+                  ? <PillarCard key={pillar.id} pillar={pillar} />
+                  : <div key={pillar.id} style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, overflow: "hidden", marginBottom: 10, position: "relative" }}>
+                      <div style={{ padding: "14px 16px" }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 4 }}>{pillar.title}</div>
+                        <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>{pillar.description}</p>
+                      </div>
+                      <div style={{ position: "relative", height: 50, overflow: "hidden" }}>
+                        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(transparent, rgba(255,255,255,0.95))", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 8 }}>
+                          <span style={{ fontSize: 10, color: V.ash }}>🔒 Assine pra ver o plano completo</span>
+                        </div>
+                      </div>
+                    </div>
+              ))}
           </div>
         )}
 
-        {/* ─── QUICK WINS ─── */}
+        {/* ─── 2. AÇÕES RÁPIDAS ─── */}
         {gm?.quickWins?.length > 0 && (() => {
           const FREE_VISIBLE = 3;
           const allQw = gm.quickWins || [];
@@ -770,7 +790,7 @@ export default function RadarDashboard({ lead, diagnosis, tier: initialTier, ini
                 fontFamily: V.mono, fontSize: 10, color: V.teal,
                 letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10,
               }}>
-                ⚡ AÇÕES RÁPIDAS — COMECE AGORA
+                ⚡ AÇÕES RÁPIDAS
                 {tier === "free" && allQw.length > FREE_VISIBLE && (
                   <span style={{ color: V.ash, marginLeft: 8 }}>
                     {FREE_VISIBLE} de {allQw.length}
@@ -787,41 +807,23 @@ export default function RadarDashboard({ lead, diagnosis, tier: initialTier, ini
                   {lockedQw.slice(0, 3).map((qw: any) => (
                     <LockedQuickWinCard key={qw.id} qw={qw} />
                   ))}
-
-                  {lockedQw.length > 3 && (
-                    <p style={{ fontSize: 11, color: V.ash, textAlign: "center", margin: "4px 0 12px" }}>
-                      + {lockedQw.length - 3} ação(ões) disponível(is)
-                    </p>
-                  )}
-
                   <div style={{
                     background: "linear-gradient(135deg, #161618 0%, #2A2A30 100%)",
-                    borderRadius: 12, padding: "18px 20px", textAlign: "center",
+                    borderRadius: 12, padding: "18px 20px", textAlign: "center", marginTop: 8,
                   }}>
                     <p style={{ fontSize: 13, fontWeight: 600, color: V.white, margin: "0 0 4px" }}>
-                      Desbloqueie {lockedQw.length} ação(ões) personalizada(s)
+                      🔒 Assine o Radar para desbloquear todas as ações
                     </p>
                     <p style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", margin: "0 0 12px" }}>
-                      Com passos detalhados, textos prontos e monitoramento semanal.
+                      Com passo a passo, textos prontos e evolução semanal.
                     </p>
-                    <button
-                      onClick={async () => {
-                        try {
-                          const res = await fetch("/api/checkout/subscription", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ leadId: lead.id }),
-                          });
-                          const data = await res.json();
-                          if (data.url) window.location.href = data.url;
-                        } catch { /* ignore */ }
-                      }}
-                      style={{
-                        padding: "10px 24px", borderRadius: 8, border: "none",
-                        background: V.teal, color: V.white, fontSize: 13, fontWeight: 700,
-                        cursor: "pointer",
-                      }}
-                    >
+                    <button onClick={async () => {
+                      try {
+                        const res = await fetch("/api/checkout/subscription", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: lead.id }) });
+                        const data = await res.json();
+                        if (data.url) window.location.href = data.url;
+                      } catch { /* ignore */ }
+                    }} style={{ padding: "10px 24px", borderRadius: 8, border: "none", background: V.teal, color: V.white, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
                       Ativar Radar · R$247/mês
                     </button>
                   </div>
@@ -831,57 +833,22 @@ export default function RadarDashboard({ lead, diagnosis, tier: initialTier, ini
           );
         })()}
 
-        {/* ─── PILARES ESTRATÉGICOS ─── */}
-        {gm?.strategicPillars?.length > 0 && tier !== "free" && (
+        {/* ─── 3. RADAR SEMANAL (provocações) ─── */}
+        {gm?.provocations?.length > 0 && (
           <div style={{ marginBottom: 24 }}>
             <div style={{
-              fontFamily: V.mono, fontSize: 10, color: V.night,
+              fontFamily: V.mono, fontSize: 10, color: V.amber,
               letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10,
             }}>
-              <span id="growth-plan">🏗️</span> SEU PLANO DE CRESCIMENTO
+              📡 SEU RADAR DESSA SEMANA DETECTOU
             </div>
-            <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 12px", lineHeight: 1.5 }}>
-              Montado a partir dos dados do seu mercado.
-              Cada item tem conteúdo pronto — copie e use.
-            </p>
-            {gm.strategicPillars
-              .sort((a: any, b: any) => (a.priority || 0) - (b.priority || 0))
-              .map((pillar: any) => (
-                <PillarCard key={pillar.id} pillar={pillar} />
-              ))}
+            {gm.provocations.map((p: any) => (
+              <ProvocationCard key={p.id} prov={p} />
+            ))}
           </div>
         )}
 
-        {/* ─── KPIs ─── */}
-        {gm?.kpis && tier !== "free" && (
-          <div style={{
-            background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`,
-            padding: "18px 20px", marginBottom: 24,
-          }}>
-            <div style={{
-              fontFamily: V.mono, fontSize: 10, color: V.ash,
-              letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 12,
-            }}>
-              📈 METAS
-            </div>
-            <div style={{ display: "grid", gap: 12 }}>
-              <div>
-                <span style={{ fontSize: 10, color: V.ash, fontFamily: V.mono }}>30 DIAS</span>
-                <p style={{ fontSize: 13, color: V.night, margin: "2px 0 0", fontWeight: 500 }}>
-                  {gm.kpis.thirtyDay}
-                </p>
-              </div>
-              <div>
-                <span style={{ fontSize: 10, color: V.ash, fontFamily: V.mono }}>90 DIAS</span>
-                <p style={{ fontSize: 13, color: V.night, margin: "2px 0 0", fontWeight: 500 }}>
-                  {gm.kpis.ninetyDay}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ─── CONTEÚDO SEMANAL (subscriber only) ─── */}
+        {/* ─── 4. CONTEÚDO SEMANAL (subscriber only) ─── */}
         {tier === "subscriber" && <WeeklyContentsSection leadId={lead.id} />}
 
         {/* Footer */}
