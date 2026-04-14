@@ -18,15 +18,22 @@ export interface QuickWinAction {
   generatedContent?: any;
 }
 
-/** Pilar estratégico: operação montada (paper, evento, posts, etc.) */
+/** Pilar estratégico: aposta de crescimento com plano completo */
 export interface StrategicPillar {
   id: string;
-  type: string;                    // 'content_engine' | 'authority' | 'prospecting' | 'expansion'
-  title: string;                   // "Motor de Conteúdo Instagram"
-  description: string;             // "Calendário de 12 posts baseado nos temas..."
+  type: string;                    // 'content_engine' | 'authority' | 'prospecting' | 'expansion' | 'retention'
+  title: string;                   // "Sistema de Fidelização por WhatsApp"
+  description: string;             // POR QUE: cita dados reais e conecta com objetivo
   channel: string;                 // Canal primário
   priority: number;                // 1 = mais importante
-  /** Itens gerados dentro do pilar */
+  // Campos de plano de crescimento
+  objective?: string;              // O que vai resolver (1 frase)
+  targetMetric?: string;           // Métrica quantitativa (ex: "40% dos clientes voltando em 15 dias")
+  timeline?: string;               // Timeline (ex: "30 dias setup, resultados em 60 dias")
+  resources?: string;              // O que investir (tempo, dinheiro, equipe)
+  risks?: string;                  // Riscos e mitigação
+  tools?: string[];                // Ferramentas externas recomendadas
+  /** Etapas do pilar com conteúdo pronto */
   items: StrategicItem[];
   /** KPI do pilar */
   kpi: { metric: string; target: string; timeframe: string };

@@ -316,6 +316,7 @@ function PillarCard({ pillar }: { pillar: any }) {
     prospecting: "🎯",
     reputation: "⭐",
     expansion: "🗺️",
+    retention: "🔄",
   };
 
   return (
@@ -345,7 +346,7 @@ function PillarCard({ pillar }: { pillar: any }) {
       {/* Content */}
       {expanded && (
         <div style={{ padding: "0 18px 18px", borderTop: `1px solid ${V.fog}` }}>
-          {/* Objetivo + Meta */}
+          {/* Objetivo + Meta + Recursos + Riscos + Ferramentas */}
           <div style={{ marginTop: 14, marginBottom: 14 }}>
             <div style={{
               padding: "10px 12px", background: "rgba(45,155,131,0.06)",
@@ -353,12 +354,46 @@ function PillarCard({ pillar }: { pillar: any }) {
             }}>
               <div style={{ fontSize: 10, fontWeight: 600, color: V.teal, textTransform: "uppercase", marginBottom: 4 }}>OBJETIVO</div>
               <span style={{ fontSize: 12, color: V.night, fontWeight: 500 }}>
-                {pillar.kpi?.metric || pillar.title}
+                {pillar.objective || pillar.kpi?.metric || pillar.title}
               </span>
-              <span style={{ fontSize: 11, color: V.ash, marginLeft: 8 }}>
-                Meta: {pillar.kpi?.target} em {pillar.kpi?.timeframe}
-              </span>
+              {pillar.targetMetric && (
+                <div style={{ fontSize: 11, color: V.teal, fontWeight: 600, marginTop: 4 }}>
+                  Meta: {pillar.targetMetric}
+                </div>
+              )}
+              {pillar.timeline && (
+                <div style={{ fontSize: 11, color: V.ash, marginTop: 2 }}>⏱ {pillar.timeline}</div>
+              )}
             </div>
+
+            {/* Recursos + Riscos */}
+            {(pillar.resources || pillar.risks) && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 8 }}>
+                {pillar.resources && (
+                  <div style={{ padding: "8px 10px", background: V.cloud, borderRadius: 6 }}>
+                    <div style={{ fontSize: 9, fontWeight: 600, color: V.ash, textTransform: "uppercase", marginBottom: 2 }}>RECURSOS</div>
+                    <div style={{ fontSize: 11, color: V.zinc, lineHeight: 1.4 }}>{pillar.resources}</div>
+                  </div>
+                )}
+                {pillar.risks && (
+                  <div style={{ padding: "8px 10px", background: "rgba(217,83,79,0.04)", borderRadius: 6 }}>
+                    <div style={{ fontSize: 9, fontWeight: 600, color: V.coral, textTransform: "uppercase", marginBottom: 2 }}>RISCOS</div>
+                    <div style={{ fontSize: 11, color: V.zinc, lineHeight: 1.4 }}>{pillar.risks}</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Ferramentas */}
+            {pillar.tools?.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap" as const, gap: 4, marginBottom: 8 }}>
+                {pillar.tools.map((tool: string, ti: number) => (
+                  <span key={ti} style={{ fontSize: 9, fontWeight: 500, color: V.night, background: V.fog, padding: "2px 6px", borderRadius: 4 }}>
+                    🔧 {tool}
+                  </span>
+                ))}
+              </div>
+            )}
 
             {/* Etapas resumidas */}
             <div style={{

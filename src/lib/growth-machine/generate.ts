@@ -1390,46 +1390,66 @@ ${compIG.map((c: any) => {
 })()}
 `.trim();
 
-  const prompt = `Você é o Virô, radar de crescimento para negócios brasileiros. Com base nos DADOS REAIS acima, gere pilares estratégicos de marketing.
+  const prompt = `Você é o Virô, radar de crescimento para negócios brasileiros. Com base nos DADOS REAIS acima, crie um PLANO DE CRESCIMENTO — não ações genéricas, mas um plano real de A→B com apostas estratégicas.
 
-REGRAS CRÍTICAS:
-1. CADA pilar deve ser baseado em dados reais do diagnóstico — cite números específicos
-2. NÃO gere pilares genéricos. Se o negócio não tem Instagram, NÃO gere pilar de Instagram
-3. CADA item dentro do pilar deve ter conteúdo PRONTO para copiar/colar
-4. Gere apenas pilares que fazem sentido pro segmento (${bp.label})
-5. Máximo 4 pilares, mínimo 2
-6. Cada pilar tem 2-4 itens com conteúdo pronto
-7. Todos os textos em PT-BR, tom profissional mas acessível
-8. ${challengeContext ? `O PRIMEIRO PILAR deve ser diretamente ligado ao objetivo do dono: "${challengeLabels[lead.challenge || ''] || ''}"` : 'Priorize pilares pelos gaps mais críticos detectados nos dados'}
+CONTEXTO DO DONO:
+${challengeContext ? `Objetivo declarado: "${challengeLabels[lead.challenge || ''] || ''}". O PRIMEIRO PILAR deve atacar diretamente esse objetivo.` : 'Sem objetivo declarado — priorize pelo gap mais crítico dos dados.'}
+
+REGRAS DO PLANO:
+1. Exatamente 3 PILARES. Cada pilar é uma APOSTA ESTRATÉGICA que move a agulha — não uma ação tática.
+2. CADA pilar deve citar dados reais do diagnóstico (números, concorrentes, métricas).
+3. Se o negócio tem Instagram (mesmo com 0 seguidores), inclua métricas e ações de Instagram.
+4. Se o negócio NÃO tem Instagram mas deveria, o pilar deve incluir a criação.
+5. CADA pilar deve incluir: objetivo, meta quantitativa, timeline, recursos necessários, riscos, ferramentas recomendadas.
+6. CADA etapa deve ter conteúdo COMPLETO pronto pra copiar/colar — textos reais, não instruções.
+7. Todos os textos em PT-BR, tom profissional mas acessível.
 
 FORMATO JSON:
 {"pillars":[{
   "id":"pilar-1",
-  "type":"content_engine|authority|prospecting|reputation|expansion",
-  "title":"Título curto e direto",
-  "description":"POR QUE esse pilar conecta com o objetivo do dono. Cite dados reais.",
+  "type":"content_engine|authority|prospecting|reputation|expansion|retention",
+  "title":"Título estratégico (ex: Sistema de Fidelização por WhatsApp)",
+  "description":"POR QUE essa aposta conecta com os dados e o objetivo. Cite números reais: rating, reviews, followers, concorrentes, volume.",
   "channel":"canal_principal",
   "priority":1,
+  "objective":"O que este pilar vai resolver (1 frase clara)",
+  "targetMetric":"Métrica principal (ex: 40% dos clientes voltando em 15 dias)",
+  "timeline":"Em quanto tempo (ex: 30 dias para setup, resultados em 60 dias)",
+  "resources":"O que precisa investir (tempo, dinheiro, equipe — seja específico)",
+  "risks":"Riscos e como mitigar (1-2 frases)",
+  "tools":["Ferramentas externas recomendadas (ex: WhatsApp Business, Canva, Google Business Profile, Meta Business Suite)"],
   "items":[{
     "id":"item-1",
-    "title":"Etapa clara (ex: Responder reviews negativos, Publicar post de autoridade)",
+    "title":"Etapa clara e sequencial",
     "type":"copy|template|structure|checklist|script",
-    "content":"CONTEÚDO COMPLETO PRONTO PRA USAR. Não escreva placeholder — escreva o texto final.",
+    "content":"CONTEÚDO COMPLETO PRONTO PRA USAR. O texto final, não uma instrução.",
     "copyable":true
   }],
-  "kpi":{"metric":"Métrica específica do pilar","target":"Número meta realista","timeframe":"30 dias"}
+  "kpi":{"metric":"Métrica específica","target":"Número meta realista","timeframe":"30 dias"}
 }]}
 
-IMPORTANTE: Cada item.content deve ser o TEXTO COMPLETO, não uma descrição do que escrever. Por exemplo:
-- Se é um post, escreva O POST inteiro
-- Se é um email, escreva O EMAIL inteiro
-- Se é uma estrutura de evento, escreva A ESTRUTURA completa
-- Se é uma mensagem WhatsApp, escreva A MENSAGEM pronta`;
+CONTEÚDO OBRIGATÓRIO EM CADA ITEM:
+- Se é uma mensagem WhatsApp, escreva A MENSAGEM completa com emojis e formatação
+- Se é um post Instagram, escreva O POST inteiro com legenda e hashtags
+- Se é um script de abordagem, escreva O SCRIPT completo
+- Se é uma estrutura de evento, escreva A ESTRUTURA com horários e programação
+- Se é um email, escreva O EMAIL inteiro com assunto e corpo
+- NUNCA use [COLOQUE AQUI] ou [INSIRA] — escreva o conteúdo real baseado nos dados
+
+FERRAMENTAS EXTERNAS PRA REFERENCIAR:
+- Google Business Profile (business.google.com) — pra Maps
+- Meta Business Suite (business.facebook.com) — pra Instagram agendamento
+- Canva (canva.com) — pra design de posts
+- WhatsApp Business (business.whatsapp.com) — pra automação
+- Linktree (linktr.ee) — pra link na bio
+- Bit.ly — pra links curtos
+- Google Ads (ads.google.com) — pra anúncios
+- Carrd.co — pra landing page simples`;
 
   try {
     const res = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 6000,
+      max_tokens: 10000,
       temperature: 0.4,
       messages: [{ role: 'user', content: `${dataContext}\n\n${prompt}` }],
     });
@@ -1449,6 +1469,13 @@ IMPORTANTE: Cada item.content deve ser o TEXTO COMPLETO, não uma descrição do
       description: p.description || '',
       channel: p.channel || bp.channels[0] || 'instagram',
       priority: p.priority || idx + 1,
+      // Novos campos de plano de crescimento
+      objective: p.objective || '',
+      targetMetric: p.targetMetric || '',
+      timeline: p.timeline || '',
+      resources: p.resources || '',
+      risks: p.risks || '',
+      tools: p.tools || [],
       items: (p.items || []).map((item: any, iIdx: number) => ({
         id: item.id || `item-${iIdx + 1}`,
         title: item.title || '',
