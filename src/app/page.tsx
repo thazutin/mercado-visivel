@@ -407,8 +407,8 @@ export default function Home() {
             <p style={{ fontSize: 12, color: V.ash, margin: "0 0 16px", lineHeight: 1.4 }}>
               Opcional — quanto mais, mais personalizado o diagnóstico.
             </p>
-            <Field label="Instagram">
-              <input style={inputStyle} type="text" placeholder="@seunegocio" value={formData.instagram}
+            <Field label="Instagram" hint="Nome de usuário do perfil (ex: @efbrasil, @starbucks). Sem o @ também funciona.">
+              <input style={inputStyle} type="text" placeholder="@seunegocio ou instagram.com/seunegocio" value={formData.instagram}
                 onChange={(e: any) => updateField("instagram", e.target.value)} />
             </Field>
             {(formData as any).clientType === 'b2b' && (

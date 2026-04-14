@@ -537,9 +537,16 @@ Responda APENAS em JSON, sem markdown:
   const businessHandle = formData.instagram
     ? formData.instagram.replace(/@/g, "").replace(/https?:\/\/(www\.)?instagram\.com\//g, "").replace(/\//g, "").trim().toLowerCase()
     : "";
-  if (businessHandle.length > 1) {
+
+  // Handle deve ter ≥3 chars — menos que isso provavelmente é o nome do negócio, não o handle real
+  // Ex: user digita "ef" no campo Instagram achando que é o nome, mas handle real é @efbrasil
+  const handleTooShort = businessHandle.length > 0 && businessHandle.length < 3;
+
+  if (businessHandle.length >= 3) {
     instagramHandles.push(businessHandle);
     console.log(`[Pipeline] Business Instagram handle: @${businessHandle} (from form input: "${formData.instagram}")`);
+  } else if (handleTooShort) {
+    console.warn(`[Pipeline] Handle muito curto: "${businessHandle}" — vai tentar SERP discovery pelo nome do negócio`);
   } else if (formData.instagram) {
     console.warn(`[Pipeline] Instagram handle inválido após limpeza: "${formData.instagram}" → "${businessHandle}"`);
   }
