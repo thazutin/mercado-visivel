@@ -535,10 +535,13 @@ Responda APENAS em JSON, sem markdown:
   // Extract & auto-discover Instagram handles
   const instagramHandles: string[] = [];
   const businessHandle = formData.instagram
-    ? formData.instagram.replace(/@/g, "").replace(/https?:\/\/(www\.)?instagram\.com\//g, "").replace(/\//g, "").trim()
+    ? formData.instagram.replace(/@/g, "").replace(/https?:\/\/(www\.)?instagram\.com\//g, "").replace(/\//g, "").trim().toLowerCase()
     : "";
   if (businessHandle.length > 1) {
     instagramHandles.push(businessHandle);
+    console.log(`[Pipeline] Business Instagram handle: @${businessHandle} (from form input: "${formData.instagram}")`);
+  } else if (formData.instagram) {
+    console.warn(`[Pipeline] Instagram handle inválido após limpeza: "${formData.instagram}" → "${businessHandle}"`);
   }
 
   // Add any manually declared competitors
@@ -1120,7 +1123,7 @@ Responda APENAS em JSON, sem markdown:
   }
   console.log(`[Pipeline] Business handle to match: "${businessHandle}"`);
 
-  const businessProfile = instagramProfiles.find(
+  let businessProfile = instagramProfiles.find(
     (p) => p.handle === businessHandle
   ) || {
     handle: businessHandle,
@@ -1141,6 +1144,44 @@ Responda APENAS em JSON, sem markdown:
     isPrivate: false,
     dataAvailable: false,
   };
+
+  // FALLBACK: se businessProfile não tem dados (handle curto/inválido), tenta SERP discovery
+  // pelo nome do negócio pra achar handle correto (ex: "ef" → "@efbrasil")
+  if (!businessProfile.dataAvailable && formData.businessName && apifyConfig) {
+    try {
+      const serpScraper2 = createApifySerpScraper(apifyConfig);
+      const fallbackQuery = `instagram ${formData.businessName} ${extractedCity || 'brasil'}`;
+      console.log(`[Pipeline] IG fallback SERP: "${fallbackQuery}"`);
+      const serpResults = await withTimeout(
+        serpScraper2([fallbackQuery], resolvedRegion, undefined),
+        15_000, "IG-fallback-SERP",
+      );
+      const discoveredHandles: string[] = [];
+      for (const r of serpResults) {
+        const url = r.url || r.link || "";
+        const match = url.match(/instagram\.com\/([a-zA-Z0-9_.]+)/);
+        if (match && match[1] && !["explore","p","reel","reels","stories","accounts","about","direct","share","rsrc.php","static","help","developer","legal","privacy","terms"].includes(match[1]) && !match[1].includes('.') && match[1].length >= 3) {
+          const h = match[1].toLowerCase();
+          if (h !== businessHandle && !discoveredHandles.includes(h)) discoveredHandles.push(h);
+        }
+      }
+      if (discoveredHandles.length > 0) {
+        const topHandle = discoveredHandles[0];
+        console.log(`[Pipeline] IG fallback: found candidate @${topHandle}, scraping...`);
+        const instagramScraperFallback = createApifyInstagramScraper(apifyConfig);
+        const extraProfiles = await instagramScraperFallback([topHandle]);
+        const correctProfile = extraProfiles.find(p => p.handle === topHandle && p.dataAvailable);
+        if (correctProfile) {
+          console.log(`[Pipeline] IG fallback SUCCESS: @${topHandle} (${correctProfile.followers} followers)`);
+          businessProfile = correctProfile;
+          instagramProfiles.push(correctProfile);
+          sourcesUsed.push("ig_fallback_serp");
+        }
+      }
+    } catch (err) {
+      console.warn(`[Pipeline] IG fallback falhou:`, (err as Error).message);
+    }
+  }
   const competitorProfiles = instagramProfiles.filter(
     (p) => p.handle !== businessHandle
   );

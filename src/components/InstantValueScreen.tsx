@@ -344,7 +344,9 @@ export default function InstantValueScreen({ product, region, results: initialRe
   // Volumes inteiros (P8 fix) + check se todos iguais (P9 fix)
   const totalVolumeRaw = Math.round(results.totalVolume || 0);
   // Volume ponderado: usa buscasNoRaio (geo-adjusted) se disponível, senão pondera manualmente
+  // IMPORTANTE: pra negócios NACIONAIS não pondera — mostra volume total
   const totalVolumeInt = (() => {
+    if (isNacional) return totalVolumeRaw; // Nacional usa volume bruto
     if (proj?.buscasNoRaio && proj.buscasNoRaio > 0 && proj.buscasNoRaio < totalVolumeRaw) {
       return proj.buscasNoRaio;
     }
@@ -380,6 +382,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
   useEffect(() => {
     if (!leadId) { setQwLoading(false); return; }
     let cancelled = false;
+    let postTriggered = false;
 
     const fetchQW = async (attempt: number) => {
       if (cancelled) return;
@@ -397,22 +400,27 @@ export default function InstantValueScreen({ product, region, results: initialRe
             return;
           }
         }
-        // Se não existe, tenta gerar via POST
-        if (attempt <= 1) {
-          await fetch('/api/growth-machine', {
+        // Primeira tentativa: dispara POST fire-and-forget (não aguarda)
+        if (!postTriggered) {
+          postTriggered = true;
+          fetch('/api/growth-machine', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ leadId }),
-          });
+          }).catch(() => { /* ignore — polling vai pegar */ });
         }
-        // Retry até 3x com 8s entre tentativas
-        if (attempt < 3 && !cancelled) {
-          setTimeout(() => fetchQW(attempt + 1), 8000);
+        // Polls por até ~3min (20 tentativas × 10s)
+        if (attempt < 20 && !cancelled) {
+          setTimeout(() => fetchQW(attempt + 1), 10000);
         } else if (!cancelled) {
           setQwLoading(false);
         }
       } catch {
-        if (!cancelled) setQwLoading(false);
+        if (attempt < 20 && !cancelled) {
+          setTimeout(() => fetchQW(attempt + 1), 10000);
+        } else if (!cancelled) {
+          setQwLoading(false);
+        }
       }
     };
 
@@ -765,8 +773,8 @@ export default function InstantValueScreen({ product, region, results: initialRe
         <Expandable title={`Demanda ativa — ${hasVolume ? fmtPop(totalVolumeInt) + ' buscas/mês' + (searchVolumeIsEstimate ? ' (estimativa)' : '') : 'sem dados de busca para este segmento'}`} icon="">
           <div style={{ background: V.amberWash, borderRadius: 8, padding: "8px 12px", marginBottom: 12, borderLeft: `3px solid ${V.amber}` }}>
             <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
-              {results.demandType === 'ecommerce_national' || results.demandType === 'national_service'
-                ? `Volumes nacionais. Estimativa de alcance orgânico possível com posicionamento adequado.`
+              {isNacional || results.demandType === 'ecommerce_national' || results.demandType === 'national_service'
+                ? `Volumes nacionais do seu setor. Estimativa de alcance orgânico possível com posicionamento adequado.`
                 : `Volumes regionais. O número de ${fmtPop(totalVolumeInt)} buscas/mês é estimado com base na penetração da sua audiência no raio de ${raioKm}km do seu negócio.`}
             </p>
           </div>
