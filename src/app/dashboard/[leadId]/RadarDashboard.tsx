@@ -859,6 +859,28 @@ export default function RadarDashboard({ lead, diagnosis, tier: initialTier, ini
           <p style={{ fontSize: 11, color: V.ash, fontFamily: V.mono, marginTop: 4 }}>
             Seu radar de crescimento · virolocal.com
           </p>
+          {tier === "subscriber" && (
+            <button
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/checkout/portal", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ leadId: lead.id }),
+                  });
+                  const data = await res.json();
+                  if (data.url) window.location.href = data.url;
+                } catch { /* ignore */ }
+              }}
+              style={{
+                marginTop: 8, padding: "4px 12px", fontSize: 10, color: V.ash,
+                background: "none", border: `1px solid ${V.fog}`, borderRadius: 6,
+                cursor: "pointer", fontFamily: V.mono,
+              }}
+            >
+              Gerenciar assinatura
+            </button>
+          )}
         </div>
       </div>
 

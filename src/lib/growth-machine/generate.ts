@@ -1457,15 +1457,27 @@ CONTEÚDO OBRIGATÓRIO EM CADA ITEM:
 - Se é um email, escreva O EMAIL inteiro com assunto e corpo
 - NUNCA use [COLOQUE AQUI] ou [INSIRA] — escreva o conteúdo real baseado nos dados
 
-FERRAMENTAS EXTERNAS PRA REFERENCIAR:
-- Google Business Profile (business.google.com) — pra Maps
-- Meta Business Suite (business.facebook.com) — pra Instagram agendamento
-- Canva (canva.com) — pra design de posts
-- WhatsApp Business (business.whatsapp.com) — pra automação
-- Linktree (linktr.ee) — pra link na bio
-- Bit.ly — pra links curtos
-- Google Ads (ads.google.com) — pra anúncios
-- Carrd.co — pra landing page simples`;
+PROFUNDIDADE EXIGIDA:
+- Se o pilar sugere criar um blog post, ESCREVA o blog post inteiro (500+ palavras)
+- Se sugere criar programa de fidelidade, detalhe a ESTRUTURA completa (níveis, benefícios, regras)
+- Se sugere prospecção, liste as EMPRESAS REAIS dos dados e templates personalizados POR NOME
+- Se sugere evento, detalhe PROGRAMAÇÃO completa (horários, formato, follow-up)
+- Se sugere videocast, detalhe ROTEIRO completo (intro, perguntas, encerramento)
+- Cada etapa deve indicar ONDE CONSTRUIR e COMO VER EVOLUÇÃO
+
+FERRAMENTAS — SEMPRE indique onde executar cada ação:
+- Google Business Profile (business.google.com) — ficha, posts, reviews
+- Meta Business Suite (business.facebook.com) — agendamento Instagram
+- Canva (canva.com) — design de posts e materiais
+- WhatsApp Business (business.whatsapp.com) — catálogo, respostas rápidas
+- Linktree (linktr.ee) — link na bio
+- Bit.ly — links curtos com tracking
+- Google Ads (ads.google.com) — anúncios de busca
+- Carrd.co — landing page simples
+- Mailchimp (mailchimp.com) ou RD Station — email marketing
+- Hotmart/Stripe — pagamentos e assinaturas
+- Google Analytics (analytics.google.com) — métricas do site
+- Notion/Trello — gestão do plano`;
 
   try {
     const res = await anthropic.messages.create({

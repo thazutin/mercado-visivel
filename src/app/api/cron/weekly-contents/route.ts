@@ -195,14 +195,65 @@ export async function GET(req: NextRequest) {
         );
       }
 
+      // 2c. Re-rodar diagnóstico pra atualizar score (evolução semanal)
+      try {
+        const { runInstantAnalysis, buildDisplayData } = await import("@/lib/analysis");
+        const { adaptFormToInput } = await import("@/lib/form-adapter");
+
+        // Reconstruir formData a partir do lead
+        const { data: leadFull } = await getSupabase().from("leads").select("*").eq("id", lead.id).single();
+        if (leadFull) {
+          const previousScore = leadFull.diagnosis_display?.influencePercent || 0;
+
+          const formData: any = {
+            businessName: leadFull.name || "", product: leadFull.product || "", region: leadFull.region || "",
+            email: leadFull.email || "", whatsapp: leadFull.whatsapp || "", site: leadFull.site || "",
+            instagram: leadFull.instagram || "", linkedin: leadFull.linkedin || "",
+            customerDescription: leadFull.customer_description || "", channels: leadFull.channels || [],
+            ticket: leadFull.ticket || "", differentiator: leadFull.differentiator || "",
+            challenge: leadFull.challenge || "", address: leadFull.address || "",
+            placeId: leadFull.place_id || "", lat: leadFull.lat, lng: leadFull.lng,
+            locale: "pt", clientType: leadFull.client_type || "b2c",
+            competitors: leadFull.validated_competitors?.map((c: any) => ({ name: c.name, instagram: c.instagram || "" })) || [],
+          };
+
+          const pipelineResult = await Promise.race([
+            runInstantAnalysis(formData, "pt"),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Weekly re-analysis timeout")), 120_000)),
+          ]);
+
+          const display = buildDisplayData(pipelineResult);
+          display.lat = leadFull.lat; display.lng = leadFull.lng;
+          display.enrichmentStatus = "complete";
+          const newScore = display.influencePercent || 0;
+
+          // Atualizar diagnosis_display
+          await getSupabase().from("leads").update({ diagnosis_display: display }).eq("id", lead.id);
+
+          // Salvar snapshot pra evolução
+          const weekNum = Math.ceil((Date.now() - new Date(new Date().getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000));
+          await getSupabase().from("snapshots").upsert({
+            id: `${lead.id}-w${weekNum}`,
+            lead_id: lead.id,
+            week_number: weekNum,
+            data: { influencePercent: newScore, previousScore, delta: newScore - previousScore },
+            influence_percent: newScore,
+          }, { onConflict: "lead_id,week_number" });
+
+          console.log(`[Cron/Contents] Score updated: ${previousScore} → ${newScore} (delta: ${newScore - previousScore})`);
+        }
+      } catch (reAnalysisErr) {
+        console.warn(`[Cron/Contents] Re-analysis falhou (non-fatal):`, (reAnalysisErr as Error).message);
+      }
+
       // 3. Calcular score delta e reviews novas pra email enriquecido
       let scoreDelta: number | undefined;
       let currentScore: number | undefined;
       let newReviewsCount: number | undefined;
       try {
-        const { data: leadFull } = await getSupabase().from("leads")
+        const { data: leadFreshScore } = await getSupabase().from("leads")
           .select("diagnosis_display").eq("id", lead.id).single();
-        currentScore = leadFull?.diagnosis_display?.influencePercent || 0;
+        currentScore = leadFreshScore?.diagnosis_display?.influencePercent || 0;
 
         // Score delta: compara com snapshot anterior (se existir)
         const { data: snapshots } = await getSupabase().from("snapshots")
