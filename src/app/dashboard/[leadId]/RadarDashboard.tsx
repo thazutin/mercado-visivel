@@ -458,7 +458,7 @@ function FreeCTA({ leadId }: { leadId: string }) {
         onClick={async () => {
           setLoading(true);
           try {
-            const res = await fetch("/api/checkout", {
+            const res = await fetch("/api/checkout/subscription", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ leadId }),
@@ -487,9 +487,40 @@ function FreeCTA({ leadId }: { leadId: string }) {
 // ═══════════════════════════════════════════════════════════════════════
 // MAIN RADAR DASHBOARD
 // ═══════════════════════════════════════════════════════════════════════
-export default function RadarDashboard({ lead, diagnosis, tier, initialGrowthMachine }: Props) {
+export default function RadarDashboard({ lead, diagnosis, tier: initialTier, initialGrowthMachine }: Props) {
   const [gm, setGm] = useState<any>(initialGrowthMachine || null);
   const [generating, setGenerating] = useState(false);
+  const [tier, setTier] = useState(initialTier);
+
+  // Pós-pagamento: se ?subscribed=true e tier=free, poll até webhook setar subscription_status=active
+  useEffect(() => {
+    if (tier !== 'free') return;
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has('subscribed')) return;
+
+    let attempts = 0;
+    const poll = setInterval(async () => {
+      attempts++;
+      try {
+        const res = await fetch(`/api/diagnose?leadId=${lead.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.subscription_status === 'active' || data.status === 'done') {
+            setTier('subscriber');
+            clearInterval(poll);
+            // Remove ?subscribed da URL
+            window.history.replaceState({}, '', window.location.pathname);
+          }
+        }
+      } catch { /* ignore */ }
+      if (attempts >= 20) { // 60s max
+        clearInterval(poll);
+        // Força reload — webhook pode ter completado
+        window.location.reload();
+      }
+    }, 3000);
+    return () => clearInterval(poll);
+  }, [lead.id, tier]);
 
   // Fetch or generate growth machine (free também recebe pra exibir quick wins)
   useEffect(() => {

@@ -44,14 +44,14 @@ export default async function ResultadoPage({ params }: { params: { leadId: stri
   const supabase = getSupabase();
 
   const { data: lead } = await supabase
-    .from("leads").select("id, product, region, email, status, paid_at, name, diagnosis_display").eq("id", leadId).single();
+    .from("leads").select("id, product, region, email, status, paid_at, name, diagnosis_display, subscription_status").eq("id", leadId).single();
 
   if (!lead) {
     return <ErrorScreen title="Resultado não encontrado" subtitle="Não encontramos nenhum diagnóstico com esse link. Ele pode ter expirado ou sido removido." />;
   }
 
-  // Se já pagou, redireciona para o dashboard
-  if (lead.paid_at) {
+  // Se já pagou ou é subscriber, redireciona para o dashboard
+  if (lead.paid_at || lead.subscription_status === 'active') {
     redirect(`/dashboard/${leadId}`);
   }
 

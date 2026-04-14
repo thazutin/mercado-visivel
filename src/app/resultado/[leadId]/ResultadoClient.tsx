@@ -151,10 +151,10 @@ export default function ResultadoClient({ product, region, leadId, results, name
           results={results}
           onCheckout={async (coupon) => {
             try {
-              const res = await fetch('/api/checkout', {
+              const res = await fetch('/api/checkout/subscription', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ lead_id: leadId, leadId, email: '', locale: 'pt', coupon }),
+                body: JSON.stringify({ leadId, coupon }),
               });
               const data = await res.json();
               if (data.url) window.location.href = data.url;
