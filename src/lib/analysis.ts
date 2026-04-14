@@ -568,7 +568,7 @@ Responda APENAS em JSON, sem markdown:
       for (const result of discoveryResults) {
         const url = result.url || result.link || "";
         const match = url.match(/instagram\.com\/([a-zA-Z0-9_.]+)/);
-        if (match && match[1] && !["explore", "p", "reel", "stories", "accounts"].includes(match[1])) {
+        if (match && match[1] && !["explore", "p", "reel", "reels", "stories", "accounts", "about", "direct", "share", "rsrc.php", "static", "help", "developer", "legal", "privacy", "terms"].includes(match[1]) && !match[1].includes('.') && match[1].length >= 3) {
           const handle = match[1].toLowerCase();
           if (handle !== businessHandle.toLowerCase() && !discoveredHandles.includes(handle)) {
             discoveredHandles.push(handle);
