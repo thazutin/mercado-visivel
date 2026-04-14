@@ -72,11 +72,11 @@ function generateQuickWins(
             impact: '+15pts Visibilidade',
             timeEstimate: '~20 min',
             steps: [
-              'Acesse business.google.com e clique em "Gerenciar agora"',
-              `Digite "${lead.name}" e siga o processo de verificação`,
-              'Adicione categoria, horários, telefone e endereço',
-              'Adicione pelo menos 5 fotos do espaço/produto',
-              'Escreva uma descrição com palavras-chave do seu serviço',
+              'Acesse business.google.com → clique em "Gerenciar agora" (Google Business Profile)',
+              `Digite "${lead.name}" e siga o processo de verificação por carta ou telefone`,
+              'Preencha: categoria principal, horários, telefone, endereço completo',
+              'Adicione pelo menos 5 fotos reais (use Canva — canva.com — pra editar se necessário)',
+              'Descrição: use palavras-chave do seu serviço + localização',
             ],
           });
         } else {
@@ -109,19 +109,25 @@ function generateQuickWins(
 
       case 'responder_reviews': {
         if (maps?.found && maps.reviewCount && maps.reviewCount > 0) {
-          const unreviewedEstimate = Math.round((maps.reviewCount || 0) * (1 - (diagnosis.influenceBreakdown?.google || 0) / 100));
+          // Estima reviews sem resposta baseado no owner response rate
+          const ownerResponseRate = diagnosis.influenceBreakdown?.ownerResponseRate || 0;
+          const unreviewedCount = Math.min(
+            Math.round((maps.reviewCount || 0) * (1 - ownerResponseRate)),
+            20, // cap em 20 pra não sobrecarregar
+          );
           quickWins.push({
             id: 'qw-reviews',
             type: actionType,
-            title: `Responder avaliações no Google`,
-            description: `Você tem ${maps.reviewCount} avaliações. Negócios que respondem recebem 45% mais avaliações novas. Use o co-pilot da Virô pra gerar respostas no seu tom.`,
+            title: `Responder ${unreviewedCount > 0 ? unreviewedCount : ''} avaliações no Google`,
+            description: `Você tem ${maps.reviewCount} avaliações${unreviewedCount > 0 ? `, ~${unreviewedCount} sem resposta` : ''}. Negócios que respondem recebem 45% mais avaliações novas. O co-pilot da Virô gera respostas prontas no seu tom — é só copiar e colar.`,
             impact: '+8pts Credibilidade',
             timeEstimate: '~10 min',
             steps: [
-              'Clique em "Gerar respostas" abaixo para criar respostas personalizadas',
-              'Revise cada resposta sugerida',
-              'Copie e cole direto no Google Meu Negócio',
-              'Responda reviews novos toda semana (seu radar vai te avisar)',
+              `${unreviewedCount > 0 ? `Você tem ~${unreviewedCount} avaliações sem resposta.` : 'Suas avaliações precisam de respostas atualizadas.'} Clique em "Gerar respostas" abaixo.`,
+              'O Virô vai ler cada avaliação e gerar uma resposta personalizada no tom do seu negócio',
+              'Revise, ajuste se necessário, e copie cada resposta',
+              'Cole direto no Google Meu Negócio (business.google.com → Avaliações)',
+              'Toda semana o Radar traz novas reviews pra responder',
             ],
           });
         }
@@ -165,9 +171,9 @@ function generateQuickWins(
             steps: [
               'Abra seu perfil no Instagram → Editar perfil',
               'Nome: use palavras-chave (ex: "João | Eletricista em Campinas")',
-              'Bio: 1ª linha = o que você faz. 2ª linha = pra quem. 3ª linha = CTA',
-              'Link: coloque link do WhatsApp ou site',
-              'Foto: profissional, rosto ou logo visível',
+              'Bio: 1ª linha = o que faz. 2ª linha = pra quem. 3ª linha = CTA (WhatsApp/site)',
+              'Link: use Linktree (linktr.ee) pra múltiplos links ou coloque o WhatsApp direto',
+              'Foto: profissional. Use Canva (canva.com) pra ajustar se necessário',
             ],
           });
         }
@@ -211,10 +217,10 @@ function generateQuickWins(
               impact: '+6pts Presença Digital',
               timeEstimate: '~30 min/semana',
               steps: [
-                'Defina 3 dias fixos da semana pra postar (ex: seg, qua, sex)',
-                'Alterne formatos: 1 carrossel educativo + 1 reel mostrando bastidores + 1 post de depoimento',
-                'Use as hashtags do seu setor + localização na legenda',
-                'Poste entre 11h-13h ou 18h-20h (horários de pico)',
+                'Defina 3 dias fixos (ex: seg, qua, sex). Agende pelo Meta Business Suite (business.facebook.com)',
+                'Alterne: 1 carrossel + 1 reel bastidores + 1 depoimento. Crie no Canva (canva.com)',
+                'Hashtags: 3-5 do setor + localização na legenda',
+                'Poste 11h-13h ou 18h-20h. Acompanhe Insights no app',
               ],
             });
           }
