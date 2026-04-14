@@ -8,7 +8,7 @@ import { createClient } from "@supabase/supabase-js";
 import { generateGrowthMachine } from "@/lib/growth-machine";
 import { classifyBusiness } from "@/lib/blueprints";
 
-export const maxDuration = 120;
+export const maxDuration = 300; // Vercel Pro — Claude Sonnet 10k tokens pode demorar
 
 function getSupabase() {
   return createClient(
