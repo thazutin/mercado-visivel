@@ -969,9 +969,11 @@ export function createApifyInstagramScraper(config: ApifyConfig) {
 
       console.log(`[Instagram] @${handle}: ${followers} followers, ${handlePosts.length} posts scraped, ${recentPosts.length} last 30d, ${recentPosts15d.length} last 15d, avgLikes=${Math.round(avgLikes)}, avgViews=${Math.round(avgViews)}, recentReach=${Math.round(recentAvgReach)}`);
 
-      // Cache per handle for 3 days
-      if (config.cache) {
+      // Cache per handle for 3 days — mas NÃO cacheia zeros (evita stale data de falhas)
+      if (config.cache && profile.dataAvailable) {
         setCache(config.cache, `ig:${handle}`, 'instagram', profile, 3);
+      } else if (config.cache && !profile.dataAvailable) {
+        console.log(`[Instagram] @${handle}: NOT caching (dataAvailable=false, followers=${followers})`);
       }
 
       return profile;

@@ -462,12 +462,9 @@ export default function InstantValueScreen({ product, region, results: initialRe
 
           return (
             <div style={{ background: V.white, borderRadius: 16, border: `1px solid ${V.fog}`, padding: "28px 20px", marginBottom: 16, textAlign: "center" }}>
-              <div style={{ fontFamily: V.display, fontSize: 15, fontWeight: 700, color: V.night, marginBottom: 4 }}>
+              <div style={{ fontFamily: V.display, fontSize: 15, fontWeight: 700, color: V.night, marginBottom: 16 }}>
                 Qual fatia do seu mercado você disputa?
               </div>
-              <p style={{ fontSize: 11, color: V.zinc, margin: "0 0 16px", lineHeight: 1.5 }}>
-                Medimos sua presença no Google, Instagram e IA pra calcular quanto do mercado local te encontra hoje.
-              </p>
 
               {/* Ring */}
               <div style={{ position: "relative", width: ringSize, height: ringSize, margin: "0 auto 20px" }}>
@@ -503,22 +500,15 @@ export default function InstantValueScreen({ product, region, results: initialRe
 
               {/* Explicação contextual */}
               <p style={{ fontSize: 12, color: V.night, margin: "14px 0 0", lineHeight: 1.6, fontWeight: 500 }}>
-                {scoreAtual < 20
-                  ? `Você disputa ${scoreAtual}% da demanda do seu mercado atingível. Concorrentes na região disputam em ~${competitorAvgRating > 0 ? Math.round(competitorAvgRating * 10) : 35}%. Chegar a ${scorePotencial}% é viável em 90 dias.`
-                  : scoreAtual < 40
-                  ? `Você disputa ${scoreAtual}% da demanda do seu mercado atingível. Concorrentes na região disputam em ~${competitorAvgRating > 0 ? Math.round(competitorAvgRating * 10) : 35}%. Chegar a ${scorePotencial}% é viável em 90 dias.`
-                  : scoreAtual < 60
-                  ? `Boa posição — você disputa ${scoreAtual}% da demanda. Acima da média de ${competitorAvgRating > 0 ? Math.round(competitorAvgRating * 10) : 35}%. Pra chegar a ${scorePotencial}%, foque nas ações abaixo.`
-                  : `Forte presença — ${scoreAtual}% do mercado te encontra. Você está acima da média. Foque em manter e expandir.`}
+                {`Você disputa ${scoreAtual}% da demanda do seu mercado atingível. Concorrentes no mesmo contexto disputam ~${competitorAvgRating > 0 ? Math.round(competitorAvgRating * 10) : 35}%. Chegar a ${scorePotencial}% é viável em 90 dias.`}
               </p>
 
-              {/* Metodologia */}
-              <div style={{ marginTop: 12, padding: "10px 12px", background: V.cloud, borderRadius: 8, borderLeft: `3px solid ${V.teal}` }}>
-                <p style={{ fontSize: 10, color: V.zinc, margin: 0, lineHeight: 1.6 }}>
-                  <strong style={{ color: V.night }}>Como calculamos:</strong> Cruzamos sua presença no Google Maps (posição, avaliações, fotos), resultados de busca orgânica (SERP), Instagram (alcance, engajamento, frequência){results.aiVisibility ? ', visibilidade em IA (ChatGPT, Gemini)' : ''}{aud ? `, com dados populacionais do IBGE${aud.ibgeAno ? ` (${aud.ibgeAno})` : ''}` : ''}{aud?.raioKm ? ` no raio de ${aud.raioKm}km` : ''}.
-                  {aud?.audienciaTarget ? ` Mercado atingível: ~${fmtPop(aud.audienciaTarget)} ${audienciaUnit} no perfil-alvo.` : ''}
+              {/* Incremento de clientes */}
+              {oportunidade > 0 && (
+                <p style={{ fontSize: 13, color: V.teal, margin: "8px 0 0", fontWeight: 700 }}>
+                  Isso significa incrementar +{oportunidade.toLocaleString('pt-BR')} {isB2B ? 'empresas' : 'clientes'} por mês.
                 </p>
-              </div>
+              )}
 
               {/* Source chips */}
               {fontesEncontradas.length > 0 && (
@@ -539,7 +529,58 @@ export default function InstantValueScreen({ product, region, results: initialRe
           );
         })()}
 
-        {/* ═══════════════ QUICK WINS ═══════════════ */}
+        {/* ═══════════════ PLANO DE CRESCIMENTO (preview locked) ═══════════════ */}
+        {strategicPillars.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.night, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 10 }}>
+              🏗️ SEU PLANO DE CRESCIMENTO
+            </div>
+
+            {strategicPillars.slice(0, 3).map((pillar: any, pi: number) => (
+              <div key={pillar.id || pi} style={{
+                background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`,
+                overflow: "hidden", marginBottom: 10, position: "relative",
+              }}>
+                <div style={{ padding: "14px 16px" }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: V.amber, background: V.amberWash, padding: "2px 8px", borderRadius: 4, fontFamily: V.mono }}>
+                      PILAR {pi + 1}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 4 }}>{pillar.title}</div>
+                  <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px", lineHeight: 1.5 }}>{pillar.description}</p>
+                  {pillar.objective && (
+                    <div style={{ fontSize: 11, color: V.teal, fontWeight: 600, marginBottom: 4 }}>
+                      Meta: {pillar.targetMetric || pillar.kpi?.target || pillar.objective}
+                    </div>
+                  )}
+                </div>
+                {/* Locked content */}
+                <div style={{ position: "relative", overflow: "hidden" }}>
+                  <div style={{ padding: "0 16px 14px", filter: "blur(4px)", pointerEvents: "none", userSelect: "none", maxHeight: 80, overflow: "hidden" }}>
+                    {pillar.items?.slice(0, 3).map((item: any, ii: number) => (
+                      <div key={ii} style={{ display: "flex", gap: 6, marginBottom: 4 }}>
+                        <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.fog, borderRadius: 3, padding: "1px 5px" }}>{ii + 1}</span>
+                        <span style={{ fontSize: 11, color: V.zinc }}>{item.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{
+                    position: "absolute", inset: 0,
+                    background: "linear-gradient(transparent 0%, rgba(255,255,255,0.9) 60%)",
+                    display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 10,
+                  }}>
+                    <button onClick={() => { const el = document.getElementById('cta-radar'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} style={{
+                      fontSize: 11, color: V.amber, fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0,
+                    }}>🔒 Veja como</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ═══════════════ AÇÕES RÁPIDAS ═══════════════ */}
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontFamily: V.mono, fontSize: 10, color: V.teal, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 10 }}>
             ⚡ AÇÕES RÁPIDAS — COMECE AGORA
@@ -598,10 +639,10 @@ export default function InstantValueScreen({ product, region, results: initialRe
                   ))}
                   <div style={{ textAlign: "center", margin: "8px 0 4px" }}>
                     <p style={{ fontSize: 12, color: V.night, fontWeight: 600, margin: "0 0 4px" }}>
-                      🔒 Assine o Radar para desbloquear {quickWins.length - 3} ações personalizadas
+                      🔒 Assine o Radar para desbloquear todas as ações personalizadas
                     </p>
                     <p style={{ fontSize: 11, color: V.ash, margin: 0 }}>
-                      Com passo a passo detalhado, textos prontos e monitoramento semanal.
+                      Com passo a passo detalhado, textos prontos e monitoramento e evolução semanal.
                     </p>
                   </div>
                 </>
@@ -610,66 +651,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
           ) : null}
         </div>
 
-        {/* ═══════════════ PLANO DE CRESCIMENTO (preview locked) ═══════════════ */}
-        {strategicPillars.length > 0 && (
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.night, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 10 }}>
-              🏗️ SEU PLANO DE CRESCIMENTO
-            </div>
-
-            {strategicPillars.slice(0, 3).map((pillar: any, pi: number) => (
-              <div key={pillar.id || pi} style={{
-                background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`,
-                overflow: "hidden", marginBottom: 10, position: "relative",
-              }}>
-                {/* Header visível */}
-                <div style={{ padding: "14px 16px" }}>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
-                    <span style={{ fontSize: 10, fontWeight: 600, color: V.amber, background: V.amberWash, padding: "2px 8px", borderRadius: 4, fontFamily: V.mono }}>
-                      PILAR {pi + 1}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 4 }}>{pillar.title}</div>
-                  <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px", lineHeight: 1.5 }}>{pillar.description}</p>
-
-                  {/* Objetivo + meta (visível) */}
-                  {pillar.objective && (
-                    <div style={{ fontSize: 11, color: V.teal, fontWeight: 600 }}>
-                      Meta: {pillar.targetMetric || pillar.kpi?.target || pillar.objective}
-                    </div>
-                  )}
-                </div>
-
-                {/* Conteúdo locked */}
-                <div style={{ position: "relative", overflow: "hidden" }}>
-                  <div style={{ padding: "0 16px 14px", filter: "blur(4px)", pointerEvents: "none", userSelect: "none", maxHeight: 80, overflow: "hidden" }}>
-                    {pillar.items?.slice(0, 3).map((item: any, ii: number) => (
-                      <div key={ii} style={{ display: "flex", gap: 6, marginBottom: 4 }}>
-                        <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.fog, borderRadius: 3, padding: "1px 5px" }}>{ii + 1}</span>
-                        <span style={{ fontSize: 11, color: V.zinc }}>{item.title}</span>
-                      </div>
-                    ))}
-                    {pillar.tools?.length > 0 && (
-                      <div style={{ display: "flex", gap: 3, marginTop: 4 }}>
-                        {pillar.tools.slice(0, 3).map((t: string, ti: number) => (
-                          <span key={ti} style={{ fontSize: 8, color: V.ash, background: V.fog, padding: "1px 4px", borderRadius: 3 }}>🔧 {t}</span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {/* Lock overlay */}
-                  <div style={{
-                    position: "absolute", inset: 0,
-                    background: "linear-gradient(transparent 0%, rgba(255,255,255,0.9) 60%)",
-                    display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 10,
-                  }}>
-                    <span style={{ fontSize: 10, color: V.ash, fontWeight: 500 }}>🔒 Expandir no Radar</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Plano de crescimento movido pra antes dos quick wins */}
 
         {/* ═══════════════ ELEMENTOS COMPETITIVOS ═══════════════ */}
         <div style={{ fontFamily: V.mono, fontSize: 10, color: V.night, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 10 }}>
@@ -1066,19 +1048,14 @@ export default function InstantValueScreen({ product, region, results: initialRe
 
         {/* CTA inline final */}
         {!hideCTA && (
-          <div style={{ background: "linear-gradient(135deg, #161618 0%, #2A2A30 100%)", borderRadius: 14, padding: "24px 20px", marginTop: 16, color: V.white, textAlign: "center" }}>
+          <div id="cta-radar" style={{ background: "linear-gradient(135deg, #161618 0%, #2A2A30 100%)", borderRadius: 14, padding: "24px 20px", marginTop: 16, color: V.white, textAlign: "center" }}>
             <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, letterSpacing: "0.06em", marginBottom: 8 }}>RADAR DE CRESCIMENTO</div>
             <p style={{ fontSize: 15, fontWeight: 700, color: V.white, margin: "0 0 8px" }}>
-              Sua rota de crescimento em {shortRegion}
+              Sua rota de crescimento, {displayName}
             </p>
             <p style={{ fontSize: 12, color: V.ash, margin: "0 0 16px", lineHeight: 1.5 }}>
-              O diagnóstico acima é gratuito. O Radar monitora seu mercado toda semana, entrega <strong style={{ color: V.white }}>ações prontas com passo a passo</strong>, conteúdo pra copiar e colar, e acompanhamento da evolução do seu score.
+              O diagnóstico acima é gratuito. Assine o Radar para ver como tirar do papel seu plano de crescimento, e seguir recebendo semanalmente ações rápidas de melhorias, acompanhado do que mudou no seu mercado.
             </p>
-            <div style={{ display: "flex", flexWrap: "wrap" as const, justifyContent: "center", gap: 6, marginBottom: 16 }}>
-              {['Respostas pra reviews', 'Posts prontos', 'Bio otimizada', 'WhatsApp templates', 'Radar semanal', 'Score de evolução'].map((tag, i) => (
-                <span key={i} style={{ fontSize: 9, fontWeight: 600, color: V.amber, background: "rgba(207,133,35,0.15)", padding: "3px 8px", borderRadius: 4 }}>{tag}</span>
-              ))}
-            </div>
             <p style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", margin: "0 0 4px" }}>CANCELE QUANDO QUISER</p>
             <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, margin: "0 0 12px" }}>R$ 247<span style={{ fontSize: 14, fontWeight: 400, color: V.ash }}>/mês</span></div>
             <div style={{ display: "flex", gap: 8, marginBottom: 12, justifyContent: "center" }}>
