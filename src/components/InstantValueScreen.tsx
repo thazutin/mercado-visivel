@@ -342,7 +342,20 @@ export default function InstantValueScreen({ product, region, results: initialRe
   ];
 
   // Volumes inteiros (P8 fix) + check se todos iguais (P9 fix)
-  const totalVolumeInt = Math.round(results.totalVolume || 0);
+  const totalVolumeRaw = Math.round(results.totalVolume || 0);
+  // Volume ponderado: usa buscasNoRaio (geo-adjusted) se disponível, senão pondera manualmente
+  const totalVolumeInt = (() => {
+    if (proj?.buscasNoRaio && proj.buscasNoRaio > 0 && proj.buscasNoRaio < totalVolumeRaw) {
+      return proj.buscasNoRaio;
+    }
+    // Ponderação manual: volume × (audiência / população)
+    if (aud?.audienciaTarget && aud?.populacaoRaio && totalVolumeRaw > 0) {
+      const ratio = Math.min(aud.audienciaTarget / Math.max(aud.populacaoRaio, 1), 1);
+      const ponderado = Math.round(totalVolumeRaw * ratio);
+      if (ponderado > 0 && ponderado < totalVolumeRaw) return ponderado;
+    }
+    return totalVolumeRaw;
+  })();
   const allTermsSameVolume = results.terms.length > 1 && results.terms.every(t => t.volume === results.terms[0].volume && t.volume > 0);
 
   // Audiência display corrigida para B2B nacional (P10 fix)

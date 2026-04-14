@@ -549,8 +549,9 @@ Responda APENAS em JSON, sem markdown:
     }
   }
 
-  // AUTO-DISCOVER competitors via SERP if no competitors declared
-  if (instagramHandles.length <= 1 && apifyConfig) {
+  // AUTO-DISCOVER competitors via SERP (sempre roda pra achar concorrentes)
+  const hasManualCompetitors = (formData.competitors || []).filter(c => c.instagram && c.instagram.length > 1).length > 0;
+  if (!hasManualCompetitors && apifyConfig) {
     try {
       console.log(`[Pipeline] Auto-discovering Instagram competitors for "${input.product}" in "${resolvedRegion}"...`);
       const serpScraper = createApifySerpScraper(apifyConfig);
@@ -1190,8 +1191,11 @@ Responda APENAS em JSON, sem markdown:
     if (apifyConfig && process.env.GOOGLE_PLACES_API_KEY) {
       const competitionSearch = createMapsCompetitionSearch(apifyConfig);
       console.log(`[pipeline] município usado em Competition Index:`, extractedCity);
+      const mapsSearchOptions = pipelineLat && pipelineLng
+        ? { lat: pipelineLat, lng: pipelineLng, radiusKm: 5 }
+        : undefined;
       let competitorResults = await withTimeout(
-        competitionSearch(input.product, resolvedRegion),
+        competitionSearch(input.product, resolvedRegion, mapsSearchOptions),
         10_000,
         "MapsCompetition",
       );
@@ -1209,7 +1213,7 @@ Responda APENAS em JSON, sem markdown:
           console.log(`[Pipeline] Competition fallback: "${input.product}" → "${broadTerm}"`);
           try {
             const fallbackResults = await withTimeout(
-              competitionSearch(broadTerm!, resolvedRegion),
+              competitionSearch(broadTerm!, resolvedRegion, mapsSearchOptions),
               8_000,
               "MapsCompetition-fallback",
             );

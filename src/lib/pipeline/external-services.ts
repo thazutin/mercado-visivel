@@ -457,11 +457,31 @@ export function createMapsCompetitionSearch(config: ApifyConfig) {
   return async function searchCompetitors(
     product: string,
     region: string,
+    options?: { lat?: number | null; lng?: number | null; radiusKm?: number },
   ): Promise<{ name: string; website: string; rating?: number; reviewCount?: number }[]> {
     const apiKey = process.env.GOOGLE_PLACES_API_KEY;
     if (!apiKey) return [];
 
     try {
+      // Usa cidade (primeira parte da região) pra query mais precisa
+      const city = region.split(',')[0].trim();
+      const query: any = {
+        textQuery: `${product} ${city}`,
+        languageCode: 'pt-BR',
+        maxResultCount: 20,
+      };
+
+      // LocationBias: usa lat/lng se disponível (muito mais preciso)
+      if (options?.lat && options?.lng) {
+        query.locationBias = {
+          circle: {
+            center: { latitude: options.lat, longitude: options.lng },
+            radius: (options?.radiusKm || 5) * 1000, // default 5km
+          },
+        };
+        console.log(`[MapsCompetition] Using locationBias: ${options.lat},${options.lng} r=${options?.radiusKm || 5}km`);
+      }
+
       const searchRes = await fetch('https://places.googleapis.com/v1/places:searchText', {
         method: 'POST',
         headers: {
@@ -469,11 +489,7 @@ export function createMapsCompetitionSearch(config: ApifyConfig) {
           'X-Goog-Api-Key': apiKey,
           'X-Goog-FieldMask': 'places.id,places.displayName,places.rating,places.userRatingCount,places.types,places.photos,places.websiteUri,places.location',
         },
-        body: JSON.stringify({
-          textQuery: `${product} ${region}`,
-          languageCode: 'pt-BR',
-          maxResultCount: 20,
-        }),
+        body: JSON.stringify(query),
       });
 
       if (!searchRes.ok) {
