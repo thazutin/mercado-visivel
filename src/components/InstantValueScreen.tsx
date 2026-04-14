@@ -484,15 +484,23 @@ export default function InstantValueScreen({ product, region, results: initialRe
               </div>
 
               {/* Explicação contextual */}
-              <p style={{ fontSize: 11, color: V.zinc, margin: "14px 0 0", lineHeight: 1.6 }}>
+              <p style={{ fontSize: 12, color: V.night, margin: "14px 0 0", lineHeight: 1.6, fontWeight: 500 }}>
                 {scoreAtual < 20
-                  ? `Hoje, quase ninguém que busca "${product}" na sua região te encontra. Com as ações certas, você pode chegar a ${scorePotencial} e capturar uma fatia real do mercado.`
+                  ? `Você disputa ${scoreAtual}% da demanda do seu mercado atingível. Concorrentes na região disputam em ~${competitorAvgRating > 0 ? Math.round(competitorAvgRating * 10) : 35}%. Chegar a ${scorePotencial}% é viável em 90 dias.`
                   : scoreAtual < 40
-                  ? `Você disputa ${scoreAtual}% da atenção do seu mercado. Concorrentes na região estão em ~${competitorAvgRating > 0 ? Math.round(competitorAvgRating * 10) : 35}. Chegar a ${scorePotencial} é viável em 90 dias.`
+                  ? `Você disputa ${scoreAtual}% da demanda do seu mercado atingível. Concorrentes na região disputam em ~${competitorAvgRating > 0 ? Math.round(competitorAvgRating * 10) : 35}%. Chegar a ${scorePotencial}% é viável em 90 dias.`
                   : scoreAtual < 60
-                  ? `Boa posição — ${scoreAtual}% do mercado te encontra. Pra puxar de ${scoreAtual} pra ${scorePotencial}, foque nas ações abaixo.`
-                  : `Forte presença: ${scoreAtual}% do mercado te encontra. Você está acima da média. Foque em manter e expandir.`}
+                  ? `Boa posição — você disputa ${scoreAtual}% da demanda. Acima da média de ${competitorAvgRating > 0 ? Math.round(competitorAvgRating * 10) : 35}%. Pra chegar a ${scorePotencial}%, foque nas ações abaixo.`
+                  : `Forte presença — ${scoreAtual}% do mercado te encontra. Você está acima da média. Foque em manter e expandir.`}
               </p>
+
+              {/* Metodologia */}
+              <div style={{ marginTop: 12, padding: "10px 12px", background: V.cloud, borderRadius: 8, borderLeft: `3px solid ${V.teal}` }}>
+                <p style={{ fontSize: 10, color: V.zinc, margin: 0, lineHeight: 1.6 }}>
+                  <strong style={{ color: V.night }}>Como calculamos:</strong> Cruzamos sua presença no Google Maps (posição, avaliações, fotos), resultados de busca orgânica (SERP), Instagram (alcance, engajamento, frequência){results.aiVisibility ? ', visibilidade em IA (ChatGPT, Gemini)' : ''}{aud ? `, com dados populacionais do IBGE${aud.ibgeAno ? ` (${aud.ibgeAno})` : ''}` : ''}{aud?.raioKm ? ` no raio de ${aud.raioKm}km` : ''}.
+                  {aud?.audienciaTarget ? ` Mercado atingível: ~${fmtPop(aud.audienciaTarget)} ${audienciaUnit} no perfil-alvo.` : ''}
+                </p>
+              </div>
 
               {/* Source chips */}
               {fontesEncontradas.length > 0 && (
@@ -568,11 +576,14 @@ export default function InstantValueScreen({ product, region, results: initialRe
                       </div>
                     </div>
                   ))}
-                  {quickWins.length > 5 && (
-                    <p style={{ fontSize: 11, color: V.ash, textAlign: "center", margin: "4px 0" }}>
-                      + {quickWins.length - 5} ação(ões) disponível(is)
+                  <div style={{ textAlign: "center", margin: "8px 0 4px" }}>
+                    <p style={{ fontSize: 12, color: V.night, fontWeight: 600, margin: "0 0 4px" }}>
+                      🔒 Assine o Radar para desbloquear {quickWins.length - 3} ações personalizadas
                     </p>
-                  )}
+                    <p style={{ fontSize: 11, color: V.ash, margin: 0 }}>
+                      Com passo a passo detalhado, textos prontos e monitoramento semanal.
+                    </p>
+                  </div>
                 </>
               )}
             </>
@@ -625,10 +636,10 @@ export default function InstantValueScreen({ product, region, results: initialRe
           {results.maps?.found && (
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${V.fog}` }}>
               <div style={{ width: 48, height: 48, borderRadius: "50%", background: V.teal, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <span style={{ color: "white", fontWeight: 700, fontSize: 18 }}>{(product || "N")[0].toUpperCase()}</span>
+                <span style={{ color: "white", fontWeight: 700, fontSize: 18 }}>{(displayName || "N")[0].toUpperCase()}</span>
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{product}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{displayName}</div>
                 <div style={{ fontSize: 11, color: V.ash }}>★ {results.maps.rating} · {results.maps.reviewCount} avaliações</div>
               </div>
             </div>
@@ -854,7 +865,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
                   )}
                 </div>
               )}
-              {igData?.dataAvailable && (
+              {(igData?.dataAvailable || igData?.handle) && (
                 <>
                   <div style={{ padding: "8px 0", borderBottom: `1px solid ${V.fog}` }}>
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
@@ -963,21 +974,7 @@ export default function InstantValueScreen({ product, region, results: initialRe
                 </div>
               )}
 
-              {/* Oportunidades */}
-              {(() => {
-                const oportunidades = [...pilarCards].sort((a, b) => a.score - b.score).slice(0, 2);
-                return oportunidades.length > 0 && oportunidades[0].score < 50 ? (
-                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${V.fog}` }}>
-                    <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 8 }}>Oportunidades de melhoria</div>
-                    {oportunidades.map((p, i) => (
-                      <div key={`opp-${i}`} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: i < oportunidades.length - 1 ? `1px solid ${V.fog}` : "none", fontSize: 12 }}>
-                        <span style={{ color: V.night }}>{p.label}</span>
-                        <span style={{ fontWeight: 700, color: p.score < 30 ? V.coral : V.amber }}>{p.score}/100</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : null;
-              })()}
+              {/* Oportunidades de melhoria removido — ações estão nos quick wins */}
             </div>
           ) : (
             <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.6 }}>
@@ -988,10 +985,19 @@ export default function InstantValueScreen({ product, region, results: initialRe
 
         {/* CTA inline final */}
         {!hideCTA && (
-          <div style={{ background: V.night, borderRadius: 12, padding: "20px 16px", marginTop: 12, color: V.white, textAlign: "center" }}>
-            <p style={{ fontSize: 13, color: V.mist, margin: "0 0 12px", lineHeight: 1.5 }}>
-              Ative o Radar pra receber <strong style={{ color: V.white }}>todas as ações com passo a passo</strong>, conteúdo pronto e monitoramento semanal do seu mercado.
+          <div style={{ background: "linear-gradient(135deg, #161618 0%, #2A2A30 100%)", borderRadius: 14, padding: "24px 20px", marginTop: 16, color: V.white, textAlign: "center" }}>
+            <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, letterSpacing: "0.06em", marginBottom: 8 }}>RADAR DE CRESCIMENTO</div>
+            <p style={{ fontSize: 15, fontWeight: 700, color: V.white, margin: "0 0 8px" }}>
+              Sua rota de crescimento em {shortRegion}
             </p>
+            <p style={{ fontSize: 12, color: V.ash, margin: "0 0 16px", lineHeight: 1.5 }}>
+              O diagnóstico acima é gratuito. O Radar monitora seu mercado toda semana, entrega <strong style={{ color: V.white }}>ações prontas com passo a passo</strong>, conteúdo pra copiar e colar, e acompanhamento da evolução do seu score.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap" as const, justifyContent: "center", gap: 6, marginBottom: 16 }}>
+              {['Respostas pra reviews', 'Posts prontos', 'Bio otimizada', 'WhatsApp templates', 'Radar semanal', 'Score de evolução'].map((tag, i) => (
+                <span key={i} style={{ fontSize: 9, fontWeight: 600, color: V.amber, background: "rgba(207,133,35,0.15)", padding: "3px 8px", borderRadius: 4 }}>{tag}</span>
+              ))}
+            </div>
             <p style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", margin: "0 0 4px" }}>CANCELE QUANDO QUISER</p>
             <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, margin: "0 0 12px" }}>R$ 247<span style={{ fontSize: 14, fontWeight: 400, color: V.ash }}>/mês</span></div>
             <div style={{ display: "flex", gap: 8, marginBottom: 12, justifyContent: "center" }}>

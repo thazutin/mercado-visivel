@@ -173,7 +173,7 @@ export const dictionaries: Record<Locale, any> = {
     formClientTargetLabel: "Quem é seu cliente principal?",
     formClientTargetOptions: ["Pessoa física", "Empresa", "Governo", "Todos"],
     formSalesChannelLabel: "Qual seu principal canal de venda?",
-    formSalesChannelOptions: ["Loja física", "Online / e-commerce", "Prestação de serviço", "Marketplace (iFood, ML, etc)", "Direto (WhatsApp, telefone)"],
+    formSalesChannelOptions: ["Loja física", "Online / e-commerce", "Prestação de serviço", "Marketplace (iFood, Mercado Livre, etc)", "Direto (WhatsApp, telefone)"],
 
     // ─── Hero (current simplified) ───
     heroSubShort: "Monitora seu mercado, monta sua operação de marketing, toda semana. Grátis em 60 segundos.",

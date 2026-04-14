@@ -144,20 +144,7 @@ export default function ResultadoClient({ product, region, leadId, results, name
     <div style={{ minHeight: "100vh", background: V.cloud, padding: "40px 20px" }}>
       <div style={{ maxWidth: 560, margin: "0 auto" }}>
 
-        {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{ marginBottom: 12 }}>
-            <NelsonLogo size={40} />
-          </div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: V.night, margin: "0 0 4px" }}>
-            {name && name.trim() ? name.trim() : product} · {shortRegion}
-          </h1>
-          <p style={{ fontSize: 13, color: V.ash, margin: 0 }}>
-            Seu radar de crescimento
-          </p>
-        </div>
-
-        {/* Diagnóstico + CTA Radar integrado (sem tabs) */}
+        {/* Diagnóstico + CTA Radar integrado (sem tabs) — header está dentro do InstantValueScreen */}
         <InstantValueScreen
           product={product}
           region={region}
@@ -177,11 +164,7 @@ export default function ResultadoClient({ product, region, leadId, results, name
           name={name}
         />
 
-        {/* Footer */}
-        <div style={{ textAlign: "center", paddingTop: 32, marginTop: 24, borderTop: `1px solid ${V.fog}` }}>
-          <span style={{ fontFamily: V.display, fontSize: 14, fontWeight: 700, color: V.night }}>Virô</span>
-          <p style={{ fontSize: 10, color: V.ash, fontFamily: V.mono, marginTop: 2 }}>virolocal.com</p>
-        </div>
+        {/* Footer está dentro do InstantValueScreen */}
       </div>
     </div>
   );

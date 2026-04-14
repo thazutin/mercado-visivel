@@ -411,10 +411,12 @@ export default function Home() {
               <input style={inputStyle} type="text" placeholder="@seunegocio" value={formData.instagram}
                 onChange={(e: any) => updateField("instagram", e.target.value)} />
             </Field>
-            <Field label="LinkedIn">
-              <input style={inputStyle} type="text" placeholder="linkedin.com/company/seunegocio" value={(formData as any).linkedin || ""}
-                onChange={(e: any) => updateField("linkedin" as any, e.target.value)} />
-            </Field>
+            {(formData as any).clientType === 'b2b' && (
+              <Field label="LinkedIn">
+                <input style={inputStyle} type="text" placeholder="linkedin.com/company/seunegocio" value={(formData as any).linkedin || ""}
+                  onChange={(e: any) => updateField("linkedin" as any, e.target.value)} />
+              </Field>
+            )}
 
             {/* Campos condicionais por canal de venda */}
             {(formData as any).salesChannel === 'marketplace' && (
