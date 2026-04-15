@@ -5,6 +5,7 @@ import AnimatedCounter from "./AnimatedCounter";
 // FeedbackWidget removido — será adicionado em outro momento da jornada
 import { NelsonLogo } from "./NelsonLogo";
 import { V, ICONS, PILAR_COLORS } from "@/lib/design-tokens";
+import { trackEventClient } from "@/lib/events";
 
 interface TermData { term: string; volume: number; cpc: number; position: string; intent?: string; serpFeatures?: string[]; }
 interface Results {
@@ -180,6 +181,20 @@ export default function InstantValueScreen({ product, region, results: initialRe
   );
   const [enrichSecondsLeft, setEnrichSecondsLeft] = useState(120);
   useEffect(() => { setTimeout(() => setShow(true), 100); }, []);
+
+  // Analytics: instant_value_viewed (tela de valor imediato após diagnóstico)
+  useEffect(() => {
+    trackEventClient({
+      eventType: "instant_value_viewed",
+      leadId,
+      metadata: {
+        product,
+        region,
+        influencePercent: (initialResults as any)?.influencePercent,
+        enrichmentStatus: (initialResults as any)?.enrichmentStatus,
+      },
+    });
+  }, [leadId, product, region, initialResults]);
 
   // Countdown timer for enrichment ETA
   useEffect(() => {
