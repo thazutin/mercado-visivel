@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import InstantValueScreen from "@/components/InstantValueScreen";
 import { LockedTab } from "@/components/dashboard/LockedTab";
 import { NelsonLogo } from "@/components/NelsonLogo";
+import { trackEventClient } from "@/lib/events";
 
 function fmtBRL(n: number): string {
   if (n >= 1_000_000) return `R$${(n / 1_000_000).toFixed(1).replace('.', ',')}M`;
@@ -1523,6 +1524,20 @@ export default function DashboardClient({ lead, plan, diagnosis, tier, checklist
   const [snapshots, setSnapshots] = useState<any[]>([]);
   const [planStatus, setPlanStatus] = useState(lead.plan_status);
   const [pollTimeout, setPollTimeout] = useState(false);
+
+  // Analytics: dashboard_viewed + page_view (variante legada)
+  useEffect(() => {
+    trackEventClient({
+      eventType: "dashboard_viewed",
+      leadId: lead.id,
+      metadata: { variant: "legacy", tier, planStatus: lead.plan_status },
+    });
+    trackEventClient({
+      eventType: "page_view",
+      leadId: lead.id,
+      metadata: { page: "dashboard-legacy", path: `/dashboard/${lead.id}` },
+    });
+  }, [lead.id, tier, lead.plan_status]);
 
   useEffect(() => {
     fetch(`/api/snapshots?leadId=${lead.id}`)

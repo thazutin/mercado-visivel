@@ -6,6 +6,7 @@ import { initialFormData, type LeadFormData, stepValidation } from "@/lib/schema
 import { dictionaries, type Locale } from "@/lib/i18n";
 import { NelsonLogo } from "@/components/NelsonLogo";
 import { V, ICONS, PILAR_COLORS } from "@/lib/design-tokens";
+import { trackEventClient } from "@/lib/events";
 
 const inputStyle: React.CSSProperties = {
   width: "100%", padding: "14px 16px", borderRadius: 10,
@@ -159,10 +160,29 @@ export default function Home() {
   const [honeypot, setHoneypot] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const formStartedRef = useRef(false);
 
   useEffect(() => { setTimeout(() => setHeroVisible(true), 200); }, []);
 
-  const updateField = (key: keyof LeadFormData, val: any) => setFormData((d: any) => ({ ...d, [key]: val }));
+  // Analytics: page_view da home (uma vez por sessão de página)
+  useEffect(() => {
+    trackEventClient({
+      eventType: "page_view",
+      metadata: { page: "home", path: "/" },
+    });
+  }, []);
+
+  const updateField = (key: keyof LeadFormData, val: any) => {
+    // Analytics: form_started na primeira interação do user com o form
+    if (!formStartedRef.current) {
+      formStartedRef.current = true;
+      trackEventClient({
+        eventType: "form_started",
+        metadata: { firstField: key },
+      });
+    }
+    setFormData((d: any) => ({ ...d, [key]: val }));
+  };
 
   const handleSubmit = useCallback(async () => {
     if (honeypot || submitting) return;
@@ -191,6 +211,16 @@ export default function Home() {
         return;
       }
       setLeadId(data.lead_id);
+      // Analytics: form_completed após POST bem-sucedido (antes do redirect)
+      trackEventClient({
+        eventType: "form_completed",
+        leadId: data.lead_id,
+        metadata: {
+          product: formData.product,
+          clientType: formData.clientType,
+          isNational: !formData.placeId,
+        },
+      });
       // router.push pra navegação real — Next.js monta o server component de
       // /resultado/[leadId] que vai renderizar o PollingScreen enquanto o
       // pipeline roda em background.
@@ -558,6 +588,11 @@ export default function Home() {
             <button
               onClick={() => {
                 if (formStep < totalSteps) {
+                  // Analytics: form_step_completed ao avançar de step
+                  trackEventClient({
+                    eventType: "form_step_completed",
+                    metadata: { step: formStep, nextStep: formStep + 1, totalSteps },
+                  });
                   setFormStep(formStep + 1);
                   setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
                 } else {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { V } from "@/lib/design-tokens";
+import { trackEventClient } from "@/lib/events";
 
 // ─── Types ──────────────────────────────────────────────────────────────
 type Tier = "free" | "subscriber";
@@ -623,6 +624,20 @@ export default function RadarDashboard({ lead, diagnosis, tier: initialTier, ini
   const [gm, setGm] = useState<any>(initialGrowthMachine || null);
   const [generating, setGenerating] = useState(false);
   const [tier, setTier] = useState(initialTier);
+
+  // Analytics: dashboard_viewed + page_view ao montar o dashboard
+  useEffect(() => {
+    trackEventClient({
+      eventType: "dashboard_viewed",
+      leadId: lead.id,
+      metadata: { variant: "radar", tier: initialTier, blueprint: lead.blueprint_id || null },
+    });
+    trackEventClient({
+      eventType: "page_view",
+      leadId: lead.id,
+      metadata: { page: "dashboard", path: `/dashboard/${lead.id}` },
+    });
+  }, [lead.id, initialTier, lead.blueprint_id]);
 
   // Pós-pagamento: se ?subscribed=true e tier=free, poll até webhook setar subscription_status=active
   useEffect(() => {

@@ -7,6 +7,7 @@ import InstantValueScreen from "@/components/InstantValueScreen";
 import PostPaymentScreen from "@/components/PostPaymentScreen";
 import { NelsonLogo } from "@/components/NelsonLogo";
 import { V } from "@/lib/design-tokens";
+import { trackEventClient } from "@/lib/events";
 
 // Tabs removidas — resultado free é página única com CTA do Radar integrado
 
@@ -30,6 +31,15 @@ export default function ResultadoClient({ product, region, leadId, results, name
     const interval = setInterval(() => setStatusMsg(prev => (prev + 1) % 3), 3000);
     return () => clearInterval(interval);
   }, []);
+
+  // Analytics: page_view da página de resultado
+  useEffect(() => {
+    trackEventClient({
+      eventType: "page_view",
+      leadId,
+      metadata: { page: "resultado", path: `/resultado/${leadId}` },
+    });
+  }, [leadId]);
 
   const statusMessages = [
     "Buscando concorrentes no seu raio...",
