@@ -30,6 +30,9 @@ export interface FormInput {
   // Meta
   locale: 'pt-BR' | 'en' | 'es';
   submittedAt: string;                // ISO timestamp
+
+  /** Origem do lead — permite ativar lentes específicas (blueprint override, etc.) */
+  source?: string;
 }
 
 export interface DigitalAsset {

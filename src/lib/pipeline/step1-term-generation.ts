@@ -13,7 +13,10 @@ export const INTENT_WEIGHTS: Record<TermIntent, number> = {
   informational: 0.1,
 };
 
-export function buildTermGenerationPrompt(input: FormInput): string {
+export function buildTermGenerationPrompt(
+  input: FormInput,
+  options?: { seedTerms?: string[] },
+): string {
   const siteUrl = input.digitalAssets?.find(a => a.type === 'website')?.identifier;
   const context = [
     `NEGÓCIO: ${input.product}`,
@@ -25,7 +28,17 @@ export function buildTermGenerationPrompt(input: FormInput): string {
     siteUrl ? `SITE DO NEGÓCIO: ${siteUrl} — considere a presença e qualidade do site na análise` : null,
   ].filter(Boolean).join('\n');
 
-  return `Você é um especialista em marketing local e comportamento de busca do consumidor brasileiro.
+  // Seed terms vindos do blueprint quando aplicável — Claude DEVE incluí-los
+  // (são termos validados pra esse segmento, baseline de qualidade).
+  const seedBlock = options?.seedTerms && options.seedTerms.length > 0
+    ? `
+
+TERMOS-SEMENTE OBRIGATÓRIOS (já validados como relevantes pra este segmento — INCLUA-OS no output e EXPANDA a partir deles):
+${options.seedTerms.map(t => `- "${t}"`).join('\n')}
+NÃO substitua esses termos por equivalentes. Eles são o piso de qualidade.`
+    : '';
+
+  return `Você é um especialista em marketing local e comportamento de busca do consumidor brasileiro.${seedBlock}
 
 CONTEXTO:
 ${context}
@@ -135,7 +148,25 @@ export async function executeStep1(
   const model = options?.model ?? 'claude-sonnet-4-5-20250929';
   const maxRetries = options?.maxRetries ?? 2;
 
-  const prompt = buildTermGenerationPrompt(input);
+  // Resolve seedTerms via blueprint quando source apontar pra um (mapeia
+  // source → blueprintId em SOURCE_TO_BP local; idêntico ao classifier).
+  let seedTerms: string[] | undefined;
+  if (input.source) {
+    try {
+      const { BLUEPRINT_MAP } = await import('../blueprints/catalog');
+      const SOURCE_TO_BP: Record<string, string> = { balcao: 'vending_machine_b2b' };
+      const bpId = SOURCE_TO_BP[input.source];
+      const bp = bpId ? BLUEPRINT_MAP[bpId] : null;
+      if (bp?.seedTerms && bp.seedTerms.length > 0) {
+        seedTerms = bp.seedTerms;
+        console.log(`[Step1] Seed terms (source=${input.source}): ${seedTerms.length} termos`);
+      }
+    } catch {
+      /* non-fatal */
+    }
+  }
+
+  const prompt = buildTermGenerationPrompt(input, { seedTerms });
   let terms: GeneratedTerm[] = [];
   let inferredClientType: 'b2c' | 'b2b' | 'b2g' = 'b2c';
   let inferredDemandType: DemandType = 'local_residents';
@@ -158,6 +189,28 @@ export async function executeStep1(
       inferredClientType = result.clientType;
       inferredDemandType = result.demandType;
       console.log(`[Step1] Inferred clientType: ${inferredClientType}, demandType: ${inferredDemandType}`);
+
+      // Garantia: se seedTerms foram fornecidos e Claude não incluiu algum,
+      // injeta os faltantes como transactional/core no início.
+      if (seedTerms && seedTerms.length > 0) {
+        const existingNormalized = new Set(
+          terms.map(t => t.term.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()),
+        );
+        const missing = seedTerms.filter(s => {
+          const norm = s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+          return !existingNormalized.has(norm);
+        });
+        if (missing.length > 0) {
+          const injected = missing.map((t): GeneratedTerm => ({
+            term: t,
+            intent: 'transactional',
+            category: 'core',
+            rationale: 'Seed term do blueprint (baseline de qualidade)',
+          }));
+          terms = [...injected, ...terms];
+          console.log(`[Step1] Injetados ${missing.length} seed terms faltantes do blueprint`);
+        }
+      }
 
       const validation = validateTerms(terms);
       if (validation.valid) break;

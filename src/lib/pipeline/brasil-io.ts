@@ -36,7 +36,7 @@ export async function buscarEmpresasBrasilIO(
   product: string,
   municipio: string,
   uf?: string,
-  options?: { limit?: number; differentiator?: string },
+  options?: { limit?: number; differentiator?: string; targetCnaes?: string[] },
 ): Promise<BrasilIOResult | null> {
   const token = process.env.BRASIL_IO_TOKEN;
   if (!token) {
@@ -44,10 +44,22 @@ export async function buscarEmpresasBrasilIO(
     return null;
   }
 
-  const cnaeMapping = findCNAEByProduct(product, options?.differentiator);
-  if (!cnaeMapping) {
-    console.warn(`[Brasil.io] CNAE não encontrado para "${product}"`);
-    return null;
+  // Modo cliente-alvo: blueprint forneceu CNAEs específicos das EMPRESAS-ALVO
+  // (não dos concorrentes). Bypass do mapping findCNAEByProduct.
+  let cnaeMapping: CNAEMapping | null;
+  if (options?.targetCnaes && options.targetCnaes.length > 0) {
+    cnaeMapping = {
+      cnaePrimarios: options.targetCnaes,
+      cnaeGrupo: options.targetCnaes[0]?.slice(0, 2) || '',
+      descricao: 'Empresas-alvo do blueprint',
+    } as CNAEMapping;
+    console.log(`[Brasil.io] Modo target: ${options.targetCnaes.length} CNAEs alvo`);
+  } else {
+    cnaeMapping = findCNAEByProduct(product, options?.differentiator);
+    if (!cnaeMapping) {
+      console.warn(`[Brasil.io] CNAE não encontrado para "${product}"`);
+      return null;
+    }
   }
 
   const limit = options?.limit || 20;

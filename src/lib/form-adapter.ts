@@ -115,5 +115,6 @@ export function adaptFormToInput(form: LeadFormData, locale: string): FormInput 
     freeText: form.freeText || undefined,
     locale: localeMap[locale] || "pt-BR",
     submittedAt: new Date().toISOString(),
+    source: (form as any).source || undefined,
   };
 }

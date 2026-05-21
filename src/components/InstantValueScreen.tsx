@@ -97,6 +97,8 @@ interface Results {
   };
   blueprintId?: string;
   honestReading?: string;
+  /** Estágio do negócio detectado pelo pipeline (do buildDisplayData) */
+  stage?: 'pre_lancamento' | 'inicial' | 'crescimento' | 'maduro';
 }
 interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; leadId?: string; hideCTA?: boolean; hideWorkRoutes?: boolean; name?: string; seasonality?: any; }
 
@@ -698,84 +700,148 @@ export default function InstantValueScreen({ product, region, results: initialRe
 
         {/* ═══════════════════════════════════════════════════════════ */}
         {/* BLOCO 2 — TAMANHO DA OPORTUNIDADE                            */}
+        {/* (adapta narrativa conforme estágio: pre_lancamento → "construir   */}
+        {/*  do zero", senão → "fatia que você disputa")                      */}
         {/* ═══════════════════════════════════════════════════════════ */}
-        <div style={{ marginBottom: 28 }}>
-          <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 6 }}>
-            02 · tamanho da oportunidade
-          </div>
-          <h2 style={{ fontFamily: V.display, fontSize: 22, fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 4px", lineHeight: 1.2 }}>
-            Se você estimular o mercado, até onde dá pra ir?
-          </h2>
-          <p style={{ fontSize: 13, color: V.zinc, margin: "0 0 16px", lineHeight: 1.5 }}>
-            Mapeamos sua audiência, demanda ativa e teto realista pros próximos 90 dias.
-          </p>
+        {(() => {
+          const stage = (results as any).stage as 'pre_lancamento' | 'inicial' | 'crescimento' | 'maduro' | undefined;
+          const isPreLaunch = stage === 'pre_lancamento';
+          const isVending = results.blueprintId === 'vending_machine_b2b';
+          const headlineQuestion = isPreLaunch
+            ? "Qual o tamanho do mercado que você pode disputar?"
+            : isVending
+              ? "Qual é o potencial da sua operação?"
+              : "Qual fatia do seu mercado você disputa hoje?";
+          const sectionTitle = isPreLaunch
+            ? "Pra onde dá pra ir, a partir do zero."
+            : "Se você estimular o mercado, até onde dá pra ir?";
+          const sectionLead = isPreLaunch
+            ? "Você está construindo presença do zero — mapeamos o tamanho do mercado-alvo e o horizonte realista pros próximos 90 dias."
+            : "Mapeamos sua audiência, demanda ativa e teto realista pros próximos 90 dias.";
 
-          {(() => {
-            const ringSize = 160;
-            const ringStroke = 6;
-            const ringRadius = (ringSize - ringStroke) / 2;
-            const ringCirc = 2 * Math.PI * ringRadius;
-            const ringOffset = ringCirc - (scoreAtual / 100) * ringCirc;
-            return (
-              <div style={{ background: V.white, borderRadius: 16, border: `1px solid ${V.fog}`, padding: "28px 20px", textAlign: "center" }}>
-                <div style={{ fontFamily: V.display, fontSize: 14, fontWeight: 600, color: V.zinc, marginBottom: 16 }}>
-                  Qual fatia do seu mercado você disputa hoje?
-                </div>
-
-                <div style={{ position: "relative", width: ringSize, height: ringSize, margin: "0 auto 20px" }}>
-                  <svg width={ringSize} height={ringSize} style={{ transform: "rotate(-90deg)" }}>
-                    <circle cx={ringSize / 2} cy={ringSize / 2} r={ringRadius} fill="none" stroke={V.fog} strokeWidth={ringStroke} />
-                    <circle cx={ringSize / 2} cy={ringSize / 2} r={ringRadius} fill="none" stroke={scoreAtual < 30 ? V.coral : scoreAtual < 50 ? V.amber : V.teal} strokeWidth={ringStroke} strokeLinecap="round" strokeDasharray={ringCirc} strokeDashoffset={ringOffset} style={{ transition: "stroke-dashoffset 1s ease" }} />
-                  </svg>
-                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", textAlign: "center" }}>
-                    <div style={{ fontFamily: V.display, fontSize: 40, fontWeight: 800, color: V.night, lineHeight: 1 }}>
-                      <AnimatedCounter target={scoreAtual} suffix="" />
-                    </div>
-                    <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>de 100</div>
-                  </div>
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, textAlign: "center" }}>
-                  <div style={{ padding: "10px 6px", background: V.cloud, borderRadius: 8 }}>
-                    <div style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: scoreAtual < 30 ? V.coral : scoreAtual < 50 ? V.amber : V.teal }}>{scoreAtual}</div>
-                    <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>Você hoje</div>
-                  </div>
-                  <div style={{ padding: "10px 6px", background: V.cloud, borderRadius: 8 }}>
-                    <div style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: V.amber }}>{scorePotencial}</div>
-                    <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>Realizável em 90d</div>
-                  </div>
-                  <div style={{ padding: "10px 6px", background: V.cloud, borderRadius: 8 }}>
-                    <div style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: V.zinc }}>
-                      {competitorAvgRating > 0 ? Math.round(competitorAvgRating * 10) : '35'}
-                    </div>
-                    <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>Média setor</div>
-                  </div>
-                </div>
-
-                <p style={{ fontSize: 12, color: V.night, margin: "14px 0 0", lineHeight: 1.6 }}>
-                  {`Hoje você disputa ${scoreAtual}% da atenção do seu mercado. Com presença ativa, chegar a ${scorePotencial}% é viável em 90 dias.`}
-                </p>
-
-                {oportunidade > 0 && (
-                  <p style={{ fontSize: 13, color: V.teal, margin: "10px 0 0", fontWeight: 700, lineHeight: 1.5 }}>
-                    Isso significa +{oportunidade.toLocaleString('pt-BR')} {isB2B ? 'empresas' : 'pessoas'} considerando você por mês.
-                  </p>
-                )}
-                {hasProj && proj && (
-                  <p style={{ fontSize: 11, color: V.zinc, margin: "8px 0 0", lineHeight: 1.5 }}>
-                    Em receita: ~R${(proj.receitaAtual / 1000).toFixed(0)}k/mês hoje → ~R${(proj.receitaPotencial / 1000).toFixed(0)}k/mês potencial.
-                  </p>
-                )}
-
-                {nenhumEncontrado && (
-                  <p style={{ fontSize: 11, color: V.coral, margin: "12px 0 0" }}>
-                    Nenhuma presença digital detectada — partindo do zero.
-                  </p>
-                )}
+          return (
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 6 }}>
+                02 · tamanho da oportunidade
               </div>
-            );
-          })()}
-        </div>
+              <h2 style={{ fontFamily: V.display, fontSize: 22, fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 4px", lineHeight: 1.2 }}>
+                {sectionTitle}
+              </h2>
+              <p style={{ fontSize: 13, color: V.zinc, margin: "0 0 16px", lineHeight: 1.5 }}>
+                {sectionLead}
+              </p>
+
+              {(() => {
+                const ringSize = 160;
+                const ringStroke = 6;
+                const ringRadius = (ringSize - ringStroke) / 2;
+                const ringCirc = 2 * Math.PI * ringRadius;
+                const ringOffset = ringCirc - (scoreAtual / 100) * ringCirc;
+                const ringColor = isPreLaunch ? V.amber : (scoreAtual < 30 ? V.coral : scoreAtual < 50 ? V.amber : V.teal);
+                return (
+                  <div style={{ background: V.white, borderRadius: 16, border: `1px solid ${V.fog}`, padding: "28px 20px", textAlign: "center" }}>
+                    <div style={{ fontFamily: V.display, fontSize: 14, fontWeight: 600, color: V.zinc, marginBottom: 16 }}>
+                      {headlineQuestion}
+                    </div>
+
+                    {/* Em pré-lançamento o ring fica "neutro" — não mostra score como julgamento */}
+                    {!isPreLaunch && (
+                      <div style={{ position: "relative", width: ringSize, height: ringSize, margin: "0 auto 20px" }}>
+                        <svg width={ringSize} height={ringSize} style={{ transform: "rotate(-90deg)" }}>
+                          <circle cx={ringSize / 2} cy={ringSize / 2} r={ringRadius} fill="none" stroke={V.fog} strokeWidth={ringStroke} />
+                          <circle cx={ringSize / 2} cy={ringSize / 2} r={ringRadius} fill="none" stroke={ringColor} strokeWidth={ringStroke} strokeLinecap="round" strokeDasharray={ringCirc} strokeDashoffset={ringOffset} style={{ transition: "stroke-dashoffset 1s ease" }} />
+                        </svg>
+                        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", textAlign: "center" }}>
+                          <div style={{ fontFamily: V.display, fontSize: 40, fontWeight: 800, color: V.night, lineHeight: 1 }}>
+                            <AnimatedCounter target={scoreAtual} suffix="" />
+                          </div>
+                          <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>de 100</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Pra pré-lançamento mostra audiência + horizonte ao invés de ring de score */}
+                    {isPreLaunch && audienciaTotal > 0 && (
+                      <div style={{ marginBottom: 20 }}>
+                        <div style={{ fontFamily: V.display, fontSize: 48, fontWeight: 800, color: V.night, lineHeight: 1 }}>
+                          {fmtPop(audienciaTotal)}
+                        </div>
+                        <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, marginTop: 6, letterSpacing: "0.06em", textTransform: "uppercase" as const }}>
+                          {audienciaLabel} no seu mercado-alvo
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Grid de comparação — em pré-lançamento mostra "horizonte" sem média setor injusta */}
+                    {!isPreLaunch ? (
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, textAlign: "center" }}>
+                        <div style={{ padding: "10px 6px", background: V.cloud, borderRadius: 8 }}>
+                          <div style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: ringColor }}>{scoreAtual}</div>
+                          <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>Você hoje</div>
+                        </div>
+                        <div style={{ padding: "10px 6px", background: V.cloud, borderRadius: 8 }}>
+                          <div style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: V.amber }}>{scorePotencial}</div>
+                          <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>Realizável em 90d</div>
+                        </div>
+                        <div style={{ padding: "10px 6px", background: V.cloud, borderRadius: 8 }}>
+                          <div style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: V.zinc }}>
+                            {competitorAvgRating > 0 ? Math.round(competitorAvgRating * 10) : '35'}
+                          </div>
+                          <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>Média setor</div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, textAlign: "center" }}>
+                        <div style={{ padding: "10px 6px", background: V.cloud, borderRadius: 8 }}>
+                          <div style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: V.zinc }}>{scoreAtual}</div>
+                          <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>Posição hoje</div>
+                        </div>
+                        <div style={{ padding: "10px 6px", background: V.amberWash, borderRadius: 8 }}>
+                          <div style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: V.amber }}>{scorePotencial}</div>
+                          <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>Realizável em 90d</div>
+                        </div>
+                      </div>
+                    )}
+
+                    <p style={{ fontSize: 12, color: V.night, margin: "14px 0 0", lineHeight: 1.6 }}>
+                      {isPreLaunch
+                        ? `Você está no momento de construir presença. ${audienciaTotal > 0 ? `O mercado-alvo no seu raio é de ${fmtPop(audienciaTotal)} ${audienciaLabel}.` : ''} O caminho começa em sair da invisibilidade — a tese 1 abaixo ataca exatamente isso.`
+                        : `Hoje você disputa ${scoreAtual}% da atenção do seu mercado. Com presença ativa, chegar a ${scorePotencial}% é viável em 90 dias.`}
+                    </p>
+
+                    {/* Para vending B2B: linha extra com projeção em pontos × ticket */}
+                    {isVending && oportunidade > 0 && (results as any)?.projecaoFinanceira?.ticketMedio && (
+                      <p style={{ fontSize: 13, color: V.teal, margin: "10px 0 0", fontWeight: 700, lineHeight: 1.5 }}>
+                        Em pontos ativos: +{oportunidade} clientes potenciais × R$ {(results as any).projecaoFinanceira.ticketMedio}/mês
+                        {' = '}
+                        ~R$ {Math.round(oportunidade * (results as any).projecaoFinanceira.ticketMedio * 12 / 1000)}k/ano de potencial.
+                      </p>
+                    )}
+
+                    {/* Padrão (não-vending): "+N pessoas/empresas/mês" */}
+                    {!isVending && oportunidade > 0 && (
+                      <p style={{ fontSize: 13, color: V.teal, margin: "10px 0 0", fontWeight: 700, lineHeight: 1.5 }}>
+                        Isso significa +{oportunidade.toLocaleString('pt-BR')} {isB2B ? 'empresas' : 'pessoas'} considerando você por mês.
+                      </p>
+                    )}
+
+                    {hasProj && proj && !isPreLaunch && (
+                      <p style={{ fontSize: 11, color: V.zinc, margin: "8px 0 0", lineHeight: 1.5 }}>
+                        Em receita: ~R${(proj.receitaAtual / 1000).toFixed(0)}k/mês hoje → ~R${(proj.receitaPotencial / 1000).toFixed(0)}k/mês potencial.
+                      </p>
+                    )}
+
+                    {nenhumEncontrado && !isPreLaunch && (
+                      <p style={{ fontSize: 11, color: V.coral, margin: "12px 0 0" }}>
+                        Nenhuma presença digital detectada — partindo do zero.
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          );
+        })()}
 
         {/* ═══════════════════════════════════════════════════════════ */}
         {/* BLOCO 3 — 3 TESES DE CRESCIMENTO (DESBLOQUEADO)              */}

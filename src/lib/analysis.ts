@@ -1669,8 +1669,27 @@ Responda APENAS em JSON, sem markdown:
       const { searchB2BCompaniesLight } = await import('./pipeline/b2b-companies');
       // Se o lead é nacional sem city, busca sem município (escopo Brasil)
       const cityForSearch = extractedCity || '';
+
+      // Modo cliente-alvo: se source mapeia pra um blueprint com clientTargetCnaes,
+      // usa esses CNAEs (busca empresas-alvo, não concorrentes do mesmo CNAE do produto).
+      let targetCnaes: string[] | undefined;
+      if (input.source) {
+        try {
+          const { BLUEPRINT_MAP } = await import('./blueprints/catalog');
+          const SOURCE_TO_BP: Record<string, string> = { balcao: 'vending_machine_b2b' };
+          const bpId = SOURCE_TO_BP[input.source];
+          const bp = bpId ? BLUEPRINT_MAP[bpId] : null;
+          if (bp?.clientTargetCnaes && bp.clientTargetCnaes.length > 0) {
+            targetCnaes = bp.clientTargetCnaes;
+            console.log(`[Pipeline] B2B target mode (source=${input.source}): ${targetCnaes.length} CNAEs alvo`);
+          }
+        } catch (err) {
+          console.warn('[Pipeline] Não foi possível resolver targetCnaes:', (err as Error).message);
+        }
+      }
+
       b2bCompanies = await withTimeout(
-        searchB2BCompaniesLight(input.product, cityForSearch, extractedState || undefined),
+        searchB2BCompaniesLight(input.product, cityForSearch, extractedState || undefined, { targetCnaes }),
         15_000,
         'B2BCompanies',
       );
@@ -1936,6 +1955,27 @@ export function buildDisplayData(result: any) {
       model: result.terms.generationModel,
       promptVersion: result.terms.promptVersion,
     } : null,
+    // Estágio do negócio detectado pelos mesmos sinais usados no prompt das teses.
+    // Permite o frontend adaptar narrativa: pré-lançamento → "construindo do zero"
+    // ao invés de "Você disputa X% da atenção" (que é injusto pra quem nem começou).
+    stage: (() => {
+      const m = mapsData;
+      const ig = igData?.profile;
+      const reviewCount = m?.reviewCount || 0;
+      const igFollowers = ig?.followers || 0;
+      const igPosts = ig?.postsLast30d || 0;
+      const hasSite = (serpPositions.filter((sp: any) => sp.position && sp.position <= 10).length) > 0;
+      const signals =
+        (m?.found && reviewCount >= 5 ? 1 : 0) +
+        (ig?.handle && igPosts >= 2 ? 1 : 0) +
+        (hasSite ? 1 : 0) +
+        (reviewCount >= 30 ? 1 : 0) +
+        (igFollowers >= 1000 ? 1 : 0);
+      if (signals === 0) return 'pre_lancamento' as const;
+      if (signals === 1) return 'inicial' as const;
+      if (signals <= 3) return 'crescimento' as const;
+      return 'maduro' as const;
+    })(),
   };
 }
 

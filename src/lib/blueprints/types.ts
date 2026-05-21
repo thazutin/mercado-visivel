@@ -118,4 +118,40 @@ export interface Blueprint {
 
   /** Métrica principal de sucesso pra esse segmento */
   primaryKPI: string;
+
+  /**
+   * Termos-semente que devem SEMPRE ser usados na geração de termos do step1.
+   * Claude expande sobre esses; eles NÃO são substituídos. Garante baseline
+   * de qualidade quando o nome do produto é ambíguo (ex: "Operação Balcão Urbano").
+   */
+  seedTerms?: string[];
+
+  /**
+   * Quick wins específicos do blueprint — gerados APÓS os automáticos do generator.
+   * Permite ações cirurgicamente adaptadas ao modelo de negócio do segmento.
+   */
+  customQuickWins?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    impact: string;
+    timeEstimate: string;
+    steps: string[];
+    copyReady?: string;
+  }>;
+
+  /**
+   * Pra blueprints B2B onde o cliente é EMPRESA: CNAEs prefixos das
+   * empresas-ALVO (clientes potenciais), não dos concorrentes.
+   * Ex: pra vending B2B, alvos são indústrias (10-33), logística (49-53),
+   * saúde (86), educação (85). Quando setado, sobrescreve o mapping default
+   * de findCNAEByProduct (que mapearia pro CNAE do PRODUTO/concorrente).
+   */
+  clientTargetCnaes?: string[];
+
+  /**
+   * Pra blueprints B2B: tagline que descreve o tipo de empresa-alvo,
+   * usado na UI ("Empresas-alvo: galpões, indústrias, hospitais").
+   */
+  clientTargetLabel?: string;
 }

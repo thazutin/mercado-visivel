@@ -83,7 +83,7 @@ export async function buscarEmpresasCnpja(
   product: string,
   municipio: string,
   uf?: string,
-  options?: { limit?: number; differentiator?: string },
+  options?: { limit?: number; differentiator?: string; targetCnaes?: string[] },
 ): Promise<CnpjaResult | null> {
   const apiKey = process.env.CNPJA_API_KEY;
   if (!apiKey) {
@@ -91,10 +91,22 @@ export async function buscarEmpresasCnpja(
     return null;
   }
 
-  const cnaeMapping = findCNAEByProduct(product, options?.differentiator);
-  if (!cnaeMapping || cnaeMapping.cnaePrimarios.length === 0) {
-    console.warn(`[CNPJá] CNAE não encontrado para "${product}"`);
-    return null;
+  // Modo cliente-alvo: blueprint forneceu CNAEs específicos das empresas-alvo
+  // (não dos concorrentes). Bypass do findCNAEByProduct.
+  let cnaeMapping: { cnaePrimarios: string[]; descricao: string };
+  if (options?.targetCnaes && options.targetCnaes.length > 0) {
+    cnaeMapping = {
+      cnaePrimarios: options.targetCnaes,
+      descricao: 'Empresas-alvo do blueprint',
+    };
+    console.log(`[CNPJá] Modo target: ${options.targetCnaes.length} CNAEs alvo`);
+  } else {
+    const mapped = findCNAEByProduct(product, options?.differentiator);
+    if (!mapped || mapped.cnaePrimarios.length === 0) {
+      console.warn(`[CNPJá] CNAE não encontrado para "${product}"`);
+      return null;
+    }
+    cnaeMapping = mapped;
   }
 
   const limit = Math.min(options?.limit || 10, 30);

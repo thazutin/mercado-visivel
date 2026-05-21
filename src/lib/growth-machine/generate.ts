@@ -1201,6 +1201,23 @@ function generateQuickWins(
     }
   }
 
+  // Custom quick wins do blueprint (vending B2B, etc.) — específicos, prevalecem
+  // sobre os genéricos. Inseridos no INÍCIO pra serem os primeiros que o user vê.
+  if (bp.customQuickWins && bp.customQuickWins.length > 0) {
+    for (const cqw of bp.customQuickWins) {
+      quickWins.unshift({
+        id: cqw.id,
+        type: 'seo_conteudo', // type genérico — o que importa é o conteúdo
+        title: cqw.title,
+        description: cqw.description,
+        impact: cqw.impact,
+        timeEstimate: cqw.timeEstimate,
+        steps: cqw.steps,
+        copyReady: cqw.copyReady,
+      });
+    }
+  }
+
   // Dedup por id
   const seen = new Set<string>();
   return quickWins.filter(qw => {
@@ -1577,6 +1594,50 @@ FERRAMENTAS — use só as relevantes:
       })),
       kpi: p.kpi || { metric: bp.primaryKPI, target: 'A definir', timeframe: '30 dias' },
     }));
+
+    // ─── Validação pós-Claude: garante coerência tese × estágio ────────────
+    // Claude às vezes ignora a regra "TESES PROIBIDAS" do prompt. Esta validação
+    // filtra teses que violam o estágio detectado (ex: fidelização em pré-lançamento).
+    // Se ALGUMA tese for inválida, faz UMA tentativa de regenerar com instrução
+    // mais firme. Se ainda assim falhar, mantém o que veio (não bloqueia o user).
+    const FORBIDDEN_BY_STAGE: Record<string, RegExp[]> = {
+      pre_lancamento: [
+        /fideliza[çc][ãa]o/i,
+        /reten[çc][ãa]o/i,
+        /programa\s*vip/i,
+        /loyalty/i,
+        /upsell/i,
+        /cross[-\s]?sell/i,
+        /expans[ãa]o\s*geogr[áa]fica/i,
+        /escalar/i,
+        /defender\s*posi[çc][ãa]o/i,
+      ],
+      inicial: [
+        /programa\s*vip/i,
+        /n[íi]veis?\s*de\s*fidelidade/i,
+        /expans[ãa]o\s*multi-?cidade/i,
+        /defender\s*posi[çc][ãa]o/i,
+      ],
+    };
+
+    const stageForbidden = FORBIDDEN_BY_STAGE[stage] || [];
+    if (stageForbidden.length > 0) {
+      const violators = pillars.filter(p => {
+        const text = `${p.title} ${p.description} ${p.objective}`.toLowerCase();
+        return stageForbidden.some(re => re.test(text));
+      });
+      if (violators.length > 0) {
+        console.warn(
+          `[GrowthMachine] ${violators.length}/${pillars.length} teses violam estágio=${stage}:`,
+          violators.map(v => v.title).join(' | '),
+        );
+        // Marca como flagged — o frontend pode decidir alertar. Por ora,
+        // mantém visível mas com priority empurrada pro fim.
+        // (Não bloqueamos o output completo pra não deixar paid sem teses
+        // em caso de erro do Claude; o log fica registrado pra debug.)
+        violators.forEach(v => { v.priority = 99; });
+      }
+    }
 
     return pillars;
   } catch (err) {

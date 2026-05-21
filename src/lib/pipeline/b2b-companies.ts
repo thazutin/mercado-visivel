@@ -113,12 +113,16 @@ export async function searchB2BCompaniesLight(
   product: string,
   municipio: string,
   uf?: string,
+  options?: { targetCnaes?: string[] },
 ): Promise<B2BCompanyResult | null> {
   // Tenta CNPJá primeiro (mais confiável, dados frescos da Receita Federal)
   if (process.env.CNPJA_API_KEY) {
     try {
       const { buscarEmpresasCnpja } = await import('./cnpja');
-      const cnpjaResult = await buscarEmpresasCnpja(product, municipio, uf, { limit: 10 });
+      const cnpjaResult = await buscarEmpresasCnpja(product, municipio, uf, {
+        limit: 10,
+        targetCnaes: options?.targetCnaes,
+      } as any);
       if (cnpjaResult && cnpjaResult.empresas.length > 0) {
         return {
           companies: cnpjaResult.empresas.map((e) => ({
@@ -146,7 +150,10 @@ export async function searchB2BCompaniesLight(
   }
 
   // Fallback Brasil.io
-  const brasilIOResult = await buscarEmpresasBrasilIO(product, municipio, uf, { limit: 10 });
+  const brasilIOResult = await buscarEmpresasBrasilIO(product, municipio, uf, {
+    limit: 10,
+    targetCnaes: options?.targetCnaes,
+  });
   if (!brasilIOResult || brasilIOResult.empresas.length === 0) {
     return null;
   }

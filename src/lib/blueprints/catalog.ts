@@ -361,6 +361,77 @@ const vending_machine_b2b: Blueprint = {
   ],
   seasonalityRelevance: 'low',
   primaryKPI: 'Pontos ativos × ticket médio mensal por ponto',
+
+  // ─── Lente cirúrgica pra B2B vending ──────────────────────────────────
+  seedTerms: [
+    'vending machine snacks empresa',
+    'máquina automática snacks escritório',
+    'snack break corporativo',
+    'auto-serviço alimentação fábrica',
+    'vending café corporativo',
+    'máquina de venda automática empresa',
+    'fornecedor vending machine',
+    'instalar máquina snacks sem custo',
+  ],
+
+  // CNAEs das EMPRESAS-ALVO (não dos concorrentes). Hunter+Brasil.io vão
+  // retornar essas empresas pra montar pipeline de prospecção real.
+  // Indústrias gerais (10-33), logística (49-53), TI e BPO (62, 82),
+  // saúde 86), educação superior (85), construção corporativa (41).
+  clientTargetCnaes: [
+    '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
+    '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33',
+    '41', '42', '43',
+    '49', '50', '51', '52', '53',
+    '62', '63',
+    '82', '85', '86',
+  ],
+  clientTargetLabel: 'Galpões logísticos, indústrias, escritórios corporativos, hospitais e instituições com 50+ funcionários',
+
+  // Quick wins cirúrgicos pra vending B2B — substituem os templates genéricos.
+  customQuickWins: [
+    {
+      id: 'qw-vending-prediomap',
+      title: 'Mapear 10 prédios corporativos no raio de 3km',
+      description: 'Lista priorizada de empresas-alvo (50+ funcionários) com decisor identificado. Foco em galpões logísticos, indústrias, escritórios de TI e hospitais.',
+      impact: '+10 pts Pipeline B2B',
+      timeEstimate: '~30 min',
+      steps: [
+        'Abra Google Maps, filtra "indústrias", "logística", "centros administrativos" no seu raio',
+        'Pra cada prédio: pegue nome da empresa principal e endereço',
+        'Cruze com LinkedIn — busca "Facilities" ou "Operações" + nome da empresa',
+        'Anota: empresa · decisor · cargo · URL LinkedIn em uma planilha',
+        'Priorize: empresas com 50-300 funcionários (sweet spot pra vending B2B)',
+      ],
+    },
+    {
+      id: 'qw-vending-qrindicacao',
+      title: 'Imprimir QR code "Indique seu prédio" no ponto mais bem-sucedido',
+      description: 'Cada cliente atendido conhece outras empresas que poderiam ter vending. Transforme satisfação em pipeline com 1 ação de baixo custo.',
+      impact: '+5 pts Indicação',
+      timeEstimate: '~20 min',
+      steps: [
+        'No Canva, crie cartão A5 com QR code linkando pra wa.me/SEU_NUMERO?text=Quero+indicar+um+predio',
+        'Texto curto: "Indique um prédio com vending e ganhe X reais em snacks free quando virar ponto ativo"',
+        'Imprima 5 unidades e fixe no ponto que mais rende',
+        'Track: cada indicação que vira ponto = referência interna do que funciona pra captar',
+      ],
+      copyReady: 'Conheço um prédio que adoraria ter máquinas como essas. Quem é o contato pra eu fazer a apresentação?',
+    },
+    {
+      id: 'qw-vending-linkedin-decisor',
+      title: 'Otimizar perfil LinkedIn pra ser encontrado por Facilities',
+      description: 'Decisor de Facilities/RH usa LinkedIn pra pesquisar fornecedores. Headline e Sobre certos te colocam em buscas de "vending empresa".',
+      impact: '+7 pts Visibilidade B2B',
+      timeEstimate: '~20 min',
+      steps: [
+        'Headline: "Operação Balcão Urbano | Vending corporativo sem custo de instalação"',
+        'Sobre: 3 frases: (1) o que faz (2) pra quem (Facilities, RH, indústrias 50+ funcionários) (3) o diferencial (sem custo de instalação)',
+        'Adicione 3 fotos: 1 da máquina instalada em ponto real, 1 do seu time, 1 da variedade de snacks',
+        'Conecte com 20 pessoas com cargo "Facilities", "Operações", "RH" em empresas do seu raio',
+      ],
+    },
+  ],
 };
 
 const b2b_servicos: Blueprint = {
