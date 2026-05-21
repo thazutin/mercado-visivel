@@ -1,6 +1,22 @@
 {
   "crons": [
     {
+      "path": "/api/cron/weekly-closure",
+      "schedule": "0 17 * * 4"
+    },
+    {
+      "path": "/api/cron/weekly-planner",
+      "schedule": "0 18 * * 4"
+    },
+    {
+      "path": "/api/cron/weekly-opening",
+      "schedule": "0 8 * * 5"
+    },
+    {
+      "path": "/api/cron/weekly-checkpoint",
+      "schedule": "0 13 * * 2"
+    },
+    {
       "path": "/api/cron/weekly-contents",
       "schedule": "0 8 * * 5"
     },
@@ -52,6 +68,18 @@
       "maxDuration": 300
     },
     "src/app/api/cron/weekly-contents/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/cron/weekly-planner/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/cron/weekly-opening/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/cron/weekly-checkpoint/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/cron/weekly-closure/route.ts": {
       "maxDuration": 300
     },
     "src/app/api/agents/qa/route.ts": {

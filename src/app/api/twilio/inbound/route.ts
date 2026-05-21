@@ -1,36 +1,97 @@
 // ============================================================================
 // /api/twilio/inbound — Webhook receptor de mensagens WhatsApp inbound
 //
-// O número Twilio do Virô é exclusivamente de SAÍDA (envio automático de
-// notificações de diagnóstico/plano). Quando um cliente responde nesse
-// número, a gente:
+// Comportamento, em ordem:
 //
-// 1. Auto-responde IMEDIATAMENTE via TwiML com uma mensagem clara
-//    redirecionando pro número humano: "Esse número é só de envio
-//    automático. Fala com a gente aqui: wa.me/5511936190947"
-//    — o cliente clica no link e abre conversa direto no número humano.
+// 1. Se for comando de opt-out (PARE / STOP / SAIR / CANCELAR /
+//    DESCADASTRAR / UNSUBSCRIBE) — descadastra via /api/optout interno
+//    e ack TwiML de confirmação. (Requisito Meta: ack imediato.)
 //
-// 2. Em paralelo (não-bloqueante), encaminha o conteúdo por email pra
-//    thazutin@gmail.com como backup — caso o cliente não clique no
-//    redirect, Thales sabe que alguém tentou contato e pode reachar
-//    proativamente do número humano.
+// 2. Se o número está associado a um lead com whatsapp_optin=true e
+//    sem whatsapp_optout_at — dispara o loop conversacional em background
+//    via waitUntil(). Retorna TwiML vazio — o bot vai enviar a resposta
+//    via Twilio API REST em alguns segundos (dentro da janela 24h Meta).
 //
-// Configuração necessária no Twilio Console:
-//   Messaging > Senders > WhatsApp sender (seu número)
-//   "When a message comes in" → Webhook
-//   POST → https://virolocal.com/api/twilio/inbound
+// 3. Caso contrário (sem opt-in, ou número desconhecido) — ack TwiML
+//    redirecionando pro WhatsApp humano + forward por email como backup.
+//
+// Twilio Console:
+//   Messaging > Senders > WhatsApp sender
+//   "When a message comes in" → Webhook POST → /api/twilio/inbound
 // ============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { waitUntil } from "@vercel/functions";
+import { processInboundMessage } from "@/lib/conversation/loop";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 const ALERT_EMAIL = "thazutin@gmail.com";
 
+// Comandos de opt-out que o usuário pode mandar pra sair da cadência.
+// Cobrimos as palavras esperadas pela Meta + variantes em PT-BR.
+const OPTOUT_KEYWORDS = ["PARE", "PARAR", "STOP", "SAIR", "CANCELAR", "DESCADASTRAR", "UNSUBSCRIBE"];
+
+function isOptoutCommand(body: string): boolean {
+  const normalized = body.trim().toUpperCase().replace(/[^\p{L}\p{N}\s]/gu, "").trim();
+  return OPTOUT_KEYWORDS.some((kw) => normalized === kw);
+}
+
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
+}
+
+/** Acha o lead mais recente associado ao número que escreveu. Match
+ *  parcial pelos últimos 10 dígitos (DDD+número) — o `whatsapp` do form
+ *  pode estar salvo com ou sem +55. */
+interface FoundLead {
+  id: string;
+  name: string | null;
+  whatsappOptin: boolean;
+  whatsappOptoutAt: string | null;
+}
+
+async function findLeadByPhone(from: string): Promise<FoundLead | null> {
+  const digits = from.replace(/\D/g, "");
+  if (digits.length < 10) return null;
+  const tail = digits.slice(-10); // DDD + 8 dígitos (cobre celulares com e sem 9)
+  const sb = getSupabaseAdmin();
+
+  // Busca leads cujo whatsapp termina com esses dígitos. PostgREST não
+  // tem `ilike right` então usamos ilike com `%tail`.
+  const { data, error } = await sb
+    .from("leads")
+    .select("id, name, whatsapp, whatsapp_optin, whatsapp_optout_at")
+    .ilike("whatsapp", `%${tail}`)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  if (error || !data || data.length === 0) return null;
+  return {
+    id: data[0].id as string,
+    name: (data[0].name as string) || null,
+    whatsappOptin: !!data[0].whatsapp_optin,
+    whatsappOptoutAt: (data[0].whatsapp_optout_at as string) || null,
+  };
+}
+
+// TwiML — ack de opt-out confirmado
+function buildOptoutAckTwiML(name: string | null): string {
+  const greeting = name ? `${name.split(" ")[0]}, ` : "";
+  const msg = `${greeting}acompanhamento semanal encerrado. Sua conta no site segue ativa — diagnóstico e teses permanecem disponíveis para consulta. Para retomar, escreva para thazutin@gmail.com.`;
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Message>${escapeXml(msg)}</Message>
+</Response>`;
+}
+
 // TwiML response — auto-ack redirecionando o cliente pro número humano.
 // O número Twilio é só de envio automático; conversa real acontece no
-// WhatsApp pessoal.
+// WhatsApp pessoal. (Loop conversacional vem no próximo sprint.)
 function buildAckTwiML(): string {
   const ack =
     "Oi 👋 Esse número é só de envio automático das notificações da Virô. " +
@@ -121,12 +182,72 @@ export async function POST(req: NextRequest) {
 
     console.log(`[TwilioInbound] From=${from} body="${body.slice(0, 100)}" media=${numMedia}`);
 
-    // Forward async (não bloqueia o ack)
+    // Comando de opt-out — desliga a cadência ANTES de qualquer outra coisa
+    // pra cumprir requisito Meta (resposta imediata a "PARE/STOP/SAIR").
+    if (body && isOptoutCommand(body)) {
+      const lead = await findLeadByPhone(from);
+      if (lead) {
+        // POST interno pra /api/optout (mesma origem). Fire-and-forget pra ack rápido.
+        const host = req.headers.get("host") || "virolocal.com";
+        const proto = host.includes("localhost") ? "http" : "https";
+        fetch(`${proto}://${host}/api/optout`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ leadId: lead.id, source: "whatsapp_inbound" }),
+        }).catch((err) => console.error("[TwilioInbound] optout call failed:", err));
+        console.log(`[TwilioInbound] Opt-out triggered for lead ${lead.id} (from=${from})`);
+
+        return new NextResponse(buildOptoutAckTwiML(lead.name), {
+          status: 200,
+          headers: { "Content-Type": "text/xml; charset=utf-8" },
+        });
+      }
+      // Sem lead identificado: ainda ack o opt-out de forma genérica
+      // (não temos como descadastrar de uma cadência que nunca começou).
+      console.warn(`[TwilioInbound] Opt-out command from unknown number: ${from}`);
+      return new NextResponse(buildOptoutAckTwiML(null), {
+        status: 200,
+        headers: { "Content-Type": "text/xml; charset=utf-8" },
+      });
+    }
+
+    // Identifica o lead (se houver) — usado pra decidir loop conversacional vs ack genérico
+    const lead = await findLeadByPhone(from);
+    const hasOptin = !!lead && lead.whatsappOptin && !lead.whatsappOptoutAt;
+
+    // ─── Caminho A: lead com opt-in → dispara LOOP CONVERSACIONAL ───────────
+    if (hasOptin && body) {
+      const fromClean = from.replace("whatsapp:", "");
+      const twilioSid = raw.MessageSid || raw.SmsMessageSid || undefined;
+      console.log(`[TwilioInbound] Disparando loop conversacional pra lead ${lead!.id}`);
+
+      // Background — Claude leva 5-15s, não dá pra bloquear o webhook do Twilio.
+      // O loop envia a resposta via Twilio REST API quando termina.
+      waitUntil(
+        processInboundMessage({
+          leadId: lead!.id,
+          fromWhatsapp: fromClean,
+          inboundBody: body,
+          twilioSidInbound: twilioSid,
+        }).catch((err) => {
+          console.error(`[TwilioInbound] Loop error pra lead ${lead!.id}:`, err);
+        })
+      );
+
+      // Resposta TwiML vazia — o bot vai mandar a mensagem real em segundos
+      // via Twilio Messages API. Não enviamos nada via TwiML pra evitar
+      // mensagem dupla.
+      return new NextResponse(`<?xml version="1.0" encoding="UTF-8"?><Response/>`, {
+        status: 200,
+        headers: { "Content-Type": "text/xml; charset=utf-8" },
+      });
+    }
+
+    // ─── Caminho B: sem opt-in → forward por email + ack redirect humano ────
     forwardToEmail({ from, body, numMedia, raw }).catch((err) =>
       console.error("[TwilioInbound] forward error:", err),
     );
 
-    // TwiML ack response
     return new NextResponse(buildAckTwiML(), {
       status: 200,
       headers: { "Content-Type": "text/xml; charset=utf-8" },

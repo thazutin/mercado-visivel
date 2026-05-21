@@ -16,7 +16,85 @@ const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://virolocal.com";
 const WHATSAPP_TEMPLATES = {
   diagnostico_pronto: "HX672bd3177d6ae1de3bab9ead2806bf8a",
   plano_pronto: "HX1ccebfd16b0961d7bdbdd5fa07e46255",
+  // Sprint 4 — ContentSids vêm do Twilio após aprovação Meta.
+  // Setar as env vars no Vercel quando os templates forem aprovados.
+  abertura_semanal: process.env.WA_TEMPLATE_ABERTURA_SEMANAL || "",
+  checkpoint_semanal: process.env.WA_TEMPLATE_CHECKPOINT_SEMANAL || "",
+  fechamento_semanal: process.env.WA_TEMPLATE_FECHAMENTO_SEMANAL || "",
 } as const;
+
+/**
+ * Modo Sandbox Twilio: o sandbox NÃO suporta Content Templates aprovados —
+ * apenas mensagens livres (Body). Setando `TWILIO_SANDBOX_MODE=true` no env,
+ * as funções abaixo caem em fallback de texto livre via sendWhatsAppFreeText.
+ *
+ * Isso só funciona dentro da janela 24h após o user mandar mensagem pro
+ * sandbox (incluindo o "join <código>" inicial). Pra demos e early users
+ * com opt-in explícito, é o caminho.
+ */
+const SANDBOX_MODE = process.env.TWILIO_SANDBOX_MODE === "true";
+
+/** Helpers de cadência semanal — chamadas pelos crons weekly-*. */
+export async function sendWeeklyOpening(opts: {
+  whatsapp: string;
+  firstName: string;
+  themeShort: string;
+}): Promise<boolean> {
+  const sid = WHATSAPP_TEMPLATES.abertura_semanal;
+  if (SANDBOX_MODE || !sid) {
+    if (!sid && !SANDBOX_MODE) {
+      console.warn("[Notify] WA_TEMPLATE_ABERTURA_SEMANAL não setada e não está em sandbox — usando free text (só funciona se janela 24h aberta)");
+    }
+    const body = `${opts.firstName}, sua estratégia desta semana está pronta.\n\n`
+      + `Tema selecionado para o seu negócio: ${opts.themeShort}.\n\n`
+      + `Responda "Ver o plano" para receber o detalhamento agora.`;
+    const r = await sendWhatsAppFreeText(opts.whatsapp, body);
+    return r.ok;
+  }
+  await sendWhatsApp(opts.whatsapp, sid, {
+    "1": opts.firstName.slice(0, 30),
+    "2": opts.themeShort.slice(0, 30),
+  });
+  return true;
+}
+
+export async function sendWeeklyCheckpoint(opts: {
+  whatsapp: string;
+  firstName: string;
+  themeShort: string;
+}): Promise<boolean> {
+  const sid = WHATSAPP_TEMPLATES.checkpoint_semanal;
+  if (SANDBOX_MODE || !sid) {
+    const body = `${opts.firstName}, lembrete do meio do ciclo de ${opts.themeShort}.\n\n`
+      + `Responda "Atualizar status" para registrar a execução desta semana.`;
+    const r = await sendWhatsAppFreeText(opts.whatsapp, body);
+    return r.ok;
+  }
+  await sendWhatsApp(opts.whatsapp, sid, {
+    "1": opts.firstName.slice(0, 30),
+    "2": opts.themeShort.slice(0, 30),
+  });
+  return true;
+}
+
+export async function sendWeeklyClosure(opts: {
+  whatsapp: string;
+  firstName: string;
+  themeShort: string;
+}): Promise<boolean> {
+  const sid = WHATSAPP_TEMPLATES.fechamento_semanal;
+  if (SANDBOX_MODE || !sid) {
+    const body = `${opts.firstName}, encerrando o ciclo de ${opts.themeShort}.\n\n`
+      + `Responda "Revisar ciclo" para fazer o balanço da semana — esse aprendizado pauta a próxima.`;
+    const r = await sendWhatsAppFreeText(opts.whatsapp, body);
+    return r.ok;
+  }
+  await sendWhatsApp(opts.whatsapp, sid, {
+    "1": opts.firstName.slice(0, 30),
+    "2": opts.themeShort.slice(0, 30),
+  });
+  return true;
+}
 
 function cleanPhone(whatsapp: string): string {
   const digits = whatsapp.replace(/\D/g, "");
@@ -98,6 +176,74 @@ export async function sendWhatsApp(
     }
   } catch (err) {
     console.error(`[Notify] WhatsApp error sending to +${phone}:`, err);
+  }
+}
+
+// ─── WhatsApp texto livre (dentro da janela 24h Meta) ───────────────────────
+// Diferente de sendWhatsApp() que exige Content Template, este envia Body
+// livre. Só funciona dentro da janela de 24h após última mensagem do user
+// (Meta bloqueia fora disso). Usado no loop conversacional.
+
+export async function sendWhatsAppFreeText(
+  to: string,
+  body: string,
+): Promise<{ ok: boolean; sid?: string; error?: string }> {
+  const whatsappEnabled = process.env.WHATSAPP_ENABLED;
+  if (whatsappEnabled !== "true") {
+    console.log("[Notify] WhatsApp desativado — setar WHATSAPP_ENABLED=true");
+    return { ok: false, error: "whatsapp_disabled" };
+  }
+
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const rawFrom = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
+  const from = rawFrom.startsWith("whatsapp:") ? rawFrom : `whatsapp:${rawFrom}`;
+
+  if (!accountSid || !authToken) {
+    console.warn("[Notify] FreeText skip — TWILIO creds missing");
+    return { ok: false, error: "twilio_creds_missing" };
+  }
+  if (!to || !body) return { ok: false, error: "to_or_body_empty" };
+
+  const phone = cleanPhone(to);
+  if (!phone) return { ok: false, error: "invalid_phone" };
+
+  // Twilio limita Body a 1600 chars no WhatsApp. Cortamos defensivamente.
+  const trimmed = body.length > 1500 ? body.slice(0, 1497) + "…" : body;
+
+  try {
+    const res = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`,
+          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        },
+        body: new URLSearchParams({
+          From: from,
+          To: `whatsapp:+${phone}`,
+          Body: trimmed,
+        }),
+      },
+    );
+    const resText = await res.text();
+    if (!res.ok) {
+      console.error(`[Notify] FreeText to +${phone} FAIL status=${res.status}`, resText);
+      return { ok: false, error: `http_${res.status}` };
+    }
+    // Tenta extrair sid pro tracking
+    let sid: string | undefined;
+    try {
+      const parsed = JSON.parse(resText);
+      sid = parsed.sid;
+    } catch { /* ignore */ }
+    console.log(`[Notify] FreeText sent to +${phone} sid=${sid ?? "?"}`);
+    return { ok: true, sid };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[Notify] FreeText to +${phone} error:`, msg);
+    return { ok: false, error: msg };
   }
 }
 
@@ -644,6 +790,66 @@ export async function notifyFreeReengagement(opts: {
       </a>
       <p style="font-size:13px;color:#888880;text-align:center;margin:0;line-height:1.5;">
         O radar monitora seu mercado e entrega tudo pronto pra você crescer — R$247/mês, cancele quando quiser.
+      </p>
+    `),
+  });
+}
+
+// ─── Re-opt-in: paid existente, convite pra cadência WhatsApp ───────────────
+
+export async function notifyReoptInInvite(opts: {
+  email: string;
+  name: string;
+  product: string;
+  leadId: string;
+  optinToken: string;
+}): Promise<void> {
+  const { email, name, product, leadId, optinToken } = opts;
+  const firstName = (name || "").split(" ")[0] || "Oi";
+  const optinUrl = `${BASE_URL}/api/optin?leadId=${leadId}&token=${optinToken}`;
+  const dashboardUrl = `${BASE_URL}/dashboard/${leadId}`;
+
+  await sendEmail({
+    to: email,
+    subject: `${firstName}, seu acompanhamento estratégico semanal está pronto.`,
+    html: emailShell(`
+      <h1 style="font-size:22px;color:#161618;margin:0 0 14px;line-height:1.3;letter-spacing:-0.01em;">
+        Sua consultora estratégica, agora também no WhatsApp.
+      </h1>
+      <p style="font-size:14px;color:#52525B;line-height:1.7;margin:0 0 18px;">
+        ${firstName}, sua assinatura do Radar evoluiu. Toda empresa grande tem alguém pensando
+        marketing semana a semana — a sua, agora também.
+      </p>
+
+      <div style="background:#0A0A0C;border-radius:12px;padding:20px;margin:0 0 20px;color:#FEFEFF;">
+        <p style="font-family:monospace;font-size:11px;color:#888;letter-spacing:0.06em;margin:0 0 10px;text-transform:uppercase;">A cadência</p>
+        <div style="font-size:13px;line-height:1.9;">
+          📡 <strong>Sexta</strong> — abertura da semana com a prioridade estratégica para ${product}<br/>
+          🎯 <strong>Terça</strong> — checagem de execução, ajuste de rota se necessário<br/>
+          🧠 <strong>Quinta</strong> — balanço do ciclo, captura do aprendizado
+        </div>
+        <p style="font-size:12px;color:#888;margin:14px 0 0;line-height:1.6;">
+          Cada ciclo evolui com base no que foi executado. Em três meses, o acompanhamento
+          conhece o seu caso específico — não o caso genérico.
+        </p>
+      </div>
+
+      <a href="${optinUrl}" style="display:block;background:#B45309;color:#FEFEFF;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:12px;">
+        Autorizar acompanhamento semanal →
+      </a>
+      <p style="font-size:11px;color:#888;text-align:center;margin:0 0 24px;">
+        Para sair quando quiser, basta responder PARE no WhatsApp.
+      </p>
+
+      <div style="background:#F7F7F8;border-radius:10px;padding:14px 16px;margin:0 0 16px;">
+        <p style="font-size:12px;color:#52525B;margin:0;line-height:1.6;">
+          Se preferir manter o acompanhamento apenas pelo painel, tudo segue disponível:
+          <a href="${dashboardUrl}" style="color:#B45309;text-decoration:none;font-weight:600;">acessar Radar</a>.
+        </p>
+      </div>
+
+      <p style="font-size:11px;color:#888;text-align:center;margin:0;line-height:1.6;">
+        — Virô · virolocal.com · consultoria estratégica de marketing
       </p>
     `),
   });

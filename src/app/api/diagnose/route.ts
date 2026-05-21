@@ -360,6 +360,10 @@ export async function POST(req: NextRequest) {
     const locale = formData.locale || "pt";
 
     // 1. Cria o lead SÍNCRONO — precisamos do leadId pra devolver ao client
+    // Opt-in WhatsApp: só vale se o usuário marcou E forneceu o número.
+    const hasValidWhatsapp = !!(formData.whatsapp && formData.whatsapp.replace(/\D/g, "").length >= 10);
+    const whatsappOptin = !!(formData as any).whatsappOptin && hasValidWhatsapp;
+
     let lead: { id: string };
     try {
       lead = await insertLead({
@@ -394,7 +398,10 @@ export async function POST(req: NextRequest) {
         mercado_livre_url: (formData as any).mercadoLivreUrl || null,
         ifood_url: (formData as any).ifoodUrl || null,
         status: "processing",
-      });
+        whatsapp_optin: whatsappOptin,
+        whatsapp_optin_at: whatsappOptin ? new Date().toISOString() : null,
+        source: (formData as any).source || null,
+      } as any);
     } catch (dbError) {
       console.error("[Diagnose] insertLead failed:", dbError);
       return NextResponse.json(

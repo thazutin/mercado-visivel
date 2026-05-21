@@ -40,6 +40,13 @@ export const leadSchema = z.object({
   freeText: z.string().optional().default(""),
   locale: z.string().optional().default("pt"),
   coupon: z.string().optional().default(""),
+
+  // Opt-in WhatsApp — pré-requisito pra cadência semanal conversacional
+  whatsappOptin: z.boolean().optional().default(false),
+
+  // Origem do lead — usado pra segmentar dashboards e adaptações específicas
+  // por parceiro/canal. Ex: "balcao" pra leads vindos da rede Balcão Urbano.
+  source: z.string().optional().default(""),
 });
 
 export type LeadFormData = z.infer<typeof leadSchema>;
@@ -71,6 +78,8 @@ export const initialFormData: LeadFormData = {
   freeText: "",
   locale: "pt",
   coupon: "",
+  whatsappOptin: false,
+  source: "",
 };
 
 // ─── Per-step validation ────────────────────────────────────────────

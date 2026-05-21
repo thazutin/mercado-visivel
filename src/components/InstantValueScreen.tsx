@@ -96,8 +96,19 @@ interface Results {
     fetchedAt?: string;
   };
   blueprintId?: string;
+  honestReading?: string;
 }
 interface Props { product: string; region: string; results: Results; onCheckout: (coupon?: string) => void; loading?: boolean; leadId?: string; hideCTA?: boolean; hideWorkRoutes?: boolean; name?: string; seasonality?: any; }
+
+interface ReviewDraft {
+  id: string;
+  author_name: string;
+  rating: number;
+  review_text: string;
+  review_date: string;
+  draft_response: string;
+  status: string;
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -444,6 +455,34 @@ export default function InstantValueScreen({ product, region, results: initialRe
     return () => { cancelled = true; clearTimeout(timer); };
   }, [leadId]);
 
+  // ─── Review drafts state ─────────────────────────────────────────
+  // Pulled from /api/reviews — alimentado pelo runPostDiagnosisEnrichment
+  const [reviewDrafts, setReviewDrafts] = useState<ReviewDraft[]>([]);
+  useEffect(() => {
+    if (!leadId) return;
+    let cancelled = false;
+    const fetchReviews = async (attempt: number) => {
+      if (cancelled) return;
+      try {
+        const res = await fetch(`/api/reviews?leadId=${leadId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const drafts = (data.reviews || []).filter((r: any) => r.draft_response);
+          if (drafts.length > 0 && !cancelled) {
+            setReviewDrafts(drafts);
+            return;
+          }
+        }
+      } catch { /* ignore */ }
+      // Polling: enrichment async pode demorar 30-90s pra gerar drafts
+      if (attempt < 12 && !cancelled) {
+        setTimeout(() => fetchReviews(attempt + 1), 8000);
+      }
+    };
+    const t = setTimeout(() => fetchReviews(0), 4000);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [leadId]);
+
   // Score visual data
   const scoreAtual = results.influencePercent || 0;
   const scorePotencial = proj?.influenciaMeta ? Math.min(proj.influenciaMeta, 85) : Math.min(scoreAtual + 35, 85);
@@ -452,18 +491,18 @@ export default function InstantValueScreen({ product, region, results: initialRe
     <div style={{ minHeight: "100vh", background: V.cloud, padding: "48px 20px", opacity: show ? 1 : 0, transition: "opacity 0.5s ease" }}>
       <div style={{ maxWidth: 560, margin: "0 auto" }}>
 
-        {/* ═══════════════ HEADER — KPI PRINCIPAL ═══════════════ */}
+        {/* ═══════════════ HEADER ═══════════════ */}
         <div style={{ textAlign: "center", marginBottom: 8 }}>
           <div style={{ fontFamily: V.display, fontSize: 18, fontWeight: 800, color: V.night, letterSpacing: "-0.02em" }}>
             Virô<span style={{ color: V.teal }}>.</span>
           </div>
           <div style={{ fontSize: 10, color: V.ash, fontFamily: V.mono, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginTop: 2 }}>
-            RADAR DE CRESCIMENTO
+            DIAGNÓSTICO ESTRATÉGICO
           </div>
         </div>
 
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: V.night, margin: "0 0 4px" }}>{displayName}</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: V.night, margin: "0 0 4px", letterSpacing: "-0.02em" }}>{displayName}</h1>
           <p style={{ fontSize: 13, color: V.zinc, margin: 0 }}>{shortRegion}</p>
         </div>
 
@@ -475,211 +514,540 @@ export default function InstantValueScreen({ product, region, results: initialRe
           </div>
         )}
 
-        {/* Score Ring — KPI Principal */}
-        {(() => {
-          const ringSize = 160;
-          const ringStroke = 6;
-          const ringRadius = (ringSize - ringStroke) / 2;
-          const ringCirc = 2 * Math.PI * ringRadius;
-          const ringOffset = ringCirc - (scoreAtual / 100) * ringCirc;
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* BLOCO 1 — ONDE VOCÊ ESTÁ HOJE                                */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 6 }}>
+            01 · onde você está hoje
+          </div>
+          <h2 style={{ fontFamily: V.display, fontSize: 22, fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 4px", lineHeight: 1.2 }}>
+            Olha o que encontrei sobre o seu negócio.
+          </h2>
+          <p style={{ fontSize: 13, color: V.zinc, margin: "0 0 18px", lineHeight: 1.5 }}>
+            Dados reais de Google, Instagram, IBGE, concorrentes e mercado. Sem chute.
+          </p>
 
-          return (
-            <div style={{ background: V.white, borderRadius: 16, border: `1px solid ${V.fog}`, padding: "28px 20px", marginBottom: 16, textAlign: "center" }}>
-              <div style={{ fontFamily: V.display, fontSize: 15, fontWeight: 700, color: V.night, marginBottom: 16 }}>
-                Qual fatia do seu mercado você disputa?
+          {/* 1.1 — Mapa do raio competitivo */}
+          {results.lat && results.lng && !isNacional && aud && (
+            <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "16px", marginBottom: 12 }}>
+              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", marginBottom: 8 }}>
+                📍 SEU RAIO COMPETITIVO · {aud.raioKm || raioKm}KM
               </div>
-
-              {/* Ring */}
-              <div style={{ position: "relative", width: ringSize, height: ringSize, margin: "0 auto 20px" }}>
-                <svg width={ringSize} height={ringSize} style={{ transform: "rotate(-90deg)" }}>
-                  <circle cx={ringSize / 2} cy={ringSize / 2} r={ringRadius} fill="none" stroke={V.fog} strokeWidth={ringStroke} />
-                  <circle cx={ringSize / 2} cy={ringSize / 2} r={ringRadius} fill="none" stroke={scoreAtual < 30 ? V.coral : scoreAtual < 50 ? V.amber : V.teal} strokeWidth={ringStroke} strokeLinecap="round" strokeDasharray={ringCirc} strokeDashoffset={ringOffset} style={{ transition: "stroke-dashoffset 1s ease" }} />
-                </svg>
-                <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", textAlign: "center" }}>
-                  <div style={{ fontFamily: V.display, fontSize: 40, fontWeight: 800, color: V.night, lineHeight: 1 }}>
-                    <AnimatedCounter target={scoreAtual} suffix="" />
-                  </div>
-                  <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>de 100</div>
-                </div>
+              <div style={{ borderRadius: 8, overflow: "hidden", border: `1px solid ${V.fog}`, marginBottom: 10 }}>
+                <img
+                  src={`https://maps.googleapis.com/maps/api/staticmap?center=${results.lat},${results.lng}&zoom=${(aud.raioKm || raioKm) <= 2 ? 15 : (aud.raioKm || raioKm) <= 5 ? 14 : 13}&size=560x220&scale=2&maptype=roadmap&markers=color:0xB45309%7Csize:mid%7C${results.lat},${results.lng}&path=color:0x0F766E80|weight:2|fillcolor:0x0F766E18|${generateCirclePath(results.lat, results.lng, aud.raioKm || raioKm)}&key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY || ''}`}
+                  alt={`Raio de ${aud.raioKm || raioKm}km`}
+                  style={{ width: "100%", height: "auto", display: "block" }}
+                  loading="lazy"
+                />
               </div>
-
-              {/* Indicadores: onde está, onde poderia, média mercado */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, textAlign: "center" }}>
-                <div style={{ padding: "10px 6px", background: V.cloud, borderRadius: 8 }}>
-                  <div style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: scoreAtual < 30 ? V.coral : scoreAtual < 50 ? V.amber : V.teal }}>{scoreAtual}</div>
-                  <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>Você hoje</div>
-                </div>
-                <div style={{ padding: "10px 6px", background: V.cloud, borderRadius: 8 }}>
-                  <div style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: V.amber }}>{scorePotencial}</div>
-                  <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>Potencial</div>
-                </div>
-                <div style={{ padding: "10px 6px", background: V.cloud, borderRadius: 8 }}>
-                  <div style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: V.zinc }}>
-                    {competitorAvgRating > 0 ? Math.round(competitorAvgRating * 10) : '35'}
-                  </div>
-                  <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>Média mercado</div>
-                </div>
-              </div>
-
-              {/* Explicação contextual */}
-              <p style={{ fontSize: 12, color: V.night, margin: "14px 0 0", lineHeight: 1.6, fontWeight: 500 }}>
-                {`Você disputa ${scoreAtual}% da demanda do seu mercado atingível. Concorrentes no mesmo contexto disputam ~${competitorAvgRating > 0 ? Math.round(competitorAvgRating * 10) : 35}%. Chegar a ${scorePotencial}% é viável em 90 dias.`}
+              <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
+                {fmtPop(audienciaTotal || audDisplayPop)} {audienciaUnit} no seu raio
+                {aud.audienciaTarget > 0 && audienciaTotal !== audDisplayPop ? ` · ${fmtPop(audienciaTotal)} no seu mercado-alvo` : ''}
+                {ci?.activeCompetitors ? ` · ${ci.activeCompetitors} concorrentes mapeados` : ''}.
               </p>
+            </div>
+          )}
 
-              {/* Incremento de clientes */}
-              {oportunidade > 0 && (
-                <p style={{ fontSize: 13, color: V.teal, margin: "8px 0 0", fontWeight: 700 }}>
-                  Isso significa incrementar +{oportunidade.toLocaleString('pt-BR')} {isB2B ? 'empresas' : 'clientes'} por mês.
-                </p>
-              )}
+          {/* 1.2 — Seu cartão de visita digital */}
+          <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "16px", marginBottom: 12 }}>
+            <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", marginBottom: 12 }}>
+              🪪 SEU CARTÃO DE VISITA DIGITAL
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {/* Google Maps */}
+              <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <span style={{ width: 28, height: 28, borderRadius: 6, background: V.cloud, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>📍</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: V.night, marginBottom: 2 }}>Google Maps</div>
+                  {results.maps?.found ? (
+                    <div style={{ fontSize: 11, color: V.zinc, lineHeight: 1.5 }}>
+                      ★ {results.maps.rating ?? '?'} · {results.maps.reviewCount ?? 0} avaliações · {results.maps.photos ?? 0} fotos
+                      {(results.maps.photos ?? 0) < 5 && <span style={{ color: V.amber, marginLeft: 4 }}>⚠ poucas fotos</span>}
+                      {(results.maps.reviewCount ?? 0) < 10 && <span style={{ color: V.amber, marginLeft: 4 }}>⚠ poucas reviews</span>}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 11, color: V.coral, lineHeight: 1.5 }}>❌ não encontrado — concorrentes do raio já estão lá</div>
+                  )}
+                </div>
+              </div>
 
-              {/* Source chips */}
-              {fontesEncontradas.length > 0 && (
-                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" as const, justifyContent: "center", marginTop: 14 }}>
-                  {fontesEncontradas.map((fonte: any, i: number) => (
-                    <span key={i} style={{ fontSize: 9, color: V.teal, background: V.tealWash, borderRadius: 4, padding: "2px 6px" }}>
-                      ✓ {fonte.label}
-                    </span>
-                  ))}
+              {/* Instagram */}
+              <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <span style={{ width: 28, height: 28, borderRadius: 6, background: V.cloud, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>📷</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: V.night, marginBottom: 2 }}>Instagram</div>
+                  {igData?.dataAvailable ? (
+                    <div style={{ fontSize: 11, color: V.zinc, lineHeight: 1.5 }}>
+                      @{igData.handle} · {(igData.followers || 0).toLocaleString('pt-BR')} seg · {igData.recentPostsCount ?? igData.postsLast30d ?? 0} posts/30d · {(igData.engagementRate * 100).toFixed(1)}% eng
+                      {(igData.recentPostsCount ?? igData.postsLast30d ?? 0) < 4 && <div style={{ color: V.amber, marginTop: 2 }}>⚠ frequência abaixo da média do setor (4-8/mês)</div>}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 11, color: V.coral, lineHeight: 1.5 }}>❌ perfil não detectado ou sem atividade</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Site */}
+              <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <span style={{ width: 28, height: 28, borderRadius: 6, background: V.cloud, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>🌐</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: V.night, marginBottom: 2 }}>Site / Search</div>
+                  {(serpData?.termsRanked || 0) > 0 ? (
+                    <div style={{ fontSize: 11, color: V.zinc, lineHeight: 1.5 }}>
+                      Ranqueia para {serpData!.termsRanked} de {serpData!.termsScraped} termos buscados
+                      {serpData!.hasLocalPack && <span style={{ color: V.teal, marginLeft: 4 }}>· aparece no pack local</span>}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 11, color: V.coral, lineHeight: 1.5 }}>❌ não aparece em buscas pelos termos do seu mercado</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Reclame Aqui (se houver) */}
+              {results.expandedData?.reclameAqui?.found && (
+                <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  <span style={{ width: 28, height: 28, borderRadius: 6, background: V.cloud, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>🛡️</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: V.night, marginBottom: 2 }}>Reclame Aqui</div>
+                    <div style={{ fontSize: 11, color: (results.expandedData!.reclameAqui!.score || 0) >= 7 ? V.teal : V.coral, lineHeight: 1.5 }}>
+                      {results.expandedData!.reclameAqui!.score ?? '?'}/10 · {results.expandedData!.reclameAqui!.reputation || 'sem reputação detectada'}
+                    </div>
+                  </div>
                 </div>
               )}
-              {nenhumEncontrado && (
-                <p style={{ fontSize: 11, color: V.coral, margin: "12px 0 0" }}>
-                  Nenhuma presença digital detectada — partindo do zero.
-                </p>
-              )}
             </div>
-          );
-        })()}
+          </div>
 
-        {/* ═══════════════ PLANO DE CRESCIMENTO (preview locked) ═══════════════ */}
-        {strategicPillars.length > 0 && (
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.night, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 10 }}>
-              🏗️ SEU PLANO DE CRESCIMENTO
+          {/* 1.3 — Concorrentes em destaque */}
+          {competitors.length > 0 && (
+            <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "16px", marginBottom: 12 }}>
+              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", marginBottom: 12 }}>
+                🔭 SEUS CONCORRENTES NO RADAR
+              </div>
+              {competitors.slice(0, 3).map((c: any, i: number) => (
+                <div key={i} style={{ paddingBottom: i < Math.min(competitors.length, 3) - 1 ? 12 : 0, marginBottom: i < Math.min(competitors.length, 3) - 1 ? 12 : 0, borderBottom: i < Math.min(competitors.length, 3) - 1 ? `1px solid ${V.fog}` : "none" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: V.night }}>@{c.handle}</div>
+                    <div style={{ fontFamily: V.mono, fontSize: 10, color: V.zinc }}>
+                      {(c.followers || 0).toLocaleString('pt-BR')} seg
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 11, color: V.zinc, marginBottom: c.bio ? 6 : 0, lineHeight: 1.5 }}>
+                    {c.postsLast30d || 0} posts/30d
+                    {(c.engagementRate || 0) > 0 && ` · ${(c.engagementRate * 100).toFixed(1)}% engajamento`}
+                    {c.reachRelative > 0 && ` · alcance ${(c.reachRelative * 100).toFixed(0)}% dos seg`}
+                  </div>
+                  {c.bio && (
+                    <p style={{ fontSize: 11, color: V.ash, margin: 0, lineHeight: 1.5, fontStyle: "italic" }}>
+                      "{c.bio.slice(0, 110)}{c.bio.length > 110 ? '…' : ''}"
+                    </p>
+                  )}
+                </div>
+              ))}
             </div>
+          )}
+
+          {/* 1.4 — Mercado em movimento */}
+          {((results as any).macro_context || results.expandedData?.seasonality || results.pncp || seasonality) && (
+            <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "16px", marginBottom: 12 }}>
+              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", marginBottom: 12 }}>
+                🌡️ SEU MERCADO EM MOVIMENTO
+              </div>
+              {(results as any).macro_context?.summary && (
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: V.night, marginBottom: 4 }}>Macro</div>
+                  <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
+                    {(results as any).macro_context.summary.slice(0, 240)}{(results as any).macro_context.summary.length > 240 ? '…' : ''}
+                  </p>
+                </div>
+              )}
+              {(results.expandedData?.seasonality?.bestMonths?.length || (seasonality?.peak_month && seasonality.peak_month !== 'dados insuficientes')) && (
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: V.night, marginBottom: 4 }}>Sazonalidade</div>
+                  <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
+                    Pico de busca: {results.expandedData?.seasonality?.bestMonths?.[0] || seasonality?.peak_month}
+                    {results.expandedData?.seasonality?.worstMonths?.[0] && ` · vale: ${results.expandedData.seasonality.worstMonths[0]}`}
+                  </p>
+                </div>
+              )}
+              {results.pncp?.totalEncontradas ? (
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: V.night, marginBottom: 4 }}>Compra pública</div>
+                  <p style={{ fontSize: 11, color: V.zinc, margin: 0, lineHeight: 1.5 }}>
+                    {results.pncp.totalEncontradas} licitações relevantes em {results.pncp.orgaosUnicos} órgãos · R$ {(results.pncp.valorTotalEstimado / 1000).toFixed(0)}k em jogo.
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          )}
+
+          {/* 1.5 — Leitura honesta */}
+          {results.honestReading && (
+            <div style={{ background: V.night, borderRadius: 12, padding: "18px 18px", marginBottom: 0 }}>
+              <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, letterSpacing: "0.08em", marginBottom: 10 }}>
+                🪞 LEITURA HONESTA
+              </div>
+              <p style={{ fontSize: 13, color: V.white, margin: 0, lineHeight: 1.65 }}>
+                {results.honestReading}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* BLOCO 2 — TAMANHO DA OPORTUNIDADE                            */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 6 }}>
+            02 · tamanho da oportunidade
+          </div>
+          <h2 style={{ fontFamily: V.display, fontSize: 22, fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 4px", lineHeight: 1.2 }}>
+            Se você estimular o mercado, até onde dá pra ir?
+          </h2>
+          <p style={{ fontSize: 13, color: V.zinc, margin: "0 0 16px", lineHeight: 1.5 }}>
+            Mapeamos sua audiência, demanda ativa e teto realista pros próximos 90 dias.
+          </p>
+
+          {(() => {
+            const ringSize = 160;
+            const ringStroke = 6;
+            const ringRadius = (ringSize - ringStroke) / 2;
+            const ringCirc = 2 * Math.PI * ringRadius;
+            const ringOffset = ringCirc - (scoreAtual / 100) * ringCirc;
+            return (
+              <div style={{ background: V.white, borderRadius: 16, border: `1px solid ${V.fog}`, padding: "28px 20px", textAlign: "center" }}>
+                <div style={{ fontFamily: V.display, fontSize: 14, fontWeight: 600, color: V.zinc, marginBottom: 16 }}>
+                  Qual fatia do seu mercado você disputa hoje?
+                </div>
+
+                <div style={{ position: "relative", width: ringSize, height: ringSize, margin: "0 auto 20px" }}>
+                  <svg width={ringSize} height={ringSize} style={{ transform: "rotate(-90deg)" }}>
+                    <circle cx={ringSize / 2} cy={ringSize / 2} r={ringRadius} fill="none" stroke={V.fog} strokeWidth={ringStroke} />
+                    <circle cx={ringSize / 2} cy={ringSize / 2} r={ringRadius} fill="none" stroke={scoreAtual < 30 ? V.coral : scoreAtual < 50 ? V.amber : V.teal} strokeWidth={ringStroke} strokeLinecap="round" strokeDasharray={ringCirc} strokeDashoffset={ringOffset} style={{ transition: "stroke-dashoffset 1s ease" }} />
+                  </svg>
+                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", textAlign: "center" }}>
+                    <div style={{ fontFamily: V.display, fontSize: 40, fontWeight: 800, color: V.night, lineHeight: 1 }}>
+                      <AnimatedCounter target={scoreAtual} suffix="" />
+                    </div>
+                    <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>de 100</div>
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, textAlign: "center" }}>
+                  <div style={{ padding: "10px 6px", background: V.cloud, borderRadius: 8 }}>
+                    <div style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: scoreAtual < 30 ? V.coral : scoreAtual < 50 ? V.amber : V.teal }}>{scoreAtual}</div>
+                    <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>Você hoje</div>
+                  </div>
+                  <div style={{ padding: "10px 6px", background: V.cloud, borderRadius: 8 }}>
+                    <div style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: V.amber }}>{scorePotencial}</div>
+                    <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>Realizável em 90d</div>
+                  </div>
+                  <div style={{ padding: "10px 6px", background: V.cloud, borderRadius: 8 }}>
+                    <div style={{ fontFamily: V.display, fontSize: 22, fontWeight: 800, color: V.zinc }}>
+                      {competitorAvgRating > 0 ? Math.round(competitorAvgRating * 10) : '35'}
+                    </div>
+                    <div style={{ fontSize: 10, color: V.ash, marginTop: 2 }}>Média setor</div>
+                  </div>
+                </div>
+
+                <p style={{ fontSize: 12, color: V.night, margin: "14px 0 0", lineHeight: 1.6 }}>
+                  {`Hoje você disputa ${scoreAtual}% da atenção do seu mercado. Com presença ativa, chegar a ${scorePotencial}% é viável em 90 dias.`}
+                </p>
+
+                {oportunidade > 0 && (
+                  <p style={{ fontSize: 13, color: V.teal, margin: "10px 0 0", fontWeight: 700, lineHeight: 1.5 }}>
+                    Isso significa +{oportunidade.toLocaleString('pt-BR')} {isB2B ? 'empresas' : 'pessoas'} considerando você por mês.
+                  </p>
+                )}
+                {hasProj && proj && (
+                  <p style={{ fontSize: 11, color: V.zinc, margin: "8px 0 0", lineHeight: 1.5 }}>
+                    Em receita: ~R${(proj.receitaAtual / 1000).toFixed(0)}k/mês hoje → ~R${(proj.receitaPotencial / 1000).toFixed(0)}k/mês potencial.
+                  </p>
+                )}
+
+                {nenhumEncontrado && (
+                  <p style={{ fontSize: 11, color: V.coral, margin: "12px 0 0" }}>
+                    Nenhuma presença digital detectada — partindo do zero.
+                  </p>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* BLOCO 3 — 3 TESES DE CRESCIMENTO (DESBLOQUEADO)              */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {strategicPillars.length > 0 ? (
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 6 }}>
+              03 · teses de crescimento
+            </div>
+            <h2 style={{ fontFamily: V.display, fontSize: 22, fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 4px", lineHeight: 1.2 }}>
+              3 apostas que mudam de patamar.
+            </h2>
+            <p style={{ fontSize: 13, color: V.zinc, margin: "0 0 16px", lineHeight: 1.5 }}>
+              Não são tarefas básicas — são alavancas estratégicas baseadas no seu desafio e nos dados do mercado.
+            </p>
 
             {strategicPillars.slice(0, 3).map((pillar: any, pi: number) => (
               <div key={pillar.id || pi} style={{
                 background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`,
-                overflow: "hidden", marginBottom: 10, position: "relative",
+                overflow: "hidden", marginBottom: 12,
               }}>
-                <div style={{ padding: "14px 16px" }}>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
-                    <span style={{ fontSize: 10, fontWeight: 600, color: V.amber, background: V.amberWash, padding: "2px 8px", borderRadius: 4, fontFamily: V.mono }}>
-                      PILAR {pi + 1}
+                <div style={{ padding: "16px 18px" }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: V.amber, background: V.amberWash, padding: "3px 10px", borderRadius: 100, fontFamily: V.mono, letterSpacing: "0.04em" }}>
+                      TESE {pi + 1}
                     </span>
+                    {pillar.timeline && (
+                      <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.fog, padding: "2px 8px", borderRadius: 100 }}>
+                        {pillar.timeline}
+                      </span>
+                    )}
                   </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 4 }}>{pillar.title}</div>
-                  <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px", lineHeight: 1.5 }}>{pillar.description}</p>
-                  {pillar.objective && (
-                    <div style={{ fontSize: 11, color: V.teal, fontWeight: 600, marginBottom: 4 }}>
-                      Meta: {pillar.targetMetric || pillar.kpi?.target || pillar.objective}
+
+                  <div style={{ fontSize: 16, fontWeight: 700, color: V.night, marginBottom: 6, letterSpacing: "-0.01em" }}>{pillar.title}</div>
+
+                  <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 12px", lineHeight: 1.6 }}>
+                    <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", marginRight: 6 }}>POR QUÊ:</span>
+                    {pillar.description}
+                  </p>
+
+                  {/* Meta + KPI */}
+                  {(pillar.targetMetric || pillar.kpi?.target) && (
+                    <div style={{ background: V.tealWash, borderRadius: 8, padding: "8px 10px", marginBottom: 10, borderLeft: `3px solid ${V.teal}` }}>
+                      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.teal, letterSpacing: "0.06em", marginBottom: 2 }}>META</div>
+                      <div style={{ fontSize: 12, color: V.night, fontWeight: 600, lineHeight: 1.5 }}>
+                        {pillar.targetMetric || pillar.kpi?.target}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Recursos + Riscos */}
+                  {(pillar.resources || pillar.risks) && (
+                    <div style={{ display: "grid", gridTemplateColumns: pillar.resources && pillar.risks ? "1fr 1fr" : "1fr", gap: 8, marginBottom: 12 }}>
+                      {pillar.resources && (
+                        <div style={{ background: V.cloud, borderRadius: 8, padding: "8px 10px" }}>
+                          <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", marginBottom: 2 }}>RECURSOS</div>
+                          <div style={{ fontSize: 11, color: V.night, lineHeight: 1.4 }}>{pillar.resources}</div>
+                        </div>
+                      )}
+                      {pillar.risks && (
+                        <div style={{ background: V.cloud, borderRadius: 8, padding: "8px 10px" }}>
+                          <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", marginBottom: 2 }}>RISCOS</div>
+                          <div style={{ fontSize: 11, color: V.night, lineHeight: 1.4 }}>{pillar.risks}</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Etapas executáveis */}
+                  {pillar.items && pillar.items.length > 0 && (
+                    <div>
+                      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.night, letterSpacing: "0.06em", marginBottom: 8, fontWeight: 600 }}>
+                        COMO EXECUTAR
+                      </div>
+                      {pillar.items.slice(0, 4).map((item: any, ii: number) => {
+                        const itemKey = `${pillar.id}-${item.id || ii}`;
+                        const isOpen = qwExpanded[itemKey];
+                        return (
+                          <div key={ii} style={{ marginBottom: 8, borderLeft: `2px solid ${V.fog}`, paddingLeft: 10 }}>
+                            <button
+                              onClick={() => setQwExpanded(prev => ({ ...prev, [itemKey]: !prev[itemKey] }))}
+                              style={{ width: "100%", background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", display: "flex", gap: 8, alignItems: "flex-start" }}
+                            >
+                              <span style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, background: V.amberWash, borderRadius: 3, padding: "1px 6px", flexShrink: 0, marginTop: 1 }}>{ii + 1}</span>
+                              <span style={{ fontSize: 12, color: V.night, fontWeight: 600, flex: 1, lineHeight: 1.4 }}>{item.title}</span>
+                              <span style={{ fontSize: 11, color: V.ash, flexShrink: 0 }}>{isOpen ? '▴' : '▾'}</span>
+                            </button>
+                            {isOpen && item.content && (
+                              <div style={{ marginTop: 8, background: V.cloud, borderRadius: 6, padding: "10px 12px", borderLeft: `3px solid ${V.amber}` }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                                  <span style={{ fontFamily: V.mono, fontSize: 8, color: V.amber, letterSpacing: "0.06em", textTransform: "uppercase" as const }}>
+                                    {item.type === 'copy' ? 'TEXTO PRONTO' : item.type === 'script' ? 'SCRIPT' : item.type === 'template' ? 'TEMPLATE' : item.type === 'checklist' ? 'CHECKLIST' : 'CONTEÚDO'}
+                                  </span>
+                                  {item.copyable && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(item.content); }}
+                                      style={{ fontSize: 10, color: V.teal, background: V.tealWash, border: "none", borderRadius: 4, padding: "2px 8px", cursor: "pointer", fontWeight: 600 }}
+                                    >
+                                      Copiar
+                                    </button>
+                                  )}
+                                </div>
+                                <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{item.content}</p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Ferramentas */}
+                  {pillar.tools && pillar.tools.length > 0 && (
+                    <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${V.fog}` }}>
+                      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", marginBottom: 6 }}>FERRAMENTAS</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                        {pillar.tools.slice(0, 6).map((tool: string, ti: number) => (
+                          <span key={ti} style={{ fontSize: 10, color: V.zinc, background: V.cloud, padding: "3px 8px", borderRadius: 4, fontFamily: V.mono }}>
+                            {tool}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
-                {/* Locked content */}
-                <div style={{ position: "relative", overflow: "hidden" }}>
-                  <div style={{ padding: "0 16px 14px", filter: "blur(4px)", pointerEvents: "none", userSelect: "none", maxHeight: 80, overflow: "hidden" }}>
-                    {pillar.items?.slice(0, 3).map((item: any, ii: number) => (
-                      <div key={ii} style={{ display: "flex", gap: 6, marginBottom: 4 }}>
-                        <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.fog, borderRadius: 3, padding: "1px 5px" }}>{ii + 1}</span>
-                        <span style={{ fontSize: 11, color: V.zinc }}>{item.title}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{
-                    position: "absolute", inset: 0,
-                    background: "linear-gradient(transparent 0%, rgba(255,255,255,0.9) 60%)",
-                    display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 10,
-                  }}>
-                    <button onClick={() => { const el = document.getElementById('cta-radar'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} style={{
-                      fontSize: 11, color: V.amber, fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0,
-                    }}>🔒 Veja como</button>
-                  </div>
-                </div>
               </div>
             ))}
-          </div>
-        )}
 
-        {/* ═══════════════ AÇÕES RÁPIDAS ═══════════════ */}
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontFamily: V.mono, fontSize: 10, color: V.teal, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 10 }}>
-            ⚡ AÇÕES RÁPIDAS — COMECE AGORA
+            <div style={{ background: V.cloud, borderRadius: 10, padding: "12px 14px", marginTop: 4, fontSize: 12, color: V.zinc, lineHeight: 1.5 }}>
+              <strong style={{ color: V.night }}>Seu plano completo, gratuito.</strong> Ative o Radar pra que essas teses
+              evoluam toda semana com sinais do seu mercado e ação principal conectada.
+            </div>
           </div>
+        ) : qwLoading ? (
+          <div style={{ marginBottom: 28, background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "32px 20px", textAlign: "center", color: V.ash, fontSize: 13 }}>
+            <span style={{ display: "inline-block", width: 16, height: 16, border: `2px solid ${V.fog}`, borderTopColor: V.amber, borderRadius: "50%", animation: "spin 0.8s linear infinite", marginRight: 10, verticalAlign: "middle" }} />
+            Montando suas 3 teses de crescimento (1-3 min)…
+          </div>
+        ) : null}
+
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* BLOCO 4 — MANTENHA O BÁSICO EM DIA                           */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 6 }}>
+            04 · mantenha o básico em dia
+          </div>
+          <h2 style={{ fontFamily: V.display, fontSize: 22, fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 4px", lineHeight: 1.2 }}>
+            O que não pode falhar — toda semana.
+          </h2>
+          <p style={{ fontSize: 13, color: V.zinc, margin: "0 0 16px", lineHeight: 1.5 }}>
+            Itens executáveis hoje. Cada um tem o passo a passo e o texto pronto.
+          </p>
 
           {qwLoading ? (
             <div style={{ textAlign: "center", padding: "20px 0", color: V.ash, fontSize: 12 }}>
               <span style={{ display: "inline-block", width: 14, height: 14, border: `2px solid ${V.fog}`, borderTopColor: V.teal, borderRadius: "50%", animation: "spin 0.8s linear infinite", marginRight: 8, verticalAlign: "middle" }} />
-              Montando ações personalizadas...
+              Montando seu checklist personalizado...
             </div>
           ) : quickWins.length > 0 ? (
             <>
-              {quickWins.slice(0, 3).map((qw: any) => (
-                <div key={qw.id} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "14px 16px", marginBottom: 8 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{qw.title}</span>
-                    <span style={{ fontFamily: V.mono, fontSize: 9, padding: "2px 6px", borderRadius: 100, background: V.fog, color: V.ash }}>{qw.timeEstimate}</span>
-                  </div>
-                  <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 6px", lineHeight: 1.5 }}>{qw.description}</p>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: V.teal, background: "rgba(45,155,131,0.08)", padding: "2px 8px", borderRadius: 4 }}>
-                    {(qw.impact || '').replace(/\s*(Visibilidade|Credibilidade|Presença Digital|Fidelização|Receita|Alcance|Expansão|Validação|Oportunidade|Estratégia|Diferenciação|Prospecção|Inteligência|Engajamento|Presença|Autoridade|Conversão|Presença B2B|Inteligência Competitiva|Prospecção Setorial|Descoberta Digital|Visibilidade Paga|Score Geral|Receita B2G)\s*/i, '')}
-                  </span>
-
-                  {qw.steps && (
-                    <button onClick={() => setQwExpanded(prev => ({ ...prev, [qw.id]: !prev[qw.id] }))} style={{ fontSize: 11, color: V.amber, background: "none", border: "none", cursor: "pointer", fontWeight: 600, marginLeft: 8, padding: 0 }}>
-                      {qwExpanded[qw.id] ? "Ocultar ▴" : "Ver como fazer ▾"}
-                    </button>
-                  )}
-
-                  {qwExpanded[qw.id] && qw.steps && (
-                    <div style={{ marginTop: 8 }}>
-                      {qw.steps.map((step: string, si: number) => (
-                        <div key={si} style={{ display: "flex", gap: 8, marginBottom: 4 }}>
-                          <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, background: V.fog, borderRadius: 4, padding: "1px 6px", flexShrink: 0, marginTop: 2 }}>{si + 1}</span>
-                          <span style={{ fontSize: 12, color: V.zinc, lineHeight: 1.5 }}>{step}</span>
-                        </div>
-                      ))}
+              {quickWins.map((qw: any) => {
+                const isReviews = qw.id === 'qw-reviews' || qw.type === 'responder_reviews';
+                const isOpen = qwExpanded[qw.id];
+                return (
+                  <div key={qw.id} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "14px 16px", marginBottom: 8 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, gap: 8 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: V.night, lineHeight: 1.4 }}>
+                        <span style={{ display: "inline-block", width: 14, height: 14, borderRadius: 3, border: `1.5px solid ${V.fog}`, marginRight: 8, verticalAlign: "middle" }}></span>
+                        {qw.title}
+                      </span>
+                      <span style={{ fontFamily: V.mono, fontSize: 9, padding: "2px 6px", borderRadius: 100, background: V.fog, color: V.ash, flexShrink: 0 }}>{qw.timeEstimate}</span>
                     </div>
-                  )}
-                </div>
-              ))}
+                    <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 8px", paddingLeft: 22, lineHeight: 1.5 }}>{qw.description}</p>
 
-              {/* Locked quick wins */}
-              {quickWins.length > 3 && (
-                <>
-                  {quickWins.slice(3, 5).map((qw: any) => (
-                    <div key={qw.id} style={{ background: V.white, borderRadius: 10, border: `1px solid ${V.fog}`, padding: "14px 16px", marginBottom: 8, position: "relative", overflow: "hidden" }}>
-                      <div style={{ filter: "blur(5px)", pointerEvents: "none", userSelect: "none" }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: V.night }}>{qw.title}</span>
-                        <p style={{ fontSize: 12, color: V.zinc, margin: "4px 0 0" }}>{qw.description}</p>
-                      </div>
-                      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.4)" }}>
-                        <span style={{ fontSize: 16, opacity: 0.6 }}>🔒</span>
-                      </div>
+                    <div style={{ paddingLeft: 22, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                      {qw.impact && (
+                        <span style={{ fontSize: 10, fontWeight: 600, color: V.teal, background: "rgba(45,155,131,0.08)", padding: "2px 8px", borderRadius: 4 }}>
+                          {(qw.impact || '').replace(/\s*(Visibilidade|Credibilidade|Presença Digital|Fidelização|Receita|Alcance|Expansão|Validação|Oportunidade|Estratégia|Diferenciação|Prospecção|Inteligência|Engajamento|Presença|Autoridade|Conversão|Presença B2B|Inteligência Competitiva|Prospecção Setorial|Descoberta Digital|Visibilidade Paga|Score Geral|Receita B2G)\s*/i, '')}
+                        </span>
+                      )}
+                      {(qw.steps || qw.copyReady || (isReviews && reviewDrafts.length > 0)) && (
+                        <button onClick={() => setQwExpanded(prev => ({ ...prev, [qw.id]: !prev[qw.id] }))} style={{ fontSize: 11, color: V.amber, background: "none", border: "none", cursor: "pointer", fontWeight: 600, padding: 0 }}>
+                          {isOpen ? "Ocultar ▴" : isReviews && reviewDrafts.length > 0 ? `Ver ${reviewDrafts.length} respostas prontas ▾` : "Ver como fazer ▾"}
+                        </button>
+                      )}
                     </div>
-                  ))}
-                  <div style={{ textAlign: "center", margin: "8px 0 4px" }}>
-                    <p style={{ fontSize: 12, color: V.night, fontWeight: 600, margin: "0 0 4px" }}>
-                      🔒 Assine o Radar para desbloquear todas as ações personalizadas
-                    </p>
-                    <p style={{ fontSize: 11, color: V.ash, margin: 0 }}>
-                      Com passo a passo detalhado, textos prontos e monitoramento e evolução semanal.
-                    </p>
+
+                    {isOpen && (
+                      <div style={{ marginTop: 12, paddingLeft: 22 }}>
+                        {/* Steps */}
+                        {qw.steps && qw.steps.length > 0 && (
+                          <div style={{ marginBottom: isReviews && reviewDrafts.length > 0 ? 14 : 0 }}>
+                            {qw.steps.map((step: string, si: number) => (
+                              <div key={si} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+                                <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, background: V.fog, borderRadius: 4, padding: "1px 6px", flexShrink: 0, marginTop: 2 }}>{si + 1}</span>
+                                <span style={{ fontSize: 12, color: V.zinc, lineHeight: 1.5 }}>{step}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Copy ready genérico */}
+                        {qw.copyReady && (
+                          <div style={{ background: V.cloud, borderRadius: 6, padding: "10px 12px", borderLeft: `3px solid ${V.amber}`, marginTop: 8 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                              <span style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, letterSpacing: "0.06em" }}>TEXTO PRONTO</span>
+                              <button onClick={() => navigator.clipboard.writeText(qw.copyReady)} style={{ fontSize: 10, color: V.teal, background: V.tealWash, border: "none", borderRadius: 4, padding: "2px 8px", cursor: "pointer", fontWeight: 600 }}>
+                                Copiar
+                              </button>
+                            </div>
+                            <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{qw.copyReady}</p>
+                          </div>
+                        )}
+
+                        {/* Reviews inline com drafts */}
+                        {isReviews && reviewDrafts.length > 0 && (
+                          <div>
+                            <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", marginBottom: 8 }}>
+                              SUAS AVALIAÇÕES SEM RESPOSTA
+                            </div>
+                            {reviewDrafts.map((r) => (
+                              <div key={r.id} style={{ marginBottom: 14, paddingBottom: 14, borderBottom: `1px solid ${V.fog}` }}>
+                                <div style={{ fontSize: 11, color: V.ash, marginBottom: 4 }}>
+                                  {'⭐'.repeat(r.rating)}{'☆'.repeat(Math.max(0, 5 - r.rating))} · {r.author_name || 'Cliente'}
+                                  {r.review_date && ` · ${new Date(r.review_date).toLocaleDateString('pt-BR')}`}
+                                </div>
+                                {r.review_text && (
+                                  <p style={{ fontSize: 12, color: V.zinc, fontStyle: "italic", margin: "0 0 8px", lineHeight: 1.5 }}>
+                                    "{r.review_text.slice(0, 220)}{r.review_text.length > 220 ? '…' : ''}"
+                                  </p>
+                                )}
+                                <div style={{ background: V.cloud, borderRadius: 6, padding: "10px 12px", borderLeft: `3px solid ${V.amber}` }}>
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                                    <span style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, letterSpacing: "0.06em" }}>RESPOSTA PRONTA</span>
+                                    <button
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(r.draft_response);
+                                        fetch('/api/reviews', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: r.id, status: 'copied' }) }).catch(() => {});
+                                      }}
+                                      style={{ fontSize: 10, color: V.teal, background: V.tealWash, border: "none", borderRadius: 4, padding: "2px 8px", cursor: "pointer", fontWeight: 600 }}
+                                    >
+                                      Copiar
+                                    </button>
+                                  </div>
+                                  <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{r.draft_response}</p>
+                                </div>
+                              </div>
+                            ))}
+                            <p style={{ fontSize: 10, color: V.ash, margin: "8px 0 0", fontStyle: "italic" }}>
+                              Onde responder: business.google.com → Reviews
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                </>
-              )}
+                );
+              })}
             </>
           ) : null}
         </div>
 
-        {/* Plano de crescimento movido pra antes dos quick wins */}
-
-        {/* ═══════════════ ELEMENTOS COMPETITIVOS ═══════════════ */}
-        <div style={{ fontFamily: V.mono, fontSize: 10, color: V.night, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 10 }}>
-          📊 SEU MERCADO EM DETALHE
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* SEU MERCADO EM DETALHE — accordions com dados profundos      */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 6, marginTop: 8 }}>
+          + · seu mercado em detalhe
         </div>
+        <p style={{ fontSize: 13, color: V.zinc, margin: "0 0 14px", lineHeight: 1.5 }}>
+          Os dados que ancoram tudo acima. Abra o que te interessa.
+        </p>
 
         {/* Resumo do mercado */}
         {(() => {
@@ -1069,36 +1437,91 @@ export default function InstantValueScreen({ product, region, results: initialRe
           )}
         </Expandable>
 
-        {/* CTA inline final */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* BLOCO 5 — CTA Radar (contextualizado)                        */}
+        {/* ═══════════════════════════════════════════════════════════ */}
         {!hideCTA && (
-          <div id="cta-radar" style={{ background: "linear-gradient(135deg, #161618 0%, #2A2A30 100%)", borderRadius: 14, padding: "24px 20px", marginTop: 16, color: V.white, textAlign: "center" }}>
-            <div style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, letterSpacing: "0.06em", marginBottom: 8 }}>RADAR DE CRESCIMENTO</div>
-            <p style={{ fontSize: 15, fontWeight: 700, color: V.white, margin: "0 0 8px" }}>
-              Sua rota de crescimento, {displayName}
-            </p>
-            <p style={{ fontSize: 12, color: V.ash, margin: "0 0 16px", lineHeight: 1.5 }}>
-              O diagnóstico acima é gratuito. Assine o Radar para ver como tirar do papel seu plano de crescimento, e seguir recebendo semanalmente ações rápidas de melhorias, acompanhado do que mudou no seu mercado.
-            </p>
-            <p style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", margin: "0 0 4px" }}>CANCELE QUANDO QUISER</p>
-            <div style={{ fontFamily: V.display, fontSize: 28, fontWeight: 700, margin: "0 0 12px" }}>R$ 247<span style={{ fontSize: 14, fontWeight: 400, color: V.ash }}>/mês</span></div>
-            <div style={{ display: "flex", gap: 8, marginBottom: 12, justifyContent: "center" }}>
-              <input type="text" placeholder="Cupom" value={coupon}
-                onChange={(e: any) => { setCoupon(e.target.value.toUpperCase()); setCouponApplied(false); }}
-                style={{ width: 120, padding: "8px 12px", borderRadius: 8, border: `1px solid ${V.slate}`, background: V.graphite, color: V.white, fontSize: 12, fontFamily: V.mono, outline: "none" }} />
-              {coupon.length > 0 && (
-                <button onClick={() => setCouponApplied(true)} style={{ padding: "8px 12px", borderRadius: 8, border: "none", background: couponApplied ? V.teal : V.amber, color: V.white, fontSize: 11, fontFamily: V.mono, cursor: "pointer" }}>
-                  {couponApplied ? "✓" : "Aplicar"}
-                </button>
-              )}
+          <div id="cta-radar" style={{ marginTop: 28 }}>
+            <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 6 }}>
+              05 · receba isso atualizado toda semana
             </div>
-            <button onClick={() => onCheckout(couponApplied ? coupon : undefined)} disabled={loading} style={{
-              width: "100%", padding: "14px", borderRadius: 10, border: "none",
-              background: V.amber, color: V.white, fontSize: 15, fontWeight: 700,
-              cursor: loading ? "wait" : "pointer", opacity: loading ? 0.7 : 1,
-            }}>
-              {loading ? "Redirecionando..." : "Ativar meu Radar de Crescimento →"}
-            </button>
-            <p style={{ fontSize: 11, color: V.ash, margin: "8px 0 0" }}>Ativo em 2-3 minutos · sem fidelidade</p>
+            <h2 style={{ fontFamily: V.display, fontSize: 22, fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 4px", lineHeight: 1.2 }}>
+              Tudo acima é seu, pra sempre. O Radar adiciona o tempo.
+            </h2>
+            <p style={{ fontSize: 13, color: V.zinc, margin: "0 0 16px", lineHeight: 1.5 }}>
+              Marketing não é evento, é cadência. O Radar acompanha você semana a semana — pelo WhatsApp,
+              como uma consultora estratégica que conhece seu negócio.
+            </p>
+
+            <div style={{ background: V.night, borderRadius: 14, padding: "22px 22px", color: V.white }}>
+              <div style={{ display: "grid", gap: 14, marginBottom: 18 }}>
+                <div style={{ display: "flex", gap: 12 }}>
+                  <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>📡</span>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: V.white, marginBottom: 2 }}>Sinais da semana</div>
+                    <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>
+                      Toda sexta: o que seus concorrentes fizeram, o que mudou no seu próprio negócio,
+                      o que pesa no macro do seu setor.
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 12 }}>
+                  <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>🎯</span>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: V.white, marginBottom: 2 }}>Ação principal da semana</div>
+                    <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>
+                      Uma aposta conectada às suas 3 teses, evolutiva — ganha complexidade conforme
+                      você executa e me conta o que funcionou.
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 12 }}>
+                  <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>💬</span>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: V.white, marginBottom: 2 }}>Consultora no seu WhatsApp</div>
+                    <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>
+                      Sexta abre a semana, terça check-in, quinta fecha. Você responde quando puder —
+                      eu carrego todo o seu contexto e respondo como quem conhece o negócio.
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 12 }}>
+                  <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>🧠</span>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: V.white, marginBottom: 2 }}>Memória que cresce com você</div>
+                    <p style={{ fontSize: 12, color: V.ash, margin: 0, lineHeight: 1.5 }}>
+                      Cada ação executada vira aprendizado registrado. Em 3 meses, sua Virô sabe o que
+                      funciona pro seu negócio específico — não o genérico.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ borderTop: `1px solid ${V.graphite}`, paddingTop: 16 }}>
+                <p style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", margin: "0 0 4px", textAlign: "center" }}>CANCELE QUANDO QUISER · SEM FIDELIDADE</p>
+                <div style={{ fontFamily: V.display, fontSize: 32, fontWeight: 700, margin: "0 0 14px", textAlign: "center", letterSpacing: "-0.02em" }}>
+                  R$ 247<span style={{ fontSize: 14, fontWeight: 400, color: V.ash }}>/mês</span>
+                </div>
+                <div style={{ display: "flex", gap: 8, marginBottom: 12, justifyContent: "center" }}>
+                  <input type="text" placeholder="Cupom" value={coupon}
+                    onChange={(e: any) => { setCoupon(e.target.value.toUpperCase()); setCouponApplied(false); }}
+                    style={{ width: 120, padding: "8px 12px", borderRadius: 8, border: `1px solid ${V.slate}`, background: V.graphite, color: V.white, fontSize: 12, fontFamily: V.mono, outline: "none" }} />
+                  {coupon.length > 0 && (
+                    <button onClick={() => setCouponApplied(true)} style={{ padding: "8px 12px", borderRadius: 8, border: "none", background: couponApplied ? V.teal : V.amber, color: V.white, fontSize: 11, fontFamily: V.mono, cursor: "pointer" }}>
+                      {couponApplied ? "✓" : "Aplicar"}
+                    </button>
+                  )}
+                </div>
+                <button onClick={() => onCheckout(couponApplied ? coupon : undefined)} disabled={loading} style={{
+                  width: "100%", padding: "14px", borderRadius: 10, border: "none",
+                  background: V.amber, color: V.white, fontSize: 15, fontWeight: 700,
+                  cursor: loading ? "wait" : "pointer", opacity: loading ? 0.7 : 1,
+                }}>
+                  {loading ? "Redirecionando..." : "Ativar meu Radar de Crescimento →"}
+                </button>
+                <p style={{ fontSize: 11, color: V.ash, margin: "8px 0 0", textAlign: "center" }}>Ativo em 2-3 minutos</p>
+              </div>
+            </div>
           </div>
         )}
 

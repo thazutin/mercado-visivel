@@ -485,10 +485,43 @@ export default function Home() {
             <input style={inputStyle} type="email" placeholder={t.formEmailPlaceholder} value={formData.email}
               onChange={(e: any) => updateField("email", e.target.value)} />
           </Field>
-          <Field label={t.formWhatsappLabel} hint="Opcional">
+          <Field label={t.formWhatsappLabel} hint="Opcional, mas recomendado — o WhatsApp é o canal do acompanhamento semanal.">
             <input style={inputStyle} type="tel" placeholder={t.formWhatsappPlaceholder} value={formData.whatsapp}
               onChange={(e: any) => updateField("whatsapp", e.target.value)} />
           </Field>
+
+          {/* Opt-in WhatsApp — pré-requisito pra cadência conversacional */}
+          {formData.whatsapp && formData.whatsapp.replace(/\D/g, "").length >= 10 && (
+            <div style={{
+              marginTop: 8, marginBottom: 16,
+              background: V.amberWash, borderRadius: 10, padding: "14px 16px",
+              border: `1px solid rgba(180,83,9,0.18)`,
+            }}>
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={!!(formData as any).whatsappOptin}
+                  onChange={(e: any) => updateField("whatsappOptin" as any, e.target.checked)}
+                  style={{ width: 16, height: 16, marginTop: 3, accentColor: V.amber, flexShrink: 0 }}
+                />
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: V.night, marginBottom: 4, lineHeight: 1.4 }}>
+                    Autorizo o acompanhamento estratégico semanal pelo WhatsApp.
+                  </div>
+                  <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.55 }}>
+                    Toda sexta abro a semana com a prioridade estratégica para o seu negócio.
+                    Terça, checagem de execução. Quinta, balanço do ciclo.
+                    Você responde quando for possível; sai quando quiser respondendo PARE.
+                    <br/>
+                    <span style={{ fontSize: 11, color: V.ash }}>
+                      Sem a autorização: você acessa a recomendação semanal pelo painel —
+                      mas o acompanhamento conversacional é o eixo do produto.
+                    </span>
+                  </p>
+                </div>
+              </label>
+            </div>
+          )}
         </>
       ),
     },
@@ -532,10 +565,11 @@ export default function Home() {
             fontFamily: V.display, fontSize: "clamp(28px, 5vw, 38px)", fontWeight: 700,
             color: V.white, letterSpacing: "-0.03em", margin: "24px 0 16px", lineHeight: 1.2,
           }}>
-            Seu mercado mapeado. <span style={{ color: V.amber }}>Tudo pronto pra crescer.</span>
+            Toda empresa grande tem com quem pensar marketing. <span style={{ color: V.amber }}>A sua, agora também.</span>
           </h1>
           <p style={{ fontSize: 15, color: V.ash, lineHeight: 1.6, margin: 0 }}>
-            Dados reais, ações prontas, conteúdo pra copiar e colar. Grátis em 60 segundos.
+            Diagnóstico estratégico do seu negócio em 60s, grátis. Conversa semanal no WhatsApp
+            pra quem decidiu evoluir toda semana.
           </p>
         </div>
       </div>
@@ -623,16 +657,15 @@ export default function Home() {
         </h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {[
-            { title: "Você informa seu negócio", text: "Nome, segmento e endereço. Leva menos de 1 minuto." },
-            { title: "Seu radar de crescimento analisa o mercado", text: "Cruzamos Google, Maps, Instagram, iFood, Reclame Aqui, IBGE e mais 12 fontes pra mapear sua posição, seus concorrentes e sua oportunidade real." },
-            { title: "Você recebe o diagnóstico grátis", text: "Quantos clientes você pode ter a mais por mês, quem disputa com você e o que está te impedindo de crescer." },
-            { title: "Tudo pronto pra você executar", text: "Pilares estratégicos com objetivo, KPI e timeline; ações rápidas com passo a passo e copy pronto; provocações baseadas no que o radar detectou — tudo com dados reais do SEU mercado." },
-            { title: "Radar ativo toda sexta — R$247/mês", text: "4 posts prontos com imagens, 3 briefings de produção, 1 relatório setorial, respostas pras reviews novas e score reanalisado. Seu marketing no piloto automático." },
+            { title: "Você conta sobre seu negócio em 60s", text: "Nome, segmento, endereço e seu desafio de crescimento. Quanto mais específico, mais cirúrgico o diagnóstico." },
+            { title: "A Virô analisa seu mercado em tempo real", text: "Google, Maps, Instagram, IBGE, Reclame Aqui, PNCP, Hunter, dados macroeconômicos — 30+ fontes cruzadas pra mapear sua posição, seus concorrentes e onde está sua oportunidade." },
+            { title: "Você recebe o diagnóstico estratégico — grátis", text: "Onde você está hoje, tamanho da oportunidade, 3 teses de crescimento com passo a passo executável e o checklist do básico em dia. Tudo desbloqueado." },
+            { title: "Quer evoluir toda semana? Ative o Radar (R$247/mês)", text: "Sua consultora estratégica no WhatsApp: sexta abre a semana com a ação prioritária, terça faz check-in, quinta fecha. Sinais do mercado atualizados toda semana, memória que cresce com cada ação executada." },
           ].map((step, i) => (
             <div key={i} style={{ background: V.white, borderRadius: 14, padding: "20px 20px", border: `1px solid ${V.fog}`, display: "flex", gap: 16, alignItems: "flex-start" }}>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
                 <span style={{ fontFamily: V.mono, fontSize: 10, fontWeight: 700, color: i < 3 ? V.amber : V.teal, background: i < 3 ? V.amberWash : V.tealWash, width: 28, height: 28, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-                  {i + 1}
+                  {i < 3 ? i + 1 : "+"}
                 </span>
               </div>
               <div>
@@ -644,17 +677,25 @@ export default function Home() {
         </div>
       </Section>
 
-      {/* ═══ SECTION 3 — PARA QUEM É ═══ */}
+      {/* ═══ SECTION 3 — A TESE ═══ */}
       <Section bg={V.white}>
-        <SectionLabel>é para mim?</SectionLabel>
-        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
-          Pra qualquer negócio que quer crescer
+        <SectionLabel>a tese</SectionLabel>
+        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 16px", lineHeight: 1.25 }}>
+          Democratizar o frame estratégico de marketing no Brasil.
         </h2>
-        <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: "0 0 12px" }}>
-          Restaurantes, clínicas, e-commerces, agências, B2B, energia, agro, criadores de conteúdo — 25 segmentos com fontes de dados e ações específicas pro seu mercado.
+        <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: "0 0 16px" }}>
+          Empresa grande tem CMO, agência e fornecedores. Pensa marketing como estratégia — não como sorte.
+          O pequeno e médio empreendedor brasileiro toca o negócio sozinho, decide sem ter com quem trocar,
+          e vê concorrente fazer coisa sem saber se replica ou não. Isso não devia ser sobre dinheiro.
+        </p>
+        <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: "0 0 16px" }}>
+          A Virô existe pra ser <strong style={{ color: V.night }}>a consultora estratégica de marketing
+          de toda pequena empresa do Brasil</strong> — ancorada em dados reais do seu negócio e do seu
+          mercado, evoluindo toda semana, aprendendo a cada ação que você executa.
         </p>
         <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: 0 }}>
-          Se você quer saber onde estão seus próximos clientes, o que seus concorrentes estão fazendo, e ter um plano pronto pra executar — sem contratar equipe e sem gastar mais em mídia — Virô é seu radar de crescimento.
+          Restaurante, clínica, e-commerce, agência, B2B, energia, agro, criador de conteúdo —
+          25 segmentos atendidos com fontes de dados e ações específicas pro seu mercado.
         </p>
       </Section>
 
@@ -663,10 +704,10 @@ export default function Home() {
         <SectionLabel>exemplo real</SectionLabel>
         <div style={{ textAlign: "center", marginBottom: 36 }}>
           <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 30px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 10px", lineHeight: 1.25 }}>
-            O que acontece quando você roda o diagnóstico
+            O que você vê quando roda o diagnóstico
           </h2>
           <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.6, margin: 0 }}>
-            Dados reais. Ações concretas. Conteúdo pronto.
+            Onde está · Tamanho da oportunidade · 3 teses de crescimento · Básico em dia.
           </p>
         </div>
 
@@ -963,21 +1004,47 @@ export default function Home() {
         </div>
       </Section>
 
-      {/* ═══ SECTION 5 — O QUE VOCÊ RECEBE (simplificado) ═══ */}
+      {/* ═══ SECTION 5 — O QUE VOCÊ RECEBE ═══ */}
       <Section bg={V.cloud}>
         <SectionLabel>o que você recebe</SectionLabel>
-        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 28px", lineHeight: 1.25 }}>
-          Um produto. Dois níveis.
+        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
+          Diagnóstico estratégico grátis. Conversa semanal quando você quiser.
         </h2>
+        <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.6, margin: "0 0 28px" }}>
+          O frame estratégico vem com você desde o primeiro minuto. O Radar é pra quem decidiu
+          que marketing precisa virar cadência — e quer alguém pensando junto toda semana.
+        </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {/* Grátis */}
+          {/* Grátis — agora denso */}
           <div style={{ background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`, padding: "24px", overflow: "hidden" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.teal, letterSpacing: "0.06em", fontWeight: 600 }}>DIAGNÓSTICO GRATUITO · 60 SEGUNDOS</span>
+              <span style={{ fontFamily: V.mono, fontSize: 10, color: V.teal, letterSpacing: "0.06em", fontWeight: 600 }}>DIAGNÓSTICO ESTRATÉGICO · 60 SEGUNDOS</span>
               <span style={{ fontFamily: V.mono, fontSize: 11, color: V.teal, fontWeight: 700 }}>R$0</span>
             </div>
-            <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 6px" }}>Seu mercado mapeado com dados reais.</p>
-            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: 0 }}>Score com benchmark do setor, gap de mercado, análise de concorrentes, termos de busca reais, audiência estimada e ações rápidas prontas pra executar.</p>
+            <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 10px" }}>O frame estratégico que você nunca teve. Completo e desbloqueado.</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+              <div style={{ display: "flex", gap: 8 }}>
+                <span style={{ color: V.teal, flexShrink: 0 }}>→</span>
+                <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.55 }}><strong style={{ color: V.night }}>Onde você está</strong> — mapa do raio, cartão digital, concorrentes nominados, sinais do mercado, leitura honesta.</p>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <span style={{ color: V.teal, flexShrink: 0 }}>→</span>
+                <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.55 }}><strong style={{ color: V.night }}>Tamanho da oportunidade</strong> — score atual vs potencial, audiência estimada, projeção financeira.</p>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <span style={{ color: V.teal, flexShrink: 0 }}>→</span>
+                <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.55 }}><strong style={{ color: V.night }}>3 teses de crescimento</strong> — alavancas estratégicas alinhadas ao seu desafio, com passo a passo, scripts, templates e conteúdo pronto pra copiar.</p>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <span style={{ color: V.teal, flexShrink: 0 }}>→</span>
+                <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.55 }}><strong style={{ color: V.night }}>Checklist do básico</strong> — reviews com respostas prontas, bio sugerida, frequência ideal de posts, fotos no Maps.</p>
+              </div>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {['25 segmentos', '30+ fontes de dados', 'Reviews com resposta', 'Mapa competitivo', 'Sem cadastro do plano', 'Link permanente'].map((tag, i) => (
+                <span key={i} style={{ fontSize: 10, fontWeight: 600, color: V.teal, background: V.tealWash, padding: "3px 8px", borderRadius: 4 }}>{tag}</span>
+              ))}
+            </div>
           </div>
           {/* Radar R$247/mês */}
           <div style={{ background: V.white, borderRadius: 14, border: `2px solid ${V.amber}`, padding: "24px" }}>
@@ -985,10 +1052,27 @@ export default function Home() {
               <span style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.06em", fontWeight: 600 }}>RADAR DE CRESCIMENTO · CANCELE QUANDO QUISER</span>
               <span style={{ fontFamily: V.mono, fontSize: 11, color: V.amber, fontWeight: 700 }}>R$247/mês</span>
             </div>
-            <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 6px" }}>Sua operação montada + radar semanal do mercado.</p>
-            <p style={{ fontSize: 13, color: V.zinc, lineHeight: 1.6, margin: "0 0 12px" }}>Pilares estratégicos com KPI, ações rápidas com copy pronto, provocações baseadas em dados — e toda sexta: 4 posts com imagens, 3 briefings de produção, 1 relatório setorial, respostas pras reviews novas e score reanalisado.</p>
+            <p style={{ fontSize: 14, color: V.night, fontWeight: 600, margin: "0 0 10px" }}>Marketing não é evento, é cadência. Aqui ele vira ritmo.</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+              <div style={{ display: "flex", gap: 8 }}>
+                <span style={{ color: V.amber, flexShrink: 0 }}>→</span>
+                <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.55 }}><strong style={{ color: V.night }}>Sinais da semana</strong> — toda sexta: o que seus concorrentes fizeram, o que mudou no seu negócio, sinais macro do setor.</p>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <span style={{ color: V.amber, flexShrink: 0 }}>→</span>
+                <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.55 }}><strong style={{ color: V.night }}>Ação principal da semana</strong> — uma aposta conectada às suas 3 teses, evolutiva, que ganha complexidade com seu feedback.</p>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <span style={{ color: V.amber, flexShrink: 0 }}>→</span>
+                <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.55 }}><strong style={{ color: V.night }}>Consultora no seu WhatsApp</strong> — sexta abre, terça check-in, quinta fecha. Conversa estratégica com quem conhece seu negócio.</p>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <span style={{ color: V.amber, flexShrink: 0 }}>→</span>
+                <p style={{ fontSize: 13, color: V.zinc, margin: 0, lineHeight: 1.55 }}><strong style={{ color: V.night }}>Memória que cresce com você</strong> — cada ação executada vira aprendizado. Em 3 meses, a Virô sabe o que funciona pro seu negócio específico.</p>
+              </div>
+            </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {['Pilares com KPI', 'Ações rápidas + copy', '4 posts/semana', '3 briefings/semana', 'Relatório setorial', 'Respostas a reviews', 'Score semanal', '25 segmentos', '12+ fontes de dados'].map((tag, i) => (
+              {['Sinais semanais', 'Ação evolutiva', 'WhatsApp 6ª/3ª/5ª', 'Memória crescente', 'Re-scrape semanal', 'Score atualizado'].map((tag, i) => (
                 <span key={i} style={{ fontSize: 10, fontWeight: 600, color: V.amber, background: V.amberWash, padding: "3px 8px", borderRadius: 4 }}>{tag}</span>
               ))}
             </div>
@@ -1035,14 +1119,15 @@ export default function Home() {
           Perguntas comuns
         </h2>
         {[
-          { q: "O diagnóstico gratuito usa dados reais do meu negócio?", a: "Sim. O Virô consulta em tempo real o Google Maps, o Instagram, o volume de buscas no Google, dados demográficos do IBGE e a presença do seu negócio em respostas de IA. Nada é inventado — tudo vem de fontes públicas e verificáveis." },
-          { q: "Quanto custa?", a: "O diagnóstico é gratuito e já entrega ações práticas pro seu negócio. O Radar custa R$247/mês — inclui tudo pronto pra você executar: ações, conteúdo, monitoramento semanal. Cancele quando quiser, sem fidelidade." },
-          { q: "O que eu recebo com o Radar?", a: "Na ativação: seu plano completo — pilares estratégicos com objetivo, KPI e timeline, ações rápidas com passo a passo e copy pronto (bio do Instagram, respostas a reviews, otimização do Google), e provocações baseadas no que o radar detectou nos concorrentes. Toda sexta-feira: 4 posts prontos com imagens, 3 briefings de produção pra delegar, 1 relatório setorial da semana, drafts de resposta pras reviews novas e score reanalisado com o delta vs. semana anterior." },
-          { q: "Em quanto tempo fico com o plano pronto?", a: "O diagnóstico inicial leva cerca de 60 segundos. Após o pagamento, o plano completo é gerado em 2 a 5 minutos e fica disponível no painel — você também recebe o link por email." },
-          { q: "O Virô faz por mim ou só me mostra o caminho?", a: "Hoje o Virô monta a operação inteira — posts prontos, respostas a reviews, papers, roteiros, emails, tudo com copy pronto pra copiar e usar. Em breve, o Agente Nelson vai executar direto no Google, Instagram e WhatsApp com sua autorização. Começa como copiloto, vira piloto automático." },
-          { q: "Funciona para qualquer tipo de negócio?", a: "Sim. Virô tem 25 blueprints de segmento — restaurantes, clínicas, e-commerce, B2B, energia, agro, criadores de conteúdo, provedores de internet e mais. Cada segmento recebe fontes de dados, ações e canais específicos pro seu mercado." },
-          { q: "E se meu negócio ainda não aparece no Google Maps?", a: "O diagnóstico funciona mesmo assim. Analisamos a demanda real e a concorrência do seu raio independentemente do seu perfil — e o plano vai indicar exatamente o que fazer para você aparecer." },
-          { q: "Meus dados são seguros?", a: "Sim. O Virô só coleta dados públicos do seu negócio (não dados de clientes), opera dentro da LGPD, e nunca vende, aluga ou compartilha seus dados com terceiros. A política completa está em /privacidade." },
+          { q: "O diagnóstico gratuito é completo mesmo?", a: "Sim. Você recebe: 1) Onde está hoje — mapa do raio, cartão de visita digital, concorrentes nominados com métricas reais, sinais do mercado. 2) Tamanho da oportunidade — score atual, potencial em 90 dias, projeção financeira. 3) 3 teses de crescimento alinhadas ao seu desafio com passo a passo, scripts e templates prontos pra copiar. 4) Checklist do básico — reviews com respostas prontas, bio sugerida, frequência de posts. Tudo desbloqueado, sem cadastro de cartão." },
+          { q: "Se o diagnóstico é tão completo, por que pagar pelo Radar?", a: "O diagnóstico é a fotografia. O Radar é o filme. Marketing não é evento, é cadência: o Radar acompanha você toda semana — sinais do mercado atualizados (concorrentes, macro, seu próprio negócio), ação principal evolutiva conectada às suas teses, e conversa estratégica no WhatsApp sexta/terça/quinta. A cada ação executada, a memória do seu negócio cresce — em 3 meses a Virô sabe o que funciona pro seu caso específico." },
+          { q: "Como funciona a conversa no WhatsApp?", a: "Sexta às 8h a Virô abre a semana: 'Pra esta semana proponho focar em X'. Você responde quando puder — ela carrega TODO o seu contexto (diagnóstico, teses, memória, ciclos anteriores) e responde como uma consultora estratégica que conhece seu negócio. Terça faz check-in, quinta fecha o ciclo capturando o que aprendemos. Sem opt-in, você acessa a ação semanal pelo site — mas a conversa é o coração do produto." },
+          { q: "Quanto custa?", a: "Diagnóstico estratégico: R$0, sem cadastro de cartão. Radar de Crescimento: R$247/mês, cancele quando quiser, sem fidelidade." },
+          { q: "Em quanto tempo recebo o diagnóstico?", a: "60 segundos pro core (mercado, concorrentes, score, indicadores). Em até 3 minutos as 3 teses de crescimento + respostas prontas pras suas reviews aparecem. O link é permanente — pode voltar quando quiser." },
+          { q: "Funciona pra qualquer tipo de negócio?", a: "Sim. Restaurantes, clínicas, e-commerces, agências, B2B, energia, agro, criadores de conteúdo, provedores de internet — 25 blueprints de segmento com fontes de dados, ações e canais específicos pro seu mercado." },
+          { q: "E se meu negócio ainda não aparece no Google Maps?", a: "O diagnóstico funciona igual. Mapeamos a demanda real e a concorrência do seu raio independentemente do seu perfil — e a Tese 1 já vai indicar exatamente como construir presença do zero." },
+          { q: "A Virô executa por mim ou só me dá o caminho?", a: "Hoje a Virô monta a operação inteira com texto pronto pra copiar e colar: scripts de abordagem, posts, respostas a reviews, propostas, bio. A execução é sua. Em breve, com sua autorização, a Virô vai executar direto no Google, Instagram e WhatsApp — começa como copiloto, vira piloto automático." },
+          { q: "Meus dados são seguros?", a: "Sim. A Virô só coleta dados públicos do seu negócio (não dados dos seus clientes), opera dentro da LGPD, e nunca vende, aluga ou compartilha seus dados. Conversas do WhatsApp são privadas e contribuem (de forma anonimizada e agregada) pra base de aprendizado sobre o PME brasileiro. Política completa em /privacidade." },
         ].map((faq, i) => (
           <FAQItem key={i} question={faq.q} answer={faq.a} />
         ))}

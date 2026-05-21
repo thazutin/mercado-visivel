@@ -2143,10 +2143,76 @@ Gere APENAS o JSON.`;
       console.log(`[Enrichment] Conteúdos gerados para lead ${leadId}`);
     })(),
 
+    // 4. Respostas a reviews — gera drafts pra cada review sem owner_response
+    (async () => {
+      const { generateReviewResponses } = await import("./generateReviewResponses");
+      try {
+        const result = await generateReviewResponses(leadId);
+        console.log(`[Enrichment] Review responses: gerados=${result.generated}, total=${result.total}`);
+      } catch (err) {
+        // Sem reviews ou falha de Claude — não bloqueia o enrichment
+        console.warn(`[Enrichment] Review responses skip: ${(err as Error).message}`);
+      }
+    })(),
+
+    // 5. Leitura honesta — 1 parágrafo de consultor estratégico
+    (async () => {
+      const { generateHonestReading } = await import("./pipeline/honest-reading");
+      const display = buildDisplayData(pipelineResult);
+      const aud = display.audiencia;
+      const ci = display.competitionIndex;
+      const competitorAvgRating = ci?.competitors && ci.competitors.length > 0
+        ? (ci.competitors.reduce((s: number, c: any) => s + (c.rating || 0), 0)
+            / Math.max(1, ci.competitors.filter((c: any) => c.rating).length))
+        : 0;
+      const competitorAvgReviews = ci?.competitors && ci.competitors.length > 0
+        ? Math.round(ci.competitors.reduce((s: number, c: any) => s + (c.reviewCount || 0), 0)
+            / Math.max(1, ci.competitors.filter((c: any) => c.reviewCount).length))
+        : 0;
+      const topCompetitor = (display.competitorInstagram || [])
+        .filter((c: any) => c.postsLast30d > 0)
+        .sort((a: any, b: any) => (b.postsLast30d || 0) - (a.postsLast30d || 0))[0];
+
+      const honestReading = await generateHonestReading({
+        businessName: formData.name || formData.product,
+        product: formData.product,
+        region: formData.region,
+        clientType: (clientType as any) || "b2c",
+        score: display.influencePercent,
+        maps: display.maps,
+        instagram: display.instagram,
+        competitorAvgRating,
+        competitorAvgReviews,
+        topCompetitorIG: topCompetitor ? {
+          handle: topCompetitor.handle,
+          followers: topCompetitor.followers,
+          postsLast30d: topCompetitor.postsLast30d,
+          bio: topCompetitor.bio,
+        } : null,
+        searchVolume: display.totalVolume,
+        audienciaTarget: aud?.audienciaTarget,
+        challenge: (pipelineResult as any).challenge || undefined,
+      });
+
+      if (honestReading) {
+        // Salva direto no lead.diagnosis_display (merge com display atual)
+        const { data: leadRow } = await supabase
+          .from("leads")
+          .select("diagnosis_display")
+          .eq("id", leadId)
+          .single();
+        const merged = { ...(leadRow?.diagnosis_display || {}), honestReading };
+        await supabase.from("leads").update({ diagnosis_display: merged }).eq("id", leadId);
+        console.log(`[Enrichment] Honest reading salvo (${honestReading.length} chars)`);
+      } else {
+        console.warn(`[Enrichment] Honest reading vazio — display sem o parágrafo`);
+      }
+    })(),
+
   ]);
 
   // Log resultado de cada etapa
-  const labels = ["Plano de ação", "Sazonalidade", "Conteúdos"];
+  const labels = ["Plano de ação", "Sazonalidade", "Conteúdos", "Review responses", "Leitura honesta"];
   results.forEach((result, i) => {
     if (result.status === "fulfilled") {
       console.log(`[Enrichment] ${labels[i]}: concluído`);

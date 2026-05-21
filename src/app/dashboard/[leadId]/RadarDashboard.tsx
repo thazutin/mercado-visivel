@@ -12,6 +12,10 @@ interface Props {
   diagnosis: any;
   tier: Tier;
   initialGrowthMachine?: any;
+  /** Ciclo da semana atual — pra renderizar Sinais/Ação/Aprendizados no topo (subscriber) */
+  currentCycle?: any;
+  currentSignals?: any;
+  recentMemories?: any[];
 }
 
 // ─── Copy Block ──────────────────────────────────────────────────────────
@@ -620,7 +624,10 @@ function WeeklyContentsSection({ leadId }: { leadId: string }) {
 // ═══════════════════════════════════════════════════════════════════════
 // MAIN RADAR DASHBOARD
 // ═══════════════════════════════════════════════════════════════════════
-export default function RadarDashboard({ lead, diagnosis, tier: initialTier, initialGrowthMachine }: Props) {
+export default function RadarDashboard({
+  lead, diagnosis, tier: initialTier, initialGrowthMachine,
+  currentCycle, currentSignals, recentMemories,
+}: Props) {
   const [gm, setGm] = useState<any>(initialGrowthMachine || null);
   const [generating, setGenerating] = useState(false);
   const [tier, setTier] = useState(initialTier);
@@ -742,6 +749,207 @@ export default function RadarDashboard({ lead, diagnosis, tier: initialTier, ini
           benchmarkLabel={score.benchmarkLabel}
         />
 
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* CADÊNCIA SEMANAL — só pra subscriber                            */}
+        {/* 📡 Sinais · 🎯 Ação da Semana · 🧠 Aprendizados                 */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {tier === "subscriber" && (
+          <>
+            {/* ─── 📡 SINAIS DESTA SEMANA ─── */}
+            {currentSignals && (
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>
+                  📡 SINAIS DESTA SEMANA{currentSignals.week_iso ? ` · ${currentSignals.week_iso}` : ""}
+                </div>
+                <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "16px 18px" }}>
+                  {/* Macro */}
+                  {currentSignals.macro?.summary && (
+                    <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${V.fog}` }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: V.night, marginBottom: 4 }}>🌡️ Macro</div>
+                      <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.55 }}>
+                        {String(currentSignals.macro.summary).slice(0, 240)}{String(currentSignals.macro.summary).length > 240 ? "…" : ""}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Concorrentes */}
+                  {Array.isArray(currentSignals.competitors) && currentSignals.competitors.length > 0 && (
+                    <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${V.fog}` }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: V.night, marginBottom: 6 }}>🔭 Concorrentes</div>
+                      {currentSignals.competitors.slice(0, 3).map((c: any, i: number) => (
+                        <div key={i} style={{ fontSize: 12, color: V.zinc, lineHeight: 1.5, marginBottom: 4 }}>
+                          <strong style={{ color: V.night }}>@{c.handle}</strong> · {c.signal}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Próprio negócio */}
+                  {currentSignals.own_business && (
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: V.night, marginBottom: 6 }}>🎯 Seu negócio</div>
+                      <div style={{ fontSize: 12, color: V.zinc, lineHeight: 1.55 }}>
+                        Score: <strong style={{ color: V.night }}>{currentSignals.own_business.score_current ?? "—"}/100</strong>
+                        {currentSignals.own_business.score_delta != null && currentSignals.own_business.score_delta !== 0 && (
+                          <span style={{ color: currentSignals.own_business.score_delta > 0 ? V.teal : "#D95A4F", marginLeft: 6 }}>
+                            ({currentSignals.own_business.score_delta > 0 ? "+" : ""}{currentSignals.own_business.score_delta} vs semana anterior)
+                          </span>
+                        )}
+                        {currentSignals.own_business.reviews_delta != null && currentSignals.own_business.reviews_delta !== 0 && (
+                          <div>
+                            Reviews: <strong style={{ color: V.night }}>{currentSignals.own_business.reviews_count_current ?? "—"}</strong>
+                            <span style={{ color: currentSignals.own_business.reviews_delta > 0 ? V.teal : "#D95A4F", marginLeft: 6 }}>
+                              ({currentSignals.own_business.reviews_delta > 0 ? "+" : ""}{currentSignals.own_business.reviews_delta} esta semana)
+                            </span>
+                          </div>
+                        )}
+                        {currentSignals.own_business.ig_posts_delta != null && currentSignals.own_business.ig_posts_delta !== 0 && (
+                          <div>
+                            Posts Instagram: <span style={{ color: currentSignals.own_business.ig_posts_delta > 0 ? V.teal : "#D95A4F" }}>
+                              {currentSignals.own_business.ig_posts_delta > 0 ? "+" : ""}{currentSignals.own_business.ig_posts_delta} vs semana anterior
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ─── 🎯 AÇÃO PRINCIPAL DA SEMANA ─── */}
+            {currentCycle && currentCycle.priority_action && (
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>
+                  🎯 Ação principal desta semana
+                </div>
+                <div style={{ background: V.white, borderRadius: 12, border: `2px solid ${V.amber}`, padding: "18px 20px" }}>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
+                    {currentCycle.linked_pillar_id && (
+                      <span style={{ fontFamily: V.mono, fontSize: 9, fontWeight: 700, color: V.amber, background: V.amberWash, padding: "2px 8px", borderRadius: 100, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                        Tese {String(currentCycle.linked_pillar_id).replace("pilar-", "")}
+                      </span>
+                    )}
+                    {currentCycle.evolution_step > 1 && (
+                      <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, background: V.fog, padding: "2px 8px", borderRadius: 100 }}>
+                        passo {currentCycle.evolution_step} (evolução)
+                      </span>
+                    )}
+                    <span style={{ fontFamily: V.mono, fontSize: 9, color: V.zinc, background: V.cloud, padding: "2px 8px", borderRadius: 100 }}>
+                      status: {currentCycle.status}
+                    </span>
+                  </div>
+
+                  <div style={{ fontSize: 15, fontWeight: 700, color: V.night, marginBottom: 6, letterSpacing: "-0.01em" }}>
+                    {currentCycle.priority_action.title}
+                  </div>
+
+                  {currentCycle.priority_action.why_now && (
+                    <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 12px", lineHeight: 1.6 }}>
+                      <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", marginRight: 6, textTransform: "uppercase" }}>Por quê:</span>
+                      {currentCycle.priority_action.why_now}
+                    </p>
+                  )}
+
+                  {Array.isArray(currentCycle.priority_action.how_to) && currentCycle.priority_action.how_to.length > 0 && (
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.night, letterSpacing: "0.06em", marginBottom: 6, fontWeight: 700, textTransform: "uppercase" }}>Como executar</div>
+                      {currentCycle.priority_action.how_to.map((step: string, i: number) => (
+                        <div key={i} style={{ display: "flex", gap: 8, marginBottom: 4 }}>
+                          <span style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, background: V.amberWash, borderRadius: 3, padding: "1px 6px", flexShrink: 0, marginTop: 2 }}>{i + 1}</span>
+                          <span style={{ fontSize: 12, color: V.zinc, lineHeight: 1.5 }}>{step}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {Array.isArray(currentCycle.priority_action.copy_blocks) && currentCycle.priority_action.copy_blocks.length > 0 && (
+                    <div style={{ marginBottom: 12 }}>
+                      {currentCycle.priority_action.copy_blocks.map((cb: any, i: number) => (
+                        <CopyBlock key={i} label={cb.label || "TEXTO PRONTO"} text={cb.text || ""} />
+                      ))}
+                    </div>
+                  )}
+
+                  {Array.isArray(currentCycle.priority_action.measure_on_thursday) && currentCycle.priority_action.measure_on_thursday.length > 0 && (
+                    <div style={{ background: V.cloud, borderRadius: 8, padding: "10px 12px", marginTop: 10 }}>
+                      <div style={{ fontFamily: V.mono, fontSize: 9, color: V.ash, letterSpacing: "0.06em", marginBottom: 4, textTransform: "uppercase" }}>Como vamos medir na 5ª</div>
+                      {currentCycle.priority_action.measure_on_thursday.map((m: string, i: number) => (
+                        <div key={i} style={{ fontSize: 11, color: V.zinc, lineHeight: 1.5, marginBottom: 2 }}>• {m}</div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Link pro WhatsApp da Virô */}
+                  {lead.whatsapp_optin && (
+                    <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${V.fog}`, textAlign: "center" }}>
+                      <a href="https://wa.me/5511936190947" target="_blank" rel="noreferrer" style={{ fontSize: 12, color: V.teal, textDecoration: "none", fontWeight: 600 }}>
+                        💬 Conversar agora no WhatsApp
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ─── 🧠 APRENDIZADOS ACUMULADOS ─── */}
+            {Array.isArray(recentMemories) && recentMemories.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>
+                  🧠 Aprendizados acumulados ({recentMemories.length})
+                </div>
+                <div style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, padding: "16px 18px" }}>
+                  <p style={{ fontSize: 11, color: V.ash, margin: "0 0 12px", lineHeight: 1.5, fontStyle: "italic" }}>
+                    Cada ação que você executa vira aprendizado registrado. A Virô usa isso pra decisões futuras.
+                  </p>
+                  {recentMemories.slice(0, 8).map((m: any) => {
+                    const catLabel: Record<string, string> = {
+                      competitor: "Concorrente", customer: "Cliente", self: "Próprio negócio",
+                      market: "Mercado", tactic: "Tática",
+                    };
+                    const catColor: Record<string, string> = {
+                      competitor: "#D95A4F", customer: V.teal, self: V.amber,
+                      market: V.zinc, tactic: V.night,
+                    };
+                    return (
+                      <div key={m.id} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: `1px solid ${V.fog}`, lineHeight: 1.5 }}>
+                        <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 3, flexWrap: "wrap" }}>
+                          <span style={{ fontFamily: V.mono, fontSize: 9, fontWeight: 700, color: catColor[m.category] || V.zinc, background: V.cloud, padding: "1px 6px", borderRadius: 3, textTransform: "uppercase" }}>
+                            {catLabel[m.category] || m.category}
+                          </span>
+                          {m.confidence === "confirmed" && (
+                            <span style={{ fontSize: 9, color: V.teal, fontWeight: 600 }}>✓ confirmado</span>
+                          )}
+                          {m.confidence === "hypothesis" && (
+                            <span style={{ fontSize: 9, color: V.amber, fontWeight: 600 }}>? hipótese</span>
+                          )}
+                          {m.linked_pillar_id && (
+                            <span style={{ fontFamily: V.mono, fontSize: 9, color: V.ash }}>
+                              · {String(m.linked_pillar_id).replace("pilar-", "tese ")}
+                            </span>
+                          )}
+                        </div>
+                        <p style={{ fontSize: 12, color: V.night, margin: 0, lineHeight: 1.5 }}>{m.content}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Mensagem inicial — subscriber sem ciclo ainda */}
+            {!currentCycle && !currentSignals && (
+              <div style={{ marginBottom: 20, background: V.amberWash, borderRadius: 12, padding: "16px 18px", border: `1px solid rgba(180,83,9,0.18)` }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: V.night, marginBottom: 4 }}>📡 Seu Radar está se preparando</div>
+                <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.55 }}>
+                  Primeira sexta-feira após sua assinatura, a Virô abre a primeira semana de conversa
+                  e este painel passa a mostrar os sinais e a ação principal.
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
         {/* Generating state */}
         {generating && (
           <div style={{
@@ -765,88 +973,31 @@ export default function RadarDashboard({ lead, diagnosis, tier: initialTier, ini
               fontFamily: V.mono, fontSize: 10, color: V.night,
               letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10,
             }}>
-              <span id="growth-plan">🏗️</span> SEU PLANO DE CRESCIMENTO
+              <span id="growth-plan">🏗️</span> SUAS 3 TESES DE CRESCIMENTO
             </div>
-            {tier !== "free" && (
-              <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 12px", lineHeight: 1.5 }}>
-                Montado a partir dos dados do seu mercado. Cada item tem conteúdo pronto — copie e use.
-              </p>
-            )}
+            <p style={{ fontSize: 12, color: V.zinc, margin: "0 0 12px", lineHeight: 1.5 }}>
+              Montadas a partir dos dados do seu mercado. Cada etapa tem conteúdo pronto — copie e use.
+            </p>
             {gm.strategicPillars
               .sort((a: any, b: any) => (a.priority || 0) - (b.priority || 0))
-              .map((pillar: any) => (
-                tier !== "free"
-                  ? <PillarCard key={pillar.id} pillar={pillar} />
-                  : <div key={pillar.id} style={{ background: V.white, borderRadius: 12, border: `1px solid ${V.fog}`, overflow: "hidden", marginBottom: 10, position: "relative" }}>
-                      <div style={{ padding: "14px 16px" }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 4 }}>{pillar.title}</div>
-                        <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.5 }}>{pillar.description}</p>
-                      </div>
-                      <div style={{ position: "relative", height: 50, overflow: "hidden" }}>
-                        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(transparent, rgba(255,255,255,0.95))", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 8 }}>
-                          <span style={{ fontSize: 10, color: V.ash }}>🔒 Assine pra ver o plano completo</span>
-                        </div>
-                      </div>
-                    </div>
-              ))}
+              .map((pillar: any) => <PillarCard key={pillar.id} pillar={pillar} />)}
           </div>
         )}
 
-        {/* ─── 2. AÇÕES RÁPIDAS ─── */}
-        {gm?.quickWins?.length > 0 && (() => {
-          const FREE_VISIBLE = 3;
-          const allQw = gm.quickWins || [];
-          const visibleQw = tier === "free" ? allQw.slice(0, FREE_VISIBLE) : allQw;
-          const lockedQw = tier === "free" ? allQw.slice(FREE_VISIBLE) : [];
-
-          return (
-            <div style={{ marginBottom: 24 }}>
-              <div style={{
-                fontFamily: V.mono, fontSize: 10, color: V.teal,
-                letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10,
-              }}>
-                ⚡ AÇÕES RÁPIDAS
-                {tier === "free" && allQw.length > FREE_VISIBLE && (
-                  <span style={{ color: V.ash, marginLeft: 8 }}>
-                    {FREE_VISIBLE} de {allQw.length}
-                  </span>
-                )}
-              </div>
-
-              {visibleQw.map((qw: any) => (
-                <QuickWinCard key={qw.id} qw={qw} leadId={lead.id} />
-              ))}
-
-              {lockedQw.length > 0 && (
-                <>
-                  {lockedQw.slice(0, 3).map((qw: any) => (
-                    <LockedQuickWinCard key={qw.id} qw={qw} />
-                  ))}
-                  <div style={{
-                    background: "linear-gradient(135deg, #161618 0%, #2A2A30 100%)",
-                    borderRadius: 12, padding: "18px 20px", textAlign: "center", marginTop: 8,
-                  }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: V.white, margin: "0 0 4px" }}>
-                      🔒 Assine o Radar para desbloquear todas as ações
-                    </p>
-                    <p style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", margin: "0 0 12px" }}>
-                      Com passo a passo, textos prontos e evolução semanal.
-                    </p>
-                    <button onClick={async () => {
-                      try {
-                        const res = await fetch("/api/checkout/subscription", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: lead.id }) });
-                        const data = await res.json();
-                        if (data.url) window.location.href = data.url;
-                      } catch { /* ignore */ }
-                    }} style={{ padding: "10px 24px", borderRadius: 8, border: "none", background: V.teal, color: V.white, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-                      Ativar Radar · R$247/mês
-                    </button>
-                  </div>
-                </>
-              )}
+        {/* ─── 2. CHECKLIST DO BÁSICO ─── */}
+        {gm?.quickWins?.length > 0 && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{
+              fontFamily: V.mono, fontSize: 10, color: V.teal,
+              letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10,
+            }}>
+              ✓ MANTENHA O BÁSICO EM DIA
             </div>
-          );
-        })()}
+            {gm.quickWins.map((qw: any) => (
+              <QuickWinCard key={qw.id} qw={qw} leadId={lead.id} />
+            ))}
+          </div>
+        )}
 
         {/* ─── 3. RADAR SEMANAL (provocações) ─── */}
         {gm?.provocations?.length > 0 && (

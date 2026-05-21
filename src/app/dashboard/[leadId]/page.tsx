@@ -95,12 +95,54 @@ export default async function DashboardPage({ params }: { params: { leadId: stri
   const useRadar = lead.blueprint_id || lead.growth_machine;
 
   if (useRadar) {
+    // ─── Sprint 5: dados de cadência conversacional (só pra subscriber) ────
+    // Carrega: ciclo da semana atual + sinais + memórias acumuladas.
+    // Falhas silenciosas — render do dashboard não depende disso (free não vê).
+    let currentCycle: any = null;
+    let currentSignals: any = null;
+    let recentMemories: any[] = [];
+
+    if (tier === "subscriber") {
+      // Ciclo da semana atual (qualquer status) — última 1
+      const { data: cycleData } = await supabase
+        .from("weekly_cycles")
+        .select("id, week_iso, theme_short, theme_full, theme_category, linked_pillar_id, evolution_step, status, priority_action, priority_reason, opened_at, user_engaged_at, checked_at, closed_at")
+        .eq("lead_id", leadId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      currentCycle = cycleData;
+
+      // Sinais da semana atual (se houver)
+      if (cycleData?.week_iso) {
+        const { data: signalsData } = await supabase
+          .from("weekly_signals")
+          .select("week_iso, macro, competitors, own_business, linked_pillars, collected_at")
+          .eq("lead_id", leadId)
+          .eq("week_iso", cycleData.week_iso)
+          .maybeSingle();
+        currentSignals = signalsData;
+      }
+
+      // 12 aprendizados mais recentes
+      const { data: memData } = await supabase
+        .from("business_memory")
+        .select("id, category, topic, content, confidence, linked_pillar_id, weekly_cycle_id, created_at")
+        .eq("lead_id", leadId)
+        .order("created_at", { ascending: false })
+        .limit(12);
+      recentMemories = memData || [];
+    }
+
     return (
       <RadarDashboard
         lead={lead}
         diagnosis={diagnosis}
         tier={tier}
         initialGrowthMachine={lead.growth_machine || null}
+        currentCycle={currentCycle}
+        currentSignals={currentSignals}
+        recentMemories={recentMemories}
       />
     );
   }
