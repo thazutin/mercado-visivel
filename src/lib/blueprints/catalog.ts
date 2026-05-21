@@ -322,6 +322,47 @@ const fitness_academia: Blueprint = {
 
 // ─── T2: B2B ────────────────────────────────────────────────────────
 
+const vending_machine_b2b: Blueprint = {
+  id: 'vending_machine_b2b',
+  label: 'Vending Machine / Auto-serviço B2B',
+  description: 'Operadores de vending de snacks, café ou bebidas que instalam máquinas em empresas (modelo B2B, decisor em Facilities/RH).',
+  icon: '🥤',
+  primaryClientType: 'b2b',
+  dataSources: {
+    linkedin: planned(0.30),    // decisor + perfil das empresas-alvo
+    serp: src(0.10),
+    google_maps: src(0.10),     // localizar empresas no raio
+    instagram: src(0.15),       // awareness + cases visuais
+    instagram_competitors: src(0.10),
+    site_traffic: planned(0.05),
+    google_trends: planned(0.05),
+    pncp: planned(0.05),        // licitações governo/SP
+    ibge: src(0.10),            // densidade empresas no raio
+  },
+  scoreWeights: { d1_descoberta: 0.25, d2_credibilidade: 0.20, d3_presenca: 0.30, d4_reputacao: 0.25 },
+  channels: ['linkedin', 'parcerias_locais', 'instagram', 'indicacao', 'eventos', 'email_marketing'],
+  actionTypes: [
+    'posts_linkedin', 'prospeccao_b2b',
+    'parcerias_locais', 'posts_instagram', 'video_reels',
+    'evento_webinar', 'white_paper',
+    'landing_page', 'email_nurturing',
+    'bio_instagram', 'whatsapp_templates',
+  ],
+  // Sem quick wins de Google Ads ou capturar_reviews — não fazem sentido pro modelo B2B vending
+  quickWins: ['posts_linkedin', 'bio_instagram', 'landing_page'],
+  benchmarkTemplate: 'operadores de vending B2B em {region}',
+  keywords: [
+    'vending', 'vending machine', 'vending machines',
+    'máquina automática', 'máquina de snacks', 'máquina de café',
+    'auto-serviço', 'autosserviço', 'auto serviço',
+    'balcão urbano', 'balcao urbano',
+    'snacks empresa', 'snacks corporativo',
+    'café corporativo', 'cafe corporativo',
+  ],
+  seasonalityRelevance: 'low',
+  primaryKPI: 'Pontos ativos × ticket médio mensal por ponto',
+};
+
 const b2b_servicos: Blueprint = {
   id: 'b2b_servicos',
   label: 'Serviços B2B',
@@ -791,6 +832,7 @@ export const BLUEPRINT_CATALOG: Blueprint[] = [
   criador_cpf,
   fitness_academia,
   // T2: B2B
+  vending_machine_b2b,
   b2b_servicos,
   b2b_industria,
   b2b_tecnologia,

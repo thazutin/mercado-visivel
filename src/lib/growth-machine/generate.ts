@@ -817,32 +817,31 @@ function generateQuickWins(
 
   // 4D Score Levers — max 2 weakest dimensions
   const breakdown = diagnosis.influenceBreakdown;
-  if (breakdown) {
+  // Quick wins por dimensão 4D — só adiciona quando há ALAVANCAS reais identificadas.
+  // O padrão antigo de "Subir Credibilidade de 0/10 para 3/10" com steps tipo
+  // "Identifique o que mais impacta X / Execute 1 ação por semana e meça" é
+  // meta-circular: não é ação concreta, é instrução pra refletir. Removido.
+  // Quando há `levers` específicas no breakdown, usa essas — caso contrário, pula.
+  if (breakdown?.levers && Array.isArray(breakdown.levers) && breakdown.levers.length > 0) {
     const dimensions = [
-      { key: 'd1_descoberta', label: 'Descoberta', score: breakdown.d1_descoberta, fix: 'SEO + Google Maps + presença em diretórios' },
-      { key: 'd2_credibilidade', label: 'Credibilidade', score: breakdown.d2_credibilidade, fix: 'reviews + rating + tempo de resposta' },
-      { key: 'd3_presenca', label: 'Presença Digital', score: breakdown.d3_presenca, fix: 'frequência de posts + variedade de canais' },
-      { key: 'd4_reputacao', label: 'Reputação', score: breakdown.d4_reputacao, fix: 'responder reclamações + prova social + cases' },
-    ].filter(d => typeof d.score === 'number' && d.score < 4)
-      .sort((a, b) => (a.score || 0) - (b.score || 0))
-      .slice(0, 2);
-
+      { key: 'd1_descoberta', label: 'Descoberta' },
+      { key: 'd2_credibilidade', label: 'Credibilidade' },
+      { key: 'd3_presenca', label: 'Presença Digital' },
+      { key: 'd4_reputacao', label: 'Reputação' },
+    ];
     for (const dim of dimensions) {
-      const levers = (breakdown.levers || []).filter((l: any) => l.dimension === dim.key);
+      const score = (breakdown as any)[dim.key];
+      if (typeof score !== 'number' || score >= 4) continue;
+      const levers = breakdown.levers.filter((l: any) => l.dimension === dim.key);
+      if (levers.length === 0) continue; // sem alavancas concretas → não adiciona
       quickWins.push({
         id: `qw-4d-${dim.key}`,
         type: 'seo_conteudo',
-        title: `Subir ${dim.label} de ${dim.score}/10 para ${Math.min((dim.score || 0) + 3, 10)}/10`,
-        description: `Sua dimensão de ${dim.label} está em ${dim.score}/10 — a mais fraca. Foco: ${dim.fix}.${levers.length > 0 ? ` Alavancas: ${levers.map((l: any) => l.label || l.action).join(', ')}.` : ''}`,
-        impact: `+${Math.round(((10 - (dim.score || 0)) / 10) * 15)}pts ${dim.label}`,
+        title: levers[0].label || levers[0].action,
+        description: `Sua dimensão de ${dim.label} está em ${score}/10. ${levers.length > 1 ? `Combine ${levers.length} ações específicas.` : 'Ação específica identificada nos dados.'}`,
+        impact: `+${Math.round(((10 - score) / 10) * 15)}pts ${dim.label}`,
         timeEstimate: '~20 min',
-        steps: levers.length > 0
-          ? levers.slice(0, 4).map((l: any, i: number) => `${i + 1}. ${l.label || l.action}`)
-          : [
-            `Identifique o que mais impacta ${dim.label} no seu caso`,
-            dim.fix,
-            'Execute 1 ação por semana e meça o impacto no score',
-          ],
+        steps: levers.slice(0, 4).map((l: any, i: number) => `${i + 1}. ${l.label || l.action}`),
       });
     }
   }
@@ -1410,74 +1409,134 @@ Use NOMES REAIS dos decisores nos templates de abordagem. Personalize cada mensa
 })()}
 `.trim();
 
-  const prompt = `Você é o Virô, radar de crescimento para negócios brasileiros. Com base nos DADOS REAIS acima, crie um PLANO DE CRESCIMENTO — não ações genéricas, mas um plano real de A→B com apostas estratégicas.
+  // ─── Detecção AUTOMÁTICA de estágio do negócio ─────────────────────────
+  // O estágio muda radicalmente o que faz sentido propor. Negócio sem reviews,
+  // sem IG, sem site = pré-lançamento. Sugerir "Sistema de Fidelização" pra
+  // esse caso é fora de fase. Calibra as teses pelo estágio real detectado.
+  const stageSignals = {
+    hasGoogleMaps: !!maps?.found,
+    reviewCount: maps?.reviewCount || 0,
+    rating: maps?.rating || 0,
+    hasInstagram: !!ig?.handle,
+    igFollowers: ig?.followers || 0,
+    igPostsRecent: ig?.postsLast30d || 0,
+    hasSite: !!(diagnosis.serpSummary?.termsRanked > 0),
+    hasReclameAqui: !!diagnosis.expandedData?.reclameAqui?.found,
+  };
+  const signalsCount =
+    (stageSignals.hasGoogleMaps && stageSignals.reviewCount >= 5 ? 1 : 0) +
+    (stageSignals.hasInstagram && stageSignals.igPostsRecent >= 2 ? 1 : 0) +
+    (stageSignals.hasSite ? 1 : 0) +
+    (stageSignals.reviewCount >= 30 ? 1 : 0) +
+    (stageSignals.igFollowers >= 1000 ? 1 : 0);
 
-CONTEXTO DO DONO:
-${challengeContext ? `Objetivo declarado: "${challengeLabels[lead.challenge || ''] || ''}". O PRIMEIRO PILAR deve atacar diretamente esse objetivo.` : 'Sem objetivo declarado — priorize pelo gap mais crítico dos dados.'}
+  const stage: 'pre_lancamento' | 'inicial' | 'crescimento' | 'maduro' =
+    signalsCount === 0 ? 'pre_lancamento' :
+    signalsCount === 1 ? 'inicial' :
+    signalsCount <= 3 ? 'crescimento' : 'maduro';
 
-REGRAS DO PLANO:
-1. Exatamente 3 PILARES. Cada pilar é uma APOSTA ESTRATÉGICA que move a agulha — não uma ação tática.
-2. CADA pilar deve citar dados reais do diagnóstico (números, concorrentes, métricas).
-3. O PRIMEIRO PILAR é MANDATORIAMENTE alinhado ao desafio de negócio declarado pelo dono. Se não há desafio declarado, priorize pelo gap mais crítico.
-4. Os pilares NÃO são canais (não é "pilar Instagram" ou "pilar Google") — são INICIATIVAS DE NEGÓCIO (ex: "Sistema de Fidelização", "Captura no Google Maps + iFood", "Programa Café da Manhã Corporativo").
-5. CADA pilar deve incluir: objetivo, meta quantitativa, timeline, recursos necessários (tempo, dinheiro, equipe), riscos e mitigação, ferramentas recomendadas.
-6. CADA etapa deve detalhar O COMO — não "faça X" mas SIM o passo a passo com conteúdo pronto, scripts, templates, estruturas completas.
-7. Se há dados de concorrentes, inclua comparativos e inteligência competitiva dentro dos pilares.
-8. Todos os textos em PT-BR, tom profissional mas acessível.
+  const stageContext: Record<typeof stage, string> = {
+    pre_lancamento: `ESTÁGIO DETECTADO: PRÉ-LANÇAMENTO.
+Sem reviews, sem Instagram ativo, sem site rankeado. Esse negócio AINDA NÃO está em operação real ou está nas primeiras semanas.
+TESES PROIBIDAS: fidelização, retenção, expansão, programa VIP, upsell.
+TESES OBRIGATÓRIAS desta fase: (1) validação de proposta de valor com primeiros clientes, (2) construção de prova social inicial (5-10 primeiros casos visíveis), (3) sistema de captação dos PRIMEIROS clientes/contratos.`,
+    inicial: `ESTÁGIO DETECTADO: INICIAL.
+Negócio operando há pouco tempo. Tem alguma presença mas ainda longe de tração. Foco: consolidar primeiros casos + criar repetibilidade.
+TESES PROIBIDAS: fidelização avançada, programa VIP com 3 níveis, expansão geográfica multi-cidade.
+TESES OBRIGATÓRIAS desta fase: sistemas de aquisição replicáveis, primeiros loops de prova social, posicionamento que diferencia dos genéricos.`,
+    crescimento: `ESTÁGIO DETECTADO: CRESCIMENTO.
+Negócio com tração. Pode falar de retenção, expansão de ticket, cross-sell, expansão geo.
+TESES OBRIGATÓRIAS desta fase: escalar o que já funciona + abrir 1 novo vetor de crescimento + sistema de retenção dos atuais.`,
+    maduro: `ESTÁGIO DETECTADO: MADURO.
+Operação estabelecida. Foco: defender posição + diversificar + LTV. Aqui pode falar de programa fidelidade, expansão real, novos produtos.`,
+  };
+
+  // ─── Lente B2B vs B2C — orienta tipo de tese ──────────────────────────────
+  const lensContext = bp.primaryClientType === 'b2b' || bp.primaryClientType === 'b2g'
+    ? `LENTE B2B/B2G OBRIGATÓRIA:
+- Cliente NÃO é o consumidor final. Cliente é uma EMPRESA com um DECISOR (Facilities, RH, Operações, Compras, Diretor).
+- Ciclo de venda é longo (30-90 dias). Não fale em "conversão rápida".
+- Modelo de receita: contratos recorrentes, comissão sobre consumo, fee por evento, ou similar — NÃO transação avulsa.
+- Canais primários: LinkedIn (decisor), parcerias setoriais, indicação interna, eventos B2B. Google Ads pra termos B2C NÃO funciona.
+- Métricas: # de contas, ticket por conta, churn anual, NRR (net revenue retention).
+- Quando propor "abordagem", inclua NOME do decisor real (use dados de PROSPECTS B2B IDENTIFICADOS acima — se vazios, fale em estruturar a lista, não em prospectar sem dados).`
+    : `LENTE B2C:
+- Cliente é o consumidor final.
+- Ciclo de decisão rápido (minutos a dias).
+- Métricas: # de clientes/mês, ticket médio, frequência de recompra, NPS.`;
+
+  const prompt = `Você é a Virô, consultora estratégica de marketing dos pequenos e médios negócios brasileiros. Com base nos DADOS REAIS acima, monte um PLANO DE CRESCIMENTO de 3 TESES que mude o patamar do negócio.
+
+${stageContext[stage]}
+
+${lensContext}
+
+══════ A REGRA QUE NÃO PODE SER QUEBRADA ══════
+Toda TESE é um SISTEMA — não uma tarefa, não um fix, não um conjunto de "boas práticas".
+
+Sistema significa que toda tese tem ESTAS 4 PARTES, e o "items" deve refletir isso:
+  1. GATILHO — o que dispara o ciclo (ex: "toda 2ª-feira", "quando entra novo cliente", "quando concorrente posta")
+  2. AÇÃO — o que é executado quando o gatilho dispara (passos concretos, com texto pronto)
+  3. MÉTRICA — como mede se está funcionando (número específico, não "engajamento")
+  4. CICLO DE FEEDBACK — como melhora a cada repetição (o que aprende e ajusta)
+
+REJEITE estes anti-padrões:
+✗ "Instalar Google Ads" → não é tese, é tática avulsa
+✗ "Otimizar Google Business" → checklist do básico, não tese
+✗ "Engajar nas redes sociais" → vago, sem sistema
+✗ "Subir Credibilidade de 0/10 para 3/10" → método circular sem ação
+✗ Sugerir "Programa de Fidelidade" em negócio pré-lançamento ou inicial
+✗ Listar empresas sem dar contato real do decisor (se PROSPECTS estiver vazio, mude a tese pra "construir a lista" antes de prospectar)
+
+ACEITE estes padrões:
+✓ "Motor de prova social via vídeo curto" (gatilho: cada cliente atendido | ação: pedir 30s de depoimento + montar reel | métrica: # de reels/mês + alcance | feedback: top 3 hooks que mais salvaram)
+✓ "Sistema de descoberta de pontos B2B" (gatilho: 1x/semana | ação: cruzar lista de empresas com perfil + Hunter | métrica: # de decisores qualificados/semana | feedback: tipo de ponto que converte melhor)
+✓ "Loop de validação de proposta" (gatilho: cada conversa com prospect | ação: aplicar 3 perguntas específicas | métrica: % que pediu proposta | feedback: ajustar pitch com objeções recorrentes)
+
+REGRAS ADICIONAIS:
+1. EXATAMENTE 3 teses, cada uma é um sistema operacional replicável.
+2. SEMPRE cite números reais do diagnóstico nas justificativas.
+3. PRIMEIRA tese deve atacar o desafio declarado pelo dono. Se não declarou, ataca o gap mais crítico do estágio detectado.
+4. Tese não é canal ("pilar Instagram") — é INICIATIVA DE NEGÓCIO com mecânica clara.
+5. Cada tese inclui: objetivo (1 frase), targetMetric, timeline realista pro estágio, recursos (tempo+dinheiro+pessoas concretos), riscos, ferramentas.
+6. Cada item da tese tem CONTEÚDO PRONTO PRA USAR — script, mensagem, template completo. Nunca "[COLOQUE AQUI]".
+7. PT-BR. Tom de consultora sênior — sem gíria, sem "bora", sem exclamação fácil.
 
 FORMATO JSON:
 {"pillars":[{
   "id":"pilar-1",
-  "type":"content_engine|authority|prospecting|reputation|expansion|retention",
-  "title":"Título estratégico (ex: Sistema de Fidelização por WhatsApp)",
-  "description":"POR QUE essa aposta conecta com os dados e o objetivo. Cite números reais: rating, reviews, followers, concorrentes, volume.",
+  "type":"content_engine|authority|prospecting|reputation|expansion|retention|validation|system_build",
+  "title":"Título do SISTEMA (ex: Motor de prova social via depoimento curto)",
+  "description":"POR QUE essa aposta. Cite dados reais: rating, reviews, followers, concorrentes nominados, volume de busca. Conecte com o estágio e o desafio declarado.",
   "channel":"canal_principal",
   "priority":1,
-  "objective":"O que este pilar vai resolver (1 frase clara)",
-  "targetMetric":"Métrica principal (ex: 40% dos clientes voltando em 15 dias)",
-  "timeline":"Em quanto tempo (ex: 30 dias para setup, resultados em 60 dias)",
-  "resources":"O que precisa investir (tempo, dinheiro, equipe — seja específico)",
-  "risks":"Riscos e como mitigar (1-2 frases)",
-  "tools":["Ferramentas externas recomendadas (ex: WhatsApp Business, Canva, Google Business Profile, Meta Business Suite)"],
-  "items":[{
-    "id":"item-1",
-    "title":"Etapa clara e sequencial",
-    "type":"copy|template|structure|checklist|script",
-    "content":"CONTEÚDO COMPLETO PRONTO PRA USAR. O texto final, não uma instrução.",
-    "copyable":true
-  }],
-  "kpi":{"metric":"Métrica específica","target":"Número meta realista","timeframe":"30 dias"}
+  "objective":"O que este sistema resolve (1 frase)",
+  "targetMetric":"Métrica específica e quantificável",
+  "timeline":"Realista pro estágio. Pré-lançamento/inicial: 30-60d setup. Crescimento: 30d setup, resultado 60-90d.",
+  "resources":"Tempo + dinheiro + pessoas (seja específico). Sem exigir time grande se for pré-lançamento.",
+  "risks":"Riscos do sistema falhar + como mitigar",
+  "tools":["Ferramentas externas — use só as relevantes pro caso"],
+  "items":[
+    {"id":"item-1","title":"GATILHO: ...","type":"structure","content":"Quando e como o sistema dispara. Frequência, condição, evento.","copyable":false},
+    {"id":"item-2","title":"AÇÃO: ...","type":"script|copy|template|checklist","content":"O QUE EXATAMENTE executar. Com texto pronto se for mensagem/script/email/post. Nunca instrução vaga.","copyable":true},
+    {"id":"item-3","title":"MÉTRICA: ...","type":"structure","content":"Como medir. Onde anotar (planilha, Notion). Frequência de revisão.","copyable":false},
+    {"id":"item-4","title":"CICLO: ...","type":"structure","content":"O que o sistema aprende a cada ciclo e como ajusta. Ex: top 3 hooks que mais converteram → repetir.","copyable":false}
+  ],
+  "kpi":{"metric":"Métrica específica","target":"Número realista","timeframe":"30 dias"}
 }]}
 
-CONTEÚDO OBRIGATÓRIO EM CADA ITEM:
-- Se é uma mensagem WhatsApp, escreva A MENSAGEM completa com emojis e formatação
-- Se é um post Instagram, escreva O POST inteiro com legenda e hashtags
-- Se é um script de abordagem, escreva O SCRIPT completo
-- Se é uma estrutura de evento, escreva A ESTRUTURA com horários e programação
-- Se é um email, escreva O EMAIL inteiro com assunto e corpo
-- NUNCA use [COLOQUE AQUI] ou [INSIRA] — escreva o conteúdo real baseado nos dados
+CONTEÚDO DOS ITEMS:
+- AÇÃO com script/copy/template: texto INTEIRO pronto pra usar, não estrutura.
+- GATILHO, MÉTRICA, CICLO: descrição operacional curta (2-4 linhas cada), foco no COMO.
+- Se sugerir prospecção, USE os nomes reais dos PROSPECTS B2B IDENTIFICADOS no contexto (decisores via Hunter). Se vazio, a tese deve ser "construir a lista" antes.
 
-PROFUNDIDADE EXIGIDA:
-- Se o pilar sugere criar um blog post, ESCREVA o blog post inteiro (500+ palavras)
-- Se sugere criar programa de fidelidade, detalhe a ESTRUTURA completa (níveis, benefícios, regras)
-- Se sugere prospecção, liste as EMPRESAS REAIS dos dados e templates personalizados POR NOME
-- Se sugere evento, detalhe PROGRAMAÇÃO completa (horários, formato, follow-up)
-- Se sugere videocast, detalhe ROTEIRO completo (intro, perguntas, encerramento)
-- Cada etapa deve indicar ONDE CONSTRUIR e COMO VER EVOLUÇÃO
-
-FERRAMENTAS — SEMPRE indique onde executar cada ação:
-- Google Business Profile (business.google.com) — ficha, posts, reviews
-- Meta Business Suite (business.facebook.com) — agendamento Instagram
-- Canva (canva.com) — design de posts e materiais
-- WhatsApp Business (business.whatsapp.com) — catálogo, respostas rápidas
-- Linktree (linktr.ee) — link na bio
-- Bit.ly — links curtos com tracking
-- Google Ads (ads.google.com) — anúncios de busca
-- Carrd.co — landing page simples
-- Mailchimp (mailchimp.com) ou RD Station — email marketing
-- Hotmart/Stripe — pagamentos e assinaturas
-- Google Analytics (analytics.google.com) — métricas do site
-- Notion/Trello — gestão do plano`;
+FERRAMENTAS — use só as relevantes:
+- Google Business Profile, Meta Business Suite, Canva, WhatsApp Business
+- LinkedIn Sales Navigator (B2B), Hunter.io (achar decisor), Apollo
+- Notion / Google Sheets (operação)
+- Bit.ly / Linktree (tracking)
+- Carrd.co / Webflow (landing)
+- Não sugerir Google Ads se ainda não houver presença orgânica básica ou o segmento for B2B-puro com decisor.`;
 
   try {
     const res = await anthropic.messages.create({

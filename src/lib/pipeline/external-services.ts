@@ -180,6 +180,60 @@ export function createApifySerpScraper(config: ApifyConfig) {
 
 // --- GOOGLE MAPS SCRAPER ---
 
+// ─── Filtro de concorrentes irrelevantes ─────────────────────────────────
+// O Google Places retorna por proximidade no Maps — frequentemente entrega
+// lojas de móveis, repartições, bancos como "concorrentes" quando não são.
+// Aplica blocklist por type (categoria Google) + por nome conhecido.
+
+const IRRELEVANT_PLACE_TYPES = new Set([
+  // Repartições e serviços públicos
+  'government_office', 'city_hall', 'embassy', 'fire_station', 'police',
+  'post_office', 'courthouse', 'local_government_office',
+  // Bancos e finanças
+  'bank', 'atm', 'finance', 'insurance_agency',
+  // Lojas grandes não relacionadas
+  'furniture_store', 'home_goods_store', 'hardware_store',
+  'department_store', 'electronics_store',
+  // Saúde geral (filtra-se separadamente quando blueprint é saúde)
+  'hospital', 'doctor', 'dentist', 'pharmacy',
+  // Educação geral
+  'school', 'university', 'primary_school', 'secondary_school',
+  // Religioso
+  'church', 'mosque', 'synagogue', 'hindu_temple',
+  // Transporte
+  'transit_station', 'train_station', 'bus_station', 'subway_station',
+  'taxi_stand', 'gas_station', 'parking',
+  // Recreação não-relacionada
+  'park', 'tourist_attraction', 'amusement_park', 'zoo', 'museum',
+  'art_gallery', 'library',
+  // Acomodação
+  'lodging', 'campground', 'rv_park',
+]);
+
+const IRRELEVANT_NAME_KEYWORDS = [
+  'poupatempo', 'detran', 'cartório', 'cartorio',
+  'prefeitura', 'caixa econômica', 'banco do brasil',
+  'sodimac', 'leroy merlin', 'magazine luiza', 'casas bahia',
+  'kalunga', 'fast móveis', 'fast moveis',
+  'mcdonalds', 'subway', 'burger king',  // grandes redes — não são concorrentes locais
+];
+
+function filterIrrelevantCompetitors(places: any[]): any[] {
+  return places.filter((p: any) => {
+    // 1. Bloqueia por type/categoria Google
+    const types: string[] = p.types || [];
+    const hasIrrelevantType = types.some((t) => IRRELEVANT_PLACE_TYPES.has(t));
+    if (hasIrrelevantType) return false;
+
+    // 2. Bloqueia por keyword no nome (case-insensitive, accent-insensitive)
+    const name = (p.displayName?.text || '').toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '');
+    if (IRRELEVANT_NAME_KEYWORDS.some((kw) => name.includes(kw))) return false;
+
+    return true;
+  });
+}
+
 export function createApifyMapsScraper(config: ApifyConfig) {
   return async function runMapsScraper(
     businessName: string,
@@ -429,7 +483,10 @@ export function createApifyMapsScraper(config: ApifyConfig) {
         website: details?.websiteUri,
         phone: details?.nationalPhoneNumber,
         openNow: details?.regularOpeningHours?.openNow,
-        mapsCompetitors: places.slice(1).map((c: any) => ({
+        // Filtro blocklist: remove negócios claramente irrelevantes
+        // (lojas de móveis, repartições, bancos, etc.) que o Google retornou
+        // por proximidade no Maps mas que não são concorrentes reais.
+        mapsCompetitors: filterIrrelevantCompetitors(places.slice(1)).map((c: any) => ({
           name: c.displayName?.text || '',
           rating: c.rating || null,
           reviewCount: c.userRatingCount || null,

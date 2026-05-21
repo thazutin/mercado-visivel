@@ -155,6 +155,7 @@ async function runPipelineBackground(leadId: string, formData: LeadFormData, loc
         region: formData.region,
         instagram: formData.instagram,
         site: formData.site,
+        source: (formData as any).source || undefined,
       });
       blueprintId = classification.blueprint.id;
       console.log(`[DiagnoseBG] Blueprint: ${blueprintId} (${classification.method}, ${classification.confidence})`);

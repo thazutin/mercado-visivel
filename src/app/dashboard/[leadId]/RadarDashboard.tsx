@@ -1026,26 +1026,34 @@ export default function RadarDashboard({
             Seu radar de crescimento · virolocal.com
           </p>
           {tier === "subscriber" && (
-            <button
-              onClick={async () => {
-                try {
-                  const res = await fetch("/api/checkout/portal", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ leadId: lead.id }),
-                  });
-                  const data = await res.json();
-                  if (data.url) window.location.href = data.url;
-                } catch { /* ignore */ }
-              }}
-              style={{
-                marginTop: 8, padding: "4px 12px", fontSize: 10, color: V.ash,
-                background: "none", border: `1px solid ${V.fog}`, borderRadius: 6,
-                cursor: "pointer", fontFamily: V.mono,
-              }}
-            >
-              Gerenciar assinatura
-            </button>
+            <div style={{ marginTop: 16 }}>
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch("/api/checkout/portal", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ leadId: lead.id }),
+                    });
+                    const data = await res.json();
+                    if (data.url) window.location.href = data.url;
+                    else if (data.error) alert(data.error);
+                  } catch (err) {
+                    alert("Não foi possível abrir o portal. Tente novamente em alguns segundos.");
+                  }
+                }}
+                style={{
+                  padding: "10px 20px", fontSize: 13, color: V.night, fontWeight: 600,
+                  background: V.white, border: `1px solid ${V.fog}`, borderRadius: 8,
+                  cursor: "pointer",
+                }}
+              >
+                Gerenciar ou cancelar assinatura →
+              </button>
+              <p style={{ fontSize: 11, color: V.ash, marginTop: 8, lineHeight: 1.5 }}>
+                Abre o portal seguro do Stripe — você cancela com 1 clique, sem precisar entrar em contato.
+              </p>
+            </div>
           )}
         </div>
       </div>

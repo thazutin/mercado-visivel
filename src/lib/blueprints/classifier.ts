@@ -16,7 +16,15 @@ interface ClassificationInput {
   region?: string;
   instagram?: string;
   site?: string;
+  /** Origem do lead. Permite forçar blueprints específicos por parceiro/canal.
+   *  Ex: source="balcao" → força vending_machine_b2b. */
+  source?: string;
 }
+
+/** Override de blueprint por origem do lead. Tem precedence sobre keywords e Claude. */
+const SOURCE_BLUEPRINT_OVERRIDE: Record<string, string> = {
+  balcao: 'vending_machine_b2b',
+};
 
 interface ClassificationResult {
   blueprint: Blueprint;
@@ -163,6 +171,22 @@ Responda APENAS com o ID (ex: beleza_estetica). Nada mais.`,
 export async function classifyBusiness(
   input: ClassificationInput,
 ): Promise<ClassificationResult> {
+  // 0. Override por source — precedence sobre tudo. Permite parcerias terem
+  // blueprint próprio sem depender de keywords + Claude.
+  if (input.source && SOURCE_BLUEPRINT_OVERRIDE[input.source]) {
+    const forcedId = SOURCE_BLUEPRINT_OVERRIDE[input.source];
+    const blueprint = BLUEPRINT_MAP[forcedId];
+    if (blueprint) {
+      console.log(`[Classifier] source=${input.source} → forçando blueprint ${forcedId}`);
+      return {
+        blueprint,
+        confidence: 'high',
+        method: 'keyword',
+        matchedKeywords: [`source=${input.source}`],
+      };
+    }
+  }
+
   // 1. Keyword matching
   const keywordResult = classifyByKeywords(input);
   if (keywordResult && keywordResult.confidence !== 'low') {

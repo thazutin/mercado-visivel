@@ -37,9 +37,10 @@ export async function POST(req: NextRequest) {
       : subscription.customer.id;
 
     // Criar sessão do Customer Portal
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000";
+    // (precedência: NEXT_PUBLIC_APP_URL > VERCEL_URL > localhost)
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
 
     const session = await getStripe().billingPortal.sessions.create({
       customer: customerId,
