@@ -201,13 +201,47 @@ export default function BalcaoForm() {
 
   return (
     <div style={{ minHeight: "100vh", background: V.white }}>
+      {/* Faixa de co-branding (idêntica à landing) */}
+      <div style={{ background: V.white, borderBottom: `1px solid ${V.fog}`, padding: "10px 20px" }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: 6,
+                background: "linear-gradient(135deg, #1A1F36, #2D3656)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: V.white, fontWeight: 800, fontSize: 13, fontFamily: V.display,
+              }}>B</div>
+              <span style={{ fontFamily: V.display, fontSize: 14, fontWeight: 700, color: V.night, letterSpacing: "-0.01em" }}>Balcão Urbano</span>
+            </div>
+            <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.08em" }}>×</span>
+            <span style={{ fontFamily: V.display, fontSize: 14, fontWeight: 700, color: V.night, letterSpacing: "-0.01em" }}>
+              Virô<span style={{ color: V.teal }}>.</span>
+            </span>
+          </div>
+          <Link href="/balcao" style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.04em", textDecoration: "none" }}>
+            ← Voltar
+          </Link>
+        </div>
+      </div>
+
       {/* Hero compacto */}
-      <div style={{ background: V.night, padding: "44px 24px 32px", textAlign: "center" }}>
+      <div style={{
+        background: "linear-gradient(180deg, #0A0E1E 0%, #161618 100%)",
+        padding: "52px 24px 40px",
+        textAlign: "center",
+      }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "6px 14px", borderRadius: 100, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", marginBottom: 18 }}>
-            <span style={{ fontFamily: V.display, fontSize: 12, fontWeight: 700, color: V.white }}>Balcão Urbano</span>
-            <span style={{ width: 3, height: 3, borderRadius: "50%", background: V.amber }} />
-            <span style={{ fontFamily: V.display, fontSize: 12, fontWeight: 700, color: V.white }}>Virô<span style={{ color: V.teal }}>.</span></span>
+          <div style={{
+            display: "inline-block",
+            padding: "4px 12px", borderRadius: 100,
+            background: "rgba(180,83,9,0.18)",
+            border: "1px solid rgba(180,83,9,0.32)",
+            marginBottom: 18,
+          }}>
+            <span style={{ fontFamily: V.mono, fontSize: 9, color: V.amber, letterSpacing: "0.08em", textTransform: "uppercase" as const, fontWeight: 700 }}>
+              programa franqueado balcão urbano
+            </span>
           </div>
           <h1 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.white, letterSpacing: "-0.02em", margin: "0 0 8px", lineHeight: 1.2 }}>
             Seu diagnóstico estratégico — 60 segundos.

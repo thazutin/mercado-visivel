@@ -31,44 +31,89 @@ export default function BalcaoLanding() {
   return (
     <div style={{ minHeight: "100vh", background: V.white }}>
 
+      {/* ═══ FAIXA DE CO-BRANDING ═══
+          Visualmente: barra fina no topo com logos das duas marcas + tag
+          "Parceria oficial". Quando você tiver o logo da Balcão (PNG/SVG),
+          substitua o placeholder <BalcaoMark /> por <img src="/balcao-logo.svg" />. */}
+      <div style={{
+        background: V.white,
+        borderBottom: `1px solid ${V.fog}`,
+        padding: "10px 20px",
+      }}>
+        <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            {/* Placeholder do logo Balcão Urbano — substitua quando tiver o asset */}
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: 6,
+                background: "linear-gradient(135deg, #1A1F36, #2D3656)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: V.white, fontWeight: 800, fontSize: 13, fontFamily: V.display,
+              }}>B</div>
+              <span style={{ fontFamily: V.display, fontSize: 14, fontWeight: 700, color: V.night, letterSpacing: "-0.01em" }}>
+                Balcão Urbano
+              </span>
+            </div>
+            <span style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.08em" }}>×</span>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontFamily: V.display, fontSize: 14, fontWeight: 700, color: V.night, letterSpacing: "-0.01em" }}>
+                Virô<span style={{ color: V.teal }}>.</span>
+              </span>
+            </div>
+          </div>
+          <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.08em", textTransform: "uppercase" as const, fontWeight: 700 }}>
+            Parceria oficial · Programa exclusivo da rede
+          </div>
+        </div>
+      </div>
+
       {/* ═══ HERO ═══ */}
-      <div style={{ background: V.night, padding: "60px 24px 56px", textAlign: "center" }}>
-        <div style={{ maxWidth: 540, margin: "0 auto" }}>
-          {/* Co-branding badge */}
+      <div style={{
+        background: "linear-gradient(180deg, #0A0E1E 0%, #161618 100%)",
+        padding: "72px 24px 64px",
+        textAlign: "center",
+        position: "relative",
+        overflow: "hidden",
+      }}>
+        {/* Detalhe visual sutil — gradiente ambar no canto */}
+        <div style={{
+          position: "absolute", top: "-50%", right: "-20%",
+          width: "60%", height: "200%",
+          background: "radial-gradient(ellipse at center, rgba(180,83,9,0.08) 0%, transparent 60%)",
+          pointerEvents: "none",
+        }} />
+        <div style={{ maxWidth: 560, margin: "0 auto", position: "relative", zIndex: 1 }}>
           <div style={{
-            display: "inline-flex", alignItems: "center", gap: 12,
-            padding: "8px 18px", borderRadius: 100,
-            background: "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            marginBottom: 28,
+            display: "inline-block",
+            padding: "5px 14px", borderRadius: 100,
+            background: "rgba(180,83,9,0.18)",
+            border: "1px solid rgba(180,83,9,0.32)",
+            marginBottom: 24,
           }}>
-            <span style={{ fontFamily: V.display, fontSize: 14, fontWeight: 700, color: V.white, letterSpacing: "-0.01em" }}>
-              Balcão Urbano
-            </span>
-            <span style={{ width: 4, height: 4, borderRadius: "50%", background: V.amber }} />
-            <span style={{ fontFamily: V.display, fontSize: 14, fontWeight: 700, color: V.white, letterSpacing: "-0.01em" }}>
-              Virô<span style={{ color: V.teal }}>.</span>
+            <span style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.08em", textTransform: "uppercase" as const, fontWeight: 700 }}>
+              programa franqueado balcão urbano
             </span>
           </div>
 
           <h1 style={{
-            fontFamily: V.display, fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 700,
-            color: V.white, letterSpacing: "-0.03em", margin: "0 0 18px", lineHeight: 1.15,
+            fontFamily: V.display, fontSize: "clamp(30px, 5.5vw, 44px)", fontWeight: 700,
+            color: V.white, letterSpacing: "-0.03em", margin: "0 0 20px", lineHeight: 1.12,
           }}>
             Sua máquina precisa estar <span style={{ color: V.amber }}>na cabeça das empresas certas</span> antes de você bater na porta.
           </h1>
-          <p style={{ fontSize: 16, color: V.ash, lineHeight: 1.65, margin: "0 0 28px" }}>
+          <p style={{ fontSize: 17, color: V.ash, lineHeight: 1.6, margin: "0 0 32px", maxWidth: 480, marginLeft: "auto", marginRight: "auto" }}>
             A Virô é a consultora estratégica de marketing dos franqueados Balcão Urbano. Mapeia pontos premium na sua região, identifica decisores e monta a estratégia de conteúdo pra fazer as empresas <strong style={{ color: V.white }}>te procurarem</strong>.
           </p>
 
           <Link href="/balcao/diagnostico" style={{
             display: "inline-block", background: V.amber, color: V.white,
-            padding: "14px 32px", borderRadius: 10,
-            fontSize: 15, fontWeight: 700, textDecoration: "none",
+            padding: "16px 36px", borderRadius: 10,
+            fontSize: 16, fontWeight: 700, textDecoration: "none",
+            boxShadow: "0 4px 20px rgba(180,83,9,0.35)",
           }}>
             Diagnóstico gratuito em 60s →
           </Link>
-          <p style={{ fontSize: 12, color: V.slate, margin: "14px 0 0" }}>
+          <p style={{ fontSize: 12, color: V.slate, margin: "16px 0 0" }}>
             Exclusivo para franqueados Balcão Urbano · Sem cadastro de cartão
           </p>
         </div>
@@ -195,6 +240,103 @@ export default function BalcaoLanding() {
         </div>
       </Section>
 
+      {/* ═══ COMPARATIVO — alternativas no mercado ═══ */}
+      <Section bg={V.cloud}>
+        <SectionLabel>comparativo</SectionLabel>
+        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 12px", lineHeight: 1.25 }}>
+          Por que a Virô faz sentido pro franqueado da rede.
+        </h2>
+        <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.6, margin: "0 0 24px" }}>
+          O franqueado Balcão Urbano tem três alternativas pra estruturar marketing. Aqui está o que cada uma entrega.
+        </p>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
+          {/* Sem marketing estruturado */}
+          <div style={{ background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`, padding: "20px 22px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+              <div>
+                <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.08em", marginBottom: 4 }}>ALTERNATIVA 1</div>
+                <h3 style={{ fontSize: 17, fontWeight: 700, color: V.night, margin: 0, letterSpacing: "-0.01em" }}>Tocar sem método</h3>
+              </div>
+              <span style={{ fontFamily: V.mono, fontSize: 11, color: V.ash, fontWeight: 700 }}>R$0</span>
+            </div>
+            <p style={{ fontSize: 13, color: V.zinc, margin: "0 0 12px", lineHeight: 1.6 }}>
+              Bater porta a porta, tentar conhecidos, postar quando lembrar. Resultado: cresce na sorte, fica refém de indicação.
+            </p>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {['Sem inteligência de mercado', 'Sem mapa de decisor', 'Sem cadência', 'Esforço alto, conversão baixa'].map((tag, i) => (
+                <span key={i} style={{ fontSize: 10, fontWeight: 500, color: V.ash, background: V.fog, padding: "3px 8px", borderRadius: 4 }}>{tag}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Consultoria de marketing tradicional */}
+          <div style={{ background: V.white, borderRadius: 14, border: `1px solid ${V.fog}`, padding: "20px 22px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+              <div>
+                <div style={{ fontFamily: V.mono, fontSize: 10, color: V.ash, letterSpacing: "0.08em", marginBottom: 4 }}>ALTERNATIVA 2</div>
+                <h3 style={{ fontSize: 17, fontWeight: 700, color: V.night, margin: 0, letterSpacing: "-0.01em" }}>Consultoria tradicional</h3>
+              </div>
+              <span style={{ fontFamily: V.mono, fontSize: 11, color: V.ash, fontWeight: 700 }}>R$3-8k/mês</span>
+            </div>
+            <p style={{ fontSize: 13, color: V.zinc, margin: "0 0 12px", lineHeight: 1.6 }}>
+              Reuniões mensais, planos genéricos sob medida, sem dados próprios do mercado. Faz sentido pra negócio que já fatura R$200k+/mês — não pra franqueado inicial.
+            </p>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {['Cara pra fase inicial', 'Plano sem dados', 'Reunião mensal', 'Execução fica com você'].map((tag, i) => (
+                <span key={i} style={{ fontSize: 10, fontWeight: 500, color: V.ash, background: V.fog, padding: "3px 8px", borderRadius: 4 }}>{tag}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Virô */}
+          <div style={{ background: V.white, borderRadius: 14, border: `2px solid ${V.amber}`, padding: "20px 22px", boxShadow: "0 4px 16px rgba(180,83,9,0.08)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+              <div>
+                <div style={{ fontFamily: V.mono, fontSize: 10, color: V.amber, letterSpacing: "0.08em", marginBottom: 4, fontWeight: 700 }}>VIRÔ × BALCÃO URBANO</div>
+                <h3 style={{ fontSize: 17, fontWeight: 700, color: V.night, margin: 0, letterSpacing: "-0.01em" }}>Sua consultora estratégica recorrente</h3>
+              </div>
+              <span style={{ fontFamily: V.mono, fontSize: 11, color: V.amber, fontWeight: 700 }}>R$97/mês*</span>
+            </div>
+            <p style={{ fontSize: 13, color: V.zinc, margin: "0 0 12px", lineHeight: 1.6 }}>
+              Dados reais do seu mercado, decisores nominados por empresa, scripts prontos por contexto, acompanhamento semanal pelo WhatsApp. Estratégia + execução, recorrente.
+            </p>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {['Dados reais', 'Decisor nominado', 'Scripts prontos', 'WhatsApp 3×/semana', 'Memória cresce com você', 'Cancele a qualquer momento'].map((tag, i) => (
+                <span key={i} style={{ fontSize: 10, fontWeight: 600, color: V.amber, background: V.amberWash, padding: "3px 8px", borderRadius: 4 }}>{tag}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* ═══ MODELO DA PARCERIA ═══ */}
+      <Section bg={V.white}>
+        <SectionLabel>parceria balcão × virô</SectionLabel>
+        <h2 style={{ fontFamily: V.display, fontSize: "clamp(22px, 4vw, 28px)", fontWeight: 700, color: V.night, letterSpacing: "-0.02em", margin: "0 0 16px", lineHeight: 1.25 }}>
+          Construído junto com a rede. Calibrado pro modelo de vending B2B.
+        </h2>
+        <p style={{ fontSize: 15, color: V.zinc, lineHeight: 1.7, margin: "0 0 20px" }}>
+          A Virô não é uma ferramenta genérica de marketing. Pra rede Balcão Urbano, calibramos o sistema com a lente do negócio de vocês:
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {[
+            { icon: "🏭", title: "Empresas-alvo segmentadas por CNAE", text: "Galpões logísticos, indústrias 50+ funcionários, escritórios corporativos, hospitais, instituições educacionais — não comércio varejista." },
+            { icon: "👤", title: "Decisor identificado por empresa", text: "Facilities, Operações, RH. Nome, cargo e LinkedIn via Hunter.io — não 'fale com o gerente'." },
+            { icon: "💼", title: "Modelo de receita reconhecido", text: "Comissão sobre consumo dos funcionários. Métricas em pontos ativos × ticket médio mensal — não em 'cliques' ou 'conversões' genéricas." },
+            { icon: "🎯", title: "Ciclo de venda B2B respeitado", text: "30-90 dias entre primeira conversa e instalação. Scripts de abordagem ajustados pra esse ritmo." },
+          ].map((item, i) => (
+            <div key={i} style={{ display: "flex", gap: 12, padding: "14px 16px", background: V.cloud, borderRadius: 12, alignItems: "flex-start" }}>
+              <span style={{ fontSize: 18, flexShrink: 0 }}>{item.icon}</span>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: V.night, marginBottom: 2 }}>{item.title}</div>
+                <p style={{ fontSize: 12, color: V.zinc, margin: 0, lineHeight: 1.55 }}>{item.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
+
       {/* ═══ COMO FUNCIONA ═══ */}
       <Section bg={V.cloud}>
         <SectionLabel>como funciona</SectionLabel>
@@ -286,17 +428,26 @@ export default function BalcaoLanding() {
       </Section>
 
       {/* ═══ FOOTER ═══ */}
-      <footer style={{ background: V.night, padding: "40px 24px 32px", textAlign: "center" }}>
+      <footer style={{ background: V.night, padding: "48px 24px 36px", textAlign: "center" }}>
         <div style={{ maxWidth: 680, margin: "0 auto" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: 6,
+              background: "rgba(255,255,255,0.08)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: V.white, fontWeight: 800, fontSize: 13, fontFamily: V.display,
+            }}>B</div>
             <span style={{ fontFamily: V.display, fontSize: 14, fontWeight: 700, color: V.white }}>Balcão Urbano</span>
-            <span style={{ width: 4, height: 4, borderRadius: "50%", background: V.amber }} />
+            <span style={{ fontFamily: V.mono, fontSize: 11, color: V.amber, letterSpacing: "0.08em" }}>×</span>
             <span style={{ fontFamily: V.display, fontSize: 14, fontWeight: 700, color: V.white }}>
               Virô<span style={{ color: V.teal }}>.</span>
             </span>
           </div>
-          <p style={{ fontSize: 12, color: V.slate, margin: 0, lineHeight: 1.6 }}>
-            Parceria piloto · Consultoria estratégica de marketing exclusiva para a rede
+          <p style={{ fontSize: 12, color: V.slate, margin: "0 0 6px", lineHeight: 1.6 }}>
+            Programa exclusivo da rede · Construído com a lente do modelo vending B2B
+          </p>
+          <p style={{ fontSize: 11, color: V.slate, margin: 0, lineHeight: 1.6, opacity: 0.6 }}>
+            Operado pela Virô · virolocal.com · Dados reais de 30+ fontes
           </p>
         </div>
       </footer>

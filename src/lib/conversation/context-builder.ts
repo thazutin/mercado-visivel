@@ -179,6 +179,27 @@ export async function buildContextBundle(leadId: string): Promise<ContextBundle>
 
   const shortRegion = (lead.region as string)?.split(",")[0]?.trim() || "";
   const displayName = (lead.name as string) || (lead.product as string) || "o negócio";
+
+  // ─── Lente do modelo de negócio — só aparece quando blueprint tem nuance específica ──
+  // Pra cada blueprint com mecânica B2B complexa (vending, locação, marketplace, etc.),
+  // adicionamos uma camada de contexto que orienta o Claude a usar a linguagem correta
+  // ("ponto" vs "cliente final", "Facilities" vs "consumidor", etc.).
+  const BLUEPRINT_LENS: Record<string, string> = {
+    vending_machine_b2b: `══════ LENTE: VENDING MACHINE B2B ══════
+O modelo deste negócio é vending machine corporativo — a Virô tem que falar a linguagem certa:
+
+• "PONTO" significa uma máquina instalada em um cliente (uma empresa). Cada ponto é uma conta B2B recorrente.
+• O CLIENTE é a EMPRESA (galpão, indústria, escritório, hospital). O DECISOR é Facilities, RH ou Operações — NÃO o funcionário que usa a máquina.
+• O CONSUMIDOR FINAL (quem aperta o botão da máquina) NÃO é o cliente comercial. Não confunda os dois.
+• O MODELO DE RECEITA é comissão sobre o consumo dos funcionários (ou aluguel + comissão). Geralmente sem custo de instalação pra empresa-cliente — esse é o pitch principal.
+• O CICLO DE VENDA é B2B: 30-90 dias entre primeiro contato e instalação. Não pergunte "convertemos quantos?" — pergunte "como foi a reunião com Facilities?".
+• MÉTRICAS-CHAVE: pontos ativos, ticket médio mensal por ponto, % de ativação no consumo, churn por ponto, tempo médio de fechamento.
+• LINGUAGEM CORRETA: "pipeline de prédios", "decisor mapeado", "proposta enviada", "máquina instalada", "ponto ativado". NUNCA: "vender pizza", "atender cliente final", "promoção pra consumidor".
+• CHANNEL primário: LinkedIn (Facilities), indicação de cliente atual, parcerias com administradoras de condomínios corporativos. NÃO Google Ads de varejo.
+`,
+  };
+  const blueprintLens = BLUEPRINT_LENS[lead.blueprint_id as string] || '';
+
   const isSubscriber = lead.subscription_status === "active";
 
   // Bloco do tema da semana (ação proposta + raciocínio do planner)
@@ -246,6 +267,7 @@ Desafio declarado pelo dono: ${lead.challenge || "não declarou"}
 Ticket: ${lead.ticket || "não declarado"}
 Status: ${isSubscriber ? "Assinante do Radar" : (lead.paid_at ? "Pagou one-time" : "Free")}
 
+${blueprintLens}
 ══════ DIAGNÓSTICO (link público: virolocal.com/resultado/${leadId}) ══════
 ${summarizeDiagnosis(diagnosis)}
 
